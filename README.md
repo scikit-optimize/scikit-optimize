@@ -1,0 +1,1 @@
+A sandmine for Black-box optimization methods using the scipy.optimize interface.
