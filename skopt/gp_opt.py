@@ -35,9 +35,8 @@ def _acquisition_func(x0, gp, prev_best, func, xi=0.01, kappa=1.96):
     return acquisition_func
 
 
-def gp_minimize():
-    # func, bounds=None, search="sampling", random_state=None,
-    #             maxiter=1000, acq="UCB", num_points=500):
+def gp_minimize(func, bounds=None, search="sampling", random_state=None,
+                maxiter=1000, acq="UCB", num_points=500):
     """
     Black-box optimization using Gaussian Processes.
 
@@ -109,68 +108,67 @@ def gp_minimize():
         d["func_vals]: d["func_vals"][i] corresponds to the minimum
         function value in iteration i.
     """
-    X, y = make_regression()
-#     rng = np.random.RandomState(random_state)
+    rng = np.random.RandomState(random_state)
 
-#     num_params = len(bounds)
-#     lower_bounds, upper_bounds = zip(*bounds)
-#     upper_bounds = np.asarray(upper_bounds)
-#     lower_bounds = np.asarray(lower_bounds)
-#     x0 = rng.rand(num_params)
-#     func_val = [func(lower_bounds + (upper_bounds - lower_bounds) * x0)]
+    num_params = len(bounds)
+    lower_bounds, upper_bounds = zip(*bounds)
+    upper_bounds = np.asarray(upper_bounds)
+    lower_bounds = np.asarray(lower_bounds)
+    x0 = rng.rand(num_params)
+    func_val = [func(lower_bounds + (upper_bounds - lower_bounds) * x0)]
 
-#     length_scale = np.ones(num_params)
-#     gp_params = {
-#         'kernel': Matern(length_scale=length_scale, nu=2.5),
-#         'normalize_y': True,
-#         'random_state': random_state
-#     }
-#     lbfgs_bounds = np.tile((0, 1), (num_params, 1))
+    length_scale = np.ones(num_params)
+    gp_params = {
+        'kernel': Matern(length_scale=length_scale, nu=2.5),
+        'normalize_y': True,
+        'random_state': random_state
+    }
+    lbfgs_bounds = np.tile((0, 1), (num_params, 1))
 
-#     gp_models = []
-#     x = np.reshape(x0, (1, -1))
+    gp_models = []
+    x = np.reshape(x0, (1, -1))
 
-#     for i in range(maxiter):
-#         gpr = GaussianProcessRegressor(**gp_params)
-#         gpr.fit(x, func_val)
+    for i in range(maxiter):
+        gpr = GaussianProcessRegressor(**gp_params)
+        gpr.fit(x, func_val)
 
-#         if search == "sampling":
-#             sampling = rng.rand(num_points, num_params)
-#             acquis = _acquisition_func(sampling, gpr, np.min(func_val), acq)
-#             best_arg = np.argmin(acquis)
-#             best_x = sampling[best_arg]
-#         elif search == "lbfgs":
-#             init = rng.rand(num_params)
-#             best_x, _, _ = fmin_l_bfgs_b(
-#                 _acquisition_func,
-#                 np.asfortranarray(init),
-#                 args=(gpr, np.min(func_val), acq),
-#                 bounds=lbfgs_bounds, approx_grad=True, maxiter=10)
+        if search == "sampling":
+            sampling = rng.rand(num_points, num_params)
+            acquis = _acquisition_func(sampling, gpr, np.min(func_val), acq)
+            best_arg = np.argmin(acquis)
+            best_x = sampling[best_arg]
+        elif search == "lbfgs":
+            init = rng.rand(num_params)
+            best_x, _, _ = fmin_l_bfgs_b(
+                _acquisition_func,
+                np.asfortranarray(init),
+                args=(gpr, np.min(func_val), acq),
+                bounds=lbfgs_bounds, approx_grad=True, maxiter=10)
 
-#         gp_models.append(gpr)
+        gp_models.append(gpr)
 
-#         best_f = func(lower_bounds + (upper_bounds - lower_bounds) * best_x)
-#         x_list = x.tolist()
-#         x_list.append(best_x)
-#         x = np.asarray(x_list)
-#         func_val.append(best_f)
+        best_f = func(lower_bounds + (upper_bounds - lower_bounds) * best_x)
+        x_list = x.tolist()
+        x_list.append(best_x)
+        x = np.asarray(x_list)
+        func_val.append(best_f)
 
-#     x = lower_bounds + (upper_bounds - lower_bounds) * x
-#     func_ind = np.argmin(func_val)
-#     x_val = x[func_ind]
-#     best_func_val = func_val[func_ind]
-#     d = {}
-#     d["models"] = gp_models
+    x = lower_bounds + (upper_bounds - lower_bounds) * x
+    func_ind = np.argmin(func_val)
+    x_val = x[func_ind]
+    best_func_val = func_val[func_ind]
+    d = {}
+    d["models"] = gp_models
 
-#     # TODO: Optimize, but not bottleneck obv
-#     best_vals = []
-#     best_xs = []
-#     for i, fval in enumerate(func_val[:-1]):
-#         best_ind = np.argmin(func_val[:i+1])
-#         best_vals.append(func_val[best_ind])
-#         best_xs.append(x[best_ind])
+    # TODO: Optimize, but not bottleneck obv
+    best_vals = []
+    best_xs = []
+    for i, fval in enumerate(func_val[:-1]):
+        best_ind = np.argmin(func_val[:i+1])
+        best_vals.append(func_val[best_ind])
+        best_xs.append(x[best_ind])
 
-#     d["x_iters"] = np.asarray(best_xs)
-#     d["func_vals"] = best_vals
+    d["x_iters"] = np.asarray(best_xs)
+    d["func_vals"] = best_vals
 
-#     return x_val, best_func_val, d
+    return x_val, best_func_val, d
