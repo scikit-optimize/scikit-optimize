@@ -3,7 +3,7 @@
 # import numpy as np
 # from sklearn.utils.testing import assert_less
 
-from gp_opt import gp_minimize
+from skopt.gp_opt import gp_minimize
 
 # a = 1
 # b = 5.1 / (4 * pi**2)
