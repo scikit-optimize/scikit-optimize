@@ -30,8 +30,9 @@ conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
    numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
    matplotlib libgfortran=1 nomkl
 git clone https://github.com/scikit-learn/scikit-learn/
-# $PYTHON_VERSION setup.py install
-# cd ..
+cd scikit-learn
+$PYTHON_VERSION setup.py install
+cd ..
 
 source activate testenv
 
