@@ -28,7 +28,7 @@ popd
 # provided versions
 conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
    numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-   matplotlib scikit-learn
+   matplotlib scikit-learn libgfortran
 source activate testenv
 
 if [[ "$COVERAGE" == "true" ]]; then
