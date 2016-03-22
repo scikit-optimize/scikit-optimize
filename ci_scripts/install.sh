@@ -24,15 +24,12 @@ export PATH=/home/travis/miniconda/bin:$PATH
 conda update --yes conda
 popd
 
-# apt-get install git
-# git clone https://github.com/scikit-learn/scikit-learn/
-
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
    numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-   matplotlib libgfortran=1 nomkl scikit-learn
-# cd scikit-learn
+   matplotlib libgfortran=1 nomkl
+git clone https://github.com/scikit-learn/scikit-learn/
 # $PYTHON_VERSION setup.py install
 # cd ..
 

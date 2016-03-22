@@ -6,6 +6,11 @@ python:
 notifications:
     email: false
 
+addsons:
+  apt:
+    packages:
+      -git
+
 env:
   global:
     # Directory where tests are run from
