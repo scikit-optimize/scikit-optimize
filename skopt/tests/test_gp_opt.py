@@ -1,4 +1,4 @@
-# from math import pi, cos
+from math import pi, cos
 
 import numpy as np
 from sklearn.utils.testing import assert_less
