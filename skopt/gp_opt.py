@@ -2,13 +2,11 @@ from math import exp
 
 import numpy as np
 
-# from sklearn.gaussian_process import GaussianProcessRegressor
-# from sklearn.gaussian_process.kernels import Matern
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern
 
 from scipy import stats
 from scipy.optimize import fmin_l_bfgs_b
-from sklearn.linear_model import LinearRegression
-from sklearn.datasets import make_regression
 
 def _acquisition_func(x0, gp, prev_best, func, xi=0.01, kappa=1.96):
     x0 = np.asarray(x0)
