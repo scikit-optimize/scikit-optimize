@@ -24,11 +24,14 @@ export PATH=/home/travis/miniconda/bin:$PATH
 conda update --yes conda
 popd
 
+apt-get install git
+
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
    numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-   matplotlib scikit-learn libgfortran=1 nomkl
+   matplotlib libgfortran=1 nomkl
+
 source activate testenv
 
 if [[ "$COVERAGE" == "true" ]]; then
