@@ -8,6 +8,7 @@ import numpy as np
 from scipy import stats
 from scipy.optimize import fmin_l_bfgs_b
 from sklearn.linear_model import LinearRegression
+from sklearn.datasets import make_regression
 
 def _acquisition_func(x0, gp, prev_best, func, xi=0.01, kappa=1.96):
     x0 = np.asarray(x0)
@@ -36,79 +37,81 @@ def _acquisition_func(x0, gp, prev_best, func, xi=0.01, kappa=1.96):
     return acquisition_func
 
 
-# def gp_minimize(func, bounds=None, search="sampling", random_state=None,
-#                 maxiter=1000, acq="UCB", num_points=500):
-#     """
-#     Black-box optimization using Gaussian Processes.
+def gp_minimize():
+    # func, bounds=None, search="sampling", random_state=None,
+    #             maxiter=1000, acq="UCB", num_points=500):
+    """
+    Black-box optimization using Gaussian Processes.
 
-#     If every function evaluation is expensive, for instance
-#     when the parameters are the hyperparameters of a neural network
-#     and the function evaluation is the mean cross-validation score across
-#     ten folds, optimizing the hyperparameters by standared optimization
-#     routines would take for ever!
+    If every function evaluation is expensive, for instance
+    when the parameters are the hyperparameters of a neural network
+    and the function evaluation is the mean cross-validation score across
+    ten folds, optimizing the hyperparameters by standared optimization
+    routines would take for ever!
 
-#     The idea is to approximate the function using a Gaussian process.
-#     In other words the function values are assumed to follow a multivariate
-#     gaussian. The covariance of the function values are given by a
-#     GP kernel between the parameters. Then a smart choice to choose the
-#     next parameter to evaluate can be made by the acquistion function
-#     over the Gaussian posterior which is much quicker to evaluate.
+    The idea is to approximate the function using a Gaussian process.
+    In other words the function values are assumed to follow a multivariate
+    gaussian. The covariance of the function values are given by a
+    GP kernel between the parameters. Then a smart choice to choose the
+    next parameter to evaluate can be made by the acquistion function
+    over the Gaussian posterior which is much quicker to evaluate.
 
-#     Parameters
-#     ----------
-#     func: callable
-#         Function to minimize. Should take a array of parameters and
-#         return the function value.
+    Parameters
+    ----------
+    func: callable
+        Function to minimize. Should take a array of parameters and
+        return the function value.
 
-#     bounds: array-like, shape (n_parameters, 2)
-#         ``bounds[i][0]`` should give the lower bound of each parameter and
-#         ``bounds[i][1]`` should give the upper bound of each parameter.
+    bounds: array-like, shape (n_parameters, 2)
+        ``bounds[i][0]`` should give the lower bound of each parameter and
+        ``bounds[i][1]`` should give the upper bound of each parameter.
 
-#     search: string, "sampling" or "lbfgs"
-#         Searching for the next possible candidate to update the Gaussian prior
-#         with.
+    search: string, "sampling" or "lbfgs"
+        Searching for the next possible candidate to update the Gaussian prior
+        with.
 
-#         If search is set to "sampling", ``num_points`` are sampled randomly
-#         and the Gaussian Process prior is updated with that point that gives
-#         the best acquision value over the Gaussian posterior.
+        If search is set to "sampling", ``num_points`` are sampled randomly
+        and the Gaussian Process prior is updated with that point that gives
+        the best acquision value over the Gaussian posterior.
 
-#         If search is set to "lbfgs", then a point is sampled randomly, and
-#         lbfgs is run for 10 iterations optimizing the acquistion function
-#         over the Gaussian posterior.
+        If search is set to "lbfgs", then a point is sampled randomly, and
+        lbfgs is run for 10 iterations optimizing the acquistion function
+        over the Gaussian posterior.
 
-#     random_state: int, RandomState instance, or None (default)
-#         Set random state to something other than None for reproducible
-#         results.
+    random_state: int, RandomState instance, or None (default)
+        Set random state to something other than None for reproducible
+        results.
 
-#     maxiter: int, default 1000
-#         Number of iterations to find the minimum. In other words, the
-#         number of function evaluations.
+    maxiter: int, default 1000
+        Number of iterations to find the minimum. In other words, the
+        number of function evaluations.
 
-#     acq: string, default "UCB"
-#         Function to minimize over the gaussian posterior. Can be either
-#         the "UCB" which refers to the UpperConfidenceBound or "EI" which
-#         is the Expected Improvement.
+    acq: string, default "UCB"
+        Function to minimize over the gaussian posterior. Can be either
+        the "UCB" which refers to the UpperConfidenceBound or "EI" which
+        is the Expected Improvement.
 
-#     num_points: int, default 500
-#         Number of points to sample to determine the next "best" point.
-#         Useless if search is set to "lbfgs".
+    num_points: int, default 500
+        Number of points to sample to determine the next "best" point.
+        Useless if search is set to "lbfgs".
 
-#     Returns
-#     -------
-#     x_val: array-like
-#         Parameter value corresponding to the best function value.
+    Returns
+    -------
+    x_val: array-like
+        Parameter value corresponding to the best function value.
 
-#     func_val: float
-#         Function minimum.
+    func_val: float
+        Function minimum.
 
-#     d: dict
-#         d["models"]: List of GP models of len maxiter. d["models"][i]
-#         corresponds to the GP model fit in iteration i.
-#         d["x_iters"]: d["x_iters"][i] corresponds to the "best" x in
-#         iteration i.
-#         d["func_vals]: d["func_vals"][i] corresponds to the minimum
-#         function value in iteration i.
-#     """
+    d: dict
+        d["models"]: List of GP models of len maxiter. d["models"][i]
+        corresponds to the GP model fit in iteration i.
+        d["x_iters"]: d["x_iters"][i] corresponds to the "best" x in
+        iteration i.
+        d["func_vals]: d["func_vals"][i] corresponds to the minimum
+        function value in iteration i.
+    """
+    X, y = make_regression()
 #     rng = np.random.RandomState(random_state)
 
 #     num_params = len(bounds)

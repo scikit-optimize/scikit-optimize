@@ -34,6 +34,10 @@
 # def hartmann_6(x):
 #     return -np.sum(alpha * np.exp(-np.sum(A * (x - P)**2, axis=1)))
 
+def test_dummy():
+    gp_minimize()
+
+
 # def test_branin_bayes():
 #     for random_state in [0, 1, 2, 3, 4]:
 #         x, f, d = gp_minimize(

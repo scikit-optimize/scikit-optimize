@@ -1,1 +1,1 @@
-# from .gp_opt import gp_minimize
+from .gp_opt import gp_minimize
