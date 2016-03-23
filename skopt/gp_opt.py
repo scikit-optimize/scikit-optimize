@@ -8,16 +8,53 @@ from sklearn.gaussian_process.kernels import Matern
 from scipy import stats
 from scipy.optimize import OptimizeResult, fmin_l_bfgs_b
 
-def _acquisition_func(x0, gp, prev_best, func, xi=0.01, kappa=1.96):
+def gp_acquisition_func(x0, gp, prev_best=None, acq="UCB",
+                        xi=0.01, kappa=1.96):
+    """
+    Returns the acquistion function computed at values x0, when the
+    prior of the unknown function is approximated by gp.
+
+    Parameters
+    ----------
+    x0 : array-like
+        Values where the acquistion function should be computed.
+
+    gp: GaussianProcess model
+        The fit sklearn gaussian process estimator that approximates
+        the function.
+
+    prev_best: float, optional
+        The previousbest value over which we want to improve.
+        Useful only when `acq` is set to "EI"
+
+    acq: string, "UCB" or "EI"
+        If set to "UCB", then the lower-confidence bound is taken.
+        If set to "EI", then the expected improvement condition is taken.
+
+    xi: float, default 0.01
+        Controls how much improvement one wants over the previous best
+        values.
+
+    kappa: float, default 1.96
+        Controls how much of the variance in the predicted values should be
+        taken into account. If set to be very high, then we are favouring
+        exploration over exploitation and vice versa.
+        Useless if acq is set to "EI"
+
+    Returns
+    -------
+    acquisition_func: array-like, length x0
+        Gaussian Process acquistion function values computed at each x0.
+    """
     x0 = np.asarray(x0)
     if x0.ndim == 1:
         x0 = np.expand_dims(x0, axis=0)
 
     predictions, std = gp.predict(x0, return_std=True)
 
-    if func == 'UCB':
+    if acq == 'UCB':
         acquisition_func = predictions - kappa * std
-    elif func == 'EI':
+    elif acq == 'EI':
         # When std is 0.0, Z is huge, safe to say the pdf at Z is 0.0
         # and cdf at Z is 1.0
         std_mask = std != 0.0
@@ -28,7 +65,7 @@ def _acquisition_func(x0, gp, prev_best, func, xi=0.01, kappa=1.96):
     else:
         raise ValueError(
             'acquisition_function not implemented yet : '
-            + func)
+            + acq)
 
     if acquisition_func.shape == (1, 1):
         return acquisition_func[0]
@@ -133,13 +170,13 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
 
         if search == "sampling":
             sampling = rng.rand(num_points, num_params)
-            acquis = _acquisition_func(sampling, gpr, np.min(func_val), acq)
+            acquis = gp_acquisition_func(sampling, gpr, np.min(func_val), acq)
             best_arg = np.argmin(acquis)
             best_x = sampling[best_arg]
         elif search == "lbfgs":
             init = rng.rand(num_params)
             best_x, _, _ = fmin_l_bfgs_b(
-                _acquisition_func,
+                gp_acquisition_func,
                 np.asfortranarray(init),
                 args=(gpr, np.min(func_val), acq),
                 bounds=lbfgs_bounds, approx_grad=True, maxiter=10)
