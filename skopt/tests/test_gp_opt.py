@@ -34,16 +34,17 @@ def branin(x):
 def hartmann_6(x):
     return -np.sum(alpha * np.exp(-np.sum(A * (x - P)**2, axis=1)))
 
-def test_branin_bayes_sampling():
+def test_branin_bayes_lbfgs():
     x, f, d = gp_minimize(
         branin, [[-5, 10], [0, 15]], random_state=0,
         search='lbfgs', maxiter=200, acq='UCB')
     assert_less(f, 0.47)
 
-#         x, f, d = gp_minimize(
-#             branin, [[-5, 10], [0, 15]], random_state=random_state,
-#             search='sampling', maxiter=200, acq='UCB')
-#         assert_less(f, 0.41)
+def test_branin_bayes_sampling():
+    x, f, d = gp_minimize(
+        branin, [[-5, 10], [0, 15]], random_state=random_state,
+        search='sampling', maxiter=200, acq='UCB')
+    assert_less(f, 0.41)
 
 # def test_hartmann_6():
 #     bounds = np.tile((0, 1), (6, 1))
@@ -53,7 +54,9 @@ def test_branin_bayes_sampling():
 #             search='lbfgs', maxiter=200, acq='UCB')
 #         assert_less(f, -3.0)
 
-#         x, f, d = gp_minimize(
-#             hartmann_6, bounds, random_state=random_state,
-#             search='sampling', maxiter=200, acq='UCB')
-#         assert_less(f, -2.5)
+
+def test_branin_hartmann_sampling():
+    x, f, d = gp_minimize(
+        hartmann_6, bounds, random_state=random_state,
+        search='sampling', maxiter=200, acq='UCB')
+    assert_less(f, -2.5)
