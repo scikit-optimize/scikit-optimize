@@ -1,28 +1,25 @@
+import numpy as np
+
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.utils import check_random_state
 
 
-class GradientBoostingRegressorWithStd(BaseEstimator, RegressorMixin):
-    def __init__(self, alpha):
-        self.alpha = alpha
+class GBTQuantiles(BaseEstimator, RegressorMixin):
+    def __init__(self, quantiles=[0.16, 0.5, 0.84], random_state=None):
+        self.quantiles = quantiles
+        self.random_state = random_state
 
     def fit(self, X, y):
-        """Fit regressor"""
-        self.regressor_ = GradientBoostingRegressor(loss='quantile')
-        self.rgr_up_ = GradientBoostingRegressor(loss='quantile',
-                                                 alpha=0.5 + self.alpha/2.)
-        self.rgr_down_ = GradientBoostingRegressor(loss='quantile',
-                                                   alpha=0.5 - self.alpha/2.)
+        """Fit one regressor for each quantile"""
+        rng = check_random_state(self.random_state)
+        self.regressors_ = [GradientBoostingRegressor(loss='quantile',
+                                                      alpha=a,
+                                                      random_state=rng)
+                            for a in self.quantiles]
+        for rgr in self.regressors_:
+            rgr.fit(X, y)
 
-        self.regressor_.fit(X, y)
-        self.rgr_up_.fit(X, y)
-        self.rgr_down_.fit(X, y)
-
-    def predict(self, X, return_std=False):
-        """Prediction with uncertainties"""
-        up = self.rgr_up_.predict(X)
-        down = self.rgr_down_.predict(X)
-        std = up - down
-        central = self.regressor_.predict(X)
-
-        return (central, std)
+    def predict(self, X):
+        """Predictions for each quantile"""
+        return np.vstack([rgr.predict(X) for rgr in self.regressors_])
