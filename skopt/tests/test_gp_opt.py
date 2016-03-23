@@ -42,7 +42,7 @@ def test_branin_bayes_lbfgs():
 
 def test_branin_bayes_sampling():
     x, f, d = gp_minimize(
-        branin, [[-5, 10], [0, 15]], random_state=random_state,
+        branin, [[-5, 10], [0, 15]], random_state=0,
         search='sampling', maxiter=200, acq='UCB')
     assert_less(f, 0.41)
 
@@ -56,6 +56,7 @@ def test_branin_bayes_sampling():
 
 
 def test_branin_hartmann_sampling():
+    bounds = np.tile((0, 1), (6, 1))
     x, f, d = gp_minimize(
         hartmann_6, bounds, random_state=random_state,
         search='sampling', maxiter=200, acq='UCB')
