@@ -1,6 +1,6 @@
 A sandmine for Black-box optimization methods using the scipy.optimize interface.
 
-[![Build Status](https://travis-ci.org/MechCoder/skopt.svg?branch=master)](https://travis-ci.org/MechCoder/skopt)
+[![Build Status](https://travis-ci.org/MechCoder/scikit-optimize.svg?branch=master)](https://travis-ci.org/MechCoder/scikit-optimize)
 
 # Develop
 
