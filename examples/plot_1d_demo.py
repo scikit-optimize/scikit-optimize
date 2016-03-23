@@ -18,11 +18,11 @@ def scale_to_uniform(x, lower_bounds, upper_bounds):
 
 def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
     rng = np.random.RandomState(0)
-    x, func_val, d = gp_minimize(
+    res = gp_minimize(
         func, (bounds,), search='lbfgs', maxiter=max_iter, random_state=0,
         acq='UCB')
-    gp_models = d["models"]
-    best_x_l = d["x_iters"].ravel()
+    gp_models = res.models
+    best_x_l = res.x_iters.ravel()
 
     fig, ax = plt.subplots()
     plt.subplots_adjust(left=0.25, bottom=0.25)
@@ -53,7 +53,7 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
     gp_iter.on_changed(update)
 
     plt.show()
-    return x, func_val, d
+
 
 plot_interactive_gp(parabola, (-1, 1), 0, 100)
 # x, f, d = plot_interactive_gp(sin, (-2, 2), 0, 100)

@@ -6,7 +6,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
 
 from scipy import stats
-from scipy.optimize import fmin_l_bfgs_b
+from scipy.optimize import OptimizeResult, fmin_l_bfgs_b
 
 def _acquisition_func(x0, gp, prev_best, func, xi=0.01, kappa=1.96):
     x0 = np.asarray(x0)
@@ -94,19 +94,18 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
 
     Returns
     -------
-    x_val: array-like
-        Parameter value corresponding to the best function value.
-
-    func_val: float
-        Function minimum.
-
-    d: dict
-        d["models"]: List of GP models of len maxiter. d["models"][i]
-        corresponds to the GP model fit in iteration i.
-        d["x_iters"]: d["x_iters"][i] corresponds to the "best" x in
-        iteration i.
-        d["func_vals]: d["func_vals"][i] corresponds to the minimum
-        function value in iteration i.
+    res: OptimizeResult, scipy object
+        The optimization result returned as a OptimizeResult object.
+        Important attributes are
+        ``x`` - float, the optimization solution,
+        ``fun`` - float, the value of the function at the optimum,
+        ``models``- gp_models[i]. the prior on the function fit at
+                       iteration[i].
+        ``func_vals`` - the function value at the ith iteration.
+        ``x_iters`` - the value of ``x`` corresponding to the function value
+                      at the ith iteration.
+        For more details related to the OptimizeResult object, refer
+        http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
     rng = np.random.RandomState(random_state)
 
@@ -157,18 +156,12 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
     func_ind = np.argmin(func_val)
     x_val = x[func_ind]
     best_func_val = func_val[func_ind]
-    d = {}
-    d["models"] = gp_models
+    res = OptimizeResult()
+    res.models = gp_models
 
-    # TODO: Optimize, but not bottleneck obv
-    best_vals = []
-    best_xs = []
-    for i, fval in enumerate(func_val[:-1]):
-        best_ind = np.argmin(func_val[:i+1])
-        best_vals.append(func_val[best_ind])
-        best_xs.append(x[best_ind])
+    res.x = x_val
+    res.fun = best_func_val
+    res.func_vals = func_val
+    res.x_iters = x
 
-    d["x_iters"] = np.asarray(best_xs)
-    d["func_vals"] = best_vals
-
-    return x_val, best_func_val, d
+    return res
