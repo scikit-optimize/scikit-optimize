@@ -1,1 +1,1 @@
-from .gp_opt import gp_minimize, gp_acquisition_func
+from .gp_opt import gp_minimize, acquisition_func

@@ -8,8 +8,8 @@ from sklearn.gaussian_process.kernels import Matern
 from scipy import stats
 from scipy.optimize import OptimizeResult, fmin_l_bfgs_b
 
-def gp_acquisition_func(x0, gp, prev_best=None, acq="UCB",
-                        xi=0.01, kappa=1.96):
+def acquisition_func(x0, model, prev_best=None,
+                     acq="UCB", xi=0.01, kappa=1.96):
     """
     Returns the acquistion function computed at values x0, when the
     prior of the unknown function is approximated by gp.
@@ -19,12 +19,13 @@ def gp_acquisition_func(x0, gp, prev_best=None, acq="UCB",
     x0 : array-like
         Values where the acquistion function should be computed.
 
-    gp: GaussianProcess model
+    model: sklearn estimator that implements predict with ``return_std``
         The fit sklearn gaussian process estimator that approximates
-        the function.
+        the function. It should have a ``return_std`` parameter
+        that returns the standard deviation.
 
     prev_best: float, optional
-        The previousbest value over which we want to improve.
+        The previous best value over which we want to improve.
         Useful only when `acq` is set to "EI"
 
     acq: string, "UCB" or "EI"
@@ -43,33 +44,33 @@ def gp_acquisition_func(x0, gp, prev_best=None, acq="UCB",
 
     Returns
     -------
-    acquisition_func: array-like, length x0
+    acquis_values: array-like, length x0
         Gaussian Process acquistion function values computed at each x0.
     """
     x0 = np.asarray(x0)
     if x0.ndim == 1:
         x0 = np.expand_dims(x0, axis=0)
 
-    predictions, std = gp.predict(x0, return_std=True)
+    predictions, std = model.predict(x0, return_std=True)
 
     if acq == 'UCB':
-        acquisition_func = predictions - kappa * std
+        acquis_values = predictions - kappa * std
     elif acq == 'EI':
         # When std is 0.0, Z is huge, safe to say the pdf at Z is 0.0
         # and cdf at Z is 1.0
         std_mask = std != 0.0
-        acquisition_func = prev_best - predictions - xi
-        Z = acquisition_func[std_mask] / std[std_mask]
-        acquisition_func[std_mask] = std[std_mask] * (
+        acquis_values = prev_best - predictions - xi
+        Z = acquis_values[std_mask] / std[std_mask]
+        acquis_values[std_mask] = std[std_mask] * (
             Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
     else:
         raise ValueError(
             'acquisition_function not implemented yet : '
             + acq)
 
-    if acquisition_func.shape == (1, 1):
-        return acquisition_func[0]
-    return acquisition_func
+    if acquis_values.shape == (1, 1):
+        return acquis_values[0]
+    return acquis_values
 
 
 def gp_minimize(func, bounds=None, search="sampling", random_state=None,
@@ -170,13 +171,13 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
 
         if search == "sampling":
             sampling = rng.rand(num_points, num_params)
-            acquis = gp_acquisition_func(sampling, gpr, np.min(func_val), acq)
+            acquis = acquisition_func(sampling, gpr, np.min(func_val), acq)
             best_arg = np.argmin(acquis)
             best_x = sampling[best_arg]
         elif search == "lbfgs":
             init = rng.rand(num_params)
             best_x, _, _ = fmin_l_bfgs_b(
-                gp_acquisition_func,
+                acquisition_func,
                 np.asfortranarray(init),
                 args=(gpr, np.min(func_val), acq),
                 bounds=lbfgs_bounds, approx_grad=True, maxiter=10)
