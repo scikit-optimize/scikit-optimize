@@ -1,4 +1,4 @@
-# Shamelessly copied from https://github.com/scikit-learn-contrib/project-template/blob/master/ci_scripts/install.sh
+# Adapted shamelessly from https://github.com/scikit-learn-contrib/project-template/blob/master/ci_scripts/install.sh
 
 # Deactivate the travis-provided virtual environment and setup a
 # conda-based environment instead
