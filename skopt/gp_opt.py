@@ -94,17 +94,18 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
 
     Returns
     -------
-    res: OptimizeResult
+    res: OptimizeResult, scipy object
         The optimization result returned as a OptimizeResult object.
         Important attributes are
         ``x`` - float, the optimization solution,
         ``fun`` - float, the value of the function at the optimum,
         ``models``- gp_models[i]. the prior on the function fit at
                        iteration[i].
-        ``func_vals`` - the minimum function value attained at the ith
-                        iteration.
-        ``x_iters`` - the value of ``x`` corresponding to the minimum
-                      function value at the ith iteration.
+        ``func_vals`` - the function value at the ith iteration.
+        ``x_iters`` - the value of ``x`` corresponding to the function value
+                      at the ith iteration.
+        For more details related to the OptimizeResult object, refer
+        http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
     rng = np.random.RandomState(random_state)
 
@@ -155,20 +156,12 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
     func_ind = np.argmin(func_val)
     x_val = x[func_ind]
     best_func_val = func_val[func_ind]
-    res = OptimizeResult
+    res = OptimizeResult()
     res.models = gp_models
-
-    # TODO: Optimize, but not bottleneck obv
-    best_vals = []
-    best_xs = []
-    for i, fval in enumerate(func_val[:-1]):
-        best_ind = np.argmin(func_val[:i+1])
-        best_vals.append(func_val[best_ind])
-        best_xs.append(x[best_ind])
 
     res.x = x_val
     res.fun = best_func_val
-    res.func_vals = best_vals
-    res.x_iters = np.asarray(best_xs)
+    res.func_vals = func_val
+    res.x_iters = x
 
     return res
