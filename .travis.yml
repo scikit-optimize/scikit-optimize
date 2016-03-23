@@ -1,10 +1,15 @@
 language: python
 
 python:
+  - 3.5
   - 3.4
 
 notifications:
-    email: false
+  email: false
+
+cache:
+  directories:
+   - $HOME/.cache/pip
 
 env:
   global:
@@ -12,7 +17,7 @@ env:
     - TEST_DIR=/tmp/test_dir/
     - MODULE=skopt
   matrix:
-    - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
+    - DISTRIB="conda" PYTHON_VERSION="3.4" COVERAGE="true"
       NUMPY_VERSION="1.10.1" SCIPY_VERSION="0.16.0" CYTHON_VERSION="0.23.4"
     - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
       NUMPY_VERSION="1.10.1" SCIPY_VERSION="0.16.0" CYTHON_VERSION="0.23.4"
