@@ -58,6 +58,6 @@ def test_branin_bayes_sampling():
 def test_branin_hartmann_sampling():
     bounds = np.tile((0, 1), (6, 1))
     x, f, d = gp_minimize(
-        hartmann_6, bounds, random_state=random_state,
+        hartmann_6, bounds, random_state=0,
         search='sampling', maxiter=200, acq='UCB')
     assert_less(f, -2.5)
