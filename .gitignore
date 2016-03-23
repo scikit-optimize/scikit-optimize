@@ -2,3 +2,5 @@
 *~
 # created by installing scikit-learn from git
 src/*
+dist/
+skopt.egg-info/
