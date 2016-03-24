@@ -57,8 +57,7 @@ def acquisition_func(x0, model, prev_best=None,
         lower_bounds, upper_bounds = zip(*bounds)
         lower_bounds = np.asarray(lower_bounds)
         upper_bounds = np.asarray(upper_bounds)
-        x0 -=lower_bounds
-        x0 /= (upper_bounds - lower_bounds)
+        x0 = (x0 - lower_bounds) / (upper_bounds - lower_bounds)
 
     predictions, std = model.predict(x0, return_std=True)
 
