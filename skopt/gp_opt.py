@@ -1,12 +1,13 @@
-from math import exp
-
 import numpy as np
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
+from sklearn.utils import check_random_state
 
 from scipy import stats
-from scipy.optimize import OptimizeResult, fmin_l_bfgs_b
+from scipy.optimize import fmin_l_bfgs_b
+from scipy.optimize import OptimizeResult
+
 
 def acquisition_func(x0, model, prev_best=None,
                      acq="UCB", xi=0.01, kappa=1.96):
@@ -64,19 +65,17 @@ def acquisition_func(x0, model, prev_best=None,
         acquis_values[std_mask] = std[std_mask] * (
             Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
     else:
-        raise ValueError(
-            'acquisition_function not implemented yet : '
-            + acq)
+        raise ValueError('acquisition_function not implemented yet :' + acq)
 
     if acquis_values.shape == (1, 1):
         return acquis_values[0]
+
     return acquis_values
 
 
 def gp_minimize(func, bounds=None, search="sampling", random_state=None,
                 maxiter=1000, acq="UCB", num_points=500):
-    """
-    Black-box optimization using Gaussian Processes.
+    """Black-box optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
     when the parameters are the hyperparameters of a neural network
@@ -145,7 +144,7 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    rng = np.random.RandomState(random_state)
+    rng = check_random_state(random_state)
 
     num_params = len(bounds)
     lower_bounds, upper_bounds = zip(*bounds)
@@ -174,6 +173,7 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
             acquis = acquisition_func(sampling, gpr, np.min(func_val), acq)
             best_arg = np.argmin(acquis)
             best_x = sampling[best_arg]
+
         elif search == "lbfgs":
             init = rng.rand(num_params)
             best_x, _, _ = fmin_l_bfgs_b(
@@ -194,9 +194,9 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
     func_ind = np.argmin(func_val)
     x_val = x[func_ind]
     best_func_val = func_val[func_ind]
+
     res = OptimizeResult()
     res.models = gp_models
-
     res.x = x_val
     res.fun = best_func_val
     res.func_vals = func_val
