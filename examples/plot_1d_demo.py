@@ -54,6 +54,5 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
 
     plt.show()
 
-
 plot_interactive_gp(parabola, (-1, 1), 0, 100)
 # x, f, d = plot_interactive_gp(sin, (-2, 2), 0, 100)
