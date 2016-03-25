@@ -26,6 +26,7 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
     plt.subplots_adjust(left=0.25, bottom=0.25)
     plt.title("Gaussian Process Approximation")
     t = np.linspace(bounds[0], bounds[1], 10000)
+    t = np.reshape(t, (10000, -1))
 
     y = [func([ele]) for ele in t]
     l, = plt.plot(t, y, lw=2, color='green')
@@ -41,7 +42,7 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
 
     def update(val):
         i = int(gp_iter.val)
-        y_data = acquisition_func(t, gp_models[i - 1], bounds=[[-1, 1]])
+        y_data = acquisition_func(t, gp_models[i - 1], bounds=[bounds,])
         l1.set_ydata(y_data)
         point[-1].set_xdata(best_x_l[i - 1])
         point[0].set_ydata(func([best_x_l[i - 1]]))
@@ -51,4 +52,4 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
 
     plt.show()
 
-plot_interactive_gp(parabola, (-3, 3), 0, 200)
+plot_interactive_gp(parabola, (-3, 3), 0, 100)

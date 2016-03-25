@@ -50,7 +50,7 @@ def acquisition_func(x0, model, prev_best=None,
     """
     x0 = np.asarray(x0)
     if x0.ndim == 1:
-        x0 = np.expand_dims(x0, axis=1)
+        x0 = np.expand_dims(x0, axis=0)
 
     # Rescale to between 0 and 1.
     if bounds is not None:
