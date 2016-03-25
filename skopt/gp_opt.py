@@ -10,7 +10,7 @@ from scipy.optimize import OptimizeResult
 
 
 def acquisition_func(x0, model, prev_best=None,
-                     acq="UCB", xi=0.01, kappa=1.96):
+                     acq="UCB", xi=0.01, kappa=1.96, bounds=None):
     """
     Returns the acquistion function computed at values x0, when the
     prior of the unknown function is approximated by gp.
@@ -51,6 +51,13 @@ def acquisition_func(x0, model, prev_best=None,
     x0 = np.asarray(x0)
     if x0.ndim == 1:
         x0 = np.expand_dims(x0, axis=0)
+
+    # Rescale to between 0 and 1.
+    if bounds is not None:
+        lower_bounds, upper_bounds = zip(*bounds)
+        lower_bounds = np.asarray(lower_bounds)
+        upper_bounds = np.asarray(upper_bounds)
+        x0 = (x0 - lower_bounds) / (upper_bounds - lower_bounds)
 
     predictions, std = model.predict(x0, return_std=True)
 

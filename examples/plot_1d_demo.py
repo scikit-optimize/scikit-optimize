@@ -5,6 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons
 
+from skopt.gp_opt import acquisition_func
 from skopt.gp_opt import gp_minimize
 
 def parabola(x):
@@ -12,9 +13,6 @@ def parabola(x):
 
 def sin(x):
     return math.sin(x[0])
-
-def scale_to_uniform(x, lower_bounds, upper_bounds):
-    return x - lower_bounds / (upper_bounds - lower_bounds)
 
 def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
     rng = np.random.RandomState(0)
@@ -28,8 +26,7 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
     plt.subplots_adjust(left=0.25, bottom=0.25)
     plt.title("Gaussian Process Approximation")
     t = np.linspace(bounds[0], bounds[1], 10000)
-    t_gp = scale_to_uniform(t, bounds[0], bounds[1])
-    t_gp = t_gp.reshape(-1, 1)
+    t = np.reshape(t, (10000, -1))
 
     y = [func([ele]) for ele in t]
     l, = plt.plot(t, y, lw=2, color='green')
@@ -45,7 +42,8 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
 
     def update(val):
         i = int(gp_iter.val)
-        l1.set_ydata(gp_models[i - 1].predict(t_gp))
+        y_data = acquisition_func(t, gp_models[i - 1], bounds=[bounds,])
+        l1.set_ydata(y_data)
         point[-1].set_xdata(best_x_l[i - 1])
         point[0].set_ydata(func([best_x_l[i - 1]]))
         fig.canvas.draw_idle()
@@ -54,5 +52,4 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
 
     plt.show()
 
-plot_interactive_gp(parabola, (-1, 1), 0, 100)
-# x, f, d = plot_interactive_gp(sin, (-2, 2), 0, 100)
+plot_interactive_gp(parabola, (-3, 3), 0, 100)
