@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 from skopt.gp_opt import acquisition_func, gp_minimize
 from skopt.tests.test_gp_opt import branin
+from scipy import stats
 
 fig = plt.gcf()
 plt.set_cmap("viridis")
@@ -25,7 +26,7 @@ for i, acq in enumerate(['UCB', 'EI']):
     if acq == "EI":
         prev_best = res.fun
     acquis_values = acquisition_func(
-        vals, gp_model, bounds=bounds, prev_best=0.0)
+        vals, gp_model, bounds=bounds, prev_best=prev_best, acq=acq)
     acquis_values = acquis_values.reshape(100, 100)
 
     plt.subplot(subplot_no)
