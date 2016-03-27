@@ -7,6 +7,7 @@ from sklearn.utils import check_random_state
 from scipy import stats
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
+from scipy.special import erf
 
 
 def acquisition_func(x0, model, prev_best=None,
@@ -64,13 +65,14 @@ def acquisition_func(x0, model, prev_best=None,
     if acq == 'UCB':
         acquis_values = predictions - kappa * std
     elif acq == 'EI':
-        # When std is 0.0, Z is huge, safe to say the pdf at Z is 0.0
-        # and cdf at Z is 1.0
-        std_mask = std != 0.0
-        acquis_values = prev_best - predictions - xi
-        Z = acquis_values[std_mask] / std[std_mask]
-        acquis_values[std_mask] = std[std_mask] * (
-            Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
+        # gamma_x = (prev_best - predictions) / std
+        # Compute EI based on some temporary variables that can be reused in
+        # gradient computation
+
+        improvement = prev_best - predictions
+        exploit = improvement * stats.norm.cdf(improvement / std)
+        explore = std * stats.norm.pdf(improvement / std)
+        acquis_values = exploit + explore
     else:
         raise ValueError('acquisition_function not implemented yet :' + acq)
 
