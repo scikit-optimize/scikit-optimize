@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-from skopt.gp_opt import acquisition_func, gp_minimize
-from skopt.tests.test_gp_opt import branin
 from scipy import stats
+
+from skopt import acquisition
+from skopt import gp_minimize
+from skopt.tests.test_gp_opt import branin
 
 fig = plt.gcf()
 plt.set_cmap("viridis")
@@ -22,17 +23,17 @@ for i, acq in enumerate(['UCB', 'EI']):
     gp_model = res.models[-1]
     opt_points = res['x_iters']
 
-    prev_best = None
+    x_opt = None
     if acq == "EI":
-        prev_best = res.fun
-    acquis_values = acquisition_func(
-        vals, gp_model, bounds=bounds, prev_best=prev_best, acq=acq)
+        x_opt = res.fun
+
+    acquis_values = acquisition(vals, gp_model, bounds=bounds, x_opt=x_opt,
+                                method=acq)
     acquis_values = acquis_values.reshape(100, 100)
 
     plt.subplot(subplot_no)
     plt.pcolormesh(x_ax, y_ax, acquis_values)
-    plt.plot(
-        opt_points[:, 0], opt_points[:, 1], 'ro', markersize=2)
+    plt.plot(opt_points[:, 0], opt_points[:, 1], 'ro', markersize=2)
     plt.colorbar()
     plt.xlabel('X1')
     plt.xlim([-5, 10])
