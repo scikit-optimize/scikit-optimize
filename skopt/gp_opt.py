@@ -1,5 +1,6 @@
 import numpy as np
 
+from sklearn.base import clone
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.utils import check_random_state
@@ -10,15 +11,15 @@ from scipy.optimize import OptimizeResult
 from scipy.special import erf
 
 
-def acquisition_func(x0, model, prev_best=None,
-                     acq="UCB", xi=0.01, kappa=1.96, bounds=None):
+def acquisition(X, model, x_opt=None, method="UCB", xi=0.01, kappa=1.96,
+                bounds=None):
     """
     Returns the acquistion function computed at values x0, when the
-    prior of the unknown function is approximated by gp.
+    posterior of the unknown function is approximated by a Gaussian process.
 
     Parameters
     ----------
-    x0 : array-like
+    X : array-like
         Values where the acquistion function should be computed.
 
     model: sklearn estimator that implements predict with ``return_std``
@@ -26,12 +27,12 @@ def acquisition_func(x0, model, prev_best=None,
         the function. It should have a ``return_std`` parameter
         that returns the standard deviation.
 
-    prev_best: float, optional
+    x_opt: float, optional
         The previous best value over which we want to improve.
         Useful only when `acq` is set to "EI"
 
-    acq: string, "UCB" or "EI"
-        If set to "UCB", then the lower-confidence bound is taken.
+    method: string, "UCB" or "EI"
+        If set to "UCB", then the lower confidence bound is taken.
         If set to "EI", then the expected improvement condition is taken.
 
     xi: float, default 0.01
@@ -46,45 +47,48 @@ def acquisition_func(x0, model, prev_best=None,
 
     Returns
     -------
-    acquis_values: array-like, length x0
-        Gaussian Process acquistion function values computed at each x0.
+    values: array-like, length X
+        Acquisition function values computed at X.
     """
-    x0 = np.asarray(x0)
-    if x0.ndim == 1:
-        x0 = np.expand_dims(x0, axis=0)
+    # Check inputs
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = np.expand_dims(X, axis=0)
 
     # Rescale to between 0 and 1.
     if bounds is not None:
         lower_bounds, upper_bounds = zip(*bounds)
         lower_bounds = np.asarray(lower_bounds)
         upper_bounds = np.asarray(upper_bounds)
-        x0 = (x0 - lower_bounds) / (upper_bounds - lower_bounds)
+        X = (X - lower_bounds) / (upper_bounds - lower_bounds)
 
-    predictions, std = model.predict(x0, return_std=True)
+    # Compute posterior
+    mu, std = model.predict(X, return_std=True)
 
-    if acq == 'UCB':
-        acquis_values = predictions - kappa * std
-    elif acq == 'EI':
-        # gamma_x = (prev_best - predictions) / std
-        # Compute EI based on some temporary variables that can be reused in
-        # gradient computation
+    # Evaluate acquisition function
+    if method == "UCB":
+        values = mu - kappa * std
 
-        improvement = prev_best - predictions
+    elif method == "EI":
+        improvement = x_opt - mu
         exploit = improvement * stats.norm.cdf(improvement / std)
         explore = std * stats.norm.pdf(improvement / std)
-        acquis_values = exploit + explore
+        values = exploit + explore
+
     else:
-        raise ValueError('acquisition_function not implemented yet :' + acq)
+        raise ValueError("Acquisition function not implemented yet: " + acq)
 
-    if acquis_values.shape == (1, 1):
-        return acquis_values[0]
+    # Return
+    if values.shape == (1, 1):
+        return values[0]
 
-    return acquis_values
+    return values
 
 
-def gp_minimize(func, bounds=None, search="sampling", random_state=None,
-                maxiter=1000, acq="UCB", num_points=500):
-    """Black-box optimization using Gaussian Processes.
+def gp_minimize(func, bounds=None, base_estimator=None, acq="UCB", xi=0.01,
+                kappa=1.96, search="sampling", maxiter=1000, num_points=500,
+                random_state=None):
+    """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
     when the parameters are the hyperparameters of a neural network
@@ -109,6 +113,24 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
         ``bounds[i][0]`` should give the lower bound of each parameter and
         ``bounds[i][1]`` should give the upper bound of each parameter.
 
+    base_estimator: a Gaussian process estimator
+        The Gaussian process estimator to use for optimization.
+
+    acq: string, default "UCB"
+        Function to minimize over the gaussian posterior. Can be either
+        the "UCB" which refers to the Upper Confidence Bound or "EI" which
+        is the Expected Improvement.
+
+    xi: float, default 0.01
+        Controls how much improvement one wants over the previous best
+        values.
+
+    kappa: float, default 1.96
+        Controls how much of the variance in the predicted values should be
+        taken into account. If set to be very high, then we are favouring
+        exploration over exploitation and vice versa.
+        Useless if acq is set to "EI"
+
     search: string, "sampling" or "lbfgs"
         Searching for the next possible candidate to update the Gaussian prior
         with.
@@ -121,22 +143,17 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
         lbfgs is run for 10 iterations optimizing the acquistion function
         over the Gaussian posterior.
 
-    random_state: int, RandomState instance, or None (default)
-        Set random state to something other than None for reproducible
-        results.
-
     maxiter: int, default 1000
         Number of iterations to find the minimum. In other words, the
         number of function evaluations.
 
-    acq: string, default "UCB"
-        Function to minimize over the gaussian posterior. Can be either
-        the "UCB" which refers to the UpperConfidenceBound or "EI" which
-        is the Expected Improvement.
-
     num_points: int, default 500
         Number of points to sample to determine the next "best" point.
         Useless if search is set to "lbfgs".
+
+    random_state: int, RandomState instance, or None (default)
+        Set random state to something other than None for reproducible
+        results.
 
     Returns
     -------
@@ -155,60 +172,63 @@ def gp_minimize(func, bounds=None, search="sampling", random_state=None,
     """
     rng = check_random_state(random_state)
 
+    # Bounds
     num_params = len(bounds)
     lower_bounds, upper_bounds = zip(*bounds)
     upper_bounds = np.asarray(upper_bounds)
     lower_bounds = np.asarray(lower_bounds)
-    x0 = rng.rand(num_params)
-    func_val = [func(lower_bounds + (upper_bounds - lower_bounds) * x0)]
-
-    length_scale = np.ones(num_params)
-    gp_params = {
-        'kernel': Matern(length_scale=length_scale, nu=2.5),
-        'normalize_y': True,
-        'random_state': random_state
-    }
     lbfgs_bounds = np.tile((0, 1), (num_params, 1))
 
-    gp_models = []
-    x = np.reshape(x0, (1, -1))
+    # Default GP
+    if base_estimator is None:
+        base_estimator = GaussianProcessRegressor(
+            kernel=Matern(length_scale=np.ones(num_params), nu=2.5),
+            normalize_y=True, random_state=random_state)
+
+    # First point
+    x0 = rng.rand(num_params)
+    Xi = np.reshape(x0, (1, -1))
+    yi = [func(lower_bounds + (upper_bounds - lower_bounds) * x0)]
+
+    # Bayesian optimization loop
+    models = []
 
     for i in range(maxiter):
-        gpr = GaussianProcessRegressor(**gp_params)
-        gpr.fit(x, func_val)
+        gp = clone(base_estimator)
+        gp.fit(Xi, yi)
+        models.append(gp)
 
         if search == "sampling":
-            sampling = rng.rand(num_points, num_params)
-            acquis = acquisition_func(sampling, gpr, np.min(func_val), acq)
-            best_arg = np.argmin(acquis)
-            best_x = sampling[best_arg]
+            X = rng.rand(num_points, num_params)
+            values = acquisition(X=X, model=gp,
+                                 x_opt=np.min(yi), method=acq,
+                                 xi=xi, kappa=kappa)
+            next_x = X[np.argmin(values)]
 
         elif search == "lbfgs":
-            init = rng.rand(num_params)
-            best_x, _, _ = fmin_l_bfgs_b(
-                acquisition_func,
-                np.asfortranarray(init),
-                args=(gpr, np.min(func_val), acq),
+            x0 = rng.rand(num_params)
+            next_x, _, _ = fmin_l_bfgs_b(
+                acquisition,
+                np.asfortranarray(x0),
+                args=(gp, np.min(yi), acq, xi, kappa),
                 bounds=lbfgs_bounds, approx_grad=True, maxiter=10)
 
-        gp_models.append(gpr)
+        next_y = func(lower_bounds + (upper_bounds - lower_bounds) * next_x)
+        Xi = np.vstack((Xi, next_x))
+        yi.append(next_y)
 
-        best_f = func(lower_bounds + (upper_bounds - lower_bounds) * best_x)
-        x_list = x.tolist()
-        x_list.append(best_x)
-        x = np.asarray(x_list)
-        func_val.append(best_f)
+    # Rescale
+    Xi = lower_bounds + (upper_bounds - lower_bounds) * Xi
+    best = np.argmin(yi)
+    best_x = Xi[best]
+    best_y = yi[best]
 
-    x = lower_bounds + (upper_bounds - lower_bounds) * x
-    func_ind = np.argmin(func_val)
-    x_val = x[func_ind]
-    best_func_val = func_val[func_ind]
-
+    # Pack results
     res = OptimizeResult()
-    res.models = gp_models
-    res.x = x_val
-    res.fun = best_func_val
-    res.func_vals = func_val
-    res.x_iters = x
+    res.x = best_x
+    res.fun = best_y
+    res.func_vals = yi
+    res.x_iters = Xi
+    res.models = models
 
     return res
