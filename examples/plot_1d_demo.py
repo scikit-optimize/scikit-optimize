@@ -5,14 +5,17 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons
 
-from skopt.gp_opt import acquisition_func
-from skopt.gp_opt import gp_minimize
+from skopt import acquisition
+from skopt import gp_minimize
+
 
 def parabola(x):
-    return x[0]**2
+    return x[0] ** 2
+
 
 def sin(x):
     return math.sin(x[0])
+
 
 def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
     rng = np.random.RandomState(0)
@@ -42,7 +45,7 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
 
     def update(val):
         i = int(gp_iter.val)
-        y_data = acquisition_func(t, gp_models[i - 1], bounds=[bounds,])
+        y_data = acquisition(t, gp_models[i - 1], bounds=[bounds])
         l1.set_ydata(y_data)
         point[-1].set_xdata(best_x_l[i - 1])
         point[0].set_ydata(func([best_x_l[i - 1]]))
