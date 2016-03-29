@@ -22,6 +22,7 @@ def sample_noise(X, std=0.2, noise=constant_noise,
     rng = check_random_state(random_state)
     return np.array([rng.normal(0, std*noise(x)) for x in X])
 
+
 def test_gbt_gaussian():
     # estiamte quantiles of the normal distribution
     rng = np.random.RandomState(1)
@@ -36,6 +37,7 @@ def test_gbt_gaussian():
     assert_almost_equal(stats.norm.ppf(rgr.quantiles),
                         np.mean(estimates, axis=1),
                         decimal=2)
+
 
 def test_gbt_with_std():
     # simple test of the interface
