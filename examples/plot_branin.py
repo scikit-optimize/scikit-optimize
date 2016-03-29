@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from skopt import acquisition
 from skopt import gp_minimize
-from skopt.tests.test_gp_opt import branin
+from skopt.benchmarks import branin
 
 fig = plt.gcf()
 plt.set_cmap("viridis")
