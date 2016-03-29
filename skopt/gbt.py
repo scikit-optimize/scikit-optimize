@@ -5,7 +5,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 
-class GBTQuantiles(BaseEstimator, RegressorMixin):
+class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, quantiles=[0.16, 0.5, 0.84], random_state=None):
         """Predict several quantiles with one estimator
 
