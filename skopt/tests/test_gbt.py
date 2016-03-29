@@ -4,7 +4,7 @@ from scipy import stats
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal, assert_almost_equal
 
-from skopt.gbt import GBTQuantiles
+from skopt.gbt import GradientBoostingQuantileRegressor
 
 
 def truth(X):
@@ -29,7 +29,7 @@ def test_gbt_gaussian():
     X = np.ones((N, 1))
     y = rng.normal(size=N)
 
-    rgr = GBTQuantiles()
+    rgr = GradientBoostingQuantileRegressor()
     rgr.fit(X, y)
 
     estimates = rgr.predict(X)
@@ -47,7 +47,7 @@ def test_gbt_with_std():
 
     X_ = np.linspace(0, 5, 1000)[:, np.newaxis]
 
-    model = GBTQuantiles()
+    model = GradientBoostingQuantileRegressor()
     model.fit(X, y)
 
     l, c, h = model.predict(X_)
