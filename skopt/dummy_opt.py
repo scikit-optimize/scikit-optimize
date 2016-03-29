@@ -1,10 +1,11 @@
 import numpy as np
+from scipy.optimize import OptimizeResult
 
 from sklearn.utils import check_random_state
 
-from scipy.optimize import OptimizeResult
+from skopt.utils import extract_bounds
 
-def dummy_search(func, bounds=None, maxiter=1000, random_state=None):
+def dummy_minimize(func, bounds=None, maxiter=1000, random_state=None):
     """
     Sample each parameter uniformly within the given bounds.
 
@@ -43,9 +44,7 @@ def dummy_search(func, bounds=None, maxiter=1000, random_state=None):
 
     # Bounds
     num_params = len(bounds)
-    lower_bounds, upper_bounds = zip(*bounds)
-    upper_bounds = np.asarray(upper_bounds)
-    lower_bounds = np.asarray(lower_bounds)
+    lower_bounds, upper_bounds = extract_bounds(bounds)
     diff = upper_bounds - lower_bounds
 
     # Sample each parameter uniformly between 0 and 1 and then rescale.
