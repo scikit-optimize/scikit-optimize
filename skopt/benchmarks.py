@@ -15,7 +15,7 @@ def branin(x, a=1, b=5.1 / (4 * np.pi**2), c=5. / np.pi,
     return (a * (x[1] - b * x[0]**2 + c * x[0] - r)**2 +
             s * (1 - t) * np.cos(x[0]) + s)
 
-def hartmann_6(x,
+def hart6(x,
                alpha=np.asarray([1.0, 1.2, 3.0, 3.2]),
                P=10**-4 * np.asarray([[1312, 1696, 5569, 124, 8283, 5886],
                                       [2329, 4135, 8307, 3736, 1004, 9991],
