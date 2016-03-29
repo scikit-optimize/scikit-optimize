@@ -1,14 +1,15 @@
 import numpy as np
 
+from scipy import stats
+from scipy.optimize import fmin_l_bfgs_b
+from scipy.optimize import OptimizeResult
+
 from sklearn.base import clone
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.utils import check_random_state
 
-from scipy import stats
-from scipy.optimize import fmin_l_bfgs_b
-from scipy.optimize import OptimizeResult
-
+from skopt.utils import extract_bounds
 
 def acquisition(X, model, x_opt=None, method="UCB", xi=0.01, kappa=1.96,
                 bounds=None):
@@ -56,9 +57,7 @@ def acquisition(X, model, x_opt=None, method="UCB", xi=0.01, kappa=1.96,
 
     # Rescale to between 0 and 1.
     if bounds is not None:
-        lower_bounds, upper_bounds = zip(*bounds)
-        lower_bounds = np.asarray(lower_bounds)
-        upper_bounds = np.asarray(upper_bounds)
+        lower_bounds, upper_bounds = extract_bounds(bounds)
         X = (X - lower_bounds) / (upper_bounds - lower_bounds)
 
     # Compute posterior
