@@ -4,7 +4,7 @@ from sklearn.utils.testing import assert_less
 
 from skopt.gp_opt import gp_minimize
 from skopt.benchmarks import branin
-from skoprt.benchmarks import hartmann_6
+from skopt.benchmarks import hartmann_6
 
 
 def check_branin(search):
