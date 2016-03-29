@@ -1,9 +1,6 @@
 import numpy as np
-import math
-
-import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button, RadioButtons
+from matplotlib.widgets import Slider
 
 from skopt import acquisition
 from skopt import gp_minimize
@@ -13,12 +10,7 @@ def parabola(x):
     return x[0] ** 2
 
 
-def sin(x):
-    return math.sin(x[0])
-
-
 def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
-    rng = np.random.RandomState(0)
     res = gp_minimize(
         func, (bounds,), search='lbfgs', maxiter=max_iter, random_state=0,
         acq='UCB')
@@ -52,7 +44,6 @@ def plot_interactive_gp(func, bounds, random_state, max_iter=1000):
         fig.canvas.draw_idle()
 
     gp_iter.on_changed(update)
-
     plt.show()
 
 plot_interactive_gp(parabola, (-3, 3), 0, 100)

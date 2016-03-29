@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 from scipy import stats
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
-from scipy.special import erf
 
 
 def acquisition(X, model, x_opt=None, method="UCB", xi=0.01, kappa=1.96,
@@ -76,7 +75,7 @@ def acquisition(X, model, x_opt=None, method="UCB", xi=0.01, kappa=1.96,
         values = exploit + explore
 
     else:
-        raise ValueError("Acquisition function not implemented yet: " + acq)
+        raise ValueError("Acquisition function not implemented yet: " + method)
 
     # Return
     if values.shape == (1, 1):
@@ -85,7 +84,7 @@ def acquisition(X, model, x_opt=None, method="UCB", xi=0.01, kappa=1.96,
     return values
 
 
-def gp_minimize(func, bounds=None, base_estimator=None, acq="UCB", xi=0.01,
+def gp_minimize(func, bounds, base_estimator=None, acq="UCB", xi=0.01,
                 kappa=1.96, search="sampling", maxiter=1000, num_points=500,
                 random_state=None):
     """Bayesian optimization using Gaussian Processes.
@@ -162,7 +161,7 @@ def gp_minimize(func, bounds=None, base_estimator=None, acq="UCB", xi=0.01,
         Important attributes are
         ``x`` - float, the optimization solution,
         ``fun`` - float, the value of the function at the optimum,
-        ``models``- gp_models[i]. the prior on the function fit at
+        ``models``- gp_models[i], the posterior on the function fit at
                        iteration[i].
         ``func_vals`` - the function value at the ith iteration.
         ``x_iters`` - the value of ``x`` corresponding to the function value

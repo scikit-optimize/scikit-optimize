@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import stats
 
 from skopt import acquisition
 from skopt import gp_minimize
