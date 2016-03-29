@@ -2,7 +2,8 @@ import numpy as np
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 
-from skopt.benchmarks import branin, hartmann_6
+from skopt.benchmarks import branin
+from skopt.benchmarks import hartmann_6
 
 
 def test_branin():
