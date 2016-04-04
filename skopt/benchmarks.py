@@ -1,6 +1,40 @@
-"""A collection of benchmark problems"""
+"""A collection of benchmark problems."""
 
 import numpy as np
+
+
+def bench1(x):
+    """A benchmark function for test purposes.
+
+        f(x) = x ** 2
+
+    It has a single minima with f(x*) = 0 at x* = 0.
+    """
+    return np.asscalar(x ** 2)
+
+
+def bench2(x):
+    """A benchmark function for test purposes.
+
+        f(x) = x ** 2 if x < 0
+               (x-5) ** 2 - 5 othewise.
+
+    It has a global minima with f(x*) = -5 at x* = 5.
+    """
+    if x < 0:
+        return np.asscalar(x ** 2)
+    else:
+        return np.asscalar((x - 5) ** 2 - 5)
+
+
+def bench3(x):
+    """A benchmark function for test purposes.
+
+        f(x) = sin(5*x) * (1 - tanh(x ** 2))
+
+    It has a global minima with f(x*) ~= -0.9 at x* ~= -0.3.
+    """
+    return np.asscalar(np.sin(5 * x) * (1 - np.tanh(x ** 2)))
 
 
 def branin(x, a=1, b=5.1 / (4 * np.pi**2), c=5. / np.pi,
@@ -12,8 +46,9 @@ def branin(x, a=1, b=5.1 / (4 * np.pi**2), c=5. / np.pi,
 
     More details: <http://www.sfu.ca/~ssurjano/branin.html>
     """
-    return (a * (x[1] - b * x[0]**2 + c * x[0] - r)**2 +
-            s * (1 - t) * np.cos(x[0]) + s)
+    return np.asscalar(a * (x[1] - b * x[0] ** 2 + c * x[0] - r) ** 2 +
+                       s * (1 - t) * np.cos(x[0]) + s)
+
 
 def hart6(x,
           alpha=np.asarray([1.0, 1.2, 3.0, 3.2]),

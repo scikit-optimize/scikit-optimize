@@ -6,6 +6,7 @@ from skopt.tests.test_gp_opt import branin
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 
+
 def test_dummy_search_api():
     res = dummy_minimize(
         branin, [[-5, 10], [0, 15]], random_state=0, maxiter=100)

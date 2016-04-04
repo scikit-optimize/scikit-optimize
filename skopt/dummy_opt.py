@@ -1,11 +1,12 @@
 import numpy as np
-from scipy.optimize import OptimizeResult
 
+from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
-from skopt.utils import extract_bounds
+from .utils import extract_bounds
 
-def dummy_minimize(func, bounds=None, maxiter=1000, random_state=None):
+
+def dummy_minimize(func, bounds, maxiter=1000, random_state=None):
     """
     Sample each parameter uniformly within the given bounds.
 
@@ -15,7 +16,7 @@ def dummy_minimize(func, bounds=None, maxiter=1000, random_state=None):
         Function to minimize. Should take a array of parameters and
         return the function value.
 
-    bounds: array-like, shape (n_parameters, 2)
+    bounds: array-like, shape (n_params, 2)
         ``bounds[i][0]`` should give the lower bound of each parameter and
         ``bounds[i][1]`` should give the upper bound of each parameter.
 
@@ -43,22 +44,22 @@ def dummy_minimize(func, bounds=None, maxiter=1000, random_state=None):
     rng = check_random_state(random_state)
 
     # Bounds
-    num_params = len(bounds)
-    lower_bounds, upper_bounds = extract_bounds(bounds)
-    diff = upper_bounds - lower_bounds
+    n_params = len(bounds)
+    lb, ub = extract_bounds(bounds)
 
     # Sample each parameter uniformly between 0 and 1 and then rescale.
-    X = np.zeros((maxiter, num_params))
+    X = np.zeros((maxiter, n_params))
     y = np.zeros(maxiter)
+
     for i in range(maxiter):
-        X[i] = lower_bounds + diff * rng.rand(num_params)
+        X[i] = lb + (ub - lb) * rng.rand(n_params)
         y[i] = func(X[i])
 
     # Store values.
     res = OptimizeResult()
-    arg_y = np.argmin(y)
-    res.x = X[arg_y]
-    res.fun = y[arg_y]
+    best = np.argmin(y)
+    res.x = X[best]
+    res.fun = y[best]
     res.func_vals = y
     res.x_iters = X
 
