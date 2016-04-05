@@ -192,8 +192,7 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
     # Default GP
     if base_estimator is None:
         base_estimator = GaussianProcessRegressor(
-            kernel=(ConstantKernel(1.0, (0.01, 1000.0)) *
-                    Matern(length_scale=np.ones(n_params),
+            kernel=(Matern(length_scale=np.ones(n_params),
                            length_scale_bounds=[(0.01, 100)] * n_params,
                            nu=2.5)),
             normalize_y=True, alpha=10e-6, random_state=random_state)
