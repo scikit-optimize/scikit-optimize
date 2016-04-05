@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
@@ -56,7 +57,10 @@ def acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
         X = np.expand_dims(X, axis=0)
 
     # Compute prior
-    mu, std = model.predict(X, return_std=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mu, std = model.predict(X, return_std=True)
+
     mu = mu.ravel()
     std = std.ravel()
 
@@ -188,10 +192,10 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
     # Default GP
     if base_estimator is None:
         base_estimator = GaussianProcessRegressor(
-            kernel=(ConstantKernel(constant_value_bounds="fixed") *
+            kernel=(ConstantKernel(1.0, (0.01, 1000.0)) *
                     Matern(length_scale=np.ones(n_params),
-                           length_scale_bounds="fixed", nu=2.5) +
-                    ConstantKernel(constant_value_bounds="fixed")),
+                           length_scale_bounds=[(0.01, 100)] * n_params,
+                           nu=2.5)),
             normalize_y=True, alpha=10e-6, random_state=random_state)
 
     # First points
@@ -203,13 +207,16 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
 
     for i in range(maxiter - n_start):
         gp = clone(base_estimator)
-        gp.fit(Xi, yi)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            gp.fit(Xi, yi)
+
         models.append(gp)
 
         if search == "sampling":
             X = lb + (ub - lb) * rng.rand(n_points, n_params)
-            values = acquisition(X=X, model=gp,
-                                 y_opt=np.min(yi), method=acq,
+            values = acquisition(X=X, model=gp,  y_opt=np.min(yi), method=acq,
                                  xi=xi, kappa=kappa)
             next_x = X[np.argmin(values)]
 
@@ -218,11 +225,13 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
 
             for j in range(n_restarts_optimizer):
                 x0 = lb + (ub - lb) * rng.rand(n_params)
-                x, a, _ = fmin_l_bfgs_b(
-                    acquisition,
-                    x0,
-                    args=(gp, np.min(yi), acq, xi, kappa),
-                    bounds=bounds, approx_grad=True, maxiter=10)
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    x, a, _ = fmin_l_bfgs_b(
+                        acquisition, x0,
+                        args=(gp, np.min(yi), acq, xi, kappa),
+                        bounds=bounds, approx_grad=True, maxiter=10)
 
                 if a < best:
                     next_x, best = x, a
