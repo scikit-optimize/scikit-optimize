@@ -9,8 +9,8 @@ from sklearn.utils.testing import assert_less
 from skopt.benchmarks import bench1
 from skopt.benchmarks import branin
 from skopt.gbt import GradientBoostingQuantileRegressor
-from skopt.trees import gbt_minimize
-from skopt.trees import _expected_improvement
+from skopt.gbrt_opt import gbrt_minimize
+from skopt.gbrt_opt import _expected_improvement
 from skopt.utils import extract_bounds
 
 
@@ -43,8 +43,8 @@ def test_ei_api():
 
 
 def test_no_iterations():
-    result = gbt_minimize(branin, [[-5, 10], [0, 15]],
-                          maxiter=0, random_state=1)
+    result = gbrt_minimize(branin, [[-5, 10], [0, 15]],
+                           maxiter=0, random_state=1)
 
     assert_almost_equal(result.fun, branin(result.x))
     assert_equal(len(result.models), 0)
@@ -52,8 +52,8 @@ def test_no_iterations():
 
 
 def test_one_iteration():
-    result = gbt_minimize(branin, [[-5, 10], [0, 15]],
-                          maxiter=1, random_state=1)
+    result = gbrt_minimize(branin, [[-5, 10], [0, 15]],
+                           maxiter=1, random_state=1)
 
     assert_equal(len(result.models), 1)
     assert_array_equal(result.x_iters.shape, (2, 2))
@@ -64,8 +64,8 @@ def test_one_iteration():
 def test_parabola():
     # find the minimum of a parabola
 
-    result = gbt_minimize(bench1, [[-10, 10]],
-                          maxiter=5, random_state=1)
+    result = gbrt_minimize(bench1, [[-10, 10]],
+                           maxiter=5, random_state=1)
 
     # 5 iterations and one random point
     assert_array_equal(result.x_iters.shape, (5+1, 1))
@@ -73,5 +73,5 @@ def test_parabola():
 
 
 def test_branin():
-    result = gbt_minimize(branin, [[-5, 10], [0, 15]],
-                          maxiter=100, random_state=1)
+    result = gbrt_minimize(branin, [[-5, 10], [0, 15]],
+                           maxiter=100, random_state=1)

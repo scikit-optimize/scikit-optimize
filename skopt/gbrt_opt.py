@@ -49,7 +49,7 @@ def _random_point(lower, upper, random_state=None):
     return lower + rng.rand(num_params) * delta
 
 
-def gbt_minimize(func, bounds, base_estimator=None, maxiter=100,
+def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
                  random_state=None):
     """Sequential optimisation using gradient boosted trees.
 
