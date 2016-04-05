@@ -16,8 +16,8 @@ def bench1(x):
 def bench2(x):
     """A benchmark function for test purposes.
 
-        f(x) = x ** 2 if x < 0
-               (x-5) ** 2 - 5 othewise.
+        f(x) = x ** 2           if x < 0
+               (x-5) ** 2 - 5   otherwise.
 
     It has a global minima with f(x*) = -5 at x* = 5.
     """

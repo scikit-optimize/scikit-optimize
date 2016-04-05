@@ -6,28 +6,28 @@ from scipy.stats import norm
 
 from sklearn.base import clone
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern
+from sklearn.gaussian_process.kernels import Matern, ConstantKernel
 from sklearn.utils import check_random_state
 
 from .utils import extract_bounds
 
 
-def acquisition(X, model, x_opt=None, method="LCB", xi=0.01, kappa=1.96):
+def acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
-    Returns the acquistion function computed at values x0, when the
-    posterior of the unknown function is approximated by a Gaussian process.
+    Returns the acquisition function computed at values x0, when the
+    prior of the unknown function is approximated by a Gaussian process.
 
     Parameters
     ----------
     X : array-like
-        Values where the acquistion function should be computed.
+        Values where the acquisition function should be computed.
 
     model: sklearn estimator that implements predict with ``return_std``
         The fit sklearn gaussian process estimator that approximates
         the function. It should have a ``return_std`` parameter
         that returns the standard deviation.
 
-    x_opt: float, optional
+    y_opt: float, optional
         The previous best value over which we want to improve.
         Useful only when `acq` is set to "EI"
 
@@ -55,7 +55,7 @@ def acquisition(X, model, x_opt=None, method="LCB", xi=0.01, kappa=1.96):
     if X.ndim == 1:
         X = np.expand_dims(X, axis=0)
 
-    # Compute posterior
+    # Compute prior
     mu, std = model.predict(X, return_std=True)
     mu = mu.ravel()
     std = std.ravel()
@@ -67,7 +67,7 @@ def acquisition(X, model, x_opt=None, method="LCB", xi=0.01, kappa=1.96):
     elif method == "EI":
         values = np.zeros(len(mu))
         mask = std > 0
-        improvement = x_opt - xi - mu[mask]
+        improvement = y_opt - xi - mu[mask]
         exploit = improvement * norm.cdf(improvement / std[mask])
         explore = std[mask] * norm.pdf(improvement / std[mask])
         values[mask] = exploit + explore
@@ -76,12 +76,12 @@ def acquisition(X, model, x_opt=None, method="LCB", xi=0.01, kappa=1.96):
     elif method == "PI":
         values = np.zeros(len(mu))
         mask = std > 0
-        improvement = x_opt - xi - mu[mask]
+        improvement = y_opt - xi - mu[mask]
         values[mask] = norm.cdf(improvement / std[mask])
         values = -values  # acquisition is minimized
 
     else:
-        raise ValueError("Acquisition function not implemented yet: " + method)
+        raise ValueError("Acquisition function not implemented.")
 
     return values
 
@@ -101,8 +101,8 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
     In other words the function values are assumed to follow a multivariate
     gaussian. The covariance of the function values are given by a
     GP kernel between the parameters. Then a smart choice to choose the
-    next parameter to evaluate can be made by the acquistion function
-    over the Gaussian posterior which is much quicker to evaluate.
+    next parameter to evaluate can be made by the acquisition function
+    over the Gaussian prior which is much quicker to evaluate.
 
     Parameters
     ----------
@@ -118,7 +118,7 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
         The Gaussian process estimator to use for optimization.
 
     acq: string, default "LCB"
-        Function to minimize over the gaussian posterior. Can be either
+        Function to minimize over the gaussian prior. Can be either
         the "LCB" which refers to the Lower Confidence Bound, "EI" which
         is the Expected Improvement or "PI" which is the probability of
         improvement.
@@ -138,16 +138,17 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
         with.
 
         If search is set to "sampling", ``n_points`` are sampled randomly
-        and the Gaussian Process prior is updated with that point that gives
-        the best acquisition value over the Gaussian posterior.
+        and the Gaussian Process prior is updated with the point that gives
+        the best acquisition value over the Gaussian prior.
 
         If search is set to "lbfgs", then a point is sampled randomly, and
-        lbfgs is run for 10 iterations optimizing the acquistion function
-        over the Gaussian posterior.
+        lbfgs is run for 10 iterations optimizing the acquisition function
+        over the Gaussian prior.
 
     maxiter: int, default 1000
-        Number of iterations to find the minimum. In other words, the
-        number of function evaluations.
+        Number of iterations to find the minimum. Note that ``n_start``
+        iterations are effectively discounted, such that total number of
+        function evaluations is at most ``maxiter``.
 
     n_points: int, default 500
         Number of points to sample to determine the next "best" point.
@@ -170,7 +171,7 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
         Important attributes are
         ``x`` - float, the optimization solution,
         ``fun`` - float, the value of the function at the optimum,
-        ``models``- gp_models[i], the posterior on the function fit at
+        ``models``- gp_models[i], the prior on the function fit at
                        iteration[i].
         ``func_vals`` - the function value at the ith iteration.
         ``x_iters`` - the value of ``x`` corresponding to the function value
@@ -187,19 +188,20 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
     # Default GP
     if base_estimator is None:
         base_estimator = GaussianProcessRegressor(
-            kernel=Matern(length_scale=np.ones(n_params),
-                          length_scale_bounds="fixed", nu=2.5),
-            normalize_y=True, alpha=10e-6, random_state=random_state,
-            n_restarts_optimizer=3)
+            kernel=(ConstantKernel(constant_value_bounds="fixed") *
+                    Matern(length_scale=np.ones(n_params),
+                           length_scale_bounds="fixed", nu=2.5) +
+                    ConstantKernel(constant_value_bounds="fixed")),
+            normalize_y=True, alpha=10e-6, random_state=random_state)
 
-    # First point
+    # First points
     Xi = lb + (ub - lb) * rng.rand(n_start, n_params)
     yi = [func(x) for x in Xi]
 
     # Bayesian optimization loop
     models = []
 
-    for i in range(maxiter):
+    for i in range(maxiter - n_start):
         gp = clone(base_estimator)
         gp.fit(Xi, yi)
         models.append(gp)
@@ -207,7 +209,7 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
         if search == "sampling":
             X = lb + (ub - lb) * rng.rand(n_points, n_params)
             values = acquisition(X=X, model=gp,
-                                 x_opt=np.min(yi), method=acq,
+                                 y_opt=np.min(yi), method=acq,
                                  xi=xi, kappa=kappa)
             next_x = X[np.argmin(values)]
 

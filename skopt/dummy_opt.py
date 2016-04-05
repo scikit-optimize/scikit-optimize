@@ -43,11 +43,9 @@ def dummy_minimize(func, bounds, maxiter=1000, random_state=None):
     """
     rng = check_random_state(random_state)
 
-    # Bounds
     n_params = len(bounds)
     lb, ub = extract_bounds(bounds)
 
-    # Sample each parameter uniformly between 0 and 1 and then rescale.
     X = np.zeros((maxiter, n_params))
     y = np.zeros(maxiter)
 
@@ -55,7 +53,6 @@ def dummy_minimize(func, bounds, maxiter=1000, random_state=None):
         X[i] = lb + (ub - lb) * rng.rand(n_params)
         y[i] = func(X[i])
 
-    # Store values.
     res = OptimizeResult()
     best = np.argmin(y)
     res.x = X[best]
