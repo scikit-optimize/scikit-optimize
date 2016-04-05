@@ -15,12 +15,12 @@ ls -l
 echo
 if [[ ! -f miniconda.sh ]]
    then
-   wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
+   wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
        -O miniconda.sh
    fi
 chmod +x miniconda.sh && ./miniconda.sh -b
 cd ..
-export PATH=/home/travis/miniconda/bin:$PATH
+export PATH=/home/travis/miniconda3/bin:$PATH
 conda update --yes conda
 popd
 
