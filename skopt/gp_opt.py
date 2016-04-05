@@ -236,7 +236,7 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
     best = np.argmin(yi)
     res.x = Xi[best]
     res.fun = yi[best]
-    res.func_vals = yi
+    res.func_vals = np.array(yi)
     res.x_iters = Xi
     res.models = models
 
