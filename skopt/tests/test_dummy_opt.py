@@ -1,0 +1,35 @@
+import numpy as np
+
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_less
+
+from skopt import dummy_minimize
+from skopt.benchmarks import bench1
+from skopt.benchmarks import bench2
+from skopt.benchmarks import bench3
+from skopt.benchmarks import branin
+from skopt.benchmarks import hart6
+
+
+def check_minimize(func, y_opt, bounds, margin, maxiter):
+    r = dummy_minimize(func, bounds, maxiter=maxiter, random_state=1)
+    assert_less(r.fun, y_opt + margin)
+
+
+def test_dummy_minimize():
+    yield (check_minimize, bench1, 0., [[-2, 2]], 0.05, 10000)
+    yield (check_minimize, bench2, -5, [[-6, 6]], 0.05, 10000)
+    yield (check_minimize, bench3, -0.9, [[-2, 2]], 0.05, 10000)
+    yield (check_minimize, branin, 0.39, [[-5, 10], [0, 15]], 0.1, 10000)
+    yield (check_minimize, hart6, -3.32, np.tile((0, 1), (6, 1)), 0.5, 10000)
+
+
+def test_api():
+    res = dummy_minimize(
+        branin, [[-5, 10], [0, 15]], random_state=0, maxiter=100)
+    assert_array_equal(res.x.shape, (2,))
+    assert_array_equal(res.x_iters.shape, (100, 2))
+    assert_array_equal(res.func_vals.shape, (100,))
+    assert_array_less(res.x_iters, np.tile([10, 15], (100, 1)))
+    assert_array_less(np.tile([-5, 0], (100, 1)), res.x_iters)
