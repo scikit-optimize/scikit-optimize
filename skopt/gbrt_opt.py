@@ -13,45 +13,60 @@ from .gbt import GradientBoostingQuantileRegressor
 from .utils import extract_bounds
 
 
-def _expected_improvement(X, surrogate, best_y):
-    """Evaluate expected improvement for `surrogate` model at `x`"""
+def _expected_improvement(X, surrogate, best_y, xi=0.01):
+    """Evaluate expected improvement for `surrogate` model at `x`
+
+    Parameters
+    ----------
+    X : array-like
+        Values at which to evaluate the acquisition function.
+
+    best_y: float, optional
+        The previous best value on which we want to improve.
+
+    xi: float, default 0.01
+        By how much must a new point improve over the previous best
+        value.
+    """
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.expand_dims(X, axis=0)
 
     # low and high are assumed to be the 16% and 84% quantiles
-    low, mu, high = surrogate.predict(X)
+    low, mu, high = surrogate.predict(X).T
     # approximate the std dev, if the pdf is gaussian this is exact
     std = (high - low) / 2.
 
     ei = np.zeros(len(mu))
 
     mask = std > 0
-    improvement = best_y - mu[mask]
+    improvement = best_y - xi - mu[mask]
     exploit = improvement * stats.norm.cdf(improvement / std[mask])
     explore = std[mask] * stats.norm.pdf(improvement / std[mask])
     ei[mask] = exploit + explore
-
-    # do not want EI below zero, happens for points that are (much)
-    # worse than ``best_y``
-    ei = np.clip(ei, 0., np.max(ei))
 
     ei = -ei # we are being used in a minimizer
     return ei
 
 
-def _random_point(lower, upper, random_state=None):
+def _random_point(lower, upper, n_points=1, random_state=None):
     """Sample a random point"""
     rng = check_random_state(random_state)
 
     num_params = len(lower)
     delta = upper - lower
-    return lower + rng.rand(num_params) * delta
+    return lower + rng.rand(n_points, num_params) * delta
 
 
 def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
                  random_state=None):
     """Sequential optimisation using gradient boosted trees.
+
+    Gradient boosted regression trees are used to model the (very)
+    expensive to evaluate function ``func``. The model is improved
+    by sequentially evaluating the expensive function at the next
+    best point. Thereby finding the minimum of ``func`` with as
+    few evaluations as possible.
 
     Parameters
     ----------
@@ -100,7 +115,8 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
     yi = np.zeros(maxiter + 1)
 
     # Initialize with a random point
-    Xi[0] = best_x = _random_point(lower_bounds, upper_bounds, rng)
+    Xi[0] = _random_point(lower_bounds, upper_bounds, random_state=rng)
+    best_x = Xi[0].ravel()
     yi[0] = best_y = func(Xi[0])
 
     models = []
@@ -112,19 +128,18 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
         rgr.fit(Xi[:i, :], yi[:i])
         models.append(rgr)
 
-        # XXX could use multi start to find global minimum
-        # XXX the model predictions are flat (no gradient)
-        # XXX so right now BFGS can't do anything useful
-        # XXX -> equivalent to random sampling
-        x0 = _random_point(lower_bounds, upper_bounds, rng)
-        next_x, _, _ = fmin_l_bfgs_b(
-            _expected_improvement,
-            np.asfortranarray(x0),
-            args=(rgr, best_y),
-            bounds=bounds, approx_grad=True, maxiter=10)
+        # `rgr` predicts constants for each leaf which means that the EI
+        # has zero gradient over large distances. As a result we can not
+        # use gradient based optimisers like BFGS, use random sampling
+        # for the moment.
+        x0 = _random_point(lower_bounds, upper_bounds,
+                           n_points=20,
+                           random_state=rng)
+        aq = _expected_improvement(x0, rgr, best_y)
+        best = np.argmin(aq)
 
-        Xi[i] = next_x
-        yi[i] = func(next_x)
+        Xi[i] = x0[best].ravel()
+        yi[i] = func(x0[best])
 
         if yi[i] < best_y:
             best_y = yi[i]
