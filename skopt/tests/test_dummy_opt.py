@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raises
 
 from skopt import dummy_minimize
 from skopt.benchmarks import bench1
@@ -33,3 +34,4 @@ def test_api():
     assert_array_equal(res.func_vals.shape, (100,))
     assert_array_less(res.x_iters, np.tile([10, 15], (100, 1)))
     assert_array_less(np.tile([-5, 0], (100, 1)), res.x_iters)
+    assert_raises(ValueError, dummy_minimize, lambda x: x, [[-5, 10]])

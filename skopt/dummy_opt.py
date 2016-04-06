@@ -46,12 +46,12 @@ def dummy_minimize(func, bounds, maxiter=1000, random_state=None):
     n_params = len(bounds)
     lb, ub = extract_bounds(bounds)
 
-    X = np.zeros((maxiter, n_params))
-    y = np.zeros(maxiter)
-
-    for i in range(maxiter):
-        X[i] = lb + (ub - lb) * rng.rand(n_params)
-        y[i] = func(X[i])
+    X = lb + (ub - lb) * rng.rand(maxiter, n_params)
+    init_y = func(X[0])
+    if not np.isscalar(init_y):
+        raise ValueError(
+            "The function to be optimized should return a scalar")
+    y = np.asarray([init_y] + [func(X[i]) for i in range(maxiter - 1)])
 
     res = OptimizeResult()
     best = np.argmin(y)

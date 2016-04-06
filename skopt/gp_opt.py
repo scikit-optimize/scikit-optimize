@@ -13,6 +13,16 @@ from sklearn.utils import check_random_state
 from .utils import extract_bounds
 
 
+def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
+    """
+    A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
+
+    This is because lbfgs allows only 1-D input.
+    """
+    X = np.expand_dims(X, axis=0)
+    return acquisition(X, model, y_opt, method, xi, kappa)
+
+
 def acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
     Returns the acquisition function computed at values x0, when the
@@ -53,16 +63,13 @@ def acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
     # Check inputs
     X = np.asarray(X)
-    if X.ndim == 1:
-        X = np.expand_dims(X, axis=0)
+    if X.ndim != 2:
+        raise ValueError("X should be 2-dimensional.")
 
-    # Compute prior
+    # Compute posterior.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         mu, std = model.predict(X, return_std=True)
-
-    mu = mu.ravel()
-    std = std.ravel()
 
     # Evaluate acquisition function
     if method == "LCB":
@@ -201,6 +208,9 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
     # First points
     Xi = lb + (ub - lb) * rng.rand(n_start, n_params)
     yi = [func(x) for x in Xi]
+    if np.ndim(yi) != 1:
+        raise ValueError(
+            "The function to be optimized should return a scalar")
 
     # Bayesian optimization loop
     models = []
@@ -229,7 +239,7 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     x, a, _ = fmin_l_bfgs_b(
-                        acquisition, x0,
+                        _acquisition, x0,
                         args=(gp, np.min(yi), acq, xi, kappa),
                         bounds=bounds, approx_grad=True, maxiter=10)
 
