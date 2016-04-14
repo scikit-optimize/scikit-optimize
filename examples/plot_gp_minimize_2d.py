@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from skopt import acquisition
 from skopt import gp_minimize
 from skopt.benchmarks import branin
+from skopt.gp_opt import acquisition
 
 fig = plt.gcf()
 plt.set_cmap("viridis")
