@@ -48,7 +48,9 @@ for n_iter in range(5):
     plt.plot(best_x, sampled_y, 'ro', label="observations", markersize=5)
     plt.title("n_iter = %d" % (n_iter + 1))
     plt.ylim([-1.5, 1.5])
-    plt.legend(loc="best", prop={'size': 6}, numpoints=1)
+
+    if col_no == 1:
+        plt.legend(loc="best", prop={'size': 6}, numpoints=1)
     col_no += 1
 
     plt.subplot(2, 5, row_no)
@@ -59,7 +61,9 @@ for n_iter in range(5):
 
     plt.plot(min_x, min_acq, "ro", markersize=5, label="Next sample point")
     plt.ylim([-1.5, 1.0])
-    plt.legend(loc="best", prop={'size': 8}, numpoints=1)
+
+    if row_no == 6:
+        plt.legend(loc="best", prop={'size': 8}, numpoints=1)
     row_no += 1
 
 plt.suptitle("Gaussian process based minimization")
