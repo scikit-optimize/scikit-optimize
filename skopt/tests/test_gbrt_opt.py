@@ -16,6 +16,7 @@ from skopt.gbrt_opt import gbrt_minimize
 from skopt.gbrt_opt import _expected_improvement
 from skopt.utils import extract_bounds
 
+
 class ConstSurrogate:
     def predict(self, X):
         return np.tile([-1., 0.,1.], (X.shape[0], 1))
@@ -72,6 +73,6 @@ def test_gbrt_minimize():
     yield (check_minimize, bench2, -5, [[-6, 6]], 0.05, 75)
     yield (check_minimize, bench3, -0.9, [[-2, 2]], 0.05, 75)
     yield (check_minimize, branin, 0.39, [[-5, 10], [0, 15]],
-           0.1, 100)
+           0.1, 150)
     yield (check_minimize, hart6, -3.32, np.tile((0, 1), (6, 1)),
            1.0, 150)

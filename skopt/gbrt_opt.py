@@ -107,7 +107,7 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
 
     # Default estimator
     if base_estimator is None:
-        base_estimator = GradientBoostingQuantileRegressor()
+        base_estimator = GradientBoostingQuantileRegressor(random_state=rng)
 
     # Record the points and function values evaluated as part of
     # the minimization
