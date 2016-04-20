@@ -50,4 +50,4 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
     def predict(self, X):
         """Predictions for each quantile."""
-        return np.vstack([rgr.predict(X) for rgr in self.regressors_])
+        return np.asarray([rgr.predict(X) for rgr in self.regressors_]).T

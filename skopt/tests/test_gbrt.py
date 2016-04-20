@@ -2,9 +2,11 @@ import numpy as np
 from scipy import stats
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal, assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
 
-from skopt.gbt import GradientBoostingQuantileRegressor
+from skopt.learning import GradientBoostingQuantileRegressor
 
 
 def truth(X):
@@ -22,7 +24,8 @@ def sample_noise(X, std=0.2, noise=constant_noise,
     rng = check_random_state(random_state)
     return np.array([rng.normal(0, std*noise(x)) for x in X])
 
-def test_gbt_gaussian():
+
+def test_gbrt_gaussian():
     # estiamte quantiles of the normal distribution
     rng = np.random.RandomState(1)
     N = 10000
@@ -34,10 +37,11 @@ def test_gbt_gaussian():
 
     estimates = rgr.predict(X)
     assert_almost_equal(stats.norm.ppf(rgr.quantiles),
-                        np.mean(estimates, axis=1),
+                        np.mean(estimates, axis=0),
                         decimal=2)
 
-def test_gbt_with_std():
+
+def test_gbrt_with_std():
     # simple test of the interface
     rng = np.random.RandomState(1)
     X = rng.uniform(0, 5, 500)[:, np.newaxis]
@@ -50,6 +54,8 @@ def test_gbt_with_std():
     model = GradientBoostingQuantileRegressor()
     model.fit(X, y)
 
-    l, c, h = model.predict(X_)
+    assert_array_equal(model.predict(X_).shape, (len(X_), 3))
+
+    l, c, h = model.predict(X_).T
     assert_equal(l.shape, c.shape, h.shape)
     assert_equal(l.shape[0], X_.shape[0])
