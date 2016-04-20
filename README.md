@@ -4,7 +4,7 @@ Scikit-Optimize, or `skopt`, is meant to be a simple and efficient library for b
 
 The library is built on top of NumPy, SciPy and Scikit-Learn. 
 
-[![Build Status](https://travis-ci.org/MechCoder/scikit-optimize.svg?branch=master)](https://travis-ci.org/MechCoder/scikit-optimize)
+[![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
 
 ## Development
 
