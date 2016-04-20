@@ -6,7 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 
-from skopt.gbt import GradientBoostingQuantileRegressor
+from skopt.gbrt import GradientBoostingQuantileRegressor
 
 
 def truth(X):
@@ -25,7 +25,7 @@ def sample_noise(X, std=0.2, noise=constant_noise,
     return np.array([rng.normal(0, std*noise(x)) for x in X])
 
 
-def test_gbt_gaussian():
+def test_gbrt_gaussian():
     # estiamte quantiles of the normal distribution
     rng = np.random.RandomState(1)
     N = 10000
@@ -41,7 +41,7 @@ def test_gbt_gaussian():
                         decimal=2)
 
 
-def test_gbt_with_std():
+def test_gbrt_with_std():
     # simple test of the interface
     rng = np.random.RandomState(1)
     X = rng.uniform(0, 5, 500)[:, np.newaxis]

@@ -13,7 +13,7 @@ from .gbt import GradientBoostingQuantileRegressor
 from .utils import extract_bounds
 
 
-def _expected_improvement(X, surrogate, best_y, xi=0.01):
+def _expected_improvement(X, surrogate, y_opt, xi=0.01):
     """Evaluate expected improvement for `surrogate` model at `x`
 
     Parameters
@@ -21,7 +21,7 @@ def _expected_improvement(X, surrogate, best_y, xi=0.01):
     X : array-like
         Values at which to evaluate the acquisition function.
 
-    best_y: float, optional
+    y_opt: float, optional
         The previous best value on which we want to improve.
 
     xi: float, default 0.01
@@ -40,7 +40,7 @@ def _expected_improvement(X, surrogate, best_y, xi=0.01):
     ei = np.zeros(len(mu))
 
     mask = std > 0
-    improvement = best_y - xi - mu[mask]
+    improvement = y_opt - xi - mu[mask]
     exploit = improvement * stats.norm.cdf(improvement / std[mask])
     explore = std[mask] * stats.norm.pdf(improvement / std[mask])
     ei[mask] = exploit + explore
