@@ -9,7 +9,7 @@ from scipy.optimize import OptimizeResult
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
-from .gbrt import GradientBoostingQuantileRegressor
+from .learning import GradientBoostingQuantileRegressor
 from .utils import extract_bounds
 
 
@@ -49,7 +49,7 @@ def _expected_improvement(X, surrogate, y_opt, xi=0.01):
     return ei
 
 
-def _random_point(lower, upper, n_points=1, random_state=None):
+def _random_points(lower, upper, n_points=1, random_state=None):
     """Sample a random point"""
     rng = check_random_state(random_state)
 
@@ -88,7 +88,7 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
 
     n_start: int, default 10
         Number of random points to draw before fitting `base_estimator`
-        for the first time. If `n_start < maxiter` this degrades to
+        for the first time. If `n_start > maxiter` this degrades to
         a random search for the minimum.
 
     n_points: int, default 20
@@ -133,10 +133,10 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
 
     n_start = min(n_start, maxiter)
 
-    Xi[:n_start] = _random_point(
+    Xi[:n_start] = _random_points(
         lower_bounds, upper_bounds, n_points=n_start, random_state=rng)
     best_x = Xi[:n_start].ravel()
-    yi[:n_start] = [func(xi) for xi in (Xi[:n_start])]
+    yi[:n_start] = [func(xi) for xi in Xi[:n_start]]
     best_y = np.min(yi[:n_start])
 
     models = []
@@ -151,7 +151,7 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
         # has zero gradient over large distances. As a result we can not
         # use gradient based optimisers like BFGS, use random sampling
         # for the moment.
-        x0 = _random_point(lower_bounds, upper_bounds,
+        x0 = _random_points(lower_bounds, upper_bounds,
                            n_points=n_points,
                            random_state=rng)
         aq = _expected_improvement(x0, rgr, best_y)

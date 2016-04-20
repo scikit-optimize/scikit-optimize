@@ -6,7 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 
-from skopt.gbrt import GradientBoostingQuantileRegressor
+from skopt.learning import GradientBoostingQuantileRegressor
 
 
 def truth(X):

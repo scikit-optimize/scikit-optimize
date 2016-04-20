@@ -12,7 +12,7 @@ from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
-from skopt.gbrt import GradientBoostingQuantileRegressor
+from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.gbrt_opt import gbrt_minimize
 from skopt.gbrt_opt import _expected_improvement
 from skopt.utils import extract_bounds
