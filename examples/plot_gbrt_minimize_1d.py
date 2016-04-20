@@ -1,7 +1,7 @@
 """
-======================================================================
-Plot lower expected improvement as a function of number of iterations.
-======================================================================
+================================================================
+Plot expected improvement as a function of number of iterations.
+================================================================
 """
 print(__doc__)
 import numpy as np
@@ -21,8 +21,7 @@ col_no = 1
 row_no = 6
 
 res = gbrt_minimize(
-    bench3, bounds, maxiter=6,
-    random_state=1)
+    bench3, bounds, maxiter=6, n_start=1, random_state=1)
 best_xs = res.x_iters.ravel()
 best_ys = res.func_vals.ravel()
 models = res.models

@@ -5,13 +5,14 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raise_message
 
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
-from skopt.gbt import GradientBoostingQuantileRegressor
+from skopt.gbrt import GradientBoostingQuantileRegressor
 from skopt.gbrt_opt import gbrt_minimize
 from skopt.gbrt_opt import _expected_improvement
 from skopt.utils import extract_bounds
@@ -45,20 +46,34 @@ def test_ei_api():
 
 
 def test_no_iterations():
-    result = gbrt_minimize(branin, [[-5, 10], [0, 15]],
-                           maxiter=0, random_state=1)
+    assert_raise_message(ValueError, "at least one iteration",
+                         gbrt_minimize,
+                         branin, [[-5, 10], [0, 15]], maxiter=0, random_state=1)
 
-    assert_almost_equal(result.fun, branin(result.x))
-    assert_equal(len(result.models), 0)
-    assert_array_equal(result.x_iters.shape, (1, 2))
+    assert_raise_message(ValueError, "at least one starting point",
+                         gbrt_minimize,
+                         branin, [[-5, 10], [0, 15]], n_start=0, maxiter=2,
+                         random_state=1)
 
 
 def test_one_iteration():
     result = gbrt_minimize(branin, [[-5, 10], [0, 15]],
                            maxiter=1, random_state=1)
 
-    assert_equal(len(result.models), 1)
-    assert_array_equal(result.x_iters.shape, (2, 2))
+    assert_equal(len(result.models), 0)
+    assert_array_equal(result.x_iters.shape, (1, 2))
+    assert_array_equal(result.func_vals.shape, (1,))
+    assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
+    assert_almost_equal(result.fun, branin(result.x))
+
+
+def test_seven_iterations():
+    result = gbrt_minimize(branin, [[-5, 10], [0, 15]],
+                           n_start=3, maxiter=7, random_state=1)
+
+    assert_equal(len(result.models), 4)
+    assert_array_equal(result.x_iters.shape, (7, 2))
+    assert_array_equal(result.func_vals.shape, (7,))
     assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
     assert_almost_equal(result.fun, branin(result.x))
 
@@ -73,6 +88,6 @@ def test_gbrt_minimize():
     yield (check_minimize, bench2, -5, [[-6, 6]], 0.05, 75)
     yield (check_minimize, bench3, -0.9, [[-2, 2]], 0.05, 75)
     yield (check_minimize, branin, 0.39, [[-5, 10], [0, 15]],
-           0.1, 150)
+           0.1, 100)
     yield (check_minimize, hart6, -3.32, np.tile((0, 1), (6, 1)),
-           1.0, 150)
+           1.0, 200)

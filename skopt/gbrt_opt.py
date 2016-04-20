@@ -9,7 +9,7 @@ from scipy.optimize import OptimizeResult
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
-from .gbt import GradientBoostingQuantileRegressor
+from .gbrt import GradientBoostingQuantileRegressor
 from .utils import extract_bounds
 
 
@@ -59,7 +59,7 @@ def _random_point(lower, upper, n_points=1, random_state=None):
 
 
 def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
-                 random_state=None):
+                  n_points=20, n_start=10, random_state=None):
     """Sequential optimisation using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -82,7 +82,17 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
         The regressor to use as surrogate model
 
     maxiter: int, default 100
-        Number of iterations used to find the minimum.
+        Number of iterations used to find the minimum. This corresponds
+        to the total number of evaluations of `func`. If `n_start` > 0
+        only `maxiter - n_start` iterations are used.
+
+    n_start: int, default 10
+        Number of random points to draw before fitting `base_estimator`
+        for the first time. If `n_start < maxiter` this degrades to
+        a random search for the minimum.
+
+    n_points: int, default 20
+        Number of points to sample when minimizing the acquisition function.
 
     random_state: int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
@@ -111,18 +121,27 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
 
     # Record the points and function values evaluated as part of
     # the minimization
-    Xi = np.zeros((maxiter + 1, num_params))
-    yi = np.zeros(maxiter + 1)
+    Xi = np.zeros((maxiter, num_params))
+    yi = np.zeros(maxiter)
 
-    # Initialize with a random point
-    Xi[0] = _random_point(lower_bounds, upper_bounds, random_state=rng)
-    best_x = Xi[0].ravel()
-    yi[0] = best_y = func(Xi[0])
+    # Initialize with random points
+    if n_start == 0:
+        raise ValueError("Need at least one starting point.")
+
+    if maxiter == 0:
+        raise ValueError("Need to perform at least one iteration.")
+
+    n_start = min(n_start, maxiter)
+
+    Xi[:n_start] = _random_point(
+        lower_bounds, upper_bounds, n_points=n_start, random_state=rng)
+    best_x = Xi[:n_start].ravel()
+    yi[:n_start] = [func(xi) for xi in (Xi[:n_start])]
+    best_y = np.min(yi[:n_start])
 
     models = []
 
-    # XXX should there be an early stopping criterion?
-    for i in range(1, maxiter + 1):
+    for i in range(n_start, maxiter):
         rgr = clone(base_estimator)
         # only the first i points are meaningful
         rgr.fit(Xi[:i, :], yi[:i])
@@ -133,7 +152,7 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
         # use gradient based optimisers like BFGS, use random sampling
         # for the moment.
         x0 = _random_point(lower_bounds, upper_bounds,
-                           n_points=20,
+                           n_points=n_points,
                            random_state=rng)
         aq = _expected_improvement(x0, rgr, best_y)
         best = np.argmin(aq)
