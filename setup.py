@@ -4,6 +4,5 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='skopt',
-      version='0.1',
-      description='Black box optimization-techniques',
-     )
+      version='0.0',
+      description='Black box optimization-techniques')

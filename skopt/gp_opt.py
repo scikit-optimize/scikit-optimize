@@ -117,76 +117,78 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
 
     Parameters
     ----------
-    func: callable
+    * `func` [callable]:
         Function to minimize. Should take a array of parameters and
-        return the function value.
+        return the function values.
 
-    bounds: array-like, shape (n_parameters, 2)
-        ``bounds[i][0]`` should give the lower bound of each parameter and
-        ``bounds[i][1]`` should give the upper bound of each parameter.
+    * `bounds` [array-like, shape=(n_parameters, 2)]:
+        - ``bounds[i][0]`` should give the lower bound of each parameter and
+        - ``bounds[i][1]`` should give the upper bound of each parameter.
 
-    base_estimator: a Gaussian process estimator
+    * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
 
-    acq: string, default "LCB"
+    * `acq` [string, default=`"LCB"`]:
         Function to minimize over the gaussian prior. Can be either
-        the "LCB" which refers to the Lower Confidence Bound, "EI" which
-        is the Expected Improvement or "PI" which is the probability of
-        improvement.
 
-    xi: float, default 0.01
+        - `"LCB"` for lower confidence bound,
+        - `"EI"` for expected improvement,
+        - `"PI"` for probability of improvement.
+
+    * `xi` [float, default=0.01]:
         Controls how much improvement one wants over the previous best
-        values. Used when the acquisition is either "EI" or "PI".
+        values. Used when the acquisition is either `"EI"` or `"PI"`.
 
-    kappa: float, default 1.96
+    * `kappa` [float, default=1.96]:
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
-        Used when the acquisition is "LCB".
+        Used when the acquisition is `"LCB"`.
 
-    search: string, "sampling" or "lbfgs"
+    * `search` [string, `"sampling"` or `"lbfgs"`]:
         Searching for the next possible candidate to update the Gaussian prior
         with.
 
-        If search is set to "sampling", ``n_points`` are sampled randomly
+        If search is set to `"sampling"`, `n_points` are sampled randomly
         and the Gaussian Process prior is updated with the point that gives
         the best acquisition value over the Gaussian prior.
 
-        If search is set to "lbfgs", then a point is sampled randomly, and
+        If search is set to `"lbfgs"`, then a point is sampled randomly, and
         lbfgs is run for 10 iterations optimizing the acquisition function
         over the Gaussian prior.
 
-    maxiter: int, default 1000
-        Number of iterations to find the minimum. Note that ``n_start``
+    * `maxiter` [int, default=1000]:
+        Number of iterations to find the minimum. Note that `n_start`
         iterations are effectively discounted, such that total number of
-        function evaluations is at most ``maxiter``.
+        function evaluations is at most `maxiter`.
 
-    n_points: int, default 500
+    * `n_points` [int, default=500]:
         Number of points to sample to determine the next "best" point.
-        Useless if search is set to "lbfgs".
+        Useless if search is set to `"lbfgs"`.
 
-    n_start: int, default 10
+    * `n_start` [int, default=10]:
         Number of random initialization points.
 
-    n_restarts_optimizer: int, default 10
-        The number of restarts of the optimizer when ``search`` is "lbfgs".
+    * `n_restarts_optimizer` [int, default=10]:
+        The number of restarts of the optimizer when `search` is `"lbfgs"`.
 
-    random_state: int, RandomState instance, or None (default)
+    * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
 
     Returns
     -------
-    res: OptimizeResult, scipy object
+    * `res` [`OptimizeResult`, scipy object]:
         The optimization result returned as a OptimizeResult object.
-        Important attributes are
-        ``x`` - float, the optimization solution,
-        ``fun`` - float, the value of the function at the optimum,
-        ``models``- gp_models[i], the prior on the function fit at
-                       iteration[i].
-        ``func_vals`` - the function value at the ith iteration.
-        ``x_iters`` - the value of ``x`` corresponding to the function value
-                      at the ith iteration.
+        Important attributes are:
+
+        - `x` [float]: location of the minimum.
+        - `fun` [float]: function value at the minimum.
+        - `models`: surrogate models used for each iteration.
+        - `x_iters` [array]: location of function evaluation for each
+           iteration.
+        - `func_vals` [array]: function value for each iteration.
+
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """

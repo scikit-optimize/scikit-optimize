@@ -20,3 +20,6 @@ install: source ci_scripts/install.sh
 
 script:
   nosetests
+
+after_success:
+    - '([ "${TRAVIS_PULL_REQUEST}" == "false" ] && [ "${PYTHON_VERSION}" == "3.5" ] && source ci_scripts/deploy.sh) || echo pass'
