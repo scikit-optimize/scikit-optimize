@@ -4,8 +4,7 @@ echo "Running deployment script..."
 # Generating documentation
 cd ~
 pip install pdoc==0.3.2
-export XDG_CONFIG_HOME=${TRAVIS_BUILD_DIR}/ci_scripts/templates
-pdoc --html --html-dir ./doc skopt
+pdoc --html --html-dir ./doc --template-dir ${TRAVIS_BUILD_DIR}/ci_scripts/templates skopt
 
 # Copying to github pages
 echo "Copying built files"
