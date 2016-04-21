@@ -17,7 +17,7 @@ The library is still experimental and under heavy development.
 
 The development version can be installed through:
 ```
-git clone https://github.com/MechCoder/scikit-optimize.git
+git clone https://github.com/scikit-optimize/scikit-optimize.git
 cd scikit-optimize
 pip install -r requirements.txt
 python setup.py develop
