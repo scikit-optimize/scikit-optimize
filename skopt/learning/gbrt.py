@@ -6,20 +6,23 @@ from sklearn.utils import check_random_state
 
 
 class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self, quantiles=[0.16, 0.5, 0.84], random_state=None):
-        """Predict several quantiles with one estimator
+    """Predict several quantiles with one estimator.
 
-        This is a wrapper around `GradientBoostingRegressor`'s quantile
-        regression that allows you to predict several `quantiles` in
-        one go.
+    This is a wrapper around `GradientBoostingRegressor`'s quantile
+    regression that allows you to predict several `quantiles` in
+    one go.
+    """
+
+    def __init__(self, quantiles=[0.16, 0.5, 0.84], random_state=None):
+        """Constructor.
 
         Parameters
         ----------
-        quantiles : array-like, optional
+        * `quantiles` [array-like]:
             Quantiles to predict. By default the 16, 50 and 84%
             quantiles are predicted.
 
-        random-state : int, RandomState instance, or None (default)
+        * `random-state` [int, RandomState instance, or None (default)]:
             Set random state to something other than None for reproducible
             results.
         """
@@ -31,11 +34,11 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        * `X` [array-like, shape=(n_samples, n_features):
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
-        y : array-like, shape = [n_samples]
+        * `y` [array-like, shape=(n_samples,)]:
             Target values (real numbers in regression)
         """
         rng = check_random_state(self.random_state)
@@ -49,5 +52,5 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
         return self
 
     def predict(self, X):
-        """Predictions for each quantile."""
+        """Predict for each quantile."""
         return np.asarray([rgr.predict(X) for rgr in self.regressors_]).T

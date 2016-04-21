@@ -3,7 +3,6 @@
 import numpy as np
 
 from scipy import stats
-from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
@@ -63,51 +62,56 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
     """Sequential optimisation using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
-    expensive to evaluate function ``func``. The model is improved
+    expensive to evaluate function `func`. The model is improved
     by sequentially evaluating the expensive function at the next
-    best point. Thereby finding the minimum of ``func`` with as
+    best point. Thereby finding the minimum of `func` with as
     few evaluations as possible.
 
     Parameters
     ----------
-    func: callable
-        Function to minimize. Should take an array of parameters and
-        return the function value.
+    * `func` [callable]:
+        Function to minimize. Should take a array of parameters and
+        return the function values.
 
-    bounds: array-like, shape (n_parameters, 2)
-        ``bounds[i][0]`` should give the lower bound of each parameter and
-        ``bounds[i][1]`` should give the upper bound of each parameter.
+    * `bounds` [array-like, shape=(n_parameters, 2)]:
+        - ``bounds[i][0]`` should give the lower bound of each parameter and
+        - ``bounds[i][1]`` should give the upper bound of each parameter.
 
-    base_estimator: a GradientBoostingQuantileRegressor
+    * `base_estimator` [`GradientBoostingQuantileRegressor`]:
         The regressor to use as surrogate model
 
-    maxiter: int, default 100
+    * `maxiter` [int, default=100]:
         Number of iterations used to find the minimum. This corresponds
         to the total number of evaluations of `func`. If `n_start` > 0
         only `maxiter - n_start` iterations are used.
 
-    n_start: int, default 10
+    * `n_start` [int, default=10]:
         Number of random points to draw before fitting `base_estimator`
         for the first time. If `n_start > maxiter` this degrades to
         a random search for the minimum.
 
-    n_points: int, default 20
+    * `n_points` [int, default=20]:
         Number of points to sample when minimizing the acquisition function.
 
-    random_state: int, RandomState instance, or None (default)
+    * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
 
     Returns
     -------
-    res: OptimizeResult, scipy object
+    * `res` [`OptimizeResult`, scipy object]:
         The optimization result returned as a OptimizeResult object.
-        Important attributes are
-        ``x`` - float, location of the minimum,
-        ``fun`` - float, function value at the minimum,
-        ``models``- surrogate models used for each iteration,
-        ``x_iters`` - location of function evaluation for each iteration,
-        ``func_vals`` - function value for each iteration.
+        Important attributes are:
+
+        - `x` [float]: location of the minimum.
+        - `fun` [float]: function value at the minimum.
+        - `models`: surrogate models used for each iteration.
+        - `x_iters` [array]: location of function evaluation for each
+           iteration.
+        - `func_vals` [array]: function value for each iteration.
+
+        For more details related to the OptimizeResult object, refer
+        http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
     rng = check_random_state(random_state)
 
@@ -152,8 +156,8 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
         # use gradient based optimisers like BFGS, use random sampling
         # for the moment.
         x0 = _random_points(lower_bounds, upper_bounds,
-                           n_points=n_points,
-                           random_state=rng)
+                            n_points=n_points,
+                            random_state=rng)
         aq = _expected_improvement(x0, rgr, best_y)
         best = np.argmin(aq)
 
@@ -170,4 +174,5 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
     res.func_vals = yi
     res.x_iters = Xi
     res.models = models
+
     return res
