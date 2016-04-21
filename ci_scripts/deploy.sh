@@ -3,7 +3,7 @@ echo "Running deployment script..."
 
 # Generating documentation
 cd ~
-pip install pdoc==0.3.2
+pip install pdoc==0.3.2 pygments
 pdoc --html --html-dir ./doc --template-dir ${TRAVIS_BUILD_DIR}/ci_scripts/templates skopt
 
 # Copying to github pages
