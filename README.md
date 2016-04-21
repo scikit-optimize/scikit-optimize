@@ -6,11 +6,16 @@ The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 [![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
 
+## Documentation
+
+- [Static documentation](https://scikit-optimize.github.io/)
+- Examples can be found under the [`examples/`](https://github.com/scikit-optimize/scikit-optimize/tree/master/examples) directory.
+
 ## Development
 
 The library is still experimental and under heavy development. 
 
-The dev version can be installed through:
+The development version can be installed through:
 ```
 git clone https://github.com/MechCoder/scikit-optimize.git
 cd scikit-optimize
