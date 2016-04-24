@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """A collection of benchmark problems."""
 
 import numpy as np
