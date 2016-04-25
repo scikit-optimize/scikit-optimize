@@ -18,8 +18,31 @@ class Categorical:
         rng = check_random_state(random_state)
         return self.values[rng.randint(len(self.values))]
 
-Discrete = randint
-Continous = uniform
+    @property
+    def low(self):
+        return min(self.values)
+
+    @property
+    def high(self):
+        return max(self.values)
+
+
+class Discrete:
+    def __init__(self, low, high):
+        self.low = low
+        self.high = high
+
+    def rvs(self, random_state=None):
+        return randint(self.low, self.high).rvs(random_state=random_state)
+
+
+class Continuous:
+    def __init__(self, low, high):
+        self.low = low
+        self.high = high
+
+    def rvs(self, random_state=None):
+        return uniform(self.low, self.high).rvs(random_state=random_state)
 
 
 def points(grid, random_state=None):
@@ -28,7 +51,7 @@ def points(grid, random_state=None):
 
     for sub_grid in grid:
         for k, v in sub_grid.items():
-            if isinstance(v, (Categorical, rv_frozen)):
+            if isinstance(v, (Categorical, Continuous, Discrete)):
                 pass
 
             elif len(v) > 2 or isinstance(v[0], str):
