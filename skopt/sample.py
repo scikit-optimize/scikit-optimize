@@ -13,36 +13,32 @@ from sklearn.utils.fixes import sp_version
 class Categorical:
     def __init__(self, *args):
         self.values = args
+        self.low = min(self.values)
+        self.high = max(self.values)
+        self._rvs = randint(0, len(self.values))
 
     def rvs(self, random_state=None):
-        rng = check_random_state(random_state)
-        return self.values[rng.randint(len(self.values))]
-
-    @property
-    def low(self):
-        return min(self.values)
-
-    @property
-    def high(self):
-        return max(self.values)
+        return self.values[self._rvs.rvs(random_state=random_state)]
 
 
 class Discrete:
     def __init__(self, low, high):
         self.low = low
         self.high = high
+        self._rvs = randint(self.low, self.high)
 
     def rvs(self, random_state=None):
-        return randint(self.low, self.high).rvs(random_state=random_state)
+        return self._rvs.rvs(random_state=random_state)
 
 
 class Continuous:
     def __init__(self, low, high):
         self.low = low
         self.high = high
+        self._rvs = uniform(self.low, self.high)
 
     def rvs(self, random_state=None):
-        return uniform(self.low, self.high).rvs(random_state=random_state)
+        return self._rvs.rvs(random_state=random_state)
 
 
 def points(grid, random_state=None):
@@ -60,9 +56,9 @@ def points(grid, random_state=None):
             # important to check for Integral first as int(3) is
             # also a Real but not the other way around
             elif isinstance(v[0], Integral):
-                sub_grid[k] = randint(*v)
+                sub_grid[k] = Discrete(*v)
             elif isinstance(v[0], Real):
-                sub_grid[k] = uniform(*v)
+                sub_grid[k] = Continuous(*v)
 
     rng = check_random_state(random_state)
 
