@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 
 from .learning import GradientBoostingQuantileRegressor
 from .utils import extract_bounds
-from .acquisition import gaussian_acquisition
+from .acquisition import gaussian_ei
 
 
 def _random_points(lower, upper, n_points=1, random_state=None):
@@ -123,8 +123,7 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
         x0 = _random_points(lower_bounds, upper_bounds,
                             n_points=n_points,
                             random_state=rng)
-        aq = gaussian_acquisition(x0, rgr, best_y, method="EI")
-        best = np.argmin(aq)
+        best = np.argmax(gaussian_ei(x0, rgr, best_y))
 
         Xi[i] = x0[best].ravel()
         yi[i] = func(x0[best])

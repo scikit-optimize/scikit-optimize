@@ -7,7 +7,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raise_message
 
-from skopt.acquisition import gaussian_acquisition
+from skopt.acquisition import _gaussian_acquisition
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3

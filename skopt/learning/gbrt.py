@@ -74,7 +74,8 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
             is_present_mask = np.in1d(std_quantiles, self.quantiles)
             if not np.all(is_present_mask):
                 raise ValueError(
-                    "return_std works only if the quan")
+                    "return_std works only if the quantiles during "
+                    "instantiation include 0.16, 0.5 and 0.84")
             low = self.regressors_[self.quantiles.index(0.16)].predict(X)
             high = self.regressors_[self.quantiles.index(0.84)].predict(X)
             mean = self.regressors_[self.quantiles.index(0.5)].predict(X)

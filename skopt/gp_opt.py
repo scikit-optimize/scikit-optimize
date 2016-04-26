@@ -10,7 +10,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern, ConstantKernel
 from sklearn.utils import check_random_state
 
-from .acquisition import gaussian_acquisition
+from .acquisition import _gaussian_acquisition
 from .utils import extract_bounds
 
 
@@ -21,7 +21,7 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     This is because lbfgs allows only 1-D input.
     """
     X = np.expand_dims(X, axis=0)
-    return gaussian_acquisition(X, model, y_opt, method, xi, kappa)
+    return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
 
 
 def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
@@ -155,7 +155,7 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
 
         if search == "sampling":
             X = lb + (ub - lb) * rng.rand(n_points, n_params)
-            values = gaussian_acquisition(
+            values = _gaussian_acquisition(
                 X=X, model=gp,  y_opt=np.min(yi), method=acq,
                 xi=xi, kappa=kappa)
             next_x = X[np.argmin(values)]
