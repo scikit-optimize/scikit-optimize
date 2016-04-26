@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raise_message
 
+from skopt.acquisition import gaussian_acquisition
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
@@ -14,36 +15,7 @@ from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
 from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.gbrt_opt import gbrt_minimize
-from skopt.gbrt_opt import _expected_improvement
 from skopt.utils import extract_bounds
-
-
-class ConstSurrogate:
-    def predict(self, X):
-        return np.tile([-1., 0.,1.], (X.shape[0], 1))
-
-def test_ei_fixed_surrogate():
-    # Uses a surrogate model that always returns -1, 0, 1
-    ei = _expected_improvement(np.asarray([10., 10.]),
-                               ConstSurrogate(),
-                               -0.5,
-                               xi=0.)
-
-    assert_almost_equal(ei, -0.1977966)
-
-
-def test_ei_api():
-    # check that it works with a vector as well
-    ei = _expected_improvement(np.array([[10., 10.],
-                                         [10., 10.],
-                                         [10., 10.],
-                                         [10., 10.]]),
-                               ConstSurrogate(),
-                               -0.5,
-                               xi=0.)
-
-    assert_array_almost_equal(ei, [-0.1977966] * 4)
-
 
 def test_no_iterations():
     assert_raise_message(ValueError, "at least one iteration",

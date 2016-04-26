@@ -7,7 +7,6 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 
-from skopt.gp_opt import acquisition
 from skopt.gp_opt import gp_minimize
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
@@ -42,14 +41,3 @@ def test_api():
     assert_array_less(np.tile([-5, 0], (20, 1)), res.x_iters)
 
     assert_raises(ValueError, gp_minimize, lambda x: x, [[-5, 10]])
-
-
-def test_acquisition_api():
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 2)
-    y = rng.randn(10)
-    gpr = GaussianProcessRegressor()
-    gpr.fit(X, y)
-
-    assert_array_equal(acquisition(X, gpr).shape, 10)
-    assert_raises(ValueError, acquisition, rng.rand(10), gpr)
