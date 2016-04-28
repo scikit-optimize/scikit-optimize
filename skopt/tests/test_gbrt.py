@@ -59,3 +59,7 @@ def test_gbrt_with_std():
     l, c, h = model.predict(X_).T
     assert_equal(l.shape, c.shape, h.shape)
     assert_equal(l.shape[0], X_.shape[0])
+
+    mean, std = model.predict(X_, return_std=True)
+    assert_array_equal(mean, c)
+    assert_array_equal(std, (h - l) / 2.0)

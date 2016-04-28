@@ -51,6 +51,32 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
         return self
 
-    def predict(self, X):
-        """Predict for each quantile."""
-        return np.asarray([rgr.predict(X) for rgr in self.regressors_]).T
+    def predict(self, X, return_std=False):
+        """Predict.
+
+        Predict X at every quantile if ``return_std`` is set to False.
+        If ``return_std`` is set to True, then return the mean
+        and the predicted standard deviation, which is approximated as
+        the (0.84th quantile - 0.16th quantile) divided by 2.0
+
+        Parameters
+        ----------
+        * `X` [array-like, shape=(n_samples, n_features):
+            where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        """
+        predicted_quantiles = np.asarray(
+            [rgr.predict(X) for rgr in self.regressors_])
+        if not return_std:
+            return predicted_quantiles.T
+        else:
+            std_quantiles = [0.16, 0.5, 0.84]
+            is_present_mask = np.in1d(std_quantiles, self.quantiles)
+            if not np.all(is_present_mask):
+                raise ValueError(
+                    "return_std works only if the quantiles during "
+                    "instantiation include 0.16, 0.5 and 0.84")
+            low = self.regressors_[self.quantiles.index(0.16)].predict(X)
+            high = self.regressors_[self.quantiles.index(0.84)].predict(X)
+            mean = self.regressors_[self.quantiles.index(0.5)].predict(X)
+            return mean, ((high - low) / 2.0)

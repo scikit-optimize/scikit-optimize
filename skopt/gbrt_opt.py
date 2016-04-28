@@ -10,42 +10,7 @@ from sklearn.utils import check_random_state
 
 from .learning import GradientBoostingQuantileRegressor
 from .utils import extract_bounds
-
-
-def _expected_improvement(X, surrogate, y_opt, xi=0.01):
-    """Evaluate expected improvement for `surrogate` model at `x`
-
-    Parameters
-    ----------
-    X : array-like
-        Values at which to evaluate the acquisition function.
-
-    y_opt: float, optional
-        The previous best value on which we want to improve.
-
-    xi: float, default 0.01
-        By how much must a new point improve over the previous best
-        value.
-    """
-    X = np.asarray(X)
-    if X.ndim == 1:
-        X = np.expand_dims(X, axis=0)
-
-    # low and high are assumed to be the 16% and 84% quantiles
-    low, mu, high = surrogate.predict(X).T
-    # approximate the std dev, if the pdf is gaussian this is exact
-    std = (high - low) / 2.
-
-    ei = np.zeros(len(mu))
-
-    mask = std > 0
-    improvement = y_opt - xi - mu[mask]
-    exploit = improvement * stats.norm.cdf(improvement / std[mask])
-    explore = std[mask] * stats.norm.pdf(improvement / std[mask])
-    ei[mask] = exploit + explore
-
-    ei = -ei # we are being used in a minimizer
-    return ei
+from .acquisition import gaussian_ei
 
 
 def _random_points(lower, upper, n_points=1, random_state=None):
@@ -158,8 +123,7 @@ def gbrt_minimize(func, bounds, base_estimator=None, maxiter=100,
         x0 = _random_points(lower_bounds, upper_bounds,
                             n_points=n_points,
                             random_state=rng)
-        aq = _expected_improvement(x0, rgr, best_y)
-        best = np.argmin(aq)
+        best = np.argmax(gaussian_ei(x0, rgr, best_y))
 
         Xi[i] = x0[best].ravel()
         yi[i] = func(x0[best])
