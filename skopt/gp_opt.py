@@ -3,7 +3,6 @@ import warnings
 
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
-from scipy.stats import norm
 
 from sklearn.base import clone
 from sklearn.gaussian_process import GaussianProcessRegressor

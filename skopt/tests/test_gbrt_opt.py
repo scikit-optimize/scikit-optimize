@@ -3,24 +3,22 @@ import numpy as np
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raise_message
 
-from skopt.acquisition import _gaussian_acquisition
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
-from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.gbrt_opt import gbrt_minimize
-from skopt.utils import extract_bounds
+
 
 def test_no_iterations():
     assert_raise_message(ValueError, "at least one iteration",
                          gbrt_minimize,
-                         branin, [[-5, 10], [0, 15]], maxiter=0, random_state=1)
+                         branin, [[-5, 10], [0, 15]], maxiter=0,
+                         random_state=1)
 
     assert_raise_message(ValueError, "at least one starting point",
                          gbrt_minimize,

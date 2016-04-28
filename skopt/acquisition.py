@@ -26,8 +26,6 @@ def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
     else:
         raise ValueError("Acquisition function not implemented.")
 
-    return values
-
 
 def gaussian_lcb(X, model, kappa=1.96):
     """
