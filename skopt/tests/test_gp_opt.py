@@ -1,7 +1,6 @@
 import numpy as np
 from itertools import product
 
-from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_less

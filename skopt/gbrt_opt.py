@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from scipy import stats
 from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone

@@ -12,8 +12,10 @@ from skopt.learning import GradientBoostingQuantileRegressor
 def truth(X):
     return 0.5 * np.sin(1.75*X[:, 0])
 
+
 def constant_noise(X):
     return np.ones_like(X)
+
 
 def sample_noise(X, std=0.2, noise=constant_noise,
                  random_state=None):
