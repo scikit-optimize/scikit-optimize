@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from skopt import gbrt_minimize
 from skopt.benchmarks import bench3
-from skopt.gbrt_opt import _expected_improvement
+from skopt.acquisition import gaussian_ei
 
 
 bounds = [[-1, 1]]
@@ -33,7 +33,7 @@ for n_iter in range(5):
 
     low, mu, high = model.predict(vals).T
     std = (high - low) / 2
-    acquis_values = _expected_improvement(vals, model, best_y[-1])
+    acquis_values = -gaussian_ei(vals, model, best_y[-1])
     acquis_values = acquis_values.ravel()
     posterior_mean = mu.ravel()
     posterior_std = std.ravel()
@@ -60,7 +60,7 @@ for n_iter in range(5):
                      label="EI values")
 
     min_x = best_xs[n_iter+1]
-    plt.plot(min_x, _expected_improvement(min_x, model, best_y[-1]),
+    plt.plot(min_x, -gaussian_ei(min_x, model, best_y[-1]),
              "ro", markersize=5, label="Next sample point")
     plt.ylim([-1.5, 1.0])
 
