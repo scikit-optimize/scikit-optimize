@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from skopt import gp_minimize
 from skopt.benchmarks import bench3
-from skopt.gp_opt import acquisition
+from skopt.acquisition import gaussian_lcb
 
 bounds = [[-1, 1]]
 x = np.linspace(-1, 1, 200)
@@ -31,7 +31,7 @@ for n_iter in range(5):
     best_x = best_xs[:n_iter+1]
 
     posterior_mean, posterior_std = gp_model.predict(vals, return_std=True)
-    acquis_values = acquisition(vals, gp_model, method="LCB")
+    acquis_values = gaussian_lcb(vals, gp_model)
     acquis_values = acquis_values.ravel()
     posterior_mean = posterior_mean.ravel()
     posterior_std = posterior_std.ravel()

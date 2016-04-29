@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 from skopt import gp_minimize
 from skopt.benchmarks import branin
-from skopt.gp_opt import acquisition
+from skopt.acquisition import gaussian_lcb
 
 fig = plt.gcf()
 plt.set_cmap("viridis")
@@ -48,7 +48,7 @@ gp_model = res.models[-1]
 opt_points = res['x_iters']
 
 posterior_mean, posterior_std = gp_model.predict(vals, return_std=True)
-acquis_values = acquisition(vals, gp_model, method="LCB")
+acquis_values = gaussian_lcb(vals, gp_model)
 acquis_values = acquis_values.reshape(100, 100)
 posterior_mean = posterior_mean.reshape(100, 100)
 posterior_std = posterior_std.reshape(100, 100)
