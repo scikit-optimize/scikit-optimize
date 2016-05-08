@@ -1,0 +1,69 @@
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+
+from skopt.parameter import sample_points
+from skopt.parameter import Uniform
+from skopt.parameter import Integer
+from skopt.parameter import Categorical
+
+
+def check_distribution(Dist, vals, random_val):
+    x = Dist(*vals)
+    assert_equal(x.rvs(random_state=1), random_val)
+
+
+def test_distributions():
+    yield (check_distribution, Uniform, (1., 4.), 2.668088018810296)
+    yield (check_distribution, Uniform, (1, 4), 2.668088018810296)
+    yield (check_distribution, Integer, (1, 4), 2)
+    yield (check_distribution, Integer, (1., 4.), 2)
+    yield (check_distribution, Categorical, ('a', 'b', 'c', 'd'), 'b')
+    yield (check_distribution, Categorical, (1., 2., 3., 4.), 2.)
+
+
+def test_simple_grid():
+    expected = [(2, 1), (1, 2), (2, 2), (2, 1), (1, 2)]
+
+    for i,p in enumerate(sample_points([(1, 3), (1, 4)],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
+
+
+def test_simple_categorical():
+    expected = [(2, 1), (1, 2), (2, 2), (2, 1), (1, 2)]
+
+    for i,p in enumerate(sample_points([Categorical(1, 2), (1, 4)],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
+
+
+def test_simple_integer():
+    expected = [(2, 1), (1, 2), (2, 2), (2, 1), (1, 2)]
+
+    for i,p in enumerate(sample_points([Categorical(1, 2), (1, 4)],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
+
+    for i,p in enumerate(sample_points([Categorical(1, 2), Integer(1, 4)],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
+
+
+def test_simple_uniform():
+    expected =[(2, 4.988739243755474), (1, 1.0004574992693795)]
+
+    for i,p in enumerate(sample_points([Categorical(1, 2), (1., 4.)],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
+
+    for i,p in enumerate(sample_points([Categorical(1, 2), Uniform(1, 4)],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
+
+
+def test_sub_grids():
+    expected = [('b', 4), ('b', 4), ('a', 1), ('b', 4), ('b', 4)]
+
+    for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 5))],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
