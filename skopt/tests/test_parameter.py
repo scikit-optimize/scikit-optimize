@@ -67,3 +67,20 @@ def test_sub_grids():
     for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 5))],
                                        len(expected), random_state=1)):
         assert_equal(p, expected[i])
+
+
+def test_categorical_transform():
+    categories = ['apple', 'orange', 'banana']
+    cat = Categorical(*categories)
+
+    # LabelEncoder sorts classes alphabetically -> banana == 1
+    assert_array_equal(cat.transform(['apple', 'banana']), [0, 1])
+    assert_array_equal(cat.inverse_transform([0, 1]), ['apple', 'banana'])
+
+
+def test_uniform_transform():
+    dist = Uniform(0, 10)
+    values = [9.1, 2.3]
+
+    assert_array_equal(dist.transform(values), values)
+    assert_array_equal(dist.inverse_transform(values), values)

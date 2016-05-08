@@ -6,18 +6,18 @@ from numbers import Real
 from scipy.stats.distributions import randint
 from scipy.stats.distributions import uniform
 
-from scipy.stats._distn_infrastructure import rv_frozen
+from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 
 class Distribution:
-    def transform(self, value):
-        """Transform `value` from original space into warped space."""
-        return value
-    def inverse_transform(self, value):
-        """Transform `value` from warped into original space."""
-        return value
+    def transform(self, values):
+        """Transform `values` from original into warped space."""
+        return values
+    def inverse_transform(self, values):
+        """Transform `values` from warped into original space."""
+        return values
 
 
 class Uniform(Distribution):
@@ -50,6 +50,8 @@ class Categorical(Distribution):
     def __init__(self, *categories):
         self.categories = categories
         self._rvs = randint(0, len(self.categories))
+        self._transformer = LabelEncoder()
+        self._transformer.fit(self.categories)
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
@@ -57,6 +59,12 @@ class Categorical(Distribution):
             return self.categories[choices]
         else:
             return [self.categories[choice] for choice in choices]
+
+    def transform(self, values):
+        return self._transformer.transform(values)
+
+    def inverse_transform(self, values):
+        return self._transformer.inverse_transform(values)
 
 
 def sample_points(grid, n_points=1, random_state=None):
