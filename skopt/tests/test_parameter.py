@@ -1,8 +1,11 @@
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
 
+from skopt.parameter import check_grid
 from skopt.parameter import sample_points
-from skopt.parameter import Uniform
+from skopt.parameter import Real
 from skopt.parameter import Integer
 from skopt.parameter import Categorical
 
@@ -13,8 +16,8 @@ def check_distribution(Dist, vals, random_val):
 
 
 def test_distributions():
-    yield (check_distribution, Uniform, (1., 4.), 2.668088018810296)
-    yield (check_distribution, Uniform, (1, 4), 2.668088018810296)
+    yield (check_distribution, Real, (1., 4.), 2.668088018810296)
+    yield (check_distribution, Real, (1, 4), 2.668088018810296)
     yield (check_distribution, Integer, (1, 4), 2)
     yield (check_distribution, Integer, (1., 4.), 2)
     yield (check_distribution, Categorical, ('a', 'b', 'c', 'd'), 'b')
@@ -29,43 +32,26 @@ def test_simple_grid():
         assert_equal(p, expected[i])
 
 
-def test_simple_categorical():
-    expected = [(2, 1), (1, 2), (2, 2), (2, 1), (1, 2)]
+def check_simple_grid(values, expected_rvs, dist_type):
+    grid = check_grid([values])
 
-    for i,p in enumerate(sample_points([Categorical(1, 2), (1, 4)],
-                                       len(expected), random_state=1)):
-        assert_equal(p, expected[i])
-
-
-def test_simple_integer():
-    expected = [(2, 1), (1, 2), (2, 2), (2, 1), (1, 2)]
-
-    for i,p in enumerate(sample_points([Categorical(1, 2), (1, 4)],
-                                       len(expected), random_state=1)):
-        assert_equal(p, expected[i])
-
-    for i,p in enumerate(sample_points([Categorical(1, 2), Integer(1, 4)],
-                                       len(expected), random_state=1)):
-        assert_equal(p, expected[i])
+    dist = grid[0][0]
+    rvs = dist.rvs(n_samples=2, random_state=1)
+    assert_true(isinstance(dist, dist_type))
+    assert_almost_equal(rvs, expected_rvs, decimal=3)
 
 
-def test_simple_uniform():
-    expected =[(2, 4.988739243755474), (1, 1.0004574992693795)]
-
-    for i,p in enumerate(sample_points([Categorical(1, 2), (1., 4.)],
-                                       len(expected), random_state=1)):
-        assert_equal(p, expected[i])
-
-    for i,p in enumerate(sample_points([Categorical(1, 2), Uniform(1, 4)],
-                                       len(expected), random_state=1)):
-        assert_equal(p, expected[i])
+def test_check_grid():
+    yield (check_simple_grid, (1, 4), [2, 1], Integer)
+    yield (check_simple_grid, (1., 4.), [2.668, 3.881], Real)
+    yield (check_simple_grid, (1, 2, 3), [2, 3], Categorical)
 
 
 def test_sub_grids():
-    expected = [('b', 4), ('b', 4), ('a', 1), ('b', 4), ('b', 4)]
+    expected = [('a', 1), ('a', 2), ('b', 5), ('b', 5), ('a', 1)]
 
-    for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 5))],
-                                       len(expected), random_state=1)):
+    for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
+                                       len(expected), random_state=3)):
         assert_equal(p, expected[i])
 
 
@@ -78,8 +64,8 @@ def test_categorical_transform():
     assert_array_equal(cat.inverse_transform([0, 1]), ['apple', 'banana'])
 
 
-def test_uniform_transform():
-    dist = Uniform(0, 10)
+def test_real_transform():
+    dist = Real(0, 10)
     values = [9.1, 2.3]
 
     assert_array_equal(dist.transform(values), values)
