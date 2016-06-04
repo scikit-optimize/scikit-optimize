@@ -15,6 +15,7 @@ from skopt.benchmarks import bench3
 from skopt.benchmarks import bench4
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
+from skopt.learning import RandomForestRegressor
 from skopt.tree_opt import gbrt_minimize
 from skopt.tree_opt import forest_minimize
 
@@ -23,7 +24,9 @@ MINIMIZERS = (partial(forest_minimize, base_estimator='dt'),
               partial(forest_minimize, base_estimator='et'),
               partial(forest_minimize, base_estimator='rf'),
               gbrt_minimize)
-
+SLOW_MINIMIZERS = (
+    partial(forest_minimize, acq_min="paramils",
+            base_estimator=RandomForestRegressor(random_state=0)),)
 
 def check_no_iterations(minimizer):
     assert_raise_message(ValueError, "Expected n_calls > 0",
@@ -44,7 +47,7 @@ def test_no_iterations():
 
 
 def test_one_iteration():
-    for minimizer in MINIMIZERS:
+    for minimizer in MINIMIZERS + SLOW_MINIMIZERS:
         assert_raise_message(ValueError,
                              "Expected n_calls >= 10",
                              minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
@@ -52,7 +55,7 @@ def test_one_iteration():
 
 
 def test_seven_iterations():
-    for minimizer in MINIMIZERS:
+    for minimizer in MINIMIZERS + SLOW_MINIMIZERS:
         result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
                            n_random_starts=3, n_calls=7,
                            random_state=1)
@@ -109,3 +112,14 @@ def test_tree_based_minimize():
                [(-5.0, 10.0), (0.0, 15.0)], 0.1, 100)
         yield (check_minimize, minimizer, hart6, -3.32,
                np.tile((0.0, 1.0), (6, 1)), 1.0, 25)
+
+
+def test_slow_minimize():
+    for minimizer in SLOW_MINIMIZERS:
+        yield (check_minimize, minimizer, bench1, 0., [(-2.0, 2.0)], 0.05, 25)
+        yield (check_minimize, minimizer, bench2, -5, [(-6.0, 6.0)], 0.05, 50)
+        yield (check_minimize, minimizer, bench3, -0.9, [(-2.0, 2.0)], 0.05, 50)
+        yield (check_minimize, minimizer, branin, 0.39,
+               [(-5.0, 10.0), (0.0, 15.0)], 0.1, 50)
+        yield (check_minimize, minimizer, hart6, -3.32,
+               np.tile((0.0, 1.0), (6, 1)), 1.0, 50)
