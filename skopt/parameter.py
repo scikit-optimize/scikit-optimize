@@ -141,7 +141,7 @@ class Real(Distribution):
             raise RuntimeError('%s is not a valid transformer.'%transformer)
 
         if prior == 'uniform':
-            self._rvs = uniform(self._low, self._high)
+            self._rvs = uniform(self._low, self._high - self._low)
         elif isinstance(prior, rv_frozen):
             self._rvs = prior
         else:

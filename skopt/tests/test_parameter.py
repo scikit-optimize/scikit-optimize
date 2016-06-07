@@ -19,8 +19,8 @@ def check_distribution(Dist, vals, random_val):
 
 def test_distributions():
     a = Real(1, 25)
-    yield (check_distribution, Real, (1., 4.), 2.668088018810296)
-    yield (check_distribution, Real, (1, 4), 2.668088018810296)
+    yield (check_distribution, Real, (1., 4.), 2.251066014107722)
+    yield (check_distribution, Real, (1, 4), 2.251066014107722)
     yield (check_distribution, Integer, (1, 4), 2)
     yield (check_distribution, Integer, (1., 4.), 2)
     yield (check_distribution, Categorical, ('a', 'b', 'c', 'd'), 'b')
@@ -34,9 +34,10 @@ def check_distribution_limits(value, lower_bound, upper_bound):
 
 def test_real():
     a = Real(1, 25)
-    for i in range(9):
+    for i in range(10):
         yield (check_distribution_limits, a.rvs(random_state=i), 1, 25)
-    assert_array_equal(a.rvs(random_state=0, n_samples=10).shape, (10))
+    random_values = a.rvs(random_state=0, n_samples=10)
+    assert_array_equal(random_values.shape, (10))
 
 
 # def test_categorical_transform():
