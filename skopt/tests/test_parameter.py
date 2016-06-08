@@ -2,7 +2,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_greater_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 
 from skopt.parameter import check_grid
@@ -18,7 +18,6 @@ def check_distribution(Dist, vals, random_val):
 
 
 def test_distributions():
-    a = Real(1, 25)
     yield (check_distribution, Real, (1., 4.), 2.251066014107722)
     yield (check_distribution, Real, (1, 4), 2.251066014107722)
     yield (check_distribution, Integer, (1, 4), 2)
@@ -29,7 +28,7 @@ def test_distributions():
 
 def check_distribution_limits(value, lower_bound, upper_bound):
     assert_less_equal(lower_bound, value)
-    assert_greater_equal(upper_bound, value)
+    assert_greater(upper_bound, value)
 
 
 def test_real():
@@ -38,6 +37,9 @@ def test_real():
         yield (check_distribution_limits, a.rvs(random_state=i), 1, 25)
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
+    a = Real(10**-5, 10**5)
+
+
 
 
 # def test_categorical_transform():

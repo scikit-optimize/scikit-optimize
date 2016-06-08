@@ -63,7 +63,7 @@ class Distribution:
     @abc.abstractmethod
     def rvs(self, n_samples=None, random_state=None):
         """
-        Sample points randomly.
+        Randomly sample points from the original space
         """
         return
 
@@ -113,15 +113,15 @@ class Real(Distribution):
         Parameters
         ----------
         * `low` [float]:
-            Lower bound of the parameter.
+            Lower bound of the parameter. (Inclusive)
 
         * `high` [float]:
-            Upper bound of the parameter.
+            Upper bound of the parameter. (Exclusive)
 
         * `prior` [string or rv_frozen, default='uniform']:
             Distribution to use when sampling random points for this parameter.
 
-        * `transformer` [instance of TransformerMixin, "identity", "log", "log10", default='identity']:
+        * `transformer` [string or fitted TransformerMixin, default='identity']:
             Transformer to convert between original and warped search space.
             Parameter values are always transformed before being handed to the
             optimizer.
@@ -197,7 +197,7 @@ class Integer(Distribution):
 
 
 class Categorical(Distribution):
-    def __init__(self, *categories, prior=None, transformer='labels'):
+    def __init__(self, *categories, prior=None, transformer='one-hot'):
         """Search space dimension that can take on categorical values.
 
         Parameters
@@ -212,7 +212,8 @@ class Categorical(Distribution):
         * `transformer` [string or fitted TransformerMixin, default 'onehot']:
             Transformer to convert between original and warped search space.
             Parameter values are always transformed before being handed to the
-            optimizer. Defaults to `OneHotEncoder`.
+            optimizer. Defaults to `CategoryTransform`
+            (OneHotEncoder of sklearn that can handle categorical variables).
         """
         self.categories = np.asarray(categories)
 
@@ -220,7 +221,6 @@ class Categorical(Distribution):
             self.transformer = CategoryTransform()
             self.transformer.fit(self.categories)
         elif transformer == 'labels':
-            # XXX Need a chain of transformers
             self.transformer = LabelEncoder()
             self.transformer.fit(self.categories)
         elif isinstance(transformer, TransformerMixin):
