@@ -150,7 +150,8 @@ class Real(Distribution):
                 "Got %s" % self._rvs)
 
     def rvs(self, n_samples=None, random_state=None):
-        return self._rvs.rvs(size=n_samples, random_state=random_state)
+        random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
+        return np.clip(random_vals, low, high)
 
 
 class Integer(Distribution):
@@ -193,7 +194,8 @@ class Integer(Distribution):
                 "Got %s" % self._rvs)
 
     def rvs(self, n_samples=None, random_state=None):
-        return self._rvs.rvs(size=n_samples, random_state=random_state)
+        random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
+        return np.clip(random_vals, low, high)
 
 
 class Categorical(Distribution):
