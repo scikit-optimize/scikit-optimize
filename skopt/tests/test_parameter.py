@@ -1,5 +1,8 @@
+import numpy as np
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater
@@ -26,7 +29,7 @@ def test_distributions():
     yield (check_distribution, Categorical, (1., 2., 3., 4.), 2.)
 
 
-def check_distribution_limits(value, lower_bound, upper_bound):
+def check_limits(value, lower_bound, upper_bound):
     assert_less_equal(lower_bound, value)
     assert_greater(upper_bound, value)
 
@@ -34,10 +37,26 @@ def check_distribution_limits(value, lower_bound, upper_bound):
 def test_real():
     a = Real(1, 25)
     for i in range(10):
-        yield (check_distribution_limits, a.rvs(random_state=i), 1, 25)
+        yield (check_limits, a.rvs(random_state=i), 1, 25)
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
+    assert_array_equal(a.transform(random_values), random_values)
+    assert_array_equal(a.inverse_transform(random_values), random_values)
 
+    log_uniform = Real(10**-5, 10**5, prior="log-uniform")
+    for i in range(10):
+        random_val = log_uniform.rvs(random_state=i)
+        yield (check_limits, random_val, 10**-5, 10**5)
+    random_values = log_uniform.rvs(random_state=0, n_samples=10)
+    assert_array_equal(random_values.shape, (10))
+    transformed_vals = log_uniform.transform(random_values)
+    assert_array_equal(transformed_vals, np.log10(random_values))
+    assert_array_almost_equal(
+        log_uniform.inverse_transform(transformed_vals), random_values)
+
+
+def test_integer():
+    a = Integer(1, 10)
 
 # def test_categorical_transform():
 #     categories = ['apple', 'orange', 'banana']

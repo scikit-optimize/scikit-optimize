@@ -39,26 +39,7 @@ class Log10(TransformerMixin):
         return 10**np.asarray(values)
 
 
-class Log(TransformerMixin):
-    """Natural logarithm transform."""
-    def fit(self, values):
-        return self
-
-    def transform(self, values):
-        return np.log(values)
-
-    def inverse_transform(self, values):
-        return np.exp(values)
-
-
 class Distribution:
-    def transform(self, values):
-        """Transform `values` from original into warped space."""
-        return self.transformer.transform(values)
-
-    def inverse_transform(self, values):
-        """Transform `values` from warped into original space."""
-        return self.transformer.inverse_transform(values)
 
     @abc.abstractmethod
     def rvs(self, n_samples=None, random_state=None):
@@ -66,6 +47,20 @@ class Distribution:
         Randomly sample points from the original space
         """
         return
+
+    @abc.abstractmethod
+    def transform(self, random_vals):
+        """
+        Transform points to a warped space.
+        """
+        return self.transformer.transform(random_vals)
+
+    @abc.abstractmethod
+    def inverse_transform(self, random_vals):
+        """
+        Transform points from a warped space.
+        """
+        return self.transformer.inverse_transform(random_vals)
 
 
 class CategoricalEncoder(TransformerMixin):
@@ -107,7 +102,7 @@ class CategoricalEncoder(TransformerMixin):
 
 
 class Real(Distribution):
-    def __init__(self, low, high, prior='uniform', transformer='identity'):
+    def __init__(self, low, high, prior='uniform'):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -118,39 +113,39 @@ class Real(Distribution):
         * `high` [float]:
             Upper bound of the parameter. (Exclusive)
 
-        * `prior` [string or rv_frozen, default='uniform']:
+        * `prior` ["uniform" or "log-uniform", default='uniform']:
             Distribution to use when sampling random points for this parameter.
+            If uniform, points are sampled uniformly between the lower and
+            upper bounds.
+            If log-uniform, points are sampled uniformly between log10(lower) and
+            log10(upper bounds)
         """
         self._low = low
         self._high = high
-
-        if transformer == 'identity':
-            self.transformer = Identity()
-        elif transformer == "log":
-            self.transformer = Log()
-        elif transformer == "log10":
-            self.transformer = Log10()
-        elif isinstance(transformer, TransformerMixin):
-            self.transformer = transformer
-        else:
-            raise RuntimeError('%s is not a valid transformer.'%transformer)
+        self.prior = prior
 
         if prior == 'uniform':
             self._rvs = uniform(self._low, self._high - self._low)
-        elif isinstance(prior, rv_frozen):
-            self._rvs = prior
+            self.transformer = Identity()
+        elif prior == "log-uniform":
+            self._rvs = uniform(
+                np.log10(self._low),
+                np.log10(self._high - self._low))
+            self.transformer = Log10()
         else:
             raise ValueError(
-                "prior should be either 'uniform' or a rv frozen object. "
+                "prior should be either 'uniform' or 'log-uniform' "
                 "Got %s" % self._rvs)
 
     def rvs(self, n_samples=None, random_state=None):
         random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
-        return np.clip(random_vals, self._low, self._high)
+        if self.prior == "log-uniform":
+            return np.exp(random_vals)
+        return random_vals
 
 
 class Integer(Distribution):
-    def __init__(self, low, high, prior='uniform', transformer='identity'):
+    def __init__(self, low, high):
         """Search space dimension that can take on integer values.
 
         Parameters
@@ -160,32 +155,14 @@ class Integer(Distribution):
 
         * `high` [float]
             Upper bound of the parameter.
-
-        * `prior` [string or rv_frozen, default='uniform']:
-            Distribution to use when sampling random points for this parameter.
         """
         self._low = low
         self._high = high
-
-        if transformer == 'identity':
-            self.transformer = Identity()
-        elif isinstance(transformer, TransformerMixin):
-            self.transformer = transformer
-        else:
-            raise RuntimeError('%s is not a valid transformer.'%transformer)
-
-        if prior == 'uniform':
-            self._rvs = randint(self._low, self._high)
-        elif isinstance(prior, rv_frozen):
-            self._rvs = prior
-        else:
-            raise ValueError(
-                "prior should be either 'uniform' or a rv frozen object. "
-                "Got %s" % self._rvs)
+        self._rvs = randint(self._low, self._high)
+        self.transformer = Identity()
 
     def rvs(self, n_samples=None, random_state=None):
-        random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
-        return np.clip(random_vals, self._low, self._high)
+        return self._rvs.rvs(size=n_samples, random_state=random_state)
 
 
 class Categorical(Distribution):
