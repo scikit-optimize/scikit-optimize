@@ -5,7 +5,7 @@ from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 
-from skopt.parameter import check_grid
+from skopt.parameter import _check_grid
 from skopt.parameter import sample_points
 from skopt.parameter import Real
 from skopt.parameter import Integer
@@ -37,9 +37,6 @@ def test_real():
         yield (check_distribution_limits, a.rvs(random_state=i), 1, 25)
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
-    a = Real(10**-5, 10**5)
-
-
 
 
 # def test_categorical_transform():
@@ -67,19 +64,19 @@ def test_real():
 #         assert_equal(p, expected[i])
 
 
-# def check_simple_grid(values, expected_rvs, dist_type):
-#     grid = check_grid([values])
+def check_simple_grid(values, expected_rvs, dist_type):
+    grid = _check_grid([values])
 
-#     dist = grid[0][0]
-#     rvs = dist.rvs(n_samples=2, random_state=1)
-#     assert_true(isinstance(dist, dist_type))
-#     assert_almost_equal(rvs, expected_rvs, decimal=3)
+    dist = grid[0][0]
+    rvs = dist.rvs(n_samples=2, random_state=1)
+    assert_true(isinstance(dist, dist_type))
+    assert_almost_equal(rvs, expected_rvs, decimal=3)
 
 
-# def test_check_grid():
-#     yield (check_simple_grid, (1, 4), [2, 1], Integer)
-#     yield (check_simple_grid, (1., 4.), [2.668, 3.881], Real)
-#     yield (check_simple_grid, (1, 2, 3), [2, 3], Categorical)
+def test_check_grid():
+    yield (check_simple_grid, (1, 4), [2, 1], Integer)
+    yield (check_simple_grid, (1., 4.), [2.251,  3.161], Real)
+    yield (check_simple_grid, (1, 2, 3), [2, 3], Categorical)
 
 
 # def test_sub_grids():
@@ -88,6 +85,3 @@ def test_real():
 #     for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
 #                                        len(expected), random_state=3)):
 #         assert_equal(p, expected[i])
-
-
-

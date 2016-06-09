@@ -120,11 +120,6 @@ class Real(Distribution):
 
         * `prior` [string or rv_frozen, default='uniform']:
             Distribution to use when sampling random points for this parameter.
-
-        * `transformer` [string or fitted TransformerMixin, default='identity']:
-            Transformer to convert between original and warped search space.
-            Parameter values are always transformed before being handed to the
-            optimizer.
         """
         self._low = low
         self._high = high
@@ -151,7 +146,7 @@ class Real(Distribution):
 
     def rvs(self, n_samples=None, random_state=None):
         random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
-        return np.clip(random_vals, low, high)
+        return np.clip(random_vals, self._low, self._high)
 
 
 class Integer(Distribution):
@@ -168,11 +163,6 @@ class Integer(Distribution):
 
         * `prior` [string or rv_frozen, default='uniform']:
             Distribution to use when sampling random points for this parameter.
-
-        * `transformer` [string or fitted TransformerMixin, default='identity']:
-            Transformer to convert between original and warped search space.
-            Parameter values are always transformed before being handed to the
-            optimizer.
         """
         self._low = low
         self._high = high
@@ -195,7 +185,7 @@ class Integer(Distribution):
 
     def rvs(self, n_samples=None, random_state=None):
         random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
-        return np.clip(random_vals, low, high)
+        return np.clip(random_vals, self._low, self._high)
 
 
 class Categorical(Distribution):
@@ -210,17 +200,11 @@ class Categorical(Distribution):
         * `prior` [array-like, shape=(categories,), default None]:
             Prior probabilities for each category. By default all categories
             are equally likely.
-
-        * `transformer` [string or fitted TransformerMixin, default 'onehot']:
-            Transformer to convert between original and warped search space.
-            Parameter values are always transformed before being handed to the
-            optimizer. Defaults to `CategoryTransform`
-            (OneHotEncoder of sklearn that can handle categorical variables).
         """
         self.categories = np.asarray(categories)
 
-        if transformer == 'onehot':
-            self.transformer = CategoryTransform()
+        if transformer == 'one-hot':
+            self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
         elif transformer == 'labels':
             self.transformer = LabelEncoder()
@@ -239,7 +223,7 @@ class Categorical(Distribution):
         return self.categories[choices]
 
 
-def check_grid(grid):
+def _check_grid(grid):
     # XXX how to detect [(1,2), (3., 5.)] and convert it to
     # XXX [[(1,2), (3., 5.)]] to support sub-grids
     if (isinstance(grid[0], Distribution) or
@@ -272,7 +256,30 @@ def check_grid(grid):
 
 
 def sample_points(grid, n_points=1, random_state=None):
-    grid_ = check_grid(grid)
+    """Sample points from the provided grid.
+
+    Parameters
+    ----------
+    * `grid` [array-like, shape=(n_parameters,)]:
+        Each parameter of the grid can be a
+
+        1. (upper_bound, lower_bound) tuple.
+        2. Instance of a Distribution object
+        3. list of categories.
+
+    * `n_points`: int
+        Number of parameters to be sampled from the grid.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    * `sampled_points`: [array-like,]
+       Points sampled from the grid.
+    """
+    grid_ = _check_grid(grid)
 
     rng = check_random_state(random_state)
 
