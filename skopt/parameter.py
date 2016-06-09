@@ -6,16 +6,14 @@ import numpy as np
 
 from scipy.stats.distributions import randint
 from scipy.stats.distributions import rv_discrete
-from scipy.stats.distributions import rv_frozen
 from scipy.stats.distributions import uniform
 
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 
-class Identity(TransformerMixin):
+class Identity(object):
     """Identity transform."""
     def fit(self, values):
         return self
@@ -27,7 +25,7 @@ class Identity(TransformerMixin):
         return values
 
 
-class Log10(TransformerMixin):
+class Log10(object):
     """Base 10 logarithm transform."""
     def fit(self, values):
         return self
@@ -48,14 +46,12 @@ class Distribution:
         """
         return
 
-    @abc.abstractmethod
     def transform(self, random_vals):
         """
         Transform points to a warped space.
         """
         return self.transformer.transform(random_vals)
 
-    @abc.abstractmethod
     def inverse_transform(self, random_vals):
         """
         Transform points from a warped space.
@@ -63,7 +59,7 @@ class Distribution:
         return self.transformer.inverse_transform(random_vals)
 
 
-class CategoricalEncoder(TransformerMixin):
+class CategoricalEncoder(object):
     """
     OneHotEncoder of scikit-learn that can handle categorical
     variables.
@@ -98,7 +94,7 @@ class CategoricalEncoder(TransformerMixin):
         """
         vals = np.asarray(values)
         vals = self._label.transform(vals).reshape(-1, 1)
-        return self._onehot.transform(vals).toarray()
+        return self._onehot.transform(vals).toarray().ravel()
 
 
 class Real(Distribution):
@@ -150,15 +146,15 @@ class Integer(Distribution):
 
         Parameters
         ----------
-        * `low` [float]
-            Lower bound of the parameter.
+        * `low` [float]:
+            Lower bound of the parameter. Inclusive
 
-        * `high` [float]
-            Upper bound of the parameter.
+        * `high` [float]:
+            Upper bound of the parameter. Inclusive
         """
         self._low = low
         self._high = high
-        self._rvs = randint(self._low, self._high)
+        self._rvs = randint(self._low, self._high + 1)
         self.transformer = Identity()
 
     def rvs(self, n_samples=None, random_state=None):
@@ -166,7 +162,7 @@ class Integer(Distribution):
 
 
 class Categorical(Distribution):
-    def __init__(self, *categories, prior=None, transformer='one-hot'):
+    def __init__(self, *categories, prior=None):
         """Search space dimension that can take on categorical values.
 
         Parameters
@@ -179,18 +175,8 @@ class Categorical(Distribution):
             are equally likely.
         """
         self.categories = np.asarray(categories)
-
-        if transformer == 'one-hot':
-            self.transformer = CategoricalEncoder()
-            self.transformer.fit(self.categories)
-        elif transformer == 'labels':
-            self.transformer = LabelEncoder()
-            self.transformer.fit(self.categories)
-        elif isinstance(transformer, TransformerMixin):
-            self.transformer = transformer
-        else:
-            raise RuntimeError('%s is not a valid transformer.'%transformer)
-
+        self.transformer = CategoricalEncoder()
+        self.transformer.fit(self.categories)
         if prior is None:
             prior = np.tile(1. / len(self.categories), len(self.categories))
         self._rvs = rv_discrete(values=(range(len(self.categories)), prior))

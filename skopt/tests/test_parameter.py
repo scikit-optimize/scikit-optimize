@@ -57,30 +57,35 @@ def test_real():
 
 def test_integer():
     a = Integer(1, 10)
-
-# def test_categorical_transform():
-#     categories = ['apple', 'orange', 'banana']
-#     cat = Categorical(*categories)
-
-#     # LabelEncoder sorts classes alphabetically -> banana == 1
-#     assert_array_equal(cat.transform(['apple', 'banana']), [0, 1])
-#     assert_array_equal(cat.inverse_transform([0, 1]), ['apple', 'banana'])
+    for i in range(10):
+        yield (check_limits, a.rvs(random_state=i), 1, 11)
+    random_values = a.rvs(random_state=0, n_samples=10)
+    assert_array_equal(random_values.shape, (10))
+    assert_array_equal(a.transform(random_values), random_values)
+    assert_array_equal(a.inverse_transform(random_values), random_values)
 
 
-# def test_real_transform():
-#     dist = Real(0, 10)
-#     values = [9.1, 2.3]
+def test_categorical_transform():
+    categories = ['apple', 'orange', 'banana']
+    cat = Categorical(*categories)
 
-#     assert_array_equal(dist.transform(values), values)
-#     assert_array_equal(dist.inverse_transform(values), values)
+    apple = [1.0, 0.0, 0.0]
+    orange = [0.,  0.,  1]
+    banana = [0.,  1.,  0.]
+    assert_array_equal(
+        cat.transform(categories), apple + orange + banana)
+    assert_array_equal(
+        cat.transform(["apple", "orange"]), apple + orange)
+    assert_array_equal(
+        cat.transform(['apple', 'banana']), apple + banana)
 
 
-# def test_simple_grid():
-#     expected = [(2, 1), (1, 2), (2, 2), (2, 1), (1, 2)]
+def test_simple_grid():
+    expected = [(2, 4), (1, 1), (2, 4), (2, 4), (1, 1)]
 
-#     for i, p in enumerate(sample_points([(1, 3), (1, 4)],
-#                                        len(expected), random_state=1)):
-#         assert_equal(p, expected[i])
+    for i, p in enumerate(sample_points([(1, 3), (1, 4)],
+                                       len(expected), random_state=1)):
+        assert_equal(p, expected[i])
 
 
 def check_simple_grid(values, expected_rvs, dist_type):
@@ -93,14 +98,14 @@ def check_simple_grid(values, expected_rvs, dist_type):
 
 
 def test_check_grid():
-    yield (check_simple_grid, (1, 4), [2, 1], Integer)
+    yield (check_simple_grid, (1, 4), [2, 4], Integer)
     yield (check_simple_grid, (1., 4.), [2.251,  3.161], Real)
     yield (check_simple_grid, (1, 2, 3), [2, 3], Categorical)
 
 
-# def test_sub_grids():
-#     expected = [('a', 1), ('a', 2), ('b', 5), ('b', 5), ('a', 1)]
+def test_sub_grids():
+    expected = [('a', 4), ('a', 2), ('b', 5), ('b', 6), ('a', 2)]
 
-#     for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
-#                                        len(expected), random_state=3)):
-#         assert_equal(p, expected[i])
+    for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
+                                       len(expected), random_state=3)):
+        assert_equal(p, expected[i])
