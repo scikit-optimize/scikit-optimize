@@ -1,20 +1,19 @@
 from collections import Sequence
+import abc
 import numbers
 
 import numpy as np
 
 from scipy.stats.distributions import randint
 from scipy.stats.distributions import rv_discrete
-from scipy.stats.distributions import rv_frozen
 from scipy.stats.distributions import uniform
 
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 
-class Identity(TransformerMixin):
+class Identity(object):
     """Identity transform."""
     def fit(self, values):
         return self
@@ -26,7 +25,7 @@ class Identity(TransformerMixin):
         return values
 
 
-class Log10(TransformerMixin):
+class Log10(object):
     """Base 10 logarithm transform."""
     def fit(self, values):
         return self
@@ -38,135 +37,135 @@ class Log10(TransformerMixin):
         return 10**np.asarray(values)
 
 
-class Log(TransformerMixin):
-    """Natural logarithm transform."""
-    def fit(self, values):
-        return self
+class Distribution:
 
-    def transform(self, values):
-        return np.log(values)
+    @abc.abstractmethod
+    def rvs(self, n_samples=None, random_state=None):
+        """
+        Randomly sample points from the original space
+        """
+        return
 
-    def inverse_transform(self, values):
-        return np.exp(values)
+    def transform(self, random_vals):
+        """
+        Transform points to a warped space.
+        """
+        return self.transformer.transform(random_vals)
+
+    def inverse_transform(self, random_vals):
+        """
+        Transform points from a warped space.
+        """
+        return self.transformer.inverse_transform(random_vals)
 
 
-class CategoryTransform(TransformerMixin):
+class CategoricalEncoder(object):
+    """
+    OneHotEncoder of scikit-learn that can handle categorical
+    variables.
+    """
     def __init__(self):
         """Convert labeled categories into one-hot encoded features"""
-        self._label = LabelEncoder()
-        self._onehot = OneHotEncoder()
+        self._lb = LabelBinarizer()
 
     def fit(self, values):
-        vals = np.asarray(values)
-        vals = self._label.fit_transform(vals)
-        self._onehot.fit(vals.reshape(-1, 1))
+        """
+        Fit a list or array of categories.
 
+        Parameters
+        ----------
+        * `values` [array-like]:
+            List of categories.
+        """
+        self._lb.fit(values)
+        self.n_classes = len(self._lb.classes_)
         return self
 
     def transform(self, values):
-        vals = np.asarray(values)
-        vals = self._label.transform(vals).reshape(-1, 1)
-        return self._onehot.transform(vals).toarray()
+        """
+        Transform an array of categories to a one-hot encoded representation.
+
+        Parameters
+        ----------
+        * `values` [array-like]:
+            List of categories.
+        """
+        return self._lb.transform(values).ravel()
 
     def inverse_transform(self, values):
-        vals = np.asarray(values)
-        vals = self._onehot.inverse_transform(vals)
-        return self._label.inverse_transform(vals)
-
-
-class Distribution:
-    def transform(self, values):
-        """Transform `values` from original into warped space."""
-        return self.transformer.transform(values)
-
-    def inverse_transform(self, values):
-        """Transform `values` from warped into original space."""
-        return self.transformer.inverse_transform(values)
-
-    def bounds(self):
-        return self.transform((self._low, self._high))
+        """
+        Transform points from a warped space.
+        """
+        values = np.reshape(values, (-1, self.n_classes))
+        return self._lb.inverse_transform(values)
 
 
 class Real(Distribution):
-    def __init__(self, low, high, prior='uniform', transformer='identity'):
+    def __init__(self, low, high, prior='uniform'):
         """Search space dimension that can take on any real value.
 
         Parameters
         ----------
-        low : float
-            Lower bound of the parameter.
+        * `low` [float]:
+            Lower bound of the parameter. (Inclusive)
 
-        high : float
-            Upper bound of the parameter.
+        * `high` [float]:
+            Upper bound of the parameter. (Exclusive)
 
-        prior : string or rv_frozen, default 'uniform'
+        * `prior` ["uniform" or "log-uniform", default='uniform']:
             Distribution to use when sampling random points for this parameter.
-
-        transformer: string or fitted TransformerMixin, default 'identity'
-            Transformer to convert between original and warped search space.
-            Parameter values are always transformed before being handed to the
-            optimizer.
+            If uniform, points are sampled uniformly between the lower and
+            upper bounds.
+            If log-uniform, points are sampled uniformly between log10(lower) and
+            log10(upper bounds)
         """
         self._low = low
         self._high = high
-
-        if transformer == 'identity':
-            self.transformer = Identity()
-        elif isinstance(transformer, TransformerMixin):
-            self.transformer = transformer
-        else:
-            raise RuntimeError('%s is not a valid transformer.'%transformer)
+        self.prior = prior
 
         if prior == 'uniform':
-            self._rvs = uniform(self._low, self._high)
-        elif isinstance(prior, rv_frozen):
-            self._rvs = prior
+            self._rvs = uniform(self._low, self._high - self._low)
+            self.transformer = Identity()
+        elif prior == "log-uniform":
+            self._rvs = uniform(
+                np.log10(self._low),
+                np.log10(self._high - self._low))
+            self.transformer = Log10()
+        else:
+            raise ValueError(
+                "prior should be either 'uniform' or 'log-uniform' "
+                "Got %s" % self._rvs)
 
     def rvs(self, n_samples=None, random_state=None):
-        return self._rvs.rvs(size=n_samples, random_state=random_state)
+        random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
+        if self.prior == "log-uniform":
+            return 10**random_vals
+        return random_vals
 
 
 class Integer(Distribution):
-    def __init__(self, low, high, prior='uniform', transformer='identity'):
+    def __init__(self, low, high):
         """Search space dimension that can take on integer values.
 
         Parameters
         ----------
-        low : float
-            Lower bound of the parameter.
+        * `low` [float]:
+            Lower bound of the parameter. Inclusive
 
-        high : float
-            Upper bound of the parameter.
-
-        prior : string or rv_frozen, default 'uniform'
-            Distribution to use when sampling random points for this parameter.
-
-        transformer: string or fitted TransformerMixin, default 'identity'
-            Transformer to convert between original and warped search space.
-            Parameter values are always transformed before being handed to the
-            optimizer.
+        * `high` [float]:
+            Upper bound of the parameter. Inclusive
         """
         self._low = low
         self._high = high
-
-        if transformer == 'identity':
-            self.transformer = Identity()
-        elif isinstance(transformer, TransformerMixin):
-            self.transformer = transformer
-        else:
-            raise RuntimeError('%s is not a valid transformer.'%transformer)
-
-        if prior == 'uniform':
-            self._rvs = randint(self._low, self._high)
-        elif isinstance(prior, rv_frozen):
-            self._rvs = prior
+        self._rvs = randint(self._low, self._high + 1)
+        self.transformer = Identity()
 
     def rvs(self, n_samples=None, random_state=None):
         return self._rvs.rvs(size=n_samples, random_state=random_state)
 
 
 class Categorical(Distribution):
-    def __init__(self, *categories, prior=None, transformer='labels'):
+    def __init__(self, *categories, prior=None):
         """Search space dimension that can take on categorical values.
 
         Parameters
@@ -174,42 +173,23 @@ class Categorical(Distribution):
         *categories :
             sequence of possible categories
 
-        prior : array-like, length `len(categories)`, default None
+        * `prior` [array-like, shape=(categories,), default None]:
             Prior probabilities for each category. By default all categories
             are equally likely.
-
-        transformer: string or fitted TransformerMixin, default 'labels'
-            Transformer to convert between original and warped search space.
-            Parameter values are always transformed before being handed to the
-            optimizer. Defaults to `LabelEncoder`.
         """
-        self.categories = categories
-
-        if transformer == 'labels':
-            self.transformer = LabelEncoder()
-            self.transformer.fit(self.categories)
-        elif transformer == 'onehot':
-            # XXX Need a chain of transformers
-            self.transformer = OneHotEncoder()
-            self.transformer.fit(self.categories)
-        elif isinstance(transformer, TransformerMixin):
-            self.transformer = transformer
-        else:
-            raise RuntimeError('%s is not a valid transformer.'%transformer)
-
+        self.categories = np.asarray(categories)
+        self.transformer = CategoricalEncoder()
+        self.transformer.fit(self.categories)
         if prior is None:
-            prior = np.tile(1./len(self.categories), len(self.categories))
+            prior = np.tile(1. / len(self.categories), len(self.categories))
         self._rvs = rv_discrete(values=(range(len(self.categories)), prior))
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
-        if n_samples is None:
-            return self.categories[choices]
-        else:
-            return [self.categories[choice] for choice in choices]
+        return self.categories[choices]
 
 
-def check_grid(grid):
+def _check_grid(grid):
     # XXX how to detect [(1,2), (3., 5.)] and convert it to
     # XXX [[(1,2), (3., 5.)]] to support sub-grids
     if (isinstance(grid[0], Distribution) or
@@ -242,7 +222,30 @@ def check_grid(grid):
 
 
 def sample_points(grid, n_points=1, random_state=None):
-    grid_ = check_grid(grid)
+    """Sample points from the provided grid.
+
+    Parameters
+    ----------
+    * `grid` [array-like, shape=(n_parameters,)]:
+        Each parameter of the grid can be a
+
+        1. (upper_bound, lower_bound) tuple.
+        2. Instance of a Distribution object
+        3. list of categories.
+
+    * `n_points`: int
+        Number of parameters to be sampled from the grid.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    * `sampled_points`: [array-like,]
+       Points sampled from the grid.
+    """
+    grid_ = _check_grid(grid)
 
     rng = check_random_state(random_state)
 
