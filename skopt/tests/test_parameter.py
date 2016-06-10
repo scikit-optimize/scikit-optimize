@@ -78,6 +78,12 @@ def test_categorical_transform():
         cat.transform(["apple", "orange"]), apple + orange)
     assert_array_equal(
         cat.transform(['apple', 'banana']), apple + banana)
+    assert_array_equal(cat.inverse_transform(apple + orange),
+                       ['apple', 'orange'])
+    assert_array_equal(cat.inverse_transform(apple + banana),
+                       ['apple', 'banana'])
+    ent_inverse = cat.inverse_transform(apple + orange + banana)
+    assert_array_equal(ent_inverse, categories)
 
 
 def test_simple_grid():

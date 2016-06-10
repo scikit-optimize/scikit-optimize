@@ -8,7 +8,7 @@ from scipy.stats.distributions import randint
 from scipy.stats.distributions import rv_discrete
 from scipy.stats.distributions import uniform
 
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
@@ -66,8 +66,7 @@ class CategoricalEncoder(object):
     """
     def __init__(self):
         """Convert labeled categories into one-hot encoded features"""
-        self._label = LabelEncoder()
-        self._onehot = OneHotEncoder()
+        self._lb = LabelBinarizer()
 
     def fit(self, values):
         """
@@ -78,9 +77,8 @@ class CategoricalEncoder(object):
         * `values` [array-like]:
             List of categories.
         """
-        vals = np.asarray(values)
-        vals = self._label.fit_transform(vals)
-        self._onehot.fit(vals.reshape(-1, 1))
+        self._lb.fit(values)
+        self.n_classes = len(self._lb.classes_)
         return self
 
     def transform(self, values):
@@ -92,9 +90,14 @@ class CategoricalEncoder(object):
         * `values` [array-like]:
             List of categories.
         """
-        vals = np.asarray(values)
-        vals = self._label.transform(vals).reshape(-1, 1)
-        return self._onehot.transform(vals).toarray().ravel()
+        return self._lb.transform(values).ravel()
+
+    def inverse_transform(self, values):
+        """
+        Transform points from a warped space.
+        """
+        values = np.reshape(values, (-1, self.n_classes))
+        return self._lb.inverse_transform(values)
 
 
 class Real(Distribution):
@@ -136,7 +139,7 @@ class Real(Distribution):
     def rvs(self, n_samples=None, random_state=None):
         random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
         if self.prior == "log-uniform":
-            return np.exp(random_vals)
+            return 10**random_vals
         return random_vals
 
 
