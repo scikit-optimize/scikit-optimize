@@ -89,7 +89,7 @@ def test_simple_grid():
     expected = [(2, 4), (1, 1), (2, 4), (2, 4), (1, 1)]
 
     for i, p in enumerate(sample_points([(1, 3), (1, 4)],
-                                       len(expected), random_state=1)):
+                                        len(expected), random_state=1)):
         assert_equal(p, expected[i])
 
 
@@ -111,8 +111,8 @@ def test_check_grid():
 def test_sub_grids():
     expected = [('a', 4), ('a', 2), ('b', 5), ('b', 6), ('a', 2)]
 
-    for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
-                                       len(expected), random_state=3)):
+    for i, p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
+                                        len(expected), random_state=3)):
         assert_equal(p, expected[i])
 
 
@@ -125,9 +125,24 @@ def test_sample_grid_consistency():
         [Real(0, 1)], random_state=0, n_points=10))
     real_points_four = list(sample_points(
         [(0.0, 1.0)], random_state=0, n_points=10))
+    real_points_five = list(sample_points(
+        [(0.0, 1.0, "uniform")], random_state=0, n_points=10))
     assert_array_equal(real_points_one, real_points_two)
     assert_array_equal(real_points_one, real_points_three)
     assert_array_equal(real_points_one, real_points_four)
+    assert_array_equal(real_points_one, real_points_five)
+
+    log_real_points_one = list(sample_points(
+        [Real(0.0, 1.0, prior="log-uniform")], random_state=0, n_points=10))
+    log_real_points_two = list(sample_points(
+        [Real(0.0, 1.0, prior="log-uniform")], random_state=0, n_points=10))
+    log_real_points_three = list(sample_points(
+        [Real(0, 1, prior="log-uniform")], random_state=0, n_points=10))
+    log_real_points_four = list(sample_points(
+        [(0.0, 1.0, "log-uniform")], random_state=0, n_points=10))
+    assert_array_equal(log_real_points_one, log_real_points_two)
+    assert_array_equal(log_real_points_one, log_real_points_three)
+    assert_array_equal(log_real_points_one, log_real_points_four)
 
     int_points_one = list(sample_points(
         [Integer(1.0, 5.0)], random_state=0, n_points=10))
