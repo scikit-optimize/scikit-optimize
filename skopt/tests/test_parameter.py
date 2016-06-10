@@ -2,7 +2,6 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater
@@ -51,7 +50,7 @@ def test_real():
     assert_array_equal(random_values.shape, (10))
     transformed_vals = log_uniform.transform(random_values)
     assert_array_equal(transformed_vals, np.log10(random_values))
-    assert_array_almost_equal(
+    assert_array_equal(
         log_uniform.inverse_transform(transformed_vals), random_values)
 
 
@@ -115,3 +114,32 @@ def test_sub_grids():
     for i,p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
                                        len(expected), random_state=3)):
         assert_equal(p, expected[i])
+
+
+def test_sample_grid_consistency():
+    real_points_one = list(sample_points(
+        [Real(0.0, 1.0)], random_state=0, n_points=10))
+    real_points_two = list(sample_points(
+        [Real(0.0, 1.0)], random_state=0, n_points=10))
+    real_points_three = list(sample_points(
+        [Real(0, 1)], random_state=0, n_points=10))
+    real_points_four = list(sample_points(
+        [(0.0, 1.0)], random_state=0, n_points=10))
+    assert_array_equal(real_points_one, real_points_two)
+    assert_array_equal(real_points_one, real_points_three)
+    assert_array_equal(real_points_one, real_points_four)
+
+    int_points_one = list(sample_points(
+        [Integer(1.0, 5.0)], random_state=0, n_points=10))
+    int_points_two = list(sample_points(
+        [(1, 5)], random_state=0, n_points=10))
+    int_points_three = list(sample_points(
+        [Integer(1.0, 5.0)], random_state=0, n_points=10))
+    assert_array_equal(int_points_one, int_points_two)
+    assert_array_equal(int_points_three, int_points_two)
+
+    cat_points_one = list(sample_points(
+        [Categorical("a", "b", "c")], random_state=0, n_points=10))
+    cat_points_two = list(sample_points(
+        [("a", "b", "c")], random_state=0, n_points=10))
+    assert_array_equal(cat_points_one, cat_points_two)
