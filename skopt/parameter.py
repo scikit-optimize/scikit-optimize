@@ -1,5 +1,4 @@
 from collections import Sequence
-import abc
 import numbers
 
 import numpy as np
@@ -15,6 +14,7 @@ from sklearn.utils.fixes import sp_version
 
 class Identity(object):
     """Identity transform."""
+
     def fit(self, values):
         return self
 
@@ -27,6 +27,7 @@ class Identity(object):
 
 class Log10(object):
     """Base 10 logarithm transform."""
+
     def fit(self, values):
         return self
 
@@ -36,27 +37,6 @@ class Log10(object):
     def inverse_transform(self, values):
         return 10**np.asarray(values)
 
-
-class Distribution:
-
-    @abc.abstractmethod
-    def rvs(self, n_samples=None, random_state=None):
-        """
-        Randomly sample points from the original space
-        """
-        return
-
-    def transform(self, random_vals):
-        """
-        Transform points to a warped space.
-        """
-        return self.transformer.transform(random_vals)
-
-    def inverse_transform(self, random_vals):
-        """
-        Transform points from a warped space.
-        """
-        return self.transformer.inverse_transform(random_vals)
 
 
 class CategoricalEncoder(object):
@@ -100,8 +80,40 @@ class CategoricalEncoder(object):
         return self._lb.inverse_transform(values)
 
 
+class Distribution:
+    def rvs(self, n_samples=1, random_state=None):
+        """
+        Randomly sample points from the original space
+
+        Parameters
+        ----------
+        * `n_samples` [int or None]:
+            The number of samples to be drawn.
+
+        * `random_state` [int, RandomState instance, or None (default)]:
+            Set random state to something other than None for reproducible
+            results.
+        """
+        # Assume that `_rvs` samples in the warped space
+        rng = check_random_state(random_state)
+        random_vals = self._rvs.rvs(size=n_samples, random_state=rng)
+        return self.inverse_transform(random_vals)
+
+    def transform(self, random_vals):
+        """
+        Transform points to a warped space.
+        """
+        return self.transformer.transform(random_vals)
+
+    def inverse_transform(self, random_vals):
+        """
+        Transform points from a warped space.
+        """
+        return self.transformer.inverse_transform(random_vals)
+
+
 class Real(Distribution):
-    def __init__(self, low, high, prior='uniform'):
+    def __init__(self, low, high, prior="uniform"):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -116,31 +128,27 @@ class Real(Distribution):
             Distribution to use when sampling random points for this parameter.
             If uniform, points are sampled uniformly between the lower and
             upper bounds.
-            If log-uniform, points are sampled uniformly between log10(lower) and
-            log10(upper bounds)
+            If log-uniform, points are sampled uniformly between log10(lower)
+            and log10(upper bounds)
         """
         self._low = low
         self._high = high
         self.prior = prior
 
-        if prior == 'uniform':
+        if prior == "uniform":
             self._rvs = uniform(self._low, self._high - self._low)
             self.transformer = Identity()
+
         elif prior == "log-uniform":
             self._rvs = uniform(
                 np.log10(self._low),
                 np.log10(self._high - self._low))
             self.transformer = Log10()
+
         else:
             raise ValueError(
-                "prior should be either 'uniform' or 'log-uniform' "
-                "Got %s" % self._rvs)
-
-    def rvs(self, n_samples=None, random_state=None):
-        random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
-        if self.prior == "log-uniform":
-            return 10**random_vals
-        return random_vals
+                "Prior should be either 'uniform' or 'log-uniform', "
+                "got '%s'." % self._rvs)
 
 
 class Integer(Distribution):
@@ -160,9 +168,6 @@ class Integer(Distribution):
         self._rvs = randint(self._low, self._high + 1)
         self.transformer = Identity()
 
-    def rvs(self, n_samples=None, random_state=None):
-        return self._rvs.rvs(size=n_samples, random_state=random_state)
-
 
 class Categorical(Distribution):
     def __init__(self, *categories, prior=None):
@@ -173,7 +178,7 @@ class Categorical(Distribution):
         *categories :
             sequence of possible categories
 
-        * `prior` [array-like, shape=(categories,), default None]:
+        * `prior` [array-like, shape=(categories,), default=None]:
             Prior probabilities for each category. By default all categories
             are equally likely.
         """
@@ -193,13 +198,14 @@ def _check_grid(grid):
     # XXX how to detect [(1,2), (3., 5.)] and convert it to
     # XXX [[(1,2), (3., 5.)]] to support sub-grids
     if (isinstance(grid[0], Distribution) or
-        (isinstance(grid[0], Sequence)
-         and isinstance(grid[0][0], (numbers.Number, str)))):
+        (isinstance(grid[0], Sequence) and
+         isinstance(grid[0][0], (numbers.Number, str)))):
         grid = [grid]
 
     # create a copy of the grid that we can modify without
     # interfering with the caller's copy
     grid_ = []
+
     for sub_grid in grid:
         sub_grid_ = list(sub_grid)
         grid_.append(sub_grid_)
@@ -208,6 +214,11 @@ def _check_grid(grid):
             if isinstance(dist, Distribution):
                 pass
 
+            elif (len(dist) == 3 and
+                  isinstance(dist[0], numbers.Real) and
+                  isinstance(dist[2], str)):
+                sub_grid_[i] = Real(*dist)
+
             elif len(dist) > 2 or isinstance(dist[0], str):
                 sub_grid_[i] = Categorical(*dist)
 
@@ -215,6 +226,7 @@ def _check_grid(grid):
             # also a Real but not the other way around
             elif isinstance(dist[0], numbers.Integral):
                 sub_grid_[i] = Integer(*dist)
+
             elif isinstance(dist[0], numbers.Real):
                 sub_grid_[i] = Real(*dist)
 
@@ -230,8 +242,9 @@ def sample_points(grid, n_points=1, random_state=None):
         Each parameter of the grid can be a
 
         1. (upper_bound, lower_bound) tuple.
-        2. Instance of a Distribution object
-        3. list of categories.
+        2. (upper_bound, lower_bound, "prior") tuple.
+        3. Instance of a Distribution object
+        4. list of categories.
 
     * `n_points`: int
         Number of parameters to be sampled from the grid.
@@ -245,17 +258,17 @@ def sample_points(grid, n_points=1, random_state=None):
     * `sampled_points`: [array-like,]
        Points sampled from the grid.
     """
-    grid_ = _check_grid(grid)
-
+    grid = _check_grid(grid)
     rng = check_random_state(random_state)
 
     for n in range(n_points):
-        sub_grid = grid_[rng.randint(0, len(grid_))]
-
+        sub_grid = grid[rng.randint(0, len(grid))]
         params = []
+
         for dist in sub_grid:
             if sp_version < (0, 16):
                 params.append(dist.rvs())
             else:
                 params.append(dist.rvs(random_state=rng))
+
         yield tuple(params)
