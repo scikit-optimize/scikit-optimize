@@ -133,13 +133,16 @@ def test_sample_grid_consistency():
     assert_array_equal(real_points_one, real_points_five)
 
     log_real_points_one = list(sample_points(
-        [Real(0.0, 1.0, prior="log-uniform")], random_state=0, n_points=10))
+        [Real(10**-3.0, 10**3.0, prior="log-uniform")],
+        random_state=0, n_points=10))
     log_real_points_two = list(sample_points(
-        [Real(0.0, 1.0, prior="log-uniform")], random_state=0, n_points=10))
+        [Real(10**-3.0, 10**3.0, prior="log-uniform")],
+        random_state=0, n_points=10))
     log_real_points_three = list(sample_points(
-        [Real(0, 1, prior="log-uniform")], random_state=0, n_points=10))
+        [Real(10**-3, 10**3, prior="log-uniform")],
+        random_state=0, n_points=10))
     log_real_points_four = list(sample_points(
-        [(0.0, 1.0, "log-uniform")], random_state=0, n_points=10))
+        [(10**-3.0, 10**3.0, "log-uniform")], random_state=0, n_points=10))
     assert_array_equal(log_real_points_one, log_real_points_two)
     assert_array_equal(log_real_points_one, log_real_points_three)
     assert_array_equal(log_real_points_one, log_real_points_four)

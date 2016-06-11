@@ -81,12 +81,23 @@ class CategoricalEncoder(object):
 
 
 class Distribution:
-    def rvs(self, n_samples=None, random_state=None):
+    def rvs(self, n_samples=1, random_state=None):
         """
         Randomly sample points from the original space
+
+        Parameters
+        ----------
+        * `n_samples` [int or None]:
+            The number of samples to be drawn.
+
+        * `random_state` [int, RandomState instance, or None (default)]:
+            Set random state to something other than None for reproducible
+            results.
         """
-        random_vals = self._rvs.rvs(size=n_samples, random_state=random_state)
-        return self.transformer.inverse_transform(random_vals)
+        # Assume that `_rvs` samples in the warped space
+        rng = check_random_state(random_state)
+        random_vals = self._rvs.rvs(size=n_samples, random_state=rng)
+        return self.inverse_transform(random_vals)
 
     def transform(self, random_vals):
         """
@@ -194,7 +205,7 @@ def _check_grid(grid):
     # create a copy of the grid that we can modify without
     # interfering with the caller's copy
     grid_ = []
-    
+
     for sub_grid in grid:
         sub_grid_ = list(sub_grid)
         grid_.append(sub_grid_)
