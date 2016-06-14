@@ -63,16 +63,27 @@ class _CategoricalEncoder:
         ----------
         * `X` [array-like, shape=(n_samples,)]:
             List of categories.
+
+        Returns
+        -------
+        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+            The one-hot encoded categories.
         """
         return self._lb.transform(X)
 
     def inverse_transform(self, Xt):
-        """Transform points from a warped space.
+        """Inverse transform one-hot encoded categories back to their original
+           representation.
 
         Parameters
         ----------
         * `Xt` [array-like, shape=(n_samples, n_categories)]:
             One-hot encoded categories.
+
+        Returns
+        -------
+        * `X` [array-like, shape=(n_samples,)]:
+            The original categories.
         """
         Xt = np.asarray(Xt)
         return self._lb.inverse_transform(Xt)
@@ -98,11 +109,13 @@ class Dimension:
         return self.inverse_transform(samples)
 
     def transform(self, X):
-        """Transform values to a warped space."""
+        """Transform samples form the original space to a warped space."""
         return self.transformer.transform(X)
 
     def inverse_transform(self, Xt):
-        """Transform values from a warped space."""
+        """Inverse transform samples from the warped space back into the
+           original space.
+        """
         return self.transformer.inverse_transform(Xt)
 
     @property
@@ -194,7 +207,9 @@ class Integer(Dimension):
         self.transformer = _Identity()
 
     def inverse_transform(self, Xt):
-        """Transform points from a warped space."""
+        """Inverse transform samples from the warped space back into the
+           orignal space.
+        """
         return super(Integer, self).inverse_transform(Xt).astype(np.int)
 
     @property
@@ -246,6 +261,8 @@ class Categorical(Dimension):
 
 
 class Space:
+    """Search space."""
+
     def __init__(self, dimensions):
         """Initialize a search space from given specifications.
 
@@ -329,6 +346,21 @@ class Space:
         return rows
 
     def transform(self, X):
+        """Transform samples from the original space into a warped space.
+
+        Note: this transformation is expected to be used to project samples
+              in a space where numerical optimization is suited.
+
+        Parameters
+        ----------
+        * `X` [array-like, shape=(n_samples, n_dims)]:
+            The samples to transform.
+
+        Returns
+        -------
+        * `Xt` [array-like, shape=(n_samples, transformed_n_dims)]
+            The transformed samples.
+        """
         # Pack by dimension
         columns = []
         for dim in self.dimensions:
@@ -348,6 +380,19 @@ class Space:
         return Xt
 
     def inverse_transform(self, Xt):
+        """Inverse transform samples from the warped space back to the
+           original space.
+
+        Parameters
+        ----------
+        * `Xt` [array-like, shape=(n_samples, transformed_n_dims)]:
+            The samples to inverse transform.
+
+        Returns
+        -------
+        * `X` [array-like, shape=(n_samples, n_dims)]
+            The original samples.
+        """
         # Inverse transform
         columns = []
         start = 0
@@ -378,14 +423,17 @@ class Space:
 
     @property
     def n_dims(self):
+        """The dimensionality of the original space."""
         return sum([dim.size for dim in self.dimensions])
 
     @property
     def transformed_n_dims(self):
+        """The dimensionality of the warped space."""
         return sum([dim.transformed_size for dim in self.dimensions])
 
     @property
     def bounds(self):
+        """The dimension bounds, in the original space."""
         b = []
 
         for dim in self.dimensions:
@@ -398,6 +446,7 @@ class Space:
 
     @property
     def transformed_bounds(self):
+        """The dimension bounds, in the warped space."""
         b = []
 
         for dim in self.dimensions:

@@ -117,6 +117,7 @@ def test_space_consistency():
     assert_array_equal(s1, s2)
     assert_array_equal(s1, s3)
 
+    # Categoricals
     s1 = Space([Categorical("a", "b", "c")]).rvs(n_samples=10, random_state=0)
     s2 = Space([Categorical("a", "b", "c")]).rvs(n_samples=10, random_state=0)
     assert_array_equal(s1, s2)
