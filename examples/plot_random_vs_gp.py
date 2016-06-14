@@ -37,14 +37,14 @@ def compute_mean_validation_score(forest_params):
 
 # Bounds inspired by
 # http://scikit-learn.org/dev/auto_examples/model_selection/randomized_search.html#example-model-selection-randomized-search-py
-bounds = [(3, 50), (1, 12), (1, 12), (1, 12)]
+dimensions = [(3, 50), (1, 12), (1, 12), (1, 12)]
 best_dummy_scores = np.zeros((5, 100))
 best_gp_scores = np.zeros((5, 100))
 
 print("Doing a gp-based search for the best random forest hyperparameter.")
 t = time()
 gp_model = gp_minimize(
-    compute_mean_validation_score, bounds, maxiter=100,
+    compute_mean_validation_score, dimensions, maxiter=100,
     random_state=0,
     n_start=1
     )

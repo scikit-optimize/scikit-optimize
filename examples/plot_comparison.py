@@ -8,7 +8,7 @@ from skopt.benchmarks import branin
 from skopt.dummy_opt import dummy_minimize
 from skopt.gp_opt import gp_minimize
 
-bounds = [[-5, 10], [0, 15]]
+dimensions = [(-5.0, 10.0), (0.0, 15.0)]
 best_dummy_scores = np.zeros((5, 200))
 best_gp_scores = np.zeros((5, 200))
 n_iterations = range(1, 201)
@@ -17,14 +17,14 @@ for random_state in range(5):
     print("Doing a random search for the minimum.")
     t = time()
     dummy_model = dummy_minimize(
-        branin, bounds, maxiter=200, random_state=random_state)
+        branin, dimensions, maxiter=200, random_state=random_state)
     print(time() - t)
     print("Best score obtained, %0.4f" % dummy_model.fun)
 
     print("Doing a gp-based search for the minimum")
     t = time()
     gp_model = gp_minimize(
-        branin, bounds, maxiter=200, random_state=random_state, n_start=1)
+        branin, dimensions, maxiter=200, random_state=random_state, n_start=1)
     print(time() - t)
     print("Best score obtained, %0.4f" % gp_model.fun)
 

@@ -8,16 +8,15 @@ from skopt.acquisition import gaussian_ei
 
 plt.figure(figsize=(10, 10))
 plt.set_cmap("viridis")
-bounds = np.asarray([[-5, 10], [0, 15]])
+dimensions = [(-5.0, 10.0), (0.0, 15.0)]
 
 x1_values = np.linspace(-5, 10, 100)
 x2_values = np.linspace(0, 15, 100)
 x_ax, y_ax = np.meshgrid(x1_values, x2_values)
 vals = np.c_[x_ax.ravel(), y_ax.ravel()]
 
-
 res = gbrt_minimize(
-    branin, bounds, maxiter=200, random_state=1)
+    branin, dimensions, maxiter=200, random_state=1)
 
 model = res.models[-1]
 opt_points = res.x_iters
