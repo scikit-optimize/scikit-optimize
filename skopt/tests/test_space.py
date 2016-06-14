@@ -7,25 +7,25 @@ from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 
-from skopt.parameter import _check_grid
-from skopt.parameter import sample_points
-from skopt.parameter import Real
-from skopt.parameter import Integer
-from skopt.parameter import Categorical
+from skopt.space import check_space
+from skopt.space import sample_points
+from skopt.space import Real
+from skopt.space import Integer
+from skopt.space import Categorical
 
 
-def check_distribution(Dist, vals, random_val):
-    x = Dist(*vals)
+def check_dimension(Dimension, vals, random_val):
+    x = Dimension(*vals)
     assert_equal(x.rvs(random_state=1), random_val)
 
 
-def test_distributions():
-    yield (check_distribution, Real, (1., 4.), 2.251066014107722)
-    yield (check_distribution, Real, (1, 4), 2.251066014107722)
-    yield (check_distribution, Integer, (1, 4), 2)
-    yield (check_distribution, Integer, (1., 4.), 2)
-    yield (check_distribution, Categorical, ('a', 'b', 'c', 'd'), 'b')
-    yield (check_distribution, Categorical, (1., 2., 3., 4.), 2.)
+def test_dimensions():
+    yield (check_dimension, Real, (1., 4.), 2.251066014107722)
+    yield (check_dimension, Real, (1, 4), 2.251066014107722)
+    yield (check_dimension, Integer, (1, 4), 2)
+    yield (check_dimension, Integer, (1., 4.), 2)
+    yield (check_dimension, Categorical, ('a', 'b', 'c', 'd'), 'b')
+    yield (check_dimension, Categorical, (1., 2., 3., 4.), 2.)
 
 
 def check_limits(value, lower_bound, upper_bound):
@@ -69,14 +69,11 @@ def test_categorical_transform():
     cat = Categorical(*categories)
 
     apple = [1.0, 0.0, 0.0]
-    orange = [0.,  0.,  1]
-    banana = [0.,  1.,  0.]
-    assert_array_equal(
-        cat.transform(categories), apple + orange + banana)
-    assert_array_equal(
-        cat.transform(["apple", "orange"]), apple + orange)
-    assert_array_equal(
-        cat.transform(['apple', 'banana']), apple + banana)
+    orange = [0., 0., 1]
+    banana = [0., 1., 0.]
+    assert_array_equal(cat.transform(categories), apple + orange + banana)
+    assert_array_equal(cat.transform(["apple", "orange"]), apple + orange)
+    assert_array_equal(cat.transform(['apple', 'banana']), apple + banana)
     assert_array_equal(cat.inverse_transform(apple + orange),
                        ['apple', 'orange'])
     assert_array_equal(cat.inverse_transform(apple + banana),
@@ -85,7 +82,7 @@ def test_categorical_transform():
     assert_array_equal(ent_inverse, categories)
 
 
-def test_simple_grid():
+def test_simple_space():
     expected = [(2, 4), (1, 1), (2, 4), (2, 4), (1, 1)]
 
     for i, p in enumerate(sample_points([(1, 3), (1, 4)],
@@ -93,21 +90,21 @@ def test_simple_grid():
         assert_equal(p, expected[i])
 
 
-def check_simple_grid(values, expected_rvs, dist_type):
-    grid = _check_grid(values)
+def check_simple_space(values, expected_rvs, dist_type):
+    grid = check_space(values)
     dist = grid[0]
     rvs = dist.rvs(n_samples=2, random_state=1)
     assert_true(isinstance(dist, dist_type))
     assert_almost_equal(rvs, expected_rvs, decimal=3)
 
 
-def test_check_grid():
-    yield (check_simple_grid, [(1, 4)], [2, 4], Integer)
-    yield (check_simple_grid, [(1., 4.)], [2.251, 3.161], Real)
-    yield (check_simple_grid, [(1, 2, 3)], [2, 3], Categorical)
+def test_check_space():
+    yield (check_simple_space, [(1, 4)], [2, 4], Integer)
+    yield (check_simple_space, [(1., 4.)], [2.251, 3.161], Real)
+    yield (check_simple_space, [(1, 2, 3)], [2, 3], Categorical)
 
 
-def test_sample_grid_consistency():
+def test_space_consistency():
     real_points_one = list(sample_points(
         [Real(0.0, 1.0)], random_state=0, n_points=10))
     real_points_two = list(sample_points(
