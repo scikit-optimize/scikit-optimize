@@ -13,27 +13,27 @@ from sklearn.utils.fixes import sp_version
 class _Identity:
     """Identity transform."""
 
-    def fit(self, values):
+    def fit(self, X):
         return self
 
-    def transform(self, values):
-        return values
+    def transform(self, X):
+        return X
 
-    def inverse_transform(self, values):
-        return values
+    def inverse_transform(self, Xt):
+        return Xt
 
 
 class _Log10:
     """Base 10 logarithm transform."""
 
-    def fit(self, values):
+    def fit(self, X):
         return self
 
-    def transform(self, values):
-        return np.log10(values)
+    def transform(self, X):
+        return np.log10(X)
 
-    def inverse_transform(self, values):
-        return 10 ** np.asarray(values)
+    def inverse_transform(self, Xt):
+        return 10 ** np.asarray(Xt)
 
 
 class _CategoricalEncoder:
@@ -43,32 +43,39 @@ class _CategoricalEncoder:
         """Convert labeled categories into one-hot encoded features."""
         self._lb = LabelBinarizer()
 
-    def fit(self, values):
+    def fit(self, X):
         """Fit a list or array of categories.
 
         Parameters
         ----------
-        * `values` [array-like]:
+        * `X` [array-like, shape=(n_categories,)]:
             List of categories.
         """
-        self._lb.fit(values)
+        self._lb.fit(X)
         self.n_classes = len(self._lb.classes_)
+
         return self
 
-    def transform(self, values):
+    def transform(self, X):
         """Transform an array of categories to a one-hot encoded representation.
 
         Parameters
         ----------
-        * `values` [array-like]:
+        * `X` [array-like, shape=(n_samples,)]:
             List of categories.
         """
-        return self._lb.transform(values)
+        return self._lb.transform(X)
 
-    def inverse_transform(self, values):
-        """Transform points from a warped space."""
-        values = np.asarray(values)
-        return self._lb.inverse_transform(values)
+    def inverse_transform(self, Xt):
+        """Transform points from a warped space.
+
+        Parameters
+        ----------
+        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+            One-hot encoded categories.
+        """
+        Xt = np.asarray(Xt)
+        return self._lb.inverse_transform(Xt)
 
 
 class Dimension:
@@ -90,13 +97,29 @@ class Dimension:
         samples = self._rvs.rvs(size=n_samples, random_state=rng)
         return self.inverse_transform(samples)
 
-    def transform(self, random_vals):
-        """Transform points to a warped space."""
-        return self.transformer.transform(random_vals)
+    def transform(self, X):
+        """Transform values to a warped space."""
+        return self.transformer.transform(X)
 
-    def inverse_transform(self, random_vals):
-        """Transform points from a warped space."""
-        return self.transformer.inverse_transform(random_vals)
+    def inverse_transform(self, Xt):
+        """Transform values from a warped space."""
+        return self.transformer.inverse_transform(Xt)
+
+    @property
+    def size(self):
+        return 1
+
+    @property
+    def transformed_size(self):
+        return 1
+
+    @property
+    def bounds(self):
+        raise NotImplementedError
+
+    @property
+    def transformed_bounds(self):
+        raise NotImplementedError
 
 
 class Real(Dimension):
@@ -137,6 +160,21 @@ class Real(Dimension):
                 "Prior should be either 'uniform' or 'log-uniform', "
                 "got '%s'." % self._rvs)
 
+    @property
+    def bounds(self):
+        return (self._low, self._high)
+
+    @property
+    def transformed_bounds(self):
+        if self.prior == "uniform":
+            return (self._low, self._high)
+
+        elif self.prior == "log-uniform":
+            return (np.log10(self._low), np.log10(self._high))
+
+        else:
+            raise ValueError
+
 
 class Integer(Dimension):
     def __init__(self, low, high):
@@ -155,9 +193,17 @@ class Integer(Dimension):
         self._rvs = randint(self._low, self._high + 1)
         self.transformer = _Identity()
 
-    def inverse_transform(self, random_vals):
+    def inverse_transform(self, Xt):
         """Transform points from a warped space."""
-        return self.transformer.inverse_transform(random_vals).astype(np.int)
+        return super(Integer, self).inverse_transform(Xt).astype(np.int)
+
+    @property
+    def bounds(self):
+        return (self._low, self._high)
+
+    @property
+    def transformed_bounds(self):
+        return (self._low, self._high)
 
 
 class Categorical(Dimension):
@@ -186,6 +232,18 @@ class Categorical(Dimension):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
         return self.categories[choices]
 
+    @property
+    def transformed_size(self):
+        return len(self.categories)
+
+    @property
+    def bounds(self):
+        return self.categories
+
+    @property
+    def transformed_bounds(self):
+        return [(0.0, 1.0) for i in range(len(self.categories))]
+
 
 class Space:
     def __init__(self, dimensions):
@@ -205,30 +263,30 @@ class Space:
               `Categorical` dimensions), or
             - as a list of categories (for `Categorical` dimensions).
         """
-        space = []
+        _dimensions = []
 
         for dim in dimensions:
             if isinstance(dim, Dimension):
-                space.append(dim)
+                _dimensions.append(dim)
 
             elif (len(dim) == 3 and
                   isinstance(dim[0], numbers.Real) and
                   isinstance(dim[2], str)):
-                space.append(Real(*dim))
+                _dimensions.append(Real(*dim))
 
             elif len(dim) > 2 or isinstance(dim[0], str):
-                space.append(Categorical(*dim))
+                _dimensions.append(Categorical(*dim))
 
             elif isinstance(dim[0], numbers.Integral):
-                space.append(Integer(*dim))
+                _dimensions.append(Integer(*dim))
 
             elif isinstance(dim[0], numbers.Real):
-                space.append(Real(*dim))
+                _dimensions.append(Real(*dim))
 
             else:
                 raise ValueError("Invalid grid component (got %s)." % dim)
 
-        self.space_ = space
+        self.dimensions = _dimensions
 
     def rvs(self, n_samples=1, random_state=None):
         """Draw random samples.
@@ -252,7 +310,7 @@ class Space:
         # Draw
         columns = []
 
-        for dim in self.space_:
+        for dim in self.dimensions:
             if sp_version < (0, 16):
                 columns.append(dim.rvs(n_samples=n_samples))
             else:
@@ -263,7 +321,7 @@ class Space:
 
         for i in range(n_samples):
             r = []
-            for j in range(len(self.space_)):
+            for j in range(self.n_dims):
                 r.append(columns[j][i])
 
             rows.append(r)
@@ -273,16 +331,16 @@ class Space:
     def transform(self, X):
         # Pack by dimension
         columns = []
-        for dim in self.space_:
+        for dim in self.dimensions:
             columns.append([])
 
         for i in range(len(X)):
-            for j in range(len(self.space_)):
+            for j in range(self.n_dims):
                 columns[j].append(X[i][j])
 
         # Transform
-        for j in range(len(self.space_)):
-            columns[j] = self.space_[j].transform(columns[j])
+        for j in range(self.n_dims):
+            columns[j] = self.dimensions[j].transform(columns[j])
 
         # Repack as an array
         Xt = np.hstack([np.asarray(c).reshape(len(X), -1) for c in columns])
@@ -294,27 +352,58 @@ class Space:
         columns = []
         start = 0
 
-        for j in range(len(self.space_)):
-            dim = self.space_[j]
+        for j in range(self.n_dims):
+            dim = self.dimensions[j]
+            offset = dim.transformed_size
 
-            if isinstance(dim, Categorical):
-                offset = len(dim.categories)
+            if offset == 1:
+                columns.append(dim.inverse_transform(Xt[:, start]))
+            else:
                 columns.append(
                     dim.inverse_transform(Xt[:, start:start+offset]))
-                start += offset
 
-            else:
-                columns.append(dim.inverse_transform(Xt[:, start]))
-                start += 1
+            start += offset
 
         # Transpose
         rows = []
 
         for i in range(len(Xt)):
             r = []
-            for j in range(len(self.space_)):
+            for j in range(self.n_dims):
                 r.append(columns[j][i])
 
             rows.append(r)
 
         return rows
+
+    @property
+    def n_dims(self):
+        return sum([dim.size for dim in self.dimensions])
+
+    @property
+    def transformed_n_dims(self):
+        return sum([dim.transformed_size for dim in self.dimensions])
+
+    @property
+    def bounds(self):
+        b = []
+
+        for dim in self.dimensions:
+            if dim.size == 1:
+                b.append(dim.bounds)
+            else:
+                b.extend(dim.bounds)
+
+        return b
+
+    @property
+    def transformed_bounds(self):
+        b = []
+
+        for dim in self.dimensions:
+            if dim.transformed_size == 1:
+                b.append(dim.transformed_bounds)
+            else:
+                b.extend(dim.transformed_bounds)
+
+        return b
