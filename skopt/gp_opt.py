@@ -10,7 +10,7 @@ from sklearn.gaussian_process.kernels import Matern, ConstantKernel
 from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
-from .utils import extract_bounds
+from .space import Space
 
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
@@ -23,7 +23,7 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
 
 
-def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
+def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
                 kappa=1.96, search="sampling", maxiter=1000, n_points=500,
                 n_start=10, n_restarts_optimizer=5, random_state=None):
     """Bayesian optimization using Gaussian Processes.
@@ -47,9 +47,17 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
         Function to minimize. Should take a array of parameters and
         return the function values.
 
-    * `bounds` [array-like, shape=(n_parameters, 2)]:
-        - ``bounds[i][0]`` should give the lower bound of each parameter and
-        - ``bounds[i][1]`` should give the upper bound of each parameter.
+    * `dimensions` [list, shape=(n_dims,)]:
+        List of search space dimensions.
+        Each search dimension can be defined either as
+
+        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+          dimensions),
+        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+          dimensions),
+        - an instance of a `Dimension` object (for `Real`, `Integer` or
+          `Categorical` dimensions), or
+        - as a list of categories (for `Categorical` dimensions).
 
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
@@ -121,20 +129,19 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
     rng = check_random_state(random_state)
 
     # Bounds
-    n_params = len(bounds)
-    lb, ub = extract_bounds(bounds)
+    space = Space(dimensions)
 
     # Default GP
     if base_estimator is None:
         base_estimator = GaussianProcessRegressor(
             kernel=(ConstantKernel(1.0, (0.01, 1000.0)) *
-                    Matern(length_scale=np.ones(n_params),
-                           length_scale_bounds=[(0.01, 100)] * n_params,
+                    Matern(length_scale=np.ones(space.transformed_n_dims),
+                           length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
                            nu=2.5)),
             normalize_y=True, alpha=10e-6, random_state=random_state)
 
     # First points
-    Xi = lb + (ub - lb) * rng.rand(n_start, n_params)
+    Xi = space.rvs(n_samples=n_start, random_state=rng)
     yi = [func(x) for x in Xi]
     if np.ndim(yi) != 1:
         raise ValueError(
@@ -148,12 +155,13 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            gp.fit(Xi, yi)
+            gp.fit(space.transform(Xi), yi)
 
         models.append(gp)
 
         if search == "sampling":
-            X = lb + (ub - lb) * rng.rand(n_points, n_params)
+            X = space.transform(space.rvs(n_samples=n_points,
+                                          random_state=rng))
             values = _gaussian_acquisition(
                 X=X, model=gp,  y_opt=np.min(yi), method=acq,
                 xi=xi, kappa=kappa)
@@ -163,18 +171,22 @@ def gp_minimize(func, bounds, base_estimator=None, acq="LCB", xi=0.01,
             best = np.inf
 
             for j in range(n_restarts_optimizer):
-                x0 = lb + (ub - lb) * rng.rand(n_params)
+                x0 = space.transform(space.rvs(n_samples=1,
+                                               random_state=rng))[0]
 
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     x, a, _ = fmin_l_bfgs_b(
                         _acquisition, x0,
                         args=(gp, np.min(yi), acq, xi, kappa),
-                        bounds=bounds, approx_grad=True, maxiter=10)
+                        bounds=space.transformed_bounds,
+                        approx_grad=True, maxiter=10)
 
                 if a < best:
                     next_x, best = x, a
 
+        next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
+        print(next_x)
         next_y = func(next_x)
         Xi = np.vstack((Xi, next_x))
         yi.append(next_y)

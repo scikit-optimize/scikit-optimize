@@ -343,7 +343,7 @@ class Space:
 
             rows.append(r)
 
-        return rows
+        return np.asarray(rows)
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
@@ -375,7 +375,7 @@ class Space:
             columns[j] = self.dimensions[j].transform(columns[j])
 
         # Repack as an array
-        Xt = np.hstack([np.asarray(c).reshape(len(X), -1) for c in columns])
+        Xt = np.hstack([np.asarray(c).reshape((len(X), -1)) for c in columns])
 
         return Xt
 
@@ -419,7 +419,7 @@ class Space:
 
             rows.append(r)
 
-        return rows
+        return np.asarray(rows)
 
     @property
     def n_dims(self):

@@ -3,10 +3,10 @@ import numpy as np
 from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
-from .utils import extract_bounds
+from .space import Space
 
 
-def dummy_minimize(func, bounds, maxiter=1000, random_state=None):
+def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -15,9 +15,17 @@ def dummy_minimize(func, bounds, maxiter=1000, random_state=None):
         Function to minimize. Should take a array of parameters and
         return the function values.
 
-    * `bounds` [array-like, shape=(n_parameters, 2)]:
-        - ``bounds[i][0]`` should give the lower bound of each parameter and
-        - ``bounds[i][1]`` should give the upper bound of each parameter.
+    * `dimensions` [list, shape=(n_dims,)]:
+        List of search space dimensions.
+        Each search dimension can be defined either as
+
+        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+          dimensions),
+        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+          dimensions),
+        - an instance of a `Dimension` object (for `Real`, `Integer` or
+          `Categorical` dimensions), or
+        - as a list of categories (for `Categorical` dimensions).
 
     * `maxiter` [int, default=1000]:
         Number of iterations to find the minimum. In other words, the
@@ -43,16 +51,14 @@ def dummy_minimize(func, bounds, maxiter=1000, random_state=None):
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
     rng = check_random_state(random_state)
+    space = Space(dimensions)
+    X = space.rvs(n_samples=maxiter, random_state=rng)
 
-    n_params = len(bounds)
-    lb, ub = extract_bounds(bounds)
-
-    X = lb + (ub - lb) * rng.rand(maxiter, n_params)
     init_y = func(X[0])
     if not np.isscalar(init_y):
         raise ValueError(
             "The function to be optimized should return a scalar")
-    y = np.asarray([init_y] + [func(X[i]) for i in range(maxiter - 1)])
+    y = np.asarray([init_y] + [func(X[1 + i]) for i in range(maxiter - 1)])
 
     res = OptimizeResult()
     best = np.argmin(y)
