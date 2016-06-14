@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 
-class _Identity(object):
+class _Identity:
     """Identity transform."""
 
     def fit(self, values):
@@ -23,7 +23,7 @@ class _Identity(object):
         return values
 
 
-class _Log10(object):
+class _Log10:
     """Base 10 logarithm transform."""
 
     def fit(self, values):
@@ -36,7 +36,7 @@ class _Log10(object):
         return 10 ** np.asarray(values)
 
 
-class _CategoricalEncoder(object):
+class _CategoricalEncoder:
     """OneHotEncoder that can handle categorical variables."""
 
     def __init__(self):
@@ -75,7 +75,7 @@ class Dimension:
     """Base class for search space dimensions."""
 
     def rvs(self, n_samples=1, random_state=None):
-        """Randomly sample points.
+        """Draw random samples.
 
         Parameters
         ----------
@@ -88,8 +88,8 @@ class Dimension:
         """
         # Assume that `_rvs` samples in the warped space
         rng = check_random_state(random_state)
-        random_vals = self._rvs.rvs(size=n_samples, random_state=rng)
-        return self.inverse_transform(random_vals)
+        samples = self._rvs.rvs(size=n_samples, random_state=rng)
+        return self.inverse_transform(samples)
 
     def transform(self, random_vals):
         """Transform points to a warped space."""
@@ -163,10 +163,10 @@ class Categorical(Dimension):
 
         Parameters
         ----------
-        * `categories`:
+        * `categories` [list, shape=(n_categories,)]:
             Sequence of possible categories.
 
-        * `prior` [array-like, shape=(categories,), default=None]:
+        * `prior` [list, shape=(categories,), default=None]:
             Prior probabilities for each category. By default all categories
             are equally likely.
         """
@@ -184,89 +184,91 @@ class Categorical(Dimension):
         return self.categories[choices]
 
 
-def check_space(space):
-    """Check and validate a search space.
+class Space:
+    def __init__(self, dimensions):
+        """Initialize a search space from given specifications.
 
-    Parameters
-    ----------
-    * `space` [list, shape=(n_dims,)]:
-        List of search space dimensions.
-        Each search dimension can be defined as a
+        Parameters
+        ----------
+        * `dimensions` [list, shape=(n_dims,)]:
+            List of search space dimensions.
+            Each search dimension can be defined either as
 
-        1. `(upper_bound, lower_bound)` tuple (`Real` or `Integer`),
-        2. `(upper_bound, lower_bound, "prior")` tuple (`Real`),
-        3. instance of a `Dimension` object (`Real`, `Integer` or
-           `Categorical`),
-        4. list of categories (`Categorical`).
+            - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+              dimensions),
+            - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+              dimensions),
+            - an instance of a `Dimension` object (for `Real`, `Integer` or
+              `Categorical` dimensions), or
+            - as a list of categories (for `Categorical` dimensions).
+        """
+        space = []
 
-    Returns
-    -------
-    * `space` [list of `Dimension` objects]:
-        The list of `Dimension` objects corresponding to the provided
-        specifications.
-    """
-    space = list(space)
+        for dim in dimensions:
+            if isinstance(dim, Dimension):
+                space.append(dim)
 
-    for i, dim in enumerate(space):
-        if isinstance(dim, Dimension):
-            pass
+            elif (len(dim) == 3 and
+                  isinstance(dim[0], numbers.Real) and
+                  isinstance(dim[2], str)):
+                space.append(Real(*dim))
 
-        elif (len(dim) == 3 and
-              isinstance(dim[0], numbers.Real) and
-              isinstance(dim[2], str)):
-            space[i] = Real(*dim)
+            elif len(dim) > 2 or isinstance(dim[0], str):
+                space.append(Categorical(*dim))
 
-        elif len(dim) > 2 or isinstance(dim[0], str):
-            space[i] = Categorical(*dim)
+            elif isinstance(dim[0], numbers.Integral):
+                space.append(Integer(*dim))
 
-        elif isinstance(dim[0], numbers.Integral):
-            space[i] = Integer(*dim)
+            elif isinstance(dim[0], numbers.Real):
+                space.append(Real(*dim))
 
-        elif isinstance(dim[0], numbers.Real):
-            space[i] = Real(*dim)
-
-        else:
-            raise ValueError("Invalid grid component (got %s)." % dim)
-
-    return space
-
-
-def sample_points(space, n_points=1, random_state=None):
-    """Sample points from the provided grid.
-
-    Parameters
-    ----------
-    * `space` [list, shape=(n_dims,)]:
-        Each search dimension can be defined as a
-
-        1. `(upper_bound, lower_bound)` tuple (`Real` or `Integer`),
-        2. `(upper_bound, lower_bound, "prior")` tuple (`Real`),
-        3. instance of a `Dimension` object (`Real`, `Integer` or
-           `Categorical`),
-        4. list of categories (`Categorical`).
-
-    * `n_points`: int
-        Number of parameters to be sampled from the grid.
-
-    * `random_state` [int, RandomState instance, or None (default)]:
-        Set random state to something other than None for reproducible
-        results.
-
-    Returns
-    -------
-    * `sampled_points`: [array-like,]
-       Points sampled from the grid.
-    """
-    space = check_space(space)
-    rng = check_random_state(random_state)
-
-    for n in range(n_points):
-        params = []
-
-        for dim in space:
-            if sp_version < (0, 16):
-                params.append(dim.rvs())
             else:
-                params.append(dim.rvs(random_state=rng))
+                raise ValueError("Invalid grid component (got %s)." % dim)
 
-        yield tuple(params)
+        self.space_ = space
+
+    def rvs(self, n_samples=1, random_state=None):
+        """Draw random samples.
+
+        Parameters
+        ----------
+        * `n_samples` [int, default=1]:
+            Number of samples to be drawn from the space.
+
+        * `random_state` [int, RandomState instance, or None (default)]:
+            Set random state to something other than None for reproducible
+            results.
+
+        Returns
+        -------
+        * `points`: [array-like, shape=(n_points, n_dims)]
+           Points sampled from the space.
+        """
+        rng = check_random_state(random_state)
+
+        # Draw
+        points = []
+
+        for dim in self.space_:
+            if sp_version < (0, 16):
+                points.append(dim.rvs(n_samples=n_samples))
+            else:
+                points.append(dim.rvs(n_samples=n_samples, random_state=rng))
+
+        # Tranpose
+        points_tr = []
+
+        for i in range(n_samples):
+            p = []
+            for j in range(len(self.space_)):
+                p.append(points[j][i])
+
+            points_tr.append(p)
+
+        return points_tr
+
+    def transform(self, X):
+        pass
+
+    def inverse_transform(self, Xt):
+        pass
