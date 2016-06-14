@@ -127,8 +127,6 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
     rng = check_random_state(random_state)
-
-    # Bounds
     space = Space(dimensions)
 
     # Default GP
@@ -186,7 +184,6 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
                     next_x, best = x, a
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-        print(next_x)
         next_y = func(next_x)
         Xi = np.vstack((Xi, next_x))
         yi.append(next_y)
