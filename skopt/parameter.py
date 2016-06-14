@@ -195,42 +195,27 @@ class Categorical(Distribution):
 
 
 def _check_grid(grid):
-    # XXX how to detect [(1,2), (3., 5.)] and convert it to
-    # XXX [[(1,2), (3., 5.)]] to support sub-grids
-    if (isinstance(grid[0], Distribution) or
-        (isinstance(grid[0], Sequence) and
-         isinstance(grid[0][0], (numbers.Number, str)))):
-        grid = [grid]
+    grid = list(grid)
 
-    # create a copy of the grid that we can modify without
-    # interfering with the caller's copy
-    grid_ = []
+    for i, dist in enumerate(grid):
+        if isinstance(dist, Distribution):
+            pass
 
-    for sub_grid in grid:
-        sub_grid_ = list(sub_grid)
-        grid_.append(sub_grid_)
+        elif (len(dist) == 3 and
+              isinstance(dist[0], numbers.Real) and
+              isinstance(dist[2], str)):
+            grid[i] = Real(*dist)
 
-        for i, dist in enumerate(sub_grid_):
-            if isinstance(dist, Distribution):
-                pass
+        elif len(dist) > 2 or isinstance(dist[0], str):
+            grid[i] = Categorical(*dist)
 
-            elif (len(dist) == 3 and
-                  isinstance(dist[0], numbers.Real) and
-                  isinstance(dist[2], str)):
-                sub_grid_[i] = Real(*dist)
+        elif isinstance(dist[0], numbers.Integral):
+            grid[i] = Integer(*dist)
 
-            elif len(dist) > 2 or isinstance(dist[0], str):
-                sub_grid_[i] = Categorical(*dist)
+        elif isinstance(dist[0], numbers.Real):
+            grid[i] = Real(*dist)
 
-            # important to check for Integral first as int(3) is
-            # also a Real but not the other way around
-            elif isinstance(dist[0], numbers.Integral):
-                sub_grid_[i] = Integer(*dist)
-
-            elif isinstance(dist[0], numbers.Real):
-                sub_grid_[i] = Real(*dist)
-
-    return grid_
+    return grid
 
 
 def sample_points(grid, n_points=1, random_state=None):
@@ -262,10 +247,9 @@ def sample_points(grid, n_points=1, random_state=None):
     rng = check_random_state(random_state)
 
     for n in range(n_points):
-        sub_grid = grid[rng.randint(0, len(grid))]
         params = []
 
-        for dist in sub_grid:
+        for dist in grid:
             if sp_version < (0, 16):
                 params.append(dist.rvs())
             else:

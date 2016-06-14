@@ -94,26 +94,17 @@ def test_simple_grid():
 
 
 def check_simple_grid(values, expected_rvs, dist_type):
-    grid = _check_grid([values])
-
-    dist = grid[0][0]
+    grid = _check_grid(values)
+    dist = grid[0]
     rvs = dist.rvs(n_samples=2, random_state=1)
     assert_true(isinstance(dist, dist_type))
     assert_almost_equal(rvs, expected_rvs, decimal=3)
 
 
 def test_check_grid():
-    yield (check_simple_grid, (1, 4), [2, 4], Integer)
-    yield (check_simple_grid, (1., 4.), [2.251,  3.161], Real)
-    yield (check_simple_grid, (1, 2, 3), [2, 3], Categorical)
-
-
-def test_sub_grids():
-    expected = [('a', 4), ('a', 2), ('b', 5), ('b', 6), ('a', 2)]
-
-    for i, p in enumerate(sample_points([(['a'], (1, 4)), (['b'], (4, 6))],
-                                        len(expected), random_state=3)):
-        assert_equal(p, expected[i])
+    yield (check_simple_grid, [(1, 4)], [2, 4], Integer)
+    yield (check_simple_grid, [(1., 4.)], [2.251, 3.161], Real)
+    yield (check_simple_grid, [(1, 2, 3)], [2, 3], Categorical)
 
 
 def test_sample_grid_consistency():
