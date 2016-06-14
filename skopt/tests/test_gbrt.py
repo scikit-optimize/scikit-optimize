@@ -28,7 +28,7 @@ def sample_noise(X, std=0.2, noise=constant_noise,
 
 
 def test_gbrt_gaussian():
-    # estiamte quantiles of the normal distribution
+    # estimate quantiles of the normal distribution
     rng = np.random.RandomState(1)
     N = 10000
     X = np.ones((N, 1))

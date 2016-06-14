@@ -63,11 +63,11 @@ class _CategoricalEncoder:
         * `values` [array-like]:
             List of categories.
         """
-        return self._lb.transform(values).ravel()
+        return self._lb.transform(values)
 
     def inverse_transform(self, values):
         """Transform points from a warped space."""
-        values = np.reshape(values, (-1, self.n_classes))
+        values = np.asarray(values)
         return self._lb.inverse_transform(values)
 
 
@@ -86,7 +86,6 @@ class Dimension:
             Set random state to something other than None for reproducible
             results.
         """
-        # Assume that `_rvs` samples in the warped space
         rng = check_random_state(random_state)
         samples = self._rvs.rvs(size=n_samples, random_state=rng)
         return self.inverse_transform(samples)
@@ -130,7 +129,7 @@ class Real(Dimension):
         elif prior == "log-uniform":
             self._rvs = uniform(
                 np.log10(self._low),
-                np.log10(self._high - self._low))
+                np.log10(self._high) - np.log10(self._low))
             self.transformer = _Log10()
 
         else:
@@ -155,6 +154,10 @@ class Integer(Dimension):
         self._high = high
         self._rvs = randint(self._low, self._high + 1)
         self.transformer = _Identity()
+
+    def inverse_transform(self, random_vals):
+        """Transform points from a warped space."""
+        return self.transformer.inverse_transform(random_vals).astype(np.int)
 
 
 class Categorical(Dimension):
@@ -247,28 +250,71 @@ class Space:
         rng = check_random_state(random_state)
 
         # Draw
-        points = []
+        columns = []
 
         for dim in self.space_:
             if sp_version < (0, 16):
-                points.append(dim.rvs(n_samples=n_samples))
+                columns.append(dim.rvs(n_samples=n_samples))
             else:
-                points.append(dim.rvs(n_samples=n_samples, random_state=rng))
+                columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
 
-        # Tranpose
-        points_tr = []
+        # Transpose
+        rows = []
 
         for i in range(n_samples):
-            p = []
+            r = []
             for j in range(len(self.space_)):
-                p.append(points[j][i])
+                r.append(columns[j][i])
 
-            points_tr.append(p)
+            rows.append(r)
 
-        return points_tr
+        return rows
 
     def transform(self, X):
-        pass
+        # Pack by dimension
+        columns = []
+        for dim in self.space_:
+            columns.append([])
+
+        for i in range(len(X)):
+            for j in range(len(self.space_)):
+                columns[j].append(X[i][j])
+
+        # Transform
+        for j in range(len(self.space_)):
+            columns[j] = self.space_[j].transform(columns[j])
+
+        # Repack as an array
+        Xt = np.hstack([np.asarray(c).reshape(len(X), -1) for c in columns])
+
+        return Xt
 
     def inverse_transform(self, Xt):
-        pass
+        # Inverse transform
+        columns = []
+        start = 0
+
+        for j in range(len(self.space_)):
+            dim = self.space_[j]
+
+            if isinstance(dim, Categorical):
+                offset = len(dim.categories)
+                columns.append(
+                    dim.inverse_transform(Xt[:, start:start+offset]))
+                start += offset
+
+            else:
+                columns.append(dim.inverse_transform(Xt[:, start]))
+                start += 1
+
+        # Transpose
+        rows = []
+
+        for i in range(len(Xt)):
+            r = []
+            for j in range(len(self.space_)):
+                r.append(columns[j][i])
+
+            rows.append(r)
+
+        return rows

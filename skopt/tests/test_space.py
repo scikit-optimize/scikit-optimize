@@ -34,7 +34,7 @@ def check_limits(value, lower_bound, upper_bound):
 
 def test_real():
     a = Real(1, 25)
-    for i in range(10):
+    for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 1, 25)
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
@@ -42,7 +42,7 @@ def test_real():
     assert_array_equal(a.inverse_transform(random_values), random_values)
 
     log_uniform = Real(10**-5, 10**5, prior="log-uniform")
-    for i in range(10):
+    for i in range(50):
         random_val = log_uniform.rvs(random_state=i)
         yield (check_limits, random_val, 10**-5, 10**5)
     random_values = log_uniform.rvs(random_state=0, n_samples=10)
@@ -55,7 +55,7 @@ def test_real():
 
 def test_integer():
     a = Integer(1, 10)
-    for i in range(10):
+    for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 1, 11)
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
@@ -68,16 +68,17 @@ def test_categorical_transform():
     cat = Categorical(*categories)
 
     apple = [1.0, 0.0, 0.0]
-    orange = [0., 0., 1]
     banana = [0., 1., 0.]
-    assert_array_equal(cat.transform(categories), apple + orange + banana)
-    assert_array_equal(cat.transform(["apple", "orange"]), apple + orange)
-    assert_array_equal(cat.transform(["apple", "banana"]), apple + banana)
-    assert_array_equal(cat.inverse_transform(apple + orange),
+    orange = [0., 0., 1]
+
+    assert_array_equal(cat.transform(categories), [apple, orange, banana])
+    assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
+    assert_array_equal(cat.transform(["apple", "banana"]), [apple, banana])
+    assert_array_equal(cat.inverse_transform([apple, orange]),
                        ["apple", "orange"])
-    assert_array_equal(cat.inverse_transform(apple + banana),
+    assert_array_equal(cat.inverse_transform([apple, banana]),
                        ["apple", "banana"])
-    ent_inverse = cat.inverse_transform(apple + orange + banana)
+    ent_inverse = cat.inverse_transform([apple, orange, banana])
     assert_array_equal(ent_inverse, categories)
 
 
@@ -143,3 +144,22 @@ def test_space_consistency():
     s1 = Space([Categorical("a", "b", "c")]).rvs(n_samples=10, random_state=0)
     s2 = Space([Categorical("a", "b", "c")]).rvs(n_samples=10, random_state=0)
     assert_array_equal(s1, s2)
+
+
+def test_space():
+    space = Space([(0.0, 1.0), (-5, 5),
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform")])
+    assert_equal(len(space.space_), 4)
+    assert_true(isinstance(space.space_[0], Real))
+    assert_true(isinstance(space.space_[1], Integer))
+    assert_true(isinstance(space.space_[2], Categorical))
+    assert_true(isinstance(space.space_[3], Real))
+
+    samples = space.rvs(n_samples=10, random_state=1)
+    assert_equal(len(samples), 10)
+    assert_equal(len(samples[0]), 4)
+
+    samples_transformed = space.transform(samples)
+    assert_equal(samples_transformed.shape[0], len(samples))
+    assert_equal(samples_transformed.shape[1], 1 + 1 + 3 + 1)
+    assert_array_equal(samples, space.inverse_transform(samples_transformed))
