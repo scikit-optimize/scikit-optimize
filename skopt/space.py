@@ -30,10 +30,10 @@ class _Log10:
         return self
 
     def transform(self, X):
-        return np.log10(X)
+        return np.log10(np.asarray(X, dtype=np.float))
 
     def inverse_transform(self, Xt):
-        return 10 ** np.asarray(Xt)
+        return 10.0 ** np.asarray(Xt, dtype=np.float)
 
 
 class _CategoricalEncoder:
