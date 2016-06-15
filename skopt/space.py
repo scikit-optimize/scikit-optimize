@@ -182,11 +182,8 @@ class Real(Dimension):
         if self.prior == "uniform":
             return (self._low, self._high)
 
-        elif self.prior == "log-uniform":
+        else:  # self.prior == "log-uniform"
             return (np.log10(self._low), np.log10(self._high))
-
-        else:
-            raise ValueError
 
 
 class Integer(Dimension):
@@ -257,7 +254,7 @@ class Categorical(Dimension):
 
     @property
     def transformed_bounds(self):
-        return [(0.0, 1.0) for i in range(len(self.categories))]
+        return [(0.0, 1.0) for i in range(self.transformed_size)]
 
 
 class Space:
@@ -323,8 +320,6 @@ class Space:
            Points sampled from the space.
         """
         rng = check_random_state(random_state)
-
-        # Draw
         columns = []
 
         for dim in self.dimensions:
@@ -333,17 +328,7 @@ class Space:
             else:
                 columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
 
-        # Transpose
-        rows = []
-
-        for i in range(n_samples):
-            r = []
-            for j in range(self.n_dims):
-                r.append(columns[j][i])
-
-            rows.append(r)
-
-        return np.asarray(rows)
+        return np.transpose(columns)
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
@@ -393,7 +378,6 @@ class Space:
         * `X` [array-like, shape=(n_samples, n_dims)]
             The original samples.
         """
-        # Inverse transform
         columns = []
         start = 0
 
@@ -409,22 +393,12 @@ class Space:
 
             start += offset
 
-        # Transpose
-        rows = []
-
-        for i in range(len(Xt)):
-            r = []
-            for j in range(self.n_dims):
-                r.append(columns[j][i])
-
-            rows.append(r)
-
-        return np.asarray(rows)
+        return np.transpose(columns)
 
     @property
     def n_dims(self):
         """The dimensionality of the original space."""
-        return sum([dim.size for dim in self.dimensions])
+        return len(self.dimensions)
 
     @property
     def transformed_n_dims(self):

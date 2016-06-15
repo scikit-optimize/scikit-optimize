@@ -1,6 +1,5 @@
 import numpy as np
 
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less_equal
@@ -133,7 +132,7 @@ def test_space_api():
     assert_true(isinstance(space.dimensions[2], Categorical))
     assert_true(isinstance(space.dimensions[3], Real))
 
-    samples = space.rvs(n_samples=10, random_state=1)
+    samples = space.rvs(n_samples=10, random_state=0)
     assert_equal(len(samples), 10)
     assert_equal(len(samples[0]), 4)
 
