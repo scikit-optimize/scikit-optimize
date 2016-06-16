@@ -55,9 +55,9 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
           dimensions),
         - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
           dimensions),
-        - an instance of a `Dimension` object (for `Real`, `Integer` or
-          `Categorical` dimensions), or
-        - as a list of categories (for `Categorical` dimensions).
+        - as a list of categories (for `Categorical` dimensions), or
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
 
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.

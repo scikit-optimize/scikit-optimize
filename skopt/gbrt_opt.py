@@ -36,9 +36,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None, maxiter=100,
           dimensions),
         - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
           dimensions),
-        - an instance of a `Dimension` object (for `Real`, `Integer` or
-          `Categorical` dimensions), or
-        - as a list of categories (for `Categorical` dimensions).
+        - as a list of categories (for `Categorical` dimensions), or
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
 
     * `base_estimator` [`GradientBoostingQuantileRegressor`]:
         The regressor to use as surrogate model

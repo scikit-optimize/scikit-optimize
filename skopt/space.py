@@ -207,6 +207,8 @@ class Integer(Dimension):
         """Inverse transform samples from the warped space back into the
            orignal space.
         """
+        # The concatenation of all transformed dimensions makes Xt to be
+        # of type float, hence the required cast back to int.
         return super(Integer, self).inverse_transform(Xt).astype(np.int)
 
     @property
@@ -237,6 +239,8 @@ class Categorical(Dimension):
 
         if prior is None:
             prior = np.tile(1. / len(self.categories), len(self.categories))
+
+        # XXX check that sum(prior) == 1
 
         self._rvs = rv_discrete(values=(range(len(self.categories)), prior))
 
@@ -273,9 +277,9 @@ class Space:
               dimensions),
             - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
               dimensions),
-            - an instance of a `Dimension` object (for `Real`, `Integer` or
-              `Categorical` dimensions), or
-            - as a list of categories (for `Categorical` dimensions).
+            - as a list of categories (for `Categorical` dimensions), or
+            - an instance of a `Dimension` object (`Real`, `Integer` or
+              `Categorical`).
         """
         _dimensions = []
 
@@ -334,7 +338,7 @@ class Space:
         """Transform samples from the original space into a warped space.
 
         Note: this transformation is expected to be used to project samples
-              in a space where numerical optimization is suited.
+              into a suitable space for numerical optimization.
 
         Parameters
         ----------

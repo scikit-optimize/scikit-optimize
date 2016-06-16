@@ -23,9 +23,9 @@ def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
           dimensions),
         - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
           dimensions),
-        - an instance of a `Dimension` object (for `Real`, `Integer` or
-          `Categorical` dimensions), or
-        - as a list of categories (for `Categorical` dimensions).
+        - as a list of categories (for `Categorical` dimensions), or
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
 
     * `maxiter` [int, default=1000]:
         Number of iterations to find the minimum. In other words, the
@@ -58,7 +58,7 @@ def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
     if not np.isscalar(init_y):
         raise ValueError(
             "The function to be optimized should return a scalar")
-    y = np.asarray([init_y] + [func(X[1 + i]) for i in range(maxiter - 1)])
+    y = np.asarray([init_y] + [func(X[i]) for i in range(1, maxiter)])
 
     res = OptimizeResult()
     best = np.argmin(y)
