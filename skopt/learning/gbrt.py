@@ -12,22 +12,25 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
     This is a wrapper around `GradientBoostingRegressor`'s quantile
     regression that allows you to predict several `quantiles` in
     one go.
+
+    Parameters
+    ----------
+    * `quantiles` [array-like]:
+        Quantiles to predict. By default the 16, 50 and 84%
+        quantiles are predicted.
+
+    * `base_estimator` [GradientBoostingRegressor instance or None (default)]:
+        Quantile regressor used to make predictions. Only instances
+        of `GradientBoostingRegressor` are supported. Use this to change
+        the hyper-parameters of the estimator.
+
+    * `random-state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
     """
 
     def __init__(self, quantiles=[0.16, 0.5, 0.84], base_estimator=None,
                  random_state=None):
-        """Constructor.
-
-        Parameters
-        ----------
-        * `quantiles` [array-like]:
-            Quantiles to predict. By default the 16, 50 and 84%
-            quantiles are predicted.
-
-        * `random-state` [int, RandomState instance, or None (default)]:
-            Set random state to something other than None for reproducible
-            results.
-        """
         self.quantiles = quantiles
         self.random_state = random_state
         self.base_estimator = base_estimator
@@ -45,10 +48,6 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
             Target values (real numbers in regression)
         """
         rng = check_random_state(self.random_state)
-        #self.regressors_ = [GradientBoostingRegressor(loss='quantile',
-        #                                              alpha=a,
-        #                                              random_state=rng)
-        #                    for a in self.quantiles]
 
         if self.base_estimator is None:
             base_estimator = GradientBoostingRegressor(loss='quantile')
@@ -76,8 +75,8 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
     def predict(self, X, return_std=False):
         """Predict.
 
-        Predict X at every quantile if ``return_std`` is set to False.
-        If ``return_std`` is set to True, then return the mean
+        Predict `X` at every quantile if `return_std` is set to False.
+        If `return_std` is set to True, then return the mean
         and the predicted standard deviation, which is approximated as
         the (0.84th quantile - 0.16th quantile) divided by 2.0
 
