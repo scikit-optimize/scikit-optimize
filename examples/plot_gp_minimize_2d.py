@@ -29,7 +29,7 @@ from skopt.acquisition import gaussian_lcb
 
 fig = plt.gcf()
 plt.set_cmap("viridis")
-bounds = np.asarray([[-5, 10], [0, 15]])
+dimensions = [(-5.0, 10.0), (0.0, 15.0)]
 
 # True minima of the branin function
 min_x = [-np.pi, np.pi, 9.42478]
@@ -42,7 +42,7 @@ vals = np.c_[x_ax.ravel(), y_ax.ravel()]
 subplot_no = 221
 
 res = gp_minimize(
-    branin, bounds, search='lbfgs', maxiter=10, random_state=0,
+    branin, dimensions, search='lbfgs', maxiter=10, random_state=0,
     acq="LCB", n_start=1, n_restarts_optimizer=2)
 gp_model = res.models[-1]
 opt_points = res['x_iters']

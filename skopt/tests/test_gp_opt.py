@@ -22,17 +22,17 @@ def check_minimize(func, y_opt, bounds, search, acq, margin, maxiter):
 
 def test_gp_minimize():
     for search, acq in product(["sampling", "lbfgs"], ["LCB", "PI", "EI"]):
-        yield (check_minimize, bench1, 0., [[-2, 2]], search, acq, 0.05, 75)
-        yield (check_minimize, bench2, -5, [[-6, 6]], search, acq, 0.05, 75)
-        yield (check_minimize, bench3, -0.9, [[-2, 2]], search, acq, 0.05, 75)
-        yield (check_minimize, branin, 0.39, [[-5, 10], [0, 15]],
+        yield (check_minimize, bench1, 0., [(-2.0, 2.0)], search, acq, 0.05, 75)
+        yield (check_minimize, bench2, -5, [(-6.0, 6.0)], search, acq, 0.05, 75)
+        yield (check_minimize, bench3, -0.9, [(-2.0, 2.0)], search, acq, 0.05, 75)
+        yield (check_minimize, branin, 0.39, [(-5.0, 10), (0.0, 15.)],
                search, acq, 0.1, 100)
-        yield (check_minimize, hart6, -3.32, np.tile((0, 1), (6, 1)),
+        yield (check_minimize, hart6, -3.32, np.tile((0., 1.), (6., 1.)),
                search, acq, 1.0, 150)
 
 
 def test_api():
-    res = gp_minimize(branin, [[-5, 10], [0, 15]], random_state=0, maxiter=20)
+    res = gp_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0, maxiter=20)
     assert_array_equal(res.x.shape, (2,))
     assert_array_equal(res.x_iters.shape, (20, 2))
     assert_array_equal(res.func_vals.shape, (20,))

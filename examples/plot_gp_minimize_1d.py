@@ -11,7 +11,7 @@ from skopt import gp_minimize
 from skopt.benchmarks import bench3
 from skopt.acquisition import gaussian_lcb
 
-bounds = [[-1, 1]]
+dimensions = [(-1.0, 1.0)]
 x = np.linspace(-1, 1, 200)
 func_values = [bench3(xi) for xi in x]
 plt.figure(figsize=(100, 50))
@@ -20,7 +20,7 @@ col_no = 1
 row_no = 6
 
 res = gp_minimize(
-    bench3, bounds, search='lbfgs', maxiter=6,
+    bench3, dimensions, search='lbfgs', maxiter=6,
     random_state=1, acq='LCB', n_start=1,
     n_restarts_optimizer=10)
 best_xs = res.x_iters.ravel()

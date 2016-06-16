@@ -12,7 +12,7 @@ from skopt.benchmarks import bench3
 from skopt.acquisition import gaussian_ei
 
 
-bounds = [[-1, 1]]
+dimensions = [(-1.0, 1.0)]
 x = np.linspace(-1, 1, 200)
 func_values = [bench3(xi) for xi in x]
 plt.figure(figsize=(10, 5))
@@ -21,7 +21,7 @@ col_no = 1
 row_no = 6
 
 res = gbrt_minimize(
-    bench3, bounds, maxiter=6, n_start=1, random_state=1)
+    bench3, dimensions, maxiter=6, n_start=1, random_state=1)
 best_xs = res.x_iters.ravel()
 best_ys = res.func_vals.ravel()
 models = res.models

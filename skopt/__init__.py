@@ -23,7 +23,7 @@ Run the tests by executing `nosetests` in the top level directory.
 
 from . import benchmarks
 from . import learning
-from . import utils
+from . import space
 
 from .gp_opt import gp_minimize
 from .dummy_opt import dummy_minimize
@@ -34,7 +34,7 @@ __version__ = "0.0"
 
 __all__ = ("benchmarks",
            "learning",
-           "utils",
+           "space",
            "gp_minimize",
            "dummy_minimize",
            "gbrt_minimize")
