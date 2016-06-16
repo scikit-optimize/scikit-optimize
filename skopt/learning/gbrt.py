@@ -1,5 +1,6 @@
 import numpy as np
 
+from sklearn.base import clone
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
@@ -13,7 +14,8 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
     one go.
     """
 
-    def __init__(self, quantiles=[0.16, 0.5, 0.84], random_state=None):
+    def __init__(self, quantiles=[0.16, 0.5, 0.84], base_estimator=None,
+                 random_state=None):
         """Constructor.
 
         Parameters
@@ -28,6 +30,7 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
         """
         self.quantiles = quantiles
         self.random_state = random_state
+        self.base_estimator = base_estimator
 
     def fit(self, X, y):
         """Fit one regressor for each quantile.
@@ -42,12 +45,31 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
             Target values (real numbers in regression)
         """
         rng = check_random_state(self.random_state)
-        self.regressors_ = [GradientBoostingRegressor(loss='quantile',
-                                                      alpha=a,
-                                                      random_state=rng)
-                            for a in self.quantiles]
-        for rgr in self.regressors_:
-            rgr.fit(X, y)
+        #self.regressors_ = [GradientBoostingRegressor(loss='quantile',
+        #                                              alpha=a,
+        #                                              random_state=rng)
+        #                    for a in self.quantiles]
+
+        if self.base_estimator is None:
+            base_estimator = GradientBoostingRegressor(loss='quantile')
+        else:
+            base_estimator = self.base_estimator
+
+            if not isinstance(base_estimator, GradientBoostingRegressor):
+                raise ValueError('base_estimator has to be of type'
+                                 ' GradientBoostingRegressor.')
+
+            if not base_estimator.loss == 'quantile':
+                raise ValueError('base_estimator has to use quantile'
+                                 ' loss not %s' % base_estimator.loss)
+
+        self.regressors_ = []
+        for q in self.quantiles:
+            regressor = clone(base_estimator)
+            regressor.set_params(alpha=q, random_state=rng)
+            regressor.fit(X, y)
+
+            self.regressors_.append(regressor)
 
         return self
 
