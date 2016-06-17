@@ -173,6 +173,12 @@ class Real(Dimension):
                 "Prior should be either 'uniform' or 'log-uniform', "
                 "got '%s'." % self._rvs)
 
+    def inverse_transform(self, Xt):
+        """Inverse transform samples from the warped space back into the
+           orignal space.
+        """
+        return super(Real, self).inverse_transform(Xt).astype(np.float)
+
     @property
     def bounds(self):
         return (self._low, self._high)
@@ -351,12 +357,12 @@ class Space:
             The transformed samples.
         """
         # Pack by dimension
-        X = np.asarray(X)
+        X = np.asarray(X, dtype=object)
         X_transform = [
             self.dimensions[j].transform(X[:, j]).reshape(len(X), -1)
             for j in range(self.n_dims)]
 
-        return np.hstack(X_transform)
+        return np.hstack(X_transform).astype(np.float)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back to the
