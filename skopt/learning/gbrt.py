@@ -1,5 +1,6 @@
 import numpy as np
 
+from sklearn.base import clone
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
@@ -11,23 +12,28 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
     This is a wrapper around `GradientBoostingRegressor`'s quantile
     regression that allows you to predict several `quantiles` in
     one go.
+
+    Parameters
+    ----------
+    * `quantiles` [array-like]:
+        Quantiles to predict. By default the 16, 50 and 84%
+        quantiles are predicted.
+
+    * `base_estimator` [GradientBoostingRegressor instance or None (default)]:
+        Quantile regressor used to make predictions. Only instances
+        of `GradientBoostingRegressor` are supported. Use this to change
+        the hyper-parameters of the estimator.
+
+    * `random-state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
     """
 
-    def __init__(self, quantiles=[0.16, 0.5, 0.84], random_state=None):
-        """Constructor.
-
-        Parameters
-        ----------
-        * `quantiles` [array-like]:
-            Quantiles to predict. By default the 16, 50 and 84%
-            quantiles are predicted.
-
-        * `random-state` [int, RandomState instance, or None (default)]:
-            Set random state to something other than None for reproducible
-            results.
-        """
+    def __init__(self, quantiles=[0.16, 0.5, 0.84], base_estimator=None,
+                 random_state=None):
         self.quantiles = quantiles
         self.random_state = random_state
+        self.base_estimator = base_estimator
 
     def fit(self, X, y):
         """Fit one regressor for each quantile.
@@ -42,20 +48,35 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
             Target values (real numbers in regression)
         """
         rng = check_random_state(self.random_state)
-        self.regressors_ = [GradientBoostingRegressor(loss='quantile',
-                                                      alpha=a,
-                                                      random_state=rng)
-                            for a in self.quantiles]
-        for rgr in self.regressors_:
-            rgr.fit(X, y)
+
+        if self.base_estimator is None:
+            base_estimator = GradientBoostingRegressor(loss='quantile')
+        else:
+            base_estimator = self.base_estimator
+
+            if not isinstance(base_estimator, GradientBoostingRegressor):
+                raise ValueError('base_estimator has to be of type'
+                                 ' GradientBoostingRegressor.')
+
+            if not base_estimator.loss == 'quantile':
+                raise ValueError('base_estimator has to use quantile'
+                                 ' loss not %s' % base_estimator.loss)
+
+        self.regressors_ = []
+        for q in self.quantiles:
+            regressor = clone(base_estimator)
+            regressor.set_params(alpha=q, random_state=rng)
+            regressor.fit(X, y)
+
+            self.regressors_.append(regressor)
 
         return self
 
     def predict(self, X, return_std=False):
         """Predict.
 
-        Predict X at every quantile if ``return_std`` is set to False.
-        If ``return_std`` is set to True, then return the mean
+        Predict `X` at every quantile if `return_std` is set to False.
+        If `return_std` is set to True, then return the mean
         and the predicted standard deviation, which is approximated as
         the (0.84th quantile - 0.16th quantile) divided by 2.0
 

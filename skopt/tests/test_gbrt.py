@@ -1,8 +1,12 @@
 import numpy as np
 from scipy import stats
 
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 
@@ -35,6 +39,31 @@ def test_gbrt_gaussian():
     y = rng.normal(size=N)
 
     rgr = GradientBoostingQuantileRegressor()
+    rgr.fit(X, y)
+
+    estimates = rgr.predict(X)
+    assert_almost_equal(stats.norm.ppf(rgr.quantiles),
+                        np.mean(estimates, axis=0),
+                        decimal=2)
+
+
+def test_gbrt_base_estimator():
+    rng = np.random.RandomState(1)
+    N = 10000
+    X = np.ones((N, 1))
+    y = rng.normal(size=N)
+
+    base = RandomForestRegressor()
+    rgr = GradientBoostingQuantileRegressor(base_estimator=base)
+    assert_raise_message(ValueError, 'type GradientBoostingRegressor',
+                         rgr.fit, X, y)
+
+    base = GradientBoostingRegressor()
+    rgr = GradientBoostingQuantileRegressor(base_estimator=base)
+    assert_raise_message(ValueError, 'quantile loss', rgr.fit, X, y)
+
+    base = GradientBoostingRegressor(loss='quantile', n_estimators=20)
+    rgr = GradientBoostingQuantileRegressor(base_estimator=base)
     rgr.fit(X, y)
 
     estimates = rgr.predict(X)
