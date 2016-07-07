@@ -150,3 +150,16 @@ def test_space_api():
                       [(0.0, 1.0), (-5, 5), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
                        (np.log10(1.0), np.log10(5.0))]):
         assert_array_equal(b1, b2)
+
+
+def test_uniform_return_type():
+    s1 = Space([(0.0, 1.0)]).rvs(n_samples=3, random_state=0)
+    s2 = Space([(1, 2)]).rvs(n_samples=3, random_state=0)
+    s3 = Space([(0.0, 1.0), (1, 2)]).rvs(n_samples=3, random_state=0)
+    s4 = Space([(1, 3), ('a', 'b', 'c')]).rvs(n_samples=3, random_state=0)
+
+    assert_equal(s1.dtype, np.float)
+    assert_equal(s2.dtype, np.int)
+    assert_equal(s3.dtype, np.float)
+    # XXX ergh, not clear what this should be, but for sure string isn't ideal
+    assert_equal(s4.dtype, np.float)
