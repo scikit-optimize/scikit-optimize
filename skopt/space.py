@@ -338,7 +338,10 @@ class Space:
             else:
                 columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
 
-        return np.transpose(columns)
+        # Build a mixed type array, we have to name fields but can use
+        # an empty string to have names generated for us
+        dtypes = [('', col.dtype) for col in columns]
+        return np.array(list(zip(*columns)), dtype=dtypes)
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
