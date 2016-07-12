@@ -47,6 +47,7 @@ class RandomForestRegressor(sk_RandomForestRegressor):
 
             std /= len(self.estimators_)
             std -= mean ** 2.0
+            std[std < 0.0] = 0.0
             std = std ** 0.5
 
             return mean, std
@@ -98,6 +99,7 @@ class ExtraTreesRegressor(sk_ExtraTreesRegressor):
 
             std /= len(self.estimators_)
             std -= mean ** 2.0
+            std[std < 0.0] = 0.0
             std = std ** 0.5
 
             return mean, std
