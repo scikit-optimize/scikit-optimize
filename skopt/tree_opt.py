@@ -5,6 +5,7 @@ import numpy as np
 from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
+from sklearn.base import RegressorMixin
 from sklearn.utils import check_random_state
 
 from .acquisition import gaussian_ei
@@ -15,8 +16,8 @@ from .learning import RandomForestRegressor
 from .space import Space
 
 
-def _tree_minimize(func, dimensions, base_estimator, maxiter=100,
-                   n_points=1000, n_start=10, random_state=None):
+def _tree_minimize(func, dimensions, base_estimator, maxiter,
+                   n_points, n_start, random_state=None):
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -147,11 +148,11 @@ def gbrt_minimize(func, dimensions, base_estimator=None, maxiter=100,
                           random_state=random_state)
 
 
-def et_minimize(func, dimensions, base_estimator=None, maxiter=100,
-                n_points=20, n_start=10, random_state=None):
-    """Sequential optimisation using extra trees.
+def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
+                    n_points=100, n_start=10, random_state=None):
+    """Sequential optimisation using decision trees.
 
-    An extra trees regressor is used to model the expensive to evaluate
+    A tree based regression model is used to model the expensive to evaluate
     function `func`. The model is improved by sequentially evaluating
     the expensive function at the next best point. Thereby finding the
     minimum of `func` with as few evaluations as possible.
@@ -174,8 +175,19 @@ def et_minimize(func, dimensions, base_estimator=None, maxiter=100,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [`ExtraTreesRegressor`]:
-        The regressor to use as surrogate model
+    * `base_estimator` [string or `Regressor`, default=`"rf"`]:
+        The regressor to use as surrogate model. Can be either
+
+        - `"rf"` for random forest regressor
+        - `"et"` for extra trees regressor
+        - `"dt"` for single decision tree regressor
+        - instance of regressor with support for `with_std` in its predict
+          method
+
+        The predefined models are initilized with good defaults. If you
+        want to adjust the model parameters pass your own instance of
+        a regressor which returns the mean and standard deviation when
+        making predictions.
 
     * `maxiter` [int, default=100]:
         Number of iterations used to find the minimum. This corresponds
@@ -187,7 +199,7 @@ def et_minimize(func, dimensions, base_estimator=None, maxiter=100,
         for the first time. If `n_start > maxiter` this degrades to
         a random search for the minimum.
 
-    * `n_points` [int, default=20]:
+    * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
 
     * `random_state` [int, RandomState instance, or None (default)]:
@@ -212,160 +224,28 @@ def et_minimize(func, dimensions, base_estimator=None, maxiter=100,
     """
     rng = check_random_state(random_state)
 
-    # Default estimator
-    if base_estimator is None:
-        base_estimator = ExtraTreesRegressor(min_samples_leaf=5,
-                                             random_state=rng)
+    if isinstance(base_estimator, str):
+        if base_estimator not in ("rf", "et", "dt"):
+            raise ValueError("Valid values for base_estimator parameter"
+                             " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
 
-    return _tree_minimize(func, dimensions, base_estimator, maxiter=maxiter,
-                          n_points=n_points, n_start=n_start,
-                          random_state=random_state)
+        if base_estimator == "rf":
+            base_estimator = RandomForestRegressor(min_samples_leaf=10,
+                                                   random_state=rng)
 
+        elif base_estimator == "et":
+            base_estimator = ExtraTreesRegressor(min_samples_leaf=10,
+                                                 random_state=rng)
 
-def tree_minimize(func, dimensions, base_estimator=None, maxiter=100,
-                  n_points=20, n_start=10, random_state=None):
-    """Sequential optimisation using a single decision tree.
+        elif base_estimator == "dt":
+            base_estimator = DecisionTreeRegressor(min_samples_leaf=10,
+                                                   random_state=rng)
 
-    An single decision tree regressor is used to model the expensive
-    to evaluate function `func`. The model is improved by sequentially
-    evaluating the expensive function at the next best point. Thereby
-    finding the minimum of `func` with as few evaluations as possible.
-
-    Parameters
-    ----------
-    * `func` [callable]:
-        Function to minimize. Should take a array of parameters and
-        return the function values.
-
-    * `dimensions` [list, shape=(n_dims,)]:
-        List of search space dimensions.
-        Each search dimension can be defined either as
-
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
-          dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
-          dimensions),
-        - as a list of categories (for `Categorical` dimensions), or
-        - an instance of a `Dimension` object (`Real`, `Integer` or
-          `Categorical`).
-
-    * `base_estimator` [`DecisionTreeRegressor`]:
-        The regressor to use as surrogate model
-
-    * `maxiter` [int, default=100]:
-        Number of iterations used to find the minimum. This corresponds
-        to the total number of evaluations of `func`. If `n_start` > 0
-        only `maxiter - n_start` iterations are used.
-
-    * `n_start` [int, default=10]:
-        Number of random points to draw before fitting `base_estimator`
-        for the first time. If `n_start > maxiter` this degrades to
-        a random search for the minimum.
-
-    * `n_points` [int, default=20]:
-        Number of points to sample when minimizing the acquisition function.
-
-    * `random_state` [int, RandomState instance, or None (default)]:
-        Set random state to something other than None for reproducible
-        results.
-
-    Returns
-    -------
-    * `res` [`OptimizeResult`, scipy object]:
-        The optimization result returned as a OptimizeResult object.
-        Important attributes are:
-
-        - `x` [float]: location of the minimum.
-        - `fun` [float]: function value at the minimum.
-        - `models`: surrogate models used for each iteration.
-        - `x_iters` [array]: location of function evaluation for each
-           iteration.
-        - `func_vals` [array]: function value for each iteration.
-
-        For more details related to the OptimizeResult object, refer
-        http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
-    """
-    rng = check_random_state(random_state)
-
-    # Default estimator
-    if base_estimator is None:
-        base_estimator = DecisionTreeRegressor(min_samples_leaf=8,
-                                               random_state=rng)
-
-    return _tree_minimize(func, dimensions, base_estimator, maxiter=maxiter,
-                          n_points=n_points, n_start=n_start,
-                          random_state=random_state)
-
-
-def rf_minimize(func, dimensions, base_estimator=None, maxiter=100,
-                n_points=20, n_start=10, random_state=None):
-    """Sequential optimisation using a random forest.
-
-    An random forest regressor is used to model the expensive to
-    evaluate function `func`. The model is improved by sequentially
-    evaluating the expensive function at the next best point. Thereby
-    finding the minimum of `func` with as few evaluations as possible.
-
-    Parameters
-    ----------
-    * `func` [callable]:
-        Function to minimize. Should take a array of parameters and
-        return the function values.
-
-    * `dimensions` [list, shape=(n_dims,)]:
-        List of search space dimensions.
-        Each search dimension can be defined either as
-
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
-          dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
-          dimensions),
-        - as a list of categories (for `Categorical` dimensions), or
-        - an instance of a `Dimension` object (`Real`, `Integer` or
-          `Categorical`).
-
-    * `base_estimator` [`RandomForestRegressor`]:
-        The regressor to use as surrogate model
-
-    * `maxiter` [int, default=100]:
-        Number of iterations used to find the minimum. This corresponds
-        to the total number of evaluations of `func`. If `n_start` > 0
-        only `maxiter - n_start` iterations are used.
-
-    * `n_start` [int, default=10]:
-        Number of random points to draw before fitting `base_estimator`
-        for the first time. If `n_start > maxiter` this degrades to
-        a random search for the minimum.
-
-    * `n_points` [int, default=20]:
-        Number of points to sample when minimizing the acquisition function.
-
-    * `random_state` [int, RandomState instance, or None (default)]:
-        Set random state to something other than None for reproducible
-        results.
-
-    Returns
-    -------
-    * `res` [`OptimizeResult`, scipy object]:
-        The optimization result returned as a OptimizeResult object.
-        Important attributes are:
-
-        - `x` [float]: location of the minimum.
-        - `fun` [float]: function value at the minimum.
-        - `models`: surrogate models used for each iteration.
-        - `x_iters` [array]: location of function evaluation for each
-           iteration.
-        - `func_vals` [array]: function value for each iteration.
-
-        For more details related to the OptimizeResult object, refer
-        http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
-    """
-    rng = check_random_state(random_state)
-
-    # Default estimator
-    if base_estimator is None:
-        base_estimator = RandomForestRegressor(min_samples_leaf=10,
-                                               random_state=rng)
+    else:
+        if not isinstance(base_estimator, RegressorMixin):
+            raise ValueError("The base_estimator parameter has to either"
+                             " be a string or a regressor instance."
+                             " '%s' is neither." % base_estimator)
 
     return _tree_minimize(func, dimensions, base_estimator, maxiter=maxiter,
                           n_points=n_points, n_start=n_start,

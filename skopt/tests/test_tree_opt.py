@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 
 from sklearn.utils.testing import assert_equal
@@ -12,9 +14,7 @@ from skopt.benchmarks import bench3
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
 from skopt.tree_opt import gbrt_minimize
-from skopt.tree_opt import et_minimize
-from skopt.tree_opt import rf_minimize
-from skopt.tree_opt import tree_minimize
+from skopt.tree_opt import forest_minimize
 
 
 def check_no_iterations(minimizer):
@@ -31,9 +31,9 @@ def check_no_iterations(minimizer):
 
 def test_no_iterations():
     yield (check_no_iterations, gbrt_minimize)
-    yield (check_no_iterations, et_minimize)
-    yield (check_no_iterations, tree_minimize)
-    yield (check_no_iterations, rf_minimize)
+    yield (check_no_iterations, partial(forest_minimize, base_estimator='et'))
+    yield (check_no_iterations, partial(forest_minimize, base_estimator='dt'))
+    yield (check_no_iterations, forest_minimize)
 
 
 def test_one_iteration():
@@ -58,13 +58,27 @@ def test_seven_iterations():
     assert_almost_equal(result.fun, branin(result.x))
 
 
+def test_forest_minimize_api():
+    # invalid string value
+    assert_raise_message(ValueError, "Valid values for base_estimator parameter",
+                         forest_minimize, lambda x: 0., [],
+                         base_estimator='abc')
+
+    # not a string nor a Regressor instance
+    assert_raise_message(ValueError, "The base_estimator parameter has to either",
+                         forest_minimize, lambda x: 0., [],
+                         base_estimator=42)
+
+
 def check_minimize(minimizer, func, y_opt, dimensions, margin, maxiter):
     r = minimizer(func, dimensions, maxiter=maxiter, random_state=1)
     assert_less(r.fun, y_opt + margin)
 
 
 def test_tree_based_minimize():
-    for minimizer in (tree_minimize, et_minimize, rf_minimize, gbrt_minimize):
+    for minimizer in (partial(forest_minimize, base_estimator='dt'),
+                      partial(forest_minimize, base_estimator='et'),
+                      forest_minimize, gbrt_minimize):
         yield (check_minimize, minimizer, bench1, 0., [(-2.0, 2.0)], 0.05, 75)
         yield (check_minimize, minimizer, bench2, -5, [(-6.0, 6.0)], 0.05, 75)
         yield (check_minimize, minimizer, bench3, -0.9, [(-2.0, 2.0)], 0.05, 75)
