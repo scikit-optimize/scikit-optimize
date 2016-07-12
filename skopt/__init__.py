@@ -1,6 +1,6 @@
 """
-Scikit-Optimize, or `skopt`, is meant to be a simple and efficient library
-for black box optimization, accessible to everybody and reusable in various
+Scikit-Optimize, or `skopt`, is a simple and efficient library
+for model-based optimization, accessible to everybody and reusable in various
 contexts.
 
 The library is built on top of NumPy, SciPy and Scikit-Learn.
