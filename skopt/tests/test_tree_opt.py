@@ -71,4 +71,4 @@ def test_tree_based_minimize():
         yield (check_minimize, minimizer, branin, 0.39,
                [(-5.0, 10.0), (0.0, 15.0)], 0.1, 100)
         yield (check_minimize, minimizer, hart6, -3.32,
-               np.tile((0.0, 1.0), (6.0, 1.0)), 1.0, 200)
+               np.tile((0.0, 1.0), (6, 1)), 1.0, 200)

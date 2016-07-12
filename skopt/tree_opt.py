@@ -16,7 +16,7 @@ from .space import Space
 
 
 def _tree_minimize(func, dimensions, base_estimator, maxiter=100,
-                   n_points=20, n_start=10, random_state=None):
+                   n_points=1000, n_start=10, random_state=None):
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -50,7 +50,7 @@ def _tree_minimize(func, dimensions, base_estimator, maxiter=100,
 
         # `rgr` predicts constants for each leaf which means that the EI
         # has zero gradient over large distances. As a result we can not
-        # use gradient based optimisers like BFGS, use random sampling
+        # use gradient based optimisers like BFGS, so using random sampling
         # for the moment.
         x0 = space.transform(space.rvs(n_samples=n_points, random_state=rng))
         best = np.argmax(gaussian_ei(x0, rgr, best_y))
@@ -214,7 +214,8 @@ def et_minimize(func, dimensions, base_estimator=None, maxiter=100,
 
     # Default estimator
     if base_estimator is None:
-        base_estimator = ExtraTreesRegressor(random_state=rng)
+        base_estimator = ExtraTreesRegressor(min_samples_leaf=5,
+                                             random_state=rng)
 
     return _tree_minimize(func, dimensions, base_estimator, maxiter=maxiter,
                           n_points=n_points, n_start=n_start,
@@ -288,7 +289,8 @@ def tree_minimize(func, dimensions, base_estimator=None, maxiter=100,
 
     # Default estimator
     if base_estimator is None:
-        base_estimator = DecisionTreeRegressor(random_state=rng)
+        base_estimator = DecisionTreeRegressor(min_samples_leaf=8,
+                                               random_state=rng)
 
     return _tree_minimize(func, dimensions, base_estimator, maxiter=maxiter,
                           n_points=n_points, n_start=n_start,
@@ -362,7 +364,8 @@ def rf_minimize(func, dimensions, base_estimator=None, maxiter=100,
 
     # Default estimator
     if base_estimator is None:
-        base_estimator = RandomForestRegressor(random_state=rng)
+        base_estimator = RandomForestRegressor(min_samples_leaf=10,
+                                               random_state=rng)
 
     return _tree_minimize(func, dimensions, base_estimator, maxiter=maxiter,
                           n_points=n_points, n_start=n_start,
