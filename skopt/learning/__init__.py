@@ -1,6 +1,11 @@
-"""Machine learning extensions for black box optimisation."""
+"""Machine learning extensions for model-based optimisation."""
 
-from .gbrt import GradientBoostingQuantileRegressor
 from .tree import DecisionTreeRegressor
+from .forest import RandomForestRegressor
+from .forest import ExtraTreesRegressor
+from .gbrt import GradientBoostingQuantileRegressor
 
-__all__ = ("GradientBoostingQuantileRegressor", "DecisionTreeRegressor")
+__all__ = ("DecisionTreeRegressor",
+           "RandomForestRegressor",
+           "ExtraTreesRegressor",
+           "GradientBoostingQuantileRegressor")
