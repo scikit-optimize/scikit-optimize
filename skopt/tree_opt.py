@@ -6,6 +6,7 @@ from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
 from sklearn.base import RegressorMixin
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .acquisition import gaussian_ei
@@ -141,7 +142,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None, maxiter=100,
 
     # Default estimator
     if base_estimator is None:
-        base_estimator = GradientBoostingQuantileRegressor(random_state=rng)
+        gbrt = GradientBoostingRegressor(n_estimators=20, loss='quantile')
+        base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
+                                                           random_state=rng)
 
     return _tree_minimize(func, dimensions, base_estimator, maxiter=maxiter,
                           n_points=n_points, n_start=n_start,
@@ -226,7 +229,7 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
 
     if isinstance(base_estimator, str):
         if base_estimator not in ("rf", "et", "dt"):
-            raise ValueError("Valid values for base_estimator parameter"
+            raise ValueError("Valid values for the base_estimator parameter"
                              " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
 
         if base_estimator == "rf":

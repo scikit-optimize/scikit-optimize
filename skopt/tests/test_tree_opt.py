@@ -71,8 +71,14 @@ def test_forest_minimize_api():
 
 
 def check_minimize(minimizer, func, y_opt, dimensions, margin, maxiter):
-    r = minimizer(func, dimensions, maxiter=maxiter, random_state=1)
-    assert_less(r.fun, y_opt + margin)
+    success = 0
+    N = 3
+    for n in range(1, N + 1):
+        r = minimizer(func, dimensions, maxiter=maxiter, random_state=n)
+        if r.fun <= y_opt + margin:
+            success += 1
+
+    assert_less(N * 0.5, success)
 
 
 def test_tree_based_minimize():
