@@ -36,6 +36,8 @@ class DecisionTreeRegressor(sk_DecisionTreeRegressor):
                     "Expected impurity to be 'mse', got %s instead"
                     % self.criterion)
 
-            return mean, self.tree_.impurity[self.apply(X)] ** 0.5
+            var = self.tree_.impurity[self.apply(X)]
+            var[var < 0.01] = 0.01
+            return mean, var**0.5
 
         return mean

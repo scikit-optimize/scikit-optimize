@@ -34,6 +34,13 @@ def _return_std(X, trees, predictions):
 
     for tree in trees:
         var_tree = tree.tree_.impurity[tree.apply(X)]
+
+        # This rounding off is done in accordance with the
+        # adjustment done in section 4.3.3
+        # of http://arxiv.org/pdf/1211.0906v2.pdf to account
+        # for cases such as leaves with 1 sample in which there
+        # is zero variance.
+        var_tree[var_tree < 0.01] = 0.01
         mean_tree = tree.predict(X)
         std += var_tree + mean_tree ** 2
 
