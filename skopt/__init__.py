@@ -27,7 +27,9 @@ from . import space
 
 from .gp_opt import gp_minimize
 from .dummy_opt import dummy_minimize
-from .gbrt_opt import gbrt_minimize
+from .tree_opt import forest_minimize
+from .tree_opt import gbrt_minimize
+
 
 __version__ = "0.0"
 
@@ -37,4 +39,5 @@ __all__ = ("benchmarks",
            "space",
            "gp_minimize",
            "dummy_minimize",
+           "forest_minimize",
            "gbrt_minimize")
