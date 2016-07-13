@@ -3,6 +3,44 @@ from sklearn.ensemble import RandomForestRegressor as sk_RandomForestRegressor
 from sklearn.ensemble import ExtraTreesRegressor as sk_ExtraTreesRegressor
 
 
+def _return_std(X, trees, predictions):
+    """
+    Return standard deviation in predictions given a list of trees.
+
+    Parameters
+    ----------
+    * `X` [array-like, shape=(n_samples, n_features)]:
+        Input data.
+
+    * `trees` [list, shape=(n_estimators,)]
+        List of fit sklearn trees as obtained from the ``estimators_``
+        attribute of a fit RandomForestRegressor or ExtraTreesRegressor.
+
+    * `predictions` [array-like, shape=(n_samples,)]
+        Prediction of each data point as returned by RandomForestRegressor
+        or ExtraTreesRegressor.
+
+    Returns
+    -------
+    * `std` [array-like, shape=(n_samples,)]:
+        Standard deviation of `y` at `X`. If criterion
+        is set to "mse", then `std[i] ~= std(y | X[i])`.
+    """
+    # This derives std(y | x) as described in 4.3.2 of arXiv:1211.0906
+    std = np.zeros(len(X))
+
+    for tree in trees:
+        var_tree = tree.tree_.impurity[tree.apply(X)]
+        mean_tree = tree.predict(X)
+        std += var_tree + mean_tree ** 2
+
+    std /= len(trees)
+    std -= predictions ** 2.0
+    std[std < 0.0] = 0.0
+    std = std ** 0.5
+    return std
+
+
 class RandomForestRegressor(sk_RandomForestRegressor):
     """
     RandomForestRegressor that supports `return_std`.
@@ -36,22 +74,7 @@ class RandomForestRegressor(sk_RandomForestRegressor):
                 raise ValueError(
                     "Expected impurity to be 'mse', got %s instead"
                     % self.criterion)
-
-            # This derives std(y | x) as described in 4.3.2 of arXiv:1211.0906
-            std = np.zeros(len(X))
-
-            for tree in self.estimators_:
-                var_tree = tree.tree_.impurity[tree.apply(X)]
-                mean_tree = tree.predict(X)
-                std += var_tree + mean_tree ** 2
-
-            std /= len(self.estimators_)
-            std -= mean ** 2.0
-            std[std < 0.0] = 0.0
-            std = std ** 0.5
-
-            return mean, std
-
+            return mean, _return_std(X, self.estimators_, mean)
         return mean
 
 
@@ -88,20 +111,6 @@ class ExtraTreesRegressor(sk_ExtraTreesRegressor):
                 raise ValueError(
                     "Expected impurity to be 'mse', got %s instead"
                     % self.criterion)
-
-            # This derives std(y | x) as described in 4.3.2 of arXiv:1211.0906
-            std = np.zeros(len(X))
-
-            for tree in self.estimators_:
-                var_tree = tree.tree_.impurity[tree.apply(X)]
-                mean_tree = tree.predict(X)
-                std += var_tree + mean_tree ** 2
-
-            std /= len(self.estimators_)
-            std -= mean ** 2.0
-            std[std < 0.0] = 0.0
-            std = std ** 0.5
-
-            return mean, std
+            return mean, _return_std(X, self.estimators_, mean)
 
         return mean
