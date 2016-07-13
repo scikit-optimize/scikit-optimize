@@ -245,7 +245,8 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
                                                    random_state=rng)
 
     else:
-        if not isinstance(base_estimator, RegressorMixin):
+        if not (hasattr(base_estimator, '_estimator_type') and
+                base_estimator._estimator_type == 'regressor'):
             raise ValueError("The base_estimator parameter has to either"
                              " be a string or a regressor instance."
                              " '%s' is neither." % base_estimator)

@@ -2,6 +2,7 @@ from functools import partial
 
 import numpy as np
 
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -60,14 +61,21 @@ def test_seven_iterations():
 
 def test_forest_minimize_api():
     # invalid string value
-    assert_raise_message(ValueError, "Valid values for base_estimator parameter",
+    assert_raise_message(ValueError,
+                         "Valid values for the base_estimator parameter",
                          forest_minimize, lambda x: 0., [],
                          base_estimator='abc')
 
-    # not a string nor a Regressor instance
-    assert_raise_message(ValueError, "The base_estimator parameter has to either",
+    # not a string nor a regressor
+    assert_raise_message(ValueError,
+                         "The base_estimator parameter has to either",
                          forest_minimize, lambda x: 0., [],
                          base_estimator=42)
+
+    assert_raise_message(ValueError,
+                         "The base_estimator parameter has to either",
+                         forest_minimize, lambda x: 0., [],
+                         base_estimator=DecisionTreeClassifier())
 
 
 def check_minimize(minimizer, func, y_opt, dimensions, margin, maxiter):
