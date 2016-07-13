@@ -22,6 +22,7 @@
     width: 25%;
     float: left;
     padding: 30px;
+    padding-top: 0px;
     overflow: hidden;
   }
   #nav {
@@ -99,7 +100,7 @@
 
   code {
     background: #f9f9f9;
-  } 
+  }
 
   pre {
     background: #fefefe;
@@ -116,7 +117,7 @@
     .codehilite pre {
       margin: 0;
     }
-    .codehilite .err { background: #ff3300; color: #fff !important; } 
+    .codehilite .err { background: #ff3300; color: #fff !important; }
 
   table#module-list {
     font-size: 110%;
@@ -227,7 +228,7 @@
       text-transform: uppercase;
       color: #fff;
       text-shadow: 1px 1px 0 #f4b700;
-      
+
       padding: 3px 8px;
       border-radius: 2px;
       transition: background .3s ease-in-out;

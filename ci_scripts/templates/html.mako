@@ -1,6 +1,7 @@
 <%
   import re
   import sys
+  import inspect
 
   import markdown
   try:
@@ -12,6 +13,8 @@
     use_pygments = False
 
   import pdoc
+
+  root_url = "http://scikit-optimize.github.io/"
 
   # From language reference, but adds '.' to allow fully qualified names.
   pyident = re.compile('^[a-zA-Z_][a-zA-Z0-9_.]+$')
@@ -65,9 +68,11 @@
     if not module_list:
       s, _ = re.subn('`[^`]+`', linkify, s)
 
+
     extensions = []
     if use_pygments:
-      extensions = ['markdown.extensions.codehilite(linenums=False)']
+      extensions = ['markdown.extensions.codehilite(linenums=False)',
+                    'markdown.extensions.fenced_code']
     s = markdown.markdown(s.strip(), extensions=extensions)
     return s
 
@@ -153,6 +158,10 @@
     name, url = lookup(refname)
     if name is None:
       return refname
+
+    if notebook:
+        url = "../" + url
+
     return '<a href="%s">%s</a>' % (url, name)
 %>
 <%def name="show_source(d)">
@@ -262,6 +271,8 @@
   ${show_source(module)}
   </header>
 
+
+
   <section id="section-items">
     % if len(variables) > 0:
     <h2 class="section-title" id="header-variables">Module variables</h2>
@@ -286,6 +297,7 @@
       <%
       class_vars = c.class_variables()
       smethods = c.functions()
+      smethods = [f for f in smethods if inspect.getmodule(f.func).__name__.startswith("skopt")]
       inst_vars = c.instance_variables()
       methods = c.methods()
       mro = c.module.mro(c)
@@ -350,8 +362,9 @@
   submodules = module.submodules()
   %>
   <div id="sidebar">
-    <h1>API</h1>
     <ul id="index">
+    <li class="set"><h3><a href="${ root_url }">Index</a></h3></li>
+
     % if len(variables) > 0:
     <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
       ${show_column_list(map(lambda v: link(v.refname), variables))}
@@ -387,7 +400,20 @@
     % endif
 
     % if len(submodules) == 0:
-    <li class="set"><h3><a href="http://scikit-optimize.github.io">Top module</a></h3>
+    <li class="set"><h3><a href="${ root_url }"></a></h3>
+    </li>
+    % endif
+
+    % if len(all_notebooks) > 0:
+    <li class="set"><h3><a href="#">Notebooks</a></h3>
+      <ul>
+      % for notebook in all_notebooks:
+        <%
+        filename = notebook.rsplit(sep="/", maxsplit=1)[-1][:-3]
+        %>
+        <li><a href="${ root_url }notebooks/${ filename }.html">${ filename }</a></li>
+      % endfor
+      </ul>
     </li>
     % endif
     </ul>
@@ -441,6 +467,14 @@
     }
   }
   </script>
+  <script type="text/javascript" async
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+  });
+  </script>
 </head>
 <body>
 <a href="https://github.com/scikit-optimize/scikit-optimize"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
@@ -454,7 +488,14 @@
   % else:
     ${module_index(module)}
     <article id="content">
-      ${show_module(module)}
+      % if not notebook:
+          ${show_module(module)}
+      % else:
+          <%
+          content = open(notebook, "r").read()
+          %>
+          ${content | mark}
+      % endif
     </article>
   % endif
   <div class="clear"> </div>
