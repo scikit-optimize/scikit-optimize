@@ -5,7 +5,10 @@ from sklearn.ensemble import ExtraTreesRegressor as sk_ExtraTreesRegressor
 
 def _return_std(X, trees, predictions):
     """
-    Return standard deviation in predictions given a list of trees.
+    Returns ``std(Y | X)``.
+
+    Can be calculated by E[Var(Y | Tree)] + Var(E[Y | Tree]) where
+    P(Tree) is ``(1 / len(trees))``
 
     Parameters
     ----------
