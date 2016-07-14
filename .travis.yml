@@ -8,10 +8,6 @@ cache:
    - $HOME/.cache/pip
 
 env:
-  global:
-    # Directory where tests are run from
-    - TEST_DIR=/tmp/test_dir/
-    - MODULE=skopt
   matrix:
     - DISTRIB="conda" PYTHON_VERSION="3.4" COVERAGE="true"
     - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
