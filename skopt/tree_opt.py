@@ -5,6 +5,7 @@ import numpy as np
 from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
+from sklearn.base import is_regressor
 from sklearn.base import RegressorMixin
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
@@ -34,7 +35,9 @@ def _tree_minimize(func, dimensions, base_estimator, maxiter,
     if maxiter == 0:
         raise ValueError("Need to perform at least one iteration.")
 
-    n_start = min(n_start, maxiter)
+    if maxiter < n_start:
+        raise ValueError("Total number of iterations set by maxiter has to"
+                         " be larger or equal to n_start.")
 
     Xi[:n_start] = space.rvs(n_samples=n_start, random_state=rng)
     yi[:n_start] = [func(xi) for xi in Xi[:n_start]]
@@ -108,11 +111,12 @@ def gbrt_minimize(func, dimensions, base_estimator=None, maxiter=100,
     * `maxiter` [int, default=100]:
         Number of iterations used to find the minimum. This corresponds
         to the total number of evaluations of `func`. If `n_start` > 0
-        only `maxiter - n_start` iterations are used.
+        only `maxiter - n_start` additional evaluations of `func` are
+        made that are guided by the surrogate model.
 
     * `n_start` [int, default=10]:
         Number of random points to draw before fitting `base_estimator`
-        for the first time. If `n_start > maxiter` this degrades to
+        for the first time. If `n_start = maxiter` this degrades to
         a random search for the minimum.
 
     * `n_points` [int, default=20]:
@@ -195,11 +199,12 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
     * `maxiter` [int, default=100]:
         Number of iterations used to find the minimum. This corresponds
         to the total number of evaluations of `func`. If `n_start` > 0
-        only `maxiter - n_start` iterations are used.
+        only `maxiter - n_start` additional evaluations of `func` are
+        made that are guided by the surrogate model.
 
     * `n_start` [int, default=10]:
         Number of random points to draw before fitting `base_estimator`
-        for the first time. If `n_start > maxiter` this degrades to
+        for the first time. If `n_start = maxiter` this degrades to
         a random search for the minimum.
 
     * `n_points` [int, default=1000]:
@@ -245,8 +250,7 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
                                                    random_state=rng)
 
     else:
-        if not (hasattr(base_estimator, '_estimator_type') and
-                base_estimator._estimator_type == 'regressor'):
+        if not is_regressor(base_estimator):
             raise ValueError("The base_estimator parameter has to either"
                              " be a string or a regressor instance."
                              " '%s' is neither." % base_estimator)
