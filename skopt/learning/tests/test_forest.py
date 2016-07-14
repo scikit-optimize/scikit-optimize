@@ -56,3 +56,14 @@ def test_variance_no_split():
                       partial(RandomForestRegressor, bootstrap=False),
                       ExtraTreesRegressor]:
         yield check_variance_no_split, Regressor
+
+
+def test_min_variance():
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(1000, 1))
+    y = np.ones(1000)
+    dt = DecisionTreeRegressor(min_variance=0.0)
+    dt.fit(X, y)
+    mean, std = dt.predict(X, return_std=True)
+    assert_array_equal(mean, y)
+    assert_array_equal(std, np.zeros(1000))
