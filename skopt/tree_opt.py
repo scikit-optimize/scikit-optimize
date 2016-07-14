@@ -111,11 +111,12 @@ def gbrt_minimize(func, dimensions, base_estimator=None, maxiter=100,
     * `maxiter` [int, default=100]:
         Number of iterations used to find the minimum. This corresponds
         to the total number of evaluations of `func`. If `n_start` > 0
-        only `maxiter - n_start` iterations are used.
+        only `maxiter - n_start` additional evaluations of `func` are
+        made that are guided by the surrogate model.
 
     * `n_start` [int, default=10]:
         Number of random points to draw before fitting `base_estimator`
-        for the first time. If `n_start > maxiter` this degrades to
+        for the first time. If `n_start = maxiter` this degrades to
         a random search for the minimum.
 
     * `n_points` [int, default=20]:
@@ -198,11 +199,12 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
     * `maxiter` [int, default=100]:
         Number of iterations used to find the minimum. This corresponds
         to the total number of evaluations of `func`. If `n_start` > 0
-        only `maxiter - n_start` iterations are used.
+        only `maxiter - n_start` additional evaluations of `func` are
+        made that are guided by the surrogate model.
 
     * `n_start` [int, default=10]:
         Number of random points to draw before fitting `base_estimator`
-        for the first time. If `n_start > maxiter` this degrades to
+        for the first time. If `n_start = maxiter` this degrades to
         a random search for the minimum.
 
     * `n_points` [int, default=1000]:
