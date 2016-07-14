@@ -18,6 +18,12 @@ from skopt.tree_opt import gbrt_minimize
 from skopt.tree_opt import forest_minimize
 
 
+MINIMIZERS = (partial(forest_minimize, base_estimator='dt'),
+              partial(forest_minimize, base_estimator='et'),
+              forest_minimize,
+              gbrt_minimize)
+
+
 def check_no_iterations(minimizer):
     assert_raise_message(ValueError, "at least one iteration",
                          minimizer,
@@ -31,32 +37,28 @@ def check_no_iterations(minimizer):
 
 
 def test_no_iterations():
-    yield (check_no_iterations, gbrt_minimize)
-    yield (check_no_iterations, partial(forest_minimize, base_estimator='et'))
-    yield (check_no_iterations, partial(forest_minimize, base_estimator='dt'))
-    yield (check_no_iterations, forest_minimize)
+    for minimizer in MINIMIZERS:
+        yield (check_no_iterations, minimizer)
 
 
 def test_one_iteration():
-    result = gbrt_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                           maxiter=1, random_state=1)
-
-    assert_equal(len(result.models), 0)
-    assert_array_equal(result.x_iters.shape, (1, 2))
-    assert_array_equal(result.func_vals.shape, (1,))
-    assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
-    assert_almost_equal(result.fun, branin(result.x))
+    for minimizer in MINIMIZERS:
+        assert_raise_message(ValueError,
+                             "Total number of iterations set by maxiter",
+                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             maxiter=1, random_state=1)
 
 
 def test_seven_iterations():
-    result = gbrt_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                           n_start=3, maxiter=7, random_state=1)
+    for minimizer in MINIMIZERS:
+        result = gbrt_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                               n_start=3, maxiter=7, random_state=1)
 
-    assert_equal(len(result.models), 4)
-    assert_array_equal(result.x_iters.shape, (7, 2))
-    assert_array_equal(result.func_vals.shape, (7,))
-    assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
-    assert_almost_equal(result.fun, branin(result.x))
+        assert_equal(len(result.models), 4)
+        assert_array_equal(result.x_iters.shape, (7, 2))
+        assert_array_equal(result.func_vals.shape, (7,))
+        assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
+        assert_almost_equal(result.fun, branin(result.x))
 
 
 def test_forest_minimize_api():
@@ -79,6 +81,9 @@ def test_forest_minimize_api():
 
 
 def check_minimize(minimizer, func, y_opt, dimensions, margin, maxiter):
+    # The result depends on random sampling so run the test several
+    # times and pass if majority of tests converge. Any single instance
+    # converging might just be luck.
     success = 0
     N = 3
     for n in range(1, N + 1):
@@ -90,9 +95,7 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin, maxiter):
 
 
 def test_tree_based_minimize():
-    for minimizer in (partial(forest_minimize, base_estimator='dt'),
-                      partial(forest_minimize, base_estimator='et'),
-                      forest_minimize, gbrt_minimize):
+    for minimizer in MINIMIZERS:
         yield (check_minimize, minimizer, bench1, 0., [(-2.0, 2.0)], 0.05, 75)
         yield (check_minimize, minimizer, bench2, -5, [(-6.0, 6.0)], 0.05, 75)
         yield (check_minimize, minimizer, bench3, -0.9, [(-2.0, 2.0)], 0.05, 75)
