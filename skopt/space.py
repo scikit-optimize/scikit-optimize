@@ -89,7 +89,7 @@ class _CategoricalEncoder:
         return self._lb.inverse_transform(Xt)
 
 
-class Dimension:
+class Dimension(object):
     """Base class for search space dimensions."""
 
     def rvs(self, n_samples=1, random_state=None):
@@ -227,7 +227,7 @@ class Integer(Dimension):
 
 
 class Categorical(Dimension):
-    def __init__(self, *categories, prior=None):
+    def __init__(self, categories, prior=None):
         """Search space dimension that can take on categorical values.
 
         Parameters
@@ -247,7 +247,6 @@ class Categorical(Dimension):
             prior = np.tile(1. / len(self.categories), len(self.categories))
 
         # XXX check that sum(prior) == 1
-
         self._rvs = rv_discrete(values=(range(len(self.categories)), prior))
 
     def rvs(self, n_samples=None, random_state=None):
@@ -299,7 +298,7 @@ class Space:
                 _dimensions.append(Real(*dim))
 
             elif len(dim) > 2 or isinstance(dim[0], str):
-                _dimensions.append(Categorical(*dim))
+                _dimensions.append(Categorical(dim))
 
             elif isinstance(dim[0], numbers.Integral):
                 _dimensions.append(Integer(*dim))

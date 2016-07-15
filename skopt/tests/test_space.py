@@ -16,15 +16,17 @@ def check_dimension(Dimension, vals, random_val):
     x = Dimension(*vals)
     assert_equal(x.rvs(random_state=1), random_val)
 
+def check_categorical(vals, random_val):
+    x = Categorical(vals)
+    assert_equal(x.rvs(random_state=1), random_val)
 
 def test_dimensions():
     yield (check_dimension, Real, (1., 4.), 2.251066014107722)
     yield (check_dimension, Real, (1, 4), 2.251066014107722)
     yield (check_dimension, Integer, (1, 4), 2)
     yield (check_dimension, Integer, (1., 4.), 2)
-    yield (check_dimension, Categorical, ('a', 'b', 'c', 'd'), 'b')
-    yield (check_dimension, Categorical, (1., 2., 3., 4.), 2.)
-
+    yield (check_categorical, (('a', 'b', 'c', 'd')), 'b')
+    yield (check_categorical, ((1., 2., 3., 4.)), 2.)
 
 def check_limits(value, lower_bound, upper_bound):
     assert_less_equal(lower_bound, value)
@@ -64,7 +66,7 @@ def test_integer():
 
 def test_categorical_transform():
     categories = ["apple", "orange", "banana"]
-    cat = Categorical(*categories)
+    cat = Categorical(categories)
 
     apple = [1.0, 0.0, 0.0]
     banana = [0., 1., 0.]
@@ -117,8 +119,8 @@ def test_space_consistency():
     assert_array_equal(s1, s3)
 
     # Categoricals
-    s1 = Space([Categorical("a", "b", "c")]).rvs(n_samples=10, random_state=0)
-    s2 = Space([Categorical("a", "b", "c")]).rvs(n_samples=10, random_state=0)
+    s1 = Space([Categorical(["a", "b", "c"])]).rvs(n_samples=10, random_state=0)
+    s2 = Space([Categorical(["a", "b", "c"])]).rvs(n_samples=10, random_state=0)
     assert_array_equal(s1, s2)
 
 
