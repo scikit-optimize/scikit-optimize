@@ -410,8 +410,9 @@
       % for notebook in all_notebooks:
         <%
         filename = notebook.rsplit(sep="/", maxsplit=1)[-1][:-3]
+        nbname = filename.replace("-", " ").capitalize()
         %>
-        <li><a href="${ root_url }notebooks/${ filename }.html">${ filename }</a></li>
+        <li><a href="${ root_url }notebooks/${ filename }.html">${ nbname }</a></li>
       % endfor
       </ul>
     </li>
