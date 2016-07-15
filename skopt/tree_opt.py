@@ -185,7 +185,7 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
         - `"rf"` for random forest regressor
         - `"et"` for extra trees regressor
         - `"dt"` for single decision tree regressor
-        - instance of regressor with support for `with_std` in its predict
+        - instance of regressor with support for `return_std` in its predict
           method
 
         The predefined models are initilized with good defaults. If you
