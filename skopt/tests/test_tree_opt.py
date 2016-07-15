@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_raise_message
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
+from skopt.benchmarks import bench4
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
 from skopt.tree_opt import gbrt_minimize
@@ -99,6 +100,8 @@ def test_tree_based_minimize():
         yield (check_minimize, minimizer, bench1, 0., [(-2.0, 2.0)], 0.05, 75)
         yield (check_minimize, minimizer, bench2, -5, [(-6.0, 6.0)], 0.05, 75)
         yield (check_minimize, minimizer, bench3, -0.9, [(-2.0, 2.0)], 0.05, 75)
+        yield (check_minimize, minimizer, bench4, 0.0,
+               [("-2", "-1", "0", "1", "2")], 0.05, 10)
         yield (check_minimize, minimizer, branin, 0.39,
                [(-5.0, 10.0), (0.0, 15.0)], 0.1, 100)
         yield (check_minimize, minimizer, hart6, -3.32,

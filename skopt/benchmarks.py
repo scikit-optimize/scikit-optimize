@@ -38,6 +38,17 @@ def bench3(x):
     return np.asscalar(np.sin(5 * x) * (1 - np.tanh(x ** 2)))
 
 
+def bench4(x):
+    """A benchmark function for test purposes.
+
+        f(x) = float(x) ** 2
+
+    where x is a string. It has a single minima with f(x*) = 0 at x* = "0".
+    This benchmark is used for checking support of categorical variables.
+    """
+    return float(x[0]) ** 2
+
+
 def branin(x, a=1, b=5.1 / (4 * np.pi**2), c=5. / np.pi,
            r=6, s=10, t=1. / (8 * np.pi)):
     """Branin-Hoo function is defined on the square x1 ∈ [-5, 10], x2 ∈ [0, 15].

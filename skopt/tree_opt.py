@@ -6,7 +6,6 @@ from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sklearn.base import RegressorMixin
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
@@ -23,11 +22,6 @@ def _tree_minimize(func, dimensions, base_estimator, maxiter,
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
-    # Record the points and function values evaluated as part of
-    # the minimization
-    Xi = np.zeros((maxiter, space.n_dims))
-    yi = np.zeros(maxiter)
-
     # Initialize with random points
     if n_start == 0:
         raise ValueError("Need at least one starting point.")
@@ -39,38 +33,39 @@ def _tree_minimize(func, dimensions, base_estimator, maxiter,
         raise ValueError("Total number of iterations set by maxiter has to"
                          " be larger or equal to n_start.")
 
-    Xi[:n_start] = space.rvs(n_samples=n_start, random_state=rng)
-    yi[:n_start] = [func(xi) for xi in Xi[:n_start]]
-    i = np.argmin(yi[:n_start])
-    best_y = yi[i]
-    best_x = Xi[i]
+    Xi = space.rvs(n_samples=n_start, random_state=rng)
+    yi = [func(x) for x in Xi]
+    if np.ndim(yi) != 1:
+        raise ValueError(
+            "The function to be optimized should return a scalar")
 
+    # Tree-based optimization loop
     models = []
 
     for i in range(n_start, maxiter):
         rgr = clone(base_estimator)
-        # only the first i points are meaningful
-        rgr.fit(space.transform(Xi[:i]), yi[:i])
+        rgr.fit(space.transform(Xi), yi)
         models.append(rgr)
 
         # `rgr` predicts constants for each leaf which means that the EI
         # has zero gradient over large distances. As a result we can not
         # use gradient based optimisers like BFGS, so using random sampling
         # for the moment.
-        x0 = space.transform(space.rvs(n_samples=n_points, random_state=rng))
-        best = np.argmax(gaussian_ei(x0, rgr, best_y))
+        X = space.transform(space.rvs(n_samples=n_points,
+                                      random_state=rng))
+        values = -gaussian_ei(X, rgr, np.min(yi))
+        next_x = X[np.argmin(values)]
 
-        Xi[i] = space.inverse_transform(x0[best:best+1])[0]
-        yi[i] = func(Xi[i])
-
-        if yi[i] < best_y:
-            best_y = yi[i]
-            best_x = Xi[i]
+        next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
+        next_y = func(next_x)
+        Xi = np.vstack((Xi, next_x))
+        yi.append(next_y)
 
     res = OptimizeResult()
-    res.x = best_x
-    res.fun = best_y
-    res.func_vals = yi
+    best = np.argmin(yi)
+    res.x = Xi[best]
+    res.fun = yi[best]
+    res.func_vals = np.array(yi)
     res.x_iters = Xi
     res.models = models
 
