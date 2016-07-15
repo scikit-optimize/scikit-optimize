@@ -9,7 +9,7 @@ cache:
 
 env:
   matrix:
-    - DISTRIB="conda" PYTHON_VERSION="3.4" COVERAGE="true"
+    - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="true"
     - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
 
 install: source ci_scripts/install.sh
