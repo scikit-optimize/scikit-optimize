@@ -122,6 +122,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
         - `x_iters` [array]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
+        - `space` [Space]: the optimisation space.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
@@ -196,5 +197,6 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
     res.func_vals = np.array(yi)
     res.x_iters = Xi
     res.models = models
+    res.space = space
 
     return res

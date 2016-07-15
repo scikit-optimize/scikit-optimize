@@ -68,6 +68,7 @@ def _tree_minimize(func, dimensions, base_estimator, maxiter,
     res.func_vals = np.array(yi)
     res.x_iters = Xi
     res.models = models
+    res.space = space
 
     return res
 
@@ -133,6 +134,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, maxiter=100,
         - `x_iters` [array]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
+        - `space` [Space]: the optimisation space.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
@@ -221,6 +223,7 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
         - `x_iters` [array]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
+        - `space` [Space]: the optimisation space.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html

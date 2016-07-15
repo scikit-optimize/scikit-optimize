@@ -46,6 +46,7 @@ def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
         - `x_iters` [array]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
+        - `space` [Space]: the optimisation space.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
@@ -66,5 +67,6 @@ def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
     res.fun = y[best]
     res.func_vals = y
     res.x_iters = X
+    res.space = space
 
     return res
