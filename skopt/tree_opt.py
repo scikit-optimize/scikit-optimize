@@ -53,7 +53,7 @@ def _tree_minimize(func, dimensions, base_estimator, maxiter,
         # for the moment.
         X = space.transform(space.rvs(n_samples=n_points,
                                       random_state=rng))
-        values = gaussian_ei(X, rgr, np.min(yi))
+        values = -gaussian_ei(X, rgr, np.min(yi))
         next_x = X[np.argmin(values)]
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
