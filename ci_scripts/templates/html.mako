@@ -14,7 +14,7 @@
 
   import pdoc
 
-  root_url = "http://scikit-optimize.github.io/"
+  root_url = "https://scikit-optimize.github.io/"
 
   # From language reference, but adds '.' to allow fully qualified names.
   pyident = re.compile('^[a-zA-Z_][a-zA-Z0-9_.]+$')
@@ -434,7 +434,7 @@
     <meta name="description" content="${module.docstring | glimpse, trim}" />
   % endif
 
-  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
   <%namespace name="css" file="css.mako" />
   <style type="text/css">
   ${css.pre()}
