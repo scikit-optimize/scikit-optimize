@@ -1,8 +1,10 @@
 # Scikit-Optimize
 
-Scikit-Optimize, or `skopt`, is meant to be a simple and efficient library for black box optimization, accessible to everybody and reusable in various contexts. 
+Scikit-Optimize, or `skopt`, is a simple and efficient library
+for model-based optimization, accessible to everybody and reusable in various
+contexts.
 
-The library is built on top of NumPy, SciPy and Scikit-Learn. 
+The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 [![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
 
@@ -13,7 +15,7 @@ The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 ## Development
 
-The library is still experimental and under heavy development. 
+The library is still experimental and under heavy development.
 
 The development version can be installed through:
 ```

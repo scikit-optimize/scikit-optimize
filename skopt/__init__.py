@@ -21,6 +21,7 @@ The development version can be installed through:
 Run the tests by executing `nosetests` in the top level directory.
 """
 
+from . import acquisition
 from . import benchmarks
 from . import learning
 from . import space
@@ -34,7 +35,8 @@ from .tree_opt import gbrt_minimize
 __version__ = "0.0"
 
 
-__all__ = ("benchmarks",
+__all__ = ("acquisition",
+           "benchmarks",
            "learning",
            "space",
            "gp_minimize",
