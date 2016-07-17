@@ -73,7 +73,7 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01):
     certain mean and standard deviation approximated by the model.
 
     The PI condition is derived by computing ``E[u(f(x))]``
-    where ``u(f(x)) = 1``, if ``f(x) > y_opt`` and ``u(f(x)) = 1``,
+    where ``u(f(x)) = 1``, if ``f(x) > y_opt`` and ``u(f(x)) = 0``,
     if``f(x) < y_opt``.
 
     This means that the PI condition does not care about how "better" the
