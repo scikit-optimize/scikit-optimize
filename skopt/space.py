@@ -325,7 +325,7 @@ class Space:
 
         Returns
         -------
-        * `points`: [array-like, shape=(n_points, n_dims)]
+        * `points`: [list of lists, shape=(n_points, n_dims)]
            Points sampled from the space.
         """
         rng = check_random_state(random_state)
@@ -359,12 +359,12 @@ class Space:
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples, n_dims)]:
+        * `X` [list of lists, shape=(n_samples, n_dims)]:
             The samples to transform.
 
         Returns
         -------
-        * `Xt` [array-like, shape=(n_samples, transformed_n_dims)]
+        * `Xt` [array of floats, shape=(n_samples, transformed_n_dims)]
             The transformed samples.
         """
         # Pack by dimension
@@ -392,12 +392,12 @@ class Space:
 
         Parameters
         ----------
-        * `Xt` [array-like, shape=(n_samples, transformed_n_dims)]:
+        * `Xt` [array of floats, shape=(n_samples, transformed_n_dims)]:
             The samples to inverse transform.
 
         Returns
         -------
-        * `X` [array-like, shape=(n_samples, n_dims)]
+        * `X` [list of lists, shape=(n_samples, n_dims)]
             The original samples.
         """
         # Inverse transform
