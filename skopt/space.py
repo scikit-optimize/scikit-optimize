@@ -329,6 +329,8 @@ class Space:
            Points sampled from the space.
         """
         rng = check_random_state(random_state)
+
+        # Draw
         columns = []
 
         for dim in self.dimensions:
@@ -337,7 +339,17 @@ class Space:
             else:
                 columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
 
-        return np.transpose(columns)
+        # Transpose
+        rows = []
+
+        for i in range(n_samples):
+            r = []
+            for j in range(self.n_dims):
+                r.append(columns[j][i])
+
+            rows.append(r)
+
+        return rows
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
@@ -356,12 +368,23 @@ class Space:
             The transformed samples.
         """
         # Pack by dimension
-        X = np.asarray(X, dtype=object)
-        X_transform = [
-            self.dimensions[j].transform(X[:, j]).reshape(len(X), -1)
-            for j in range(self.n_dims)]
+        columns = []
+        for dim in self.dimensions:
+            columns.append([])
 
-        return np.hstack(X_transform).astype(np.float)
+        for i in range(len(X)):
+            for j in range(self.n_dims):
+                columns[j].append(X[i][j])
+
+        # Transform
+        for j in range(self.n_dims):
+            columns[j] = self.dimensions[j].transform(columns[j])
+
+        # Repack as an array
+        Xt = np.hstack([np.asarray(c).reshape((len(X), -1)) for c in columns])
+        Xt = Xt.astype(np.float)
+
+        return Xt
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back to the
@@ -377,6 +400,7 @@ class Space:
         * `X` [array-like, shape=(n_samples, n_dims)]
             The original samples.
         """
+        # Inverse transform
         columns = []
         start = 0
 
@@ -392,7 +416,17 @@ class Space:
 
             start += offset
 
-        return np.transpose(columns)
+        # Transpose
+        rows = []
+
+        for i in range(len(Xt)):
+            r = []
+            for j in range(self.n_dims):
+                r.append(columns[j][i])
+
+            rows.append(r)
+
+        return rows
 
     @property
     def n_dims(self):

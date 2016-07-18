@@ -11,7 +11,7 @@ def bench1(x):
 
     It has a single minima with f(x*) = 0 at x* = 0.
     """
-    return np.asscalar(x ** 2)
+    return x[0] ** 2
 
 
 def bench2(x):
@@ -22,10 +22,10 @@ def bench2(x):
 
     It has a global minima with f(x*) = -5 at x* = 5.
     """
-    if x < 0:
-        return np.asscalar(x ** 2)
+    if x[0] < 0:
+        return x[0] ** 2
     else:
-        return np.asscalar((x - 5) ** 2 - 5)
+        return (x[0] - 5) ** 2 - 5
 
 
 def bench3(x):
@@ -35,7 +35,7 @@ def bench3(x):
 
     It has a global minima with f(x*) ~= -0.9 at x* ~= -0.3.
     """
-    return np.asscalar(np.sin(5 * x) * (1 - np.tanh(x ** 2)))
+    return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2))
 
 
 def bench4(x):
@@ -58,8 +58,8 @@ def branin(x, a=1, b=5.1 / (4 * np.pi**2), c=5. / np.pi,
 
     More details: <http://www.sfu.ca/~ssurjano/branin.html>
     """
-    return np.asscalar(a * (x[1] - b * x[0] ** 2 + c * x[0] - r) ** 2 +
-                       s * (1 - t) * np.cos(x[0]) + s)
+    return (a * (x[1] - b * x[0] ** 2 + c * x[0] - r) ** 2 +
+            s * (1 - t) * np.cos(x[0]) + s)
 
 
 def hart6(x,
@@ -79,4 +79,4 @@ def hart6(x,
 
     More details: <http://www.sfu.ca/~ssurjano/hart6.html>
     """
-    return -np.sum(alpha * np.exp(-np.sum(A * (x - P)**2, axis=1)))
+    return -np.sum(alpha * np.exp(-np.sum(A * (np.array(x) - P)**2, axis=1)))
