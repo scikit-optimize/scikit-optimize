@@ -152,7 +152,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, maxiter=100,
                           random_state=random_state)
 
 
-def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
+def forest_minimize(func, dimensions, base_estimator='et', maxiter=100,
                     n_points=100, n_start=10, random_state=None):
     """Sequential optimisation using decision trees.
 
@@ -179,7 +179,7 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [string or `Regressor`, default=`"rf"`]:
+    * `base_estimator` [string or `Regressor`, default=`"et"`]:
         The regressor to use as surrogate model. Can be either
 
         - `"rf"` for random forest regressor
@@ -236,15 +236,17 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
                              " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
 
         if base_estimator == "rf":
-            base_estimator = RandomForestRegressor(min_samples_leaf=10,
+            base_estimator = RandomForestRegressor(n_estimators=100,
+                                                   min_samples_leaf=3,
                                                    random_state=rng)
 
         elif base_estimator == "et":
-            base_estimator = ExtraTreesRegressor(min_samples_leaf=10,
+            base_estimator = ExtraTreesRegressor(n_estimators=100,
+                                                 min_samples_leaf=3,
                                                  random_state=rng)
 
         elif base_estimator == "dt":
-            base_estimator = DecisionTreeRegressor(min_samples_leaf=10,
+            base_estimator = DecisionTreeRegressor(min_samples_leaf=3,
                                                    random_state=rng)
 
     else:
