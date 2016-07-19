@@ -46,7 +46,7 @@ for n_iter in range(5):
     plt.fill_between(
         x, lower_bound, upper_bound, alpha=0.3, color='blue', label="GBRT std")
 
-    sampled_y = [2.0 for x in best_x]
+    sampled_y = [bench3([x]) for x in best_x]
     plt.plot(best_x, sampled_y, 'ro', label="observations", markersize=5)
     plt.title("n_iter = %d" % (n_iter + 1))
     plt.ylim([-1.5, 1.5])
