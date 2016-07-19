@@ -236,15 +236,15 @@ def forest_minimize(func, dimensions, base_estimator='rf', maxiter=100,
                              " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
 
         if base_estimator == "rf":
-            base_estimator = RandomForestRegressor(min_samples_leaf=10,
+            base_estimator = RandomForestRegressor(min_samples_split=10,
                                                    random_state=rng)
 
         elif base_estimator == "et":
-            base_estimator = ExtraTreesRegressor(min_samples_leaf=10,
+            base_estimator = ExtraTreesRegressor(min_samples_split=10,
                                                  random_state=rng)
 
         elif base_estimator == "dt":
-            base_estimator = DecisionTreeRegressor(min_samples_leaf=10,
+            base_estimator = DecisionTreeRegressor(min_samples_split=10,
                                                    random_state=rng)
 
     else:
