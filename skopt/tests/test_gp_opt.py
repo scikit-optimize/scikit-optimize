@@ -15,9 +15,9 @@ from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
 
 
-def check_minimize(func, y_opt, bounds, search, acq, margin, maxiter):
+def check_minimize(func, y_opt, bounds, search, acq, margin, n_calls):
     r = gp_minimize(func, bounds, search=search, acq=acq,
-                    maxiter=maxiter, random_state=1)
+                    n_calls=n_calls, random_state=1)
     assert_less(r.fun, y_opt + margin)
 
 
@@ -35,7 +35,9 @@ def test_gp_minimize():
 
 
 def test_api():
-    res = gp_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0, maxiter=20)
+    res = gp_minimize(
+        branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0,
+        n_calls=20)
     assert_array_equal(res.x.shape, (2,))
     assert_array_equal(res.x_iters.shape, (20, 2))
     assert_array_equal(res.func_vals.shape, (20,))
