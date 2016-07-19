@@ -25,7 +25,8 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 
 def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                 kappa=1.96, search="lbfgs", n_calls=100, n_points=500,
-                n_random_starts=10, n_restarts_optimizer=5, random_state=None):
+                n_random_starts=10, n_restarts_optimizer=5, 
+                x0=None, y0=None, random_state=None):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -108,6 +109,19 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     * `n_restarts_optimizer` [int, default=10]:
         The number of restarts of the optimizer when `search` is `"lbfgs"`.
 
+    * `x0` [list, shape=(n_initial,)]:
+        List of initial input parameters used to bootstrap the surrogate
+        model. Note that if `x0` is provided, no random initialization
+        points are used, so in that case `n_start` is ignored.
+
+    * `y0` [list, shape=(n_initial,)]
+        List of values corresponding to evaluations of the function
+        at each element of `x0` : the i-th element of `y0` corresponds
+        to the function evaluated at the i-th element of `x0`.
+        if only `x0` is provided but not `y0`, the function is evaluated
+        at each element of `x0`, otherwise the values provided in `y0`
+        are used.
+
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
@@ -150,10 +164,17 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         raise ValueError(
             "Expected n_calls >= %d, got %d" % (n_random_starts, n_calls))
 
-    n_model_iter = n_calls - n_random_starts
+    # first points
+    if x0 is None:
+        x0 = space.rvs(n_samples=n_random_starts, random_state=rng)
+    if y0 is None:
+        y0 = [func(x) for x in x0]
+    n_model_iter = n_calls - len(y0)
+    if len(x0) != len(y0):
+        raise ValueError('x0 and y0 should have the same length')
+    Xi = x0[:]
+    yi = y0[:]
 
-    Xi = space.rvs(n_samples=n_random_starts, random_state=rng)
-    yi = [func(x) for x in Xi]
     if np.ndim(yi) != 1:
         raise ValueError(
             "The function to be optimized should return a scalar")

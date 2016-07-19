@@ -6,7 +6,8 @@ from sklearn.utils import check_random_state
 from .space import Space
 
 
-def dummy_minimize(func, dimensions, n_calls=100, random_state=None):
+def dummy_minimize(func, dimensions, n_calls=100,
+                   x0=None, y0=None, random_state=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -30,6 +31,17 @@ def dummy_minimize(func, dimensions, n_calls=100, random_state=None):
     * `n_calls` [int, default=100]:
         Number of calls to `func` to find the minimum.
 
+    * `x0` [list, shape=(n_initial,)]:
+        List of initial input parameters.
+
+    * `y0` [list, shape=(n_initial,)]
+        List of values corresponding to evaluations of the function
+        at each element of `x0` : the i-th element of `y0` corresponds
+        to the function evaluated at the i-th element of `x0`.
+        if only `x0` is provided but not `y0`, the function is evaluated
+        at each element of `x0`, otherwise the values provided in `y0`
+        are used.
+
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
@@ -52,14 +64,19 @@ def dummy_minimize(func, dimensions, n_calls=100, random_state=None):
     """
     rng = check_random_state(random_state)
     space = Space(dimensions)
-    X = space.rvs(n_samples=n_calls, random_state=rng)
-
-    init_y = func(X[0])
+    if x0 is None:
+        x0 = []
+    if y0 is None:
+        y0 = [func(x) for x in x0]
+    if len(x0) != len(y0):
+        raise ValueError('x0 and y0 should have the same length')
+    X = x0 + space.rvs(n_samples=n_calls, random_state=rng)
+    init_y = func(X[0]) if len(y0) == 0 else y0[0]
     if not np.isscalar(init_y):
         raise ValueError(
             "The function to be optimized should return a scalar")
-    y = np.asarray([init_y] + [func(X[i]) for i in range(1, n_calls)])
-
+    y = y0 + [func(X[i]) for i in range(len(y0), len(y0) + n_calls)]
+    y = np.array(y)
     res = OptimizeResult()
     best = np.argmin(y)
     res.x = X[best]

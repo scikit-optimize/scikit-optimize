@@ -18,8 +18,8 @@ from .space import Space
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
-                   n_points, n_random_starts, random_state=None,
-                   acq="EI", xi=0.01, kappa=1.96):
+                   n_points, n_random_starts, x0=None, y0=None,
+                   random_state=None, acq="EI", xi=0.01, kappa=1.96):
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -36,8 +36,15 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         raise ValueError(
             "Expected n_calls >= %d, got %d" % (n_random_starts, n_calls))
 
-    Xi = space.rvs(n_samples=n_random_starts, random_state=rng)
-    yi = [func(x) for x in Xi]
+    if x0 is None:
+        x0 = space.rvs(n_samples=n_random_starts, random_state=rng)
+    if y0 is None:
+        y0 = [func(x) for x in x0]
+    if len(x0) != len(y0):
+        raise ValueError('x0 and y0 should have the same length')
+    Xi = x0[:]
+    yi = y0[:]
+
     if np.ndim(yi) != 1:
         raise ValueError(
             "The function to be optimized should return a scalar")
@@ -45,7 +52,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     # Tree-based optimization loop
     models = []
 
-    n_model_iter = n_calls - n_random_starts
+    n_model_iter = n_calls - len(y0)
     for i in range(n_model_iter):
         rgr = clone(base_estimator)
         rgr.fit(space.transform(Xi), yi)
@@ -79,8 +86,8 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
-                  n_points=20, n_random_starts=10, random_state=None,
-                  acq="EI", xi=0.01, kappa=1.96):
+                  n_points=20, n_random_starts=10, x0=None, y0=None, 
+                  random_state=None, acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -122,6 +129,19 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
     * `n_points` [int, default=20]:
         Number of points to sample when minimizing the acquisition function.
+
+    * `x0` [list, shape=(n_initial,)]:
+        List of initial input parameters used to bootstrap the surrogate
+        model. Note that if `x0` is provided, no random initialization
+        points are used, so in that case `n_start` is ignored.
+
+    * `y0` [list, shape=(n_initial,)]
+        List of values corresponding to evaluations of the function
+        at each element of `x0` : the i-th element of `y0` corresponds
+        to the function evaluated at the i-th element of `x0`.
+        if only `x0` is provided but not `y0`, the function is evaluated
+        at each element of `x0`, otherwise the values provided in `y0`
+        are used.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -172,14 +192,14 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
-                          random_state=random_state, xi=xi, kappa=kappa,
-                          acq=acq)
+                          x0=x0, y0=y0, random_state=random_state, xi=xi, 
+                          kappa=kappa, acq=acq)
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
-                    n_points=100, n_random_starts=10, random_state=None,
-                    acq="EI", xi=0.01, kappa=1.96):
-    """Sequential optimization using decision trees.
+                    n_points=100, n_random_starts=10, x0=None, y0=None,
+                    random_state=None, acq="EI", xi=0.01, kappa=1.96):
+    """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
     function `func`. The model is improved by sequentially evaluating
@@ -230,6 +250,19 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
 
     * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
+
+    * `x0` [list, shape=(n_initial,)]:
+        List of initial input parameters used to bootstrap the surrogate
+        model. Note that if `x0` is provided, no random initialization
+        points are used, so in that case `n_start` is ignored.
+
+    * `y0` [list, shape=(n_initial,)]
+        List of values corresponding to evaluations of the function
+        at each element of `x0` : the i-th element of `y0` corresponds
+        to the function evaluated at the i-th element of `x0`.
+        if only `x0` is provided but not `y0`, the function is evaluated
+        at each element of `x0`, otherwise the values provided in `y0`
+        are used.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -295,9 +328,8 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
             raise ValueError("The base_estimator parameter has to either"
                              " be a string or a regressor instance."
                              " '%s' is neither." % base_estimator)
-
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
-                          random_state=random_state, acq=acq, xi=xi,
-                          kappa=kappa)
+                          x0=x0, y0=y0, random_state=random_state, acq=acq,
+                          xi=xi, kappa=kappa)
