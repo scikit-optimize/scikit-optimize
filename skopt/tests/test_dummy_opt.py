@@ -29,8 +29,8 @@ def test_dummy_minimize():
 def test_api():
     res = dummy_minimize(
         branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0, maxiter=100)
-    assert_array_equal(res.x.shape, (2,))
-    assert_array_equal(res.x_iters.shape, (100, 2))
+    assert_array_equal(len(res.x), 2)
+    assert_array_equal((len(res.x_iters), len(res.x_iters[0])), (100, 2))
     assert_array_equal(res.func_vals.shape, (100,))
     assert_array_less(res.x_iters, np.tile([10, 15], (100, 1)))
     assert_array_less(np.tile([-5, 0], (100, 1)), res.x_iters)

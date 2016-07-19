@@ -1,3 +1,4 @@
+import numbers
 import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
@@ -138,10 +139,21 @@ def test_space_api():
     assert_equal(len(samples), 10)
     assert_equal(len(samples[0]), 4)
 
+    assert_true(isinstance(samples[0][0], numbers.Real))
+    assert_true(isinstance(samples[0][1], numbers.Integral))
+    assert_true(isinstance(samples[0][2], str))
+    assert_true(isinstance(samples[0][3], numbers.Real))
+
     samples_transformed = space.transform(samples)
     assert_equal(samples_transformed.shape[0], len(samples))
     assert_equal(samples_transformed.shape[1], 1 + 1 + 3 + 1)
     assert_array_equal(samples, space.inverse_transform(samples_transformed))
+
+    samples = space.inverse_transform(samples_transformed)
+    assert_true(isinstance(samples[0][0], numbers.Real))
+    assert_true(isinstance(samples[0][1], numbers.Integral))
+    assert_true(isinstance(samples[0][2], str))
+    assert_true(isinstance(samples[0][3], numbers.Real))
 
     for b1, b2 in zip(space.bounds,
                       [(0.0, 1.0), (-5, 5),
