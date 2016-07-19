@@ -14,7 +14,7 @@ from skopt.acquisition import gaussian_ei
 
 dimensions = [(-1.0, 1.0)]
 x = np.linspace(-1, 1, 200)
-func_values = [bench3(xi) for xi in x]
+func_values = [bench3([xi]) for xi in x]
 plt.figure(figsize=(10, 5))
 vals = np.reshape(x, (-1, 1))
 col_no = 1
@@ -46,7 +46,7 @@ for n_iter in range(5):
     plt.fill_between(
         x, lower_bound, upper_bound, alpha=0.3, color='blue', label="GBRT std")
 
-    sampled_y = [bench3(x) for x in best_x]
+    sampled_y = [bench3([x]) for x in best_x]
     plt.plot(best_x, sampled_y, 'ro', label="observations", markersize=5)
     plt.title("n_iter = %d" % (n_iter + 1))
     plt.ylim([-1.5, 1.5])
