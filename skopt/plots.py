@@ -31,6 +31,11 @@ def plot_convergence(*args, **kwargs):
 
     * `yscale` [None or string, optional]:
         The scale for the y-axis.
+
+    Returns
+    -------
+    * `ax`: [`Axes`]:
+        The matplotlib axes.
     """
     # <3 legacy python
     ax = kwargs.get("ax", None)

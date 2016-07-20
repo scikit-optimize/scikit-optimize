@@ -5,4 +5,4 @@ except ImportError:
 
 setup(name='skopt',
       version='0.0',
-      description='Black box optimization-techniques')
+      description='Sequential model-based optimization toolbox.')
