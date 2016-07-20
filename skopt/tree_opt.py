@@ -52,7 +52,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
         # `rgr` predicts constants for each leaf which means that the EI
         # has zero gradient over large distances. As a result we can not
-        # use gradient based optimisers like BFGS, so using random sampling
+        # use gradient based optimizers like BFGS, so using random sampling
         # for the moment.
         X = space.transform(space.rvs(n_samples=n_points,
                                       random_state=rng))
@@ -78,7 +78,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                   n_points=20, n_random_starts=10, random_state=None):
-    """Sequential optimisation using gradient boosted trees.
+    """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
     expensive to evaluate function `func`. The model is improved
@@ -136,7 +136,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         - `x_iters` [array]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
-        - `space` [Space]: the optimisation space.
+        - `space` [Space]: the optimization space.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
@@ -157,7 +157,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                     n_points=100, n_random_starts=10, random_state=None):
-    """Sequential optimisation using decision trees.
+    """Sequential optimization using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
     function `func`. The model is improved by sequentially evaluating
@@ -225,7 +225,7 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         - `x_iters` [array]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
-        - `space` [Space]: the optimisation space.
+        - `space` [Space]: the optimization space.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html

@@ -1,4 +1,4 @@
-"""Machine learning extensions for model-based optimisation."""
+"""Machine learning extensions for model-based optimization."""
 
 from .tree import DecisionTreeRegressor
 from .forest import RandomForestRegressor
