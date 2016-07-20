@@ -6,7 +6,7 @@ from sklearn.utils import check_random_state
 from .space import Space
 
 
-def dummy_minimize(func, dimensions, n_calls=1000, random_state=None):
+def dummy_minimize(func, dimensions, n_calls=100, random_state=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
