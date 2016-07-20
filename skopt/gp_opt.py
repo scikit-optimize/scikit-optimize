@@ -91,8 +91,11 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
         lbfgs is run for 10 iterations optimizing the acquisition function
         over the Gaussian prior.
 
-    *  `n_calls` [int, default=100]:
-        Number of times the expensive function is called.
+    * `n_calls` [int, default=100]:
+        Number of calls to `func`.
+        If `n_random_starts` > 0, `n_calls - n_random_starts`
+        additional evaluations of `func` are made that are guided
+        by the `base_estimator`.
 
     * `n_points` [int, default=500]:
         Number of points to sample to determine the next "best" point.

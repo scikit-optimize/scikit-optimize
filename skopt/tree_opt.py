@@ -108,7 +108,10 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         The regressor to use as surrogate model
 
     * `n_calls` [int, default=100]:
-        Number of calls to the expensive function.
+        Number of calls to `func`.
+        If `n_random_starts` > 0, `n_calls - n_random_starts`
+        additional evaluations of `func` are made that are guided
+        by the `base_estimator`.
 
     * `n_random_starts` [int, default=10]:
         Number of random points to draw before fitting `base_estimator`
@@ -194,7 +197,10 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         making predictions.
 
     * `n_calls` [int, default=100]:
-        Number of calls to the expensive function.
+        Number of calls to `func`.
+        If `n_random_starts` > 0, `n_calls - n_random_starts`
+        additional evaluations of `func` are made that are guided
+        by the `base_estimator`.
 
     * `n_random_starts` [int, default=10]:
         Number of random points to draw before fitting `base_estimator`
