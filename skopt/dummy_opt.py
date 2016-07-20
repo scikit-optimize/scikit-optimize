@@ -28,10 +28,7 @@ def dummy_minimize(func, dimensions, n_calls=1000, random_state=None):
           `Categorical`).
 
     * `n_calls` [int, default=100]:
-        Number of calls to `func`.
-        If `n_random_starts` > 0, `n_calls - n_random_starts`
-        additional evaluations of `func` are made that are guided
-        by the `base_estimator`.
+        Number of calls to `func` to find the minimum.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible

@@ -102,7 +102,8 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
         Useless if search is set to `"lbfgs"`.
 
     * `n_random_starts` [int, default=10]:
-        Number of random initialization points.
+        Number of evaluations of `func` with random initialization points
+        before approximating the `func` with `base_estimator`.
 
     * `n_restarts_optimizer` [int, default=10]:
         The number of restarts of the optimizer when `search` is `"lbfgs"`.

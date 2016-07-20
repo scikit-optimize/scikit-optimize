@@ -114,8 +114,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         by the `base_estimator`.
 
     * `n_random_starts` [int, default=10]:
-        Number of random points to draw before fitting `base_estimator`
-        for the first time.
+        Number of evaluations of `func` with random initialization points
+        before approximating the `func` with `base_estimator`.
 
     * `n_points` [int, default=20]:
         Number of points to sample when minimizing the acquisition function.
@@ -203,8 +203,8 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         by the `base_estimator`.
 
     * `n_random_starts` [int, default=10]:
-        Number of random points to draw before fitting `base_estimator`
-        for the first time.
+        Number of evaluations of `func` with random initialization points
+        before approximating the `func` with `base_estimator`.
 
     * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
