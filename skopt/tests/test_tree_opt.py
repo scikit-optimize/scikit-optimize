@@ -21,7 +21,7 @@ from skopt.tree_opt import forest_minimize
 
 MINIMIZERS = (partial(forest_minimize, base_estimator='dt'),
               partial(forest_minimize, base_estimator='et'),
-              forest_minimize,
+              partial(forest_minimize, base_estimator='rf'),
               gbrt_minimize)
 
 
@@ -97,12 +97,12 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin, maxiter):
 
 def test_tree_based_minimize():
     for minimizer in MINIMIZERS:
-        yield (check_minimize, minimizer, bench1, 0., [(-2.0, 2.0)], 0.05, 75)
-        yield (check_minimize, minimizer, bench2, -5, [(-6.0, 6.0)], 0.05, 75)
-        yield (check_minimize, minimizer, bench3, -0.9, [(-2.0, 2.0)], 0.05, 75)
+        yield (check_minimize, minimizer, bench1, 0., [(-2.0, 2.0)], 0.05, 25)
+        yield (check_minimize, minimizer, bench2, -5, [(-6.0, 6.0)], 0.05, 60)
+        yield (check_minimize, minimizer, bench3, -0.9, [(-2.0, 2.0)], 0.05, 25)
         yield (check_minimize, minimizer, bench4, 0.0,
                [("-2", "-1", "0", "1", "2")], 0.05, 10)
         yield (check_minimize, minimizer, branin, 0.39,
                [(-5.0, 10.0), (0.0, 15.0)], 0.1, 100)
         yield (check_minimize, minimizer, hart6, -3.32,
-               np.tile((0.0, 1.0), (6, 1)), 1.0, 200)
+               np.tile((0.0, 1.0), (6, 1)), 1.0, 25)
