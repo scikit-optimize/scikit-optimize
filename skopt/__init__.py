@@ -1,6 +1,6 @@
 """
 Scikit-Optimize, or `skopt`, is a simple and efficient library
-for sequential model-based optimization, accessible to everybody 
+for sequential model-based optimization, accessible to everybody
 and reusable in various contexts.
 
 The library is built on top of NumPy, SciPy and Scikit-Learn.
@@ -24,6 +24,7 @@ Run the tests by executing `nosetests` in the top level directory.
 from . import acquisition
 from . import benchmarks
 from . import learning
+from . import plots
 from . import space
 
 from .gp_opt import gp_minimize
@@ -38,6 +39,7 @@ __version__ = "0.0"
 __all__ = ("acquisition",
            "benchmarks",
            "learning",
+           "plots",
            "space",
            "gp_minimize",
            "dummy_minimize",

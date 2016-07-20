@@ -1,6 +1,5 @@
-import warnings
-
 import numpy as np
+import warnings
 
 from scipy.stats import norm
 
