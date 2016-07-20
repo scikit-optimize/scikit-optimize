@@ -26,15 +26,16 @@ MINIMIZERS = (partial(forest_minimize, base_estimator='dt'),
 
 
 def check_no_iterations(minimizer):
-    assert_raise_message(ValueError, "at least one iteration",
+    assert_raise_message(ValueError, "Expected n_calls > 0",
                          minimizer,
-                         branin, [(-5.0, 10.0), (0.0, 15.0)], maxiter=0,
+                         branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=0,
                          random_state=1)
 
-    assert_raise_message(ValueError, "at least one starting point",
+    assert_raise_message(ValueError, "Expected n_random_starts > 0",
                          minimizer,
-                         branin, [(-5.0, 10.0), (0.0, 15.0)], n_start=0,
-                         maxiter=2, random_state=1)
+                         branin, [(-5.0, 10.0), (0.0, 15.0)],
+                         n_random_starts=0,
+                         random_state=1)
 
 
 def test_no_iterations():
@@ -45,15 +46,16 @@ def test_no_iterations():
 def test_one_iteration():
     for minimizer in MINIMIZERS:
         assert_raise_message(ValueError,
-                             "Total number of iterations set by maxiter",
+                             "Expected n_calls >= 10",
                              minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
-                             maxiter=1, random_state=1)
+                             n_calls=1, random_state=1)
 
 
 def test_seven_iterations():
     for minimizer in MINIMIZERS:
-        result = gbrt_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                               n_start=3, maxiter=7, random_state=1)
+        result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                           n_random_starts=3, n_calls=7,
+                           random_state=1)
 
         assert_equal(len(result.models), 4)
         assert_array_equal(result.x_iters.shape, (7, 2))
@@ -81,14 +83,15 @@ def test_forest_minimize_api():
                          base_estimator=DecisionTreeClassifier())
 
 
-def check_minimize(minimizer, func, y_opt, dimensions, margin, maxiter):
+def check_minimize(minimizer, func, y_opt, dimensions, margin, n_calls):
     # The result depends on random sampling so run the test several
     # times and pass if majority of tests converge. Any single instance
     # converging might just be luck.
     success = 0
     N = 3
     for n in range(1, N + 1):
-        r = minimizer(func, dimensions, maxiter=maxiter, random_state=n)
+        r = minimizer(
+            func, dimensions, n_calls=n_calls, random_state=n)
         if r.fun <= y_opt + margin:
             success += 1
 

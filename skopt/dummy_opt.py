@@ -6,7 +6,7 @@ from sklearn.utils import check_random_state
 from .space import Space
 
 
-def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
+def dummy_minimize(func, dimensions, n_calls=1000, random_state=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -27,9 +27,8 @@ def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `maxiter` [int, default=1000]:
-        Number of iterations to find the minimum. In other words, the
-        number of function evaluations.
+    * `n_calls` [int, default=100]:
+        Number of calls to `func` to find the minimum.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -53,13 +52,13 @@ def dummy_minimize(func, dimensions, maxiter=1000, random_state=None):
     """
     rng = check_random_state(random_state)
     space = Space(dimensions)
-    X = space.rvs(n_samples=maxiter, random_state=rng)
+    X = space.rvs(n_samples=n_calls, random_state=rng)
 
     init_y = func(X[0])
     if not np.isscalar(init_y):
         raise ValueError(
             "The function to be optimized should return a scalar")
-    y = np.asarray([init_y] + [func(X[i]) for i in range(1, maxiter)])
+    y = np.asarray([init_y] + [func(X[i]) for i in range(1, n_calls)])
 
     res = OptimizeResult()
     best = np.argmin(y)

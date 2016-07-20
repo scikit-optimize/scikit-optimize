@@ -13,8 +13,8 @@ from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
 
 
-def check_minimize(func, y_opt, dimensions, margin, maxiter):
-    r = dummy_minimize(func, dimensions, maxiter=maxiter, random_state=1)
+def check_minimize(func, y_opt, dimensions, margin, n_calls):
+    r = dummy_minimize(func, dimensions, n_calls=n_calls, random_state=1)
     assert_less(r.fun, y_opt + margin)
 
 
@@ -28,7 +28,7 @@ def test_dummy_minimize():
 
 def test_api():
     res = dummy_minimize(
-        branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0, maxiter=100)
+        branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0, n_calls=100)
     assert_array_equal(len(res.x), 2)
     assert_array_equal((len(res.x_iters), len(res.x_iters[0])), (100, 2))
     assert_array_equal(res.func_vals.shape, (100,))

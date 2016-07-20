@@ -24,8 +24,8 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 
 
 def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
-                kappa=1.96, search="sampling", maxiter=1000, n_points=500,
-                n_start=10, n_restarts_optimizer=5, random_state=None):
+                kappa=1.96, search="sampling", n_calls=100, n_points=500,
+                n_random_starts=10, n_restarts_optimizer=5, random_state=None):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -91,17 +91,19 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
         lbfgs is run for 10 iterations optimizing the acquisition function
         over the Gaussian prior.
 
-    * `maxiter` [int, default=1000]:
-        Number of iterations to find the minimum. Note that `n_start`
-        iterations are effectively discounted, such that total number of
-        function evaluations is at most `maxiter`.
+    * `n_calls` [int, default=100]:
+        Number of calls to `func`.
+        If `n_random_starts` > 0, `n_calls - n_random_starts`
+        additional evaluations of `func` are made that are guided
+        by the `base_estimator`.
 
     * `n_points` [int, default=500]:
         Number of points to sample to determine the next "best" point.
         Useless if search is set to `"lbfgs"`.
 
-    * `n_start` [int, default=10]:
-        Number of random initialization points.
+    * `n_random_starts` [int, default=10]:
+        Number of evaluations of `func` with random initialization points
+        before approximating the `func` with `base_estimator`.
 
     * `n_restarts_optimizer` [int, default=10]:
         The number of restarts of the optimizer when `search` is `"lbfgs"`.
@@ -130,6 +132,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
+
     # Default GP
     if base_estimator is None:
         base_estimator = GaussianProcessRegressor(
@@ -139,8 +142,17 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
                            nu=2.5)),
             normalize_y=True, alpha=10e-6, random_state=random_state)
 
+    if n_random_starts <= 0:
+        raise ValueError(
+            "Expected n_random_start > 0, got %d" % n_random_starts)
+
+    if n_calls < n_random_starts:
+        raise ValueError(
+            "Expected n_calls >= %d, got %d" % (n_random_starts, n_calls))
+
+    n_model_iter = n_calls - n_random_starts
     # First points
-    Xi = space.rvs(n_samples=n_start, random_state=rng)
+    Xi = space.rvs(n_samples=n_random_starts, random_state=rng)
     yi = [func(x) for x in Xi]
     if np.ndim(yi) != 1:
         raise ValueError(
@@ -149,7 +161,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
     # Bayesian optimization loop
     models = []
 
-    for i in range(maxiter - n_start):
+    for i in range(n_model_iter):
         gp = clone(base_estimator)
 
         with warnings.catch_warnings():
