@@ -28,16 +28,19 @@ def dummy_minimize(func, dimensions, n_calls=100,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `n_calls` [int, default=100]:
+    * `n_calls` [int, default=1000]:
         Number of calls to `func` to find the minimum.
 
-    * `x0` [list, shape=(n_initial,)]:
-        List of initial input parameters.
+    * `x0` [list or list of lists]:
+        List of initial input points (if it is a list of lists)
+        or an initial input point (if it is a list).
 
-    * `y0` [list, shape=(n_initial,)]
-        List of values corresponding to evaluations of the function
+    * `y0` [list or scalar]
+        if `y0` is a list, then it corresponds to evaluations of the function
         at each element of `x0` : the i-th element of `y0` corresponds
-        to the function evaluated at the i-th element of `x0`.
+        to the function evaluated at the i-th element of `x0`. if `y0`
+        is a scalar then it corresponds to the evaluation of the function at
+        `x0`.
         if only `x0` is provided but not `y0`, the function is evaluated
         at each element of `x0`, otherwise the values provided in `y0`
         are used.
@@ -66,16 +69,29 @@ def dummy_minimize(func, dimensions, n_calls=100,
     space = Space(dimensions)
     if x0 is None:
         x0 = []
+    if type(x0) is not list:
+        x0 = list(x0)
+    if len(x0) > 0 and type(x0[0]) is not list:
+        x0 = [x0]
+    n_random_starts = n_calls
     if y0 is None:
         y0 = [func(x) for x in x0]
+        n_random_starts -= len(y0)
+    if type(y0) is not list:
+        y0 = [y0]
     if len(x0) != len(y0):
-        raise ValueError('x0 and y0 should have the same length')
-    X = x0 + space.rvs(n_samples=n_calls, random_state=rng)
-    init_y = func(X[0]) if len(y0) == 0 else y0[0]
+        raise ValueError("x0 and y0 should have the same length")
+    X = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
+    init_provided = False if len(y0) == 0 else True
+    init_y = y0[0] if init_provided else func(X[0])
     if not np.isscalar(init_y):
         raise ValueError(
             "The function to be optimized should return a scalar")
-    y = y0 + [func(X[i]) for i in range(len(y0), len(y0) + n_calls)]
+    if init_provided:
+        y = y0 + [func(x) for x in X[len(y0):]]
+    else:
+        y = [init_y] + [func(x) for x in X[1:]]
+
     y = np.array(y)
     res = OptimizeResult()
     best = np.argmin(y)

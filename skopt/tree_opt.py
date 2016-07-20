@@ -23,36 +23,46 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
-    # Initialize with random points
-    if n_random_starts <= 0:
-        raise ValueError(
-            "Expected n_random_starts > 0, got %d" % n_random_starts)
-
+    # Initialize with provided points (x0 and y0) and/or random points
     if n_calls <= 0:
         raise ValueError(
             "Expected n_calls > 0, got %d" % n_random_starts)
-
-    if n_calls < n_random_starts:
-        raise ValueError(
-            "Expected n_calls >= %d, got %d" % (n_random_starts, n_calls))
-
     if x0 is None:
-        x0 = space.rvs(n_samples=n_random_starts, random_state=rng)
+        x0 = []
+    if type(x0) is not list:
+        x0 = list(x0)
+    if len(x0) > 0 and type(x0[0]) is not list:
+        x0 = [x0]
+
+    n_init = len(x0) if y0 is None else 0
+    n_total_init_calls = n_random_starts + n_init
+
+    if n_total_init_calls <= 0:
+        # if x0 is not provided and n_random_starts is 0 then
+        # it will ask for n_random_starts to be > 0.
+        raise ValueError(
+            "Expected n_random_starts > 0, got %d" % n_random_starts)
+
+    if n_calls < n_total_init_calls:
+        raise ValueError(
+            "Expected n_calls >= %d, got %d" % (n_total_init_calls, n_calls))
+
     if y0 is None:
         y0 = [func(x) for x in x0]
+    if type(y0) is not list:
+        y0 = [y0]
     if len(x0) != len(y0):
-        raise ValueError('x0 and y0 should have the same length')
-    Xi = x0[:]
-    yi = y0[:]
+        raise ValueError("x0 and y0 should have the same length")
 
+    Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
+    yi = y0 + [func(x) for x in Xi[len(x0):]]
     if np.ndim(yi) != 1:
         raise ValueError(
             "The function to be optimized should return a scalar")
 
     # Tree-based optimization loop
     models = []
-
-    n_model_iter = n_calls - len(y0)
+    n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
         rgr = clone(base_estimator)
         rgr.fit(space.transform(Xi), yi)
@@ -121,7 +131,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Number of calls to `func`.
         If `n_random_starts` > 0, `n_calls - n_random_starts`
         additional evaluations of `func` are made that are guided
-        by the `base_estimator`.
+        by the `base_estimator`. If `x0` is provided but not `y0`
+        then `n_calls - len(x0) - n_random_starts` evaluations
+        are made instead of `n_calls - n_random_starts` .
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
@@ -130,15 +142,16 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     * `n_points` [int, default=20]:
         Number of points to sample when minimizing the acquisition function.
 
-    * `x0` [list, shape=(n_initial,)]:
-        List of initial input parameters used to bootstrap the surrogate
-        model. Note that if `x0` is provided, no random initialization
-        points are used, so in that case `n_start` is ignored.
+    * `x0` [list or list of lists]:
+        List of initial input points (if it is a list of lists)
+        or an initial input point (if it is a list).
 
-    * `y0` [list, shape=(n_initial,)]
-        List of values corresponding to evaluations of the function
+    * `y0` [list or scalar]
+        if `y0` is a list, then it corresponds to evaluations of the function
         at each element of `x0` : the i-th element of `y0` corresponds
-        to the function evaluated at the i-th element of `x0`.
+        to the function evaluated at the i-th element of `x0`. if `y0`
+        is a scalar then it corresponds to the evaluation of the function at
+        `x0`.
         if only `x0` is provided but not `y0`, the function is evaluated
         at each element of `x0`, otherwise the values provided in `y0`
         are used.
@@ -242,7 +255,9 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         Number of calls to `func`.
         If `n_random_starts` > 0, `n_calls - n_random_starts`
         additional evaluations of `func` are made that are guided
-        by the `base_estimator`.
+        by the `base_estimator`. If `x0` is also provided but not `y0`
+        then `n_calls - len(x0) - n_random_starts` evaluations
+        are made instead of `n_calls - n_random_starts` .
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
@@ -251,15 +266,16 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
 
-    * `x0` [list, shape=(n_initial,)]:
-        List of initial input parameters used to bootstrap the surrogate
-        model. Note that if `x0` is provided, no random initialization
-        points are used, so in that case `n_start` is ignored.
+    * `x0` [list or list of lists]:
+        List of initial input points (if it is a list of lists)
+        or an initial input point (if it is a list).
 
-    * `y0` [list, shape=(n_initial,)]
-        List of values corresponding to evaluations of the function
+    * `y0` [list or scalar]
+        if `y0` is a list, then it corresponds to evaluations of the function
         at each element of `x0` : the i-th element of `y0` corresponds
-        to the function evaluated at the i-th element of `x0`.
+        to the function evaluated at the i-th element of `x0`. if `y0`
+        is a scalar then it corresponds to the evaluation of the function at
+        `x0`.
         if only `x0` is provided but not `y0`, the function is evaluated
         at each element of `x0`, otherwise the values provided in `y0`
         are used.
