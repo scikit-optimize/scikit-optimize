@@ -119,6 +119,26 @@ def test_categorical_transform_binary():
     assert_array_equal(ent_inverse, categories)
 
 
+def test_space_validate_sample():
+    def if_a_not_one(sample):
+        if sample[0] == 'a' and sample[1] == 1:
+            return False
+        else:
+            return True
+
+    s1 = Space([('a', 'b'), (1, 2)]).rvs(n_samples=10, random_state=0)
+    s2 = Space(
+        [('a', 'b'), (1, 2)],
+        validate_sample=None).rvs(n_samples=10, random_state=0)
+    s3 = Space(
+        [('a', 'b'), (1, 2)],
+        validate_sample=if_a_not_one).rvs(n_samples=10, random_state=0)
+
+    assert_array_equal(s1, s2)
+    assert_equal(len([s for s in s2 if s[0] == 'a' and s[1] == 1]), 2)
+    assert_equal(len([s for s in s3 if s[0] == 'a' and s[1] == 1]), 0)
+
+
 def test_space_consistency():
     # Reals (uniform)
 

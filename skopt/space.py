@@ -328,7 +328,7 @@ class Categorical(Dimension):
 class Space:
     """Search space."""
 
-    def __init__(self, dimensions):
+    def __init__(self, dimensions, validate_sample=None):
         """Initialize a search space from given specifications.
 
         Parameters
@@ -369,6 +369,7 @@ class Space:
                 raise ValueError("Invalid grid component (got %s)." % dim)
 
         self.dimensions = _dimensions
+        self.validate_sample = validate_sample
 
     def __eq__(self, other):
         return all([a == b for a, b in zip(self.dimensions, other.dimensions)])
@@ -426,8 +427,16 @@ class Space:
             r = []
             for j in range(self.n_dims):
                 r.append(columns[j][i])
+            if self.validate_sample is None or self.validate_sample(r):
+                rows.append(r)
 
-            rows.append(r)
+        if len(rows) < n_samples:
+            try:
+                rows = rows + self.rvs(n_samples - len(rows), random_state)
+            except RecursionError as e:
+                raise ValueError(
+                    'Dimensions and validate_sample are incompatible.')
+
 
         return rows
 
