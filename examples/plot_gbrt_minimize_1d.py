@@ -21,7 +21,7 @@ col_no = 1
 row_no = 6
 
 res = gbrt_minimize(
-    bench3, dimensions, maxiter=6, n_start=1, random_state=1)
+    bench3, dimensions, n_calls=6, n_random_starts=1, random_state=1)
 best_xs = res.x_iters.ravel()
 best_ys = res.func_vals.ravel()
 models = res.models

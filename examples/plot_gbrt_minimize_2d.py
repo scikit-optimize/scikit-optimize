@@ -16,7 +16,7 @@ x_ax, y_ax = np.meshgrid(x1_values, x2_values)
 vals = np.c_[x_ax.ravel(), y_ax.ravel()]
 
 res = gbrt_minimize(
-    branin, dimensions, maxiter=200, random_state=1)
+    branin, dimensions, n_calls=200, random_state=1)
 
 model = res.models[-1]
 opt_points = res.x_iters
