@@ -42,6 +42,9 @@ class _CategoricalEncoder:
     def __init__(self):
         """Convert labeled categories into one-hot encoded features."""
         self._lb = LabelBinarizer()
+        NONE_ = '__None__'
+        self._Xin = np.vectorize(lambda a: a if a is not None else NONE_)
+        self._Xout = np.vectorize(lambda a: a if a is not NONE_ else None)
 
     def fit(self, X):
         """Fit a list or array of categories.
@@ -51,7 +54,7 @@ class _CategoricalEncoder:
         * `X` [array-like, shape=(n_categories,)]:
             List of categories.
         """
-        self._lb.fit(X)
+        self._lb.fit(self._Xin(X))
         self.n_classes = len(self._lb.classes_)
 
         return self
@@ -69,7 +72,7 @@ class _CategoricalEncoder:
         * `Xt` [array-like, shape=(n_samples, n_categories)]:
             The one-hot encoded categories.
         """
-        return self._lb.transform(X)
+        return self._lb.transform(self._Xin(X))
 
     def inverse_transform(self, Xt):
         """Inverse transform one-hot encoded categories back to their original
@@ -86,7 +89,7 @@ class _CategoricalEncoder:
             The original categories.
         """
         Xt = np.asarray(Xt)
-        return self._lb.inverse_transform(Xt)
+        return self._Xout(self._lb.inverse_transform(Xt))
 
 
 class Dimension(object):
@@ -255,7 +258,8 @@ class Categorical(Dimension):
 
     @property
     def transformed_size(self):
-        return len(self.categories)
+        l = len(self.categories)
+        return l if l != 2 else 1
 
     @property
     def bounds(self):
