@@ -17,14 +17,15 @@ for random_state in range(5):
     print("Doing a random search for the minimum.")
     t = time()
     dummy_model = dummy_minimize(
-        branin, dimensions, maxiter=200, random_state=random_state)
+        branin, dimensions, n_calls=200, random_state=random_state)
     print(time() - t)
     print("Best score obtained, %0.4f" % dummy_model.fun)
 
     print("Doing a gp-based search for the minimum")
     t = time()
     gp_model = gp_minimize(
-        branin, dimensions, maxiter=200, random_state=random_state, n_start=1)
+        branin, dimensions, n_calls=200, random_state=random_state,
+        n_random_starts=1)
     print(time() - t)
     print("Best score obtained, %0.4f" % gp_model.fun)
 

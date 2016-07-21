@@ -1,10 +1,10 @@
 """
-==========================================
-Tying a sklearn estimator with gp_minimize
-==========================================
+===========================================================
+Random forest hyper-parameter optimization with gp_minimize
+===========================================================
 
-This example shows how to chain gp_minimize with RandomForestClassifier
-in this case.
+This example shows how to use gp_minimize to optimize the
+hyper-parameters of a RandomForestClassifier.
 """
 print(__doc__)
 
@@ -38,9 +38,9 @@ best_gp_scores = np.zeros((5, 100))
 
 gp_model = gp_minimize(compute_mean_validation_score,
                        dimensions,
-                       maxiter=100,
+                       n_calls=100,
                        random_state=0,
-                       n_start=1)
+                       n_random_starts=1)
 
 print("Best score obtained = %0.4f for parameters %s" % (-gp_model.fun,
                                                          gp_model.x))
