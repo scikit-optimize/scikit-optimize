@@ -20,8 +20,8 @@ col_no = 1
 row_no = 6
 
 res = gp_minimize(
-    bench3, dimensions, search='lbfgs', maxiter=6,
-    random_state=1, acq='LCB', n_start=1,
+    bench3, dimensions, search='lbfgs', n_calls=6,
+    random_state=1, acq='LCB', n_random_starts=1,
     n_restarts_optimizer=10)
 best_xs = res.x_iters.ravel()
 gp_models = res.models
