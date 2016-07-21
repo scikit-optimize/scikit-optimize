@@ -84,6 +84,22 @@ def test_categorical_transform():
     assert_array_equal(ent_inverse, categories)
 
 
+def test_categorical_transform_binary():
+    categories = ["apple", "orange"]
+    cat = Categorical(categories)
+
+    apple = [0.]
+    orange = [1.]
+
+    assert_equal(cat.transform(["apple"]).size, cat.transformed_size)
+    assert_array_equal(cat.transform(categories), [apple, orange])
+    assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
+    assert_array_equal(cat.inverse_transform([apple, orange]),
+                       ["apple", "orange"])
+    ent_inverse = cat.inverse_transform([apple, orange])
+    assert_array_equal(ent_inverse, categories)
+
+
 def test_space_consistency():
     # Reals (uniform)
     s1 = Space([Real(0.0, 1.0)]).rvs(n_samples=10, random_state=0)

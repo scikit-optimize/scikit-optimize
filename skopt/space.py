@@ -255,7 +255,9 @@ class Categorical(Dimension):
 
     @property
     def transformed_size(self):
-        return len(self.categories)
+        size = len(self.categories)
+        # when len(categories) == 2 CategoricalEncoder outputs a single vector
+        return size if size != 2 else 1
 
     @property
     def bounds(self):
