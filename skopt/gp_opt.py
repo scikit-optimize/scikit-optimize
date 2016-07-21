@@ -12,6 +12,8 @@ from sklearn.utils import check_random_state
 from .acquisition import _gaussian_acquisition
 from .space import Space
 
+from collections import Iterable
+
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
@@ -94,11 +96,13 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
-        If `n_random_starts` > 0, `n_calls - n_random_starts`
-        additional evaluations of `func` are made that are guided
-        by the `base_estimator`. If `x0` is provided but not `y0`
-        then `n_calls - len(x0) - n_random_starts` evaluations
-        are made instead of `n_calls - n_random_starts` .
+        If `x0` is provided but not `y0`, then the elements of `x0` are
+        first evaluated, followed by `n_random_starts` evaluations.
+        Finally, `n_calls - len(x0) - n_random_starts` evaluations are
+        made guided by the surrogate model. If `x0` and `y0` are both
+        provided then `n_random_starts` evaluations are first made then
+        `n_calls - n_random_starts` subsequent evaluations are made
+        guided by the surrogate model.
 
     * `n_points` [int, default=500]:
         Number of points to sample to determine the next "best" point.
@@ -111,9 +115,10 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     * `n_restarts_optimizer` [int, default=10]:
         The number of restarts of the optimizer when `search` is `"lbfgs"`.
 
-    * `x0` [list or list of lists]:
+    * `x0` [list or list of lists or None]:
         List of initial input points (if it is a list of lists)
-        or an initial input point (if it is a list).
+        or an initial input point (if it is a list). if it is
+        `None`, no initial points are used.
 
     * `y0` [list or scalar]
         if `y0` is a list, then it corresponds to evaluations of the function
@@ -161,8 +166,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
         x0 = []
-    if type(x0) is not list:
-        x0 = list(x0)
+    x0 = list(x0)
     if len(x0) > 0 and type(x0[0]) is not list:
         x0 = [x0]
 
@@ -181,8 +185,12 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
 
     if y0 is None:
         y0 = [func(x) for x in x0]
-    if type(y0) is not list:
+
+    if isinstance(y0, Iterable):
+        y0 = list(y0)
+    else:
         y0 = [y0]
+
     if len(x0) != len(y0):
         raise ValueError("x0 and y0 should have the same length")
 

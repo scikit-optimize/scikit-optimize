@@ -16,6 +16,8 @@ from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
 
+from collections import Iterable
+
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
                    n_points, n_random_starts, x0=None, y0=None,
@@ -29,8 +31,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             "Expected n_calls > 0, got %d" % n_random_starts)
     if x0 is None:
         x0 = []
-    if type(x0) is not list:
-        x0 = list(x0)
+    x0 = list(x0)
     if len(x0) > 0 and type(x0[0]) is not list:
         x0 = [x0]
 
@@ -49,8 +50,12 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
     if y0 is None:
         y0 = [func(x) for x in x0]
-    if type(y0) is not list:
+
+    if isinstance(y0, Iterable):
+        y0 = list(y0)
+    else:
         y0 = [y0]
+
     if len(x0) != len(y0):
         raise ValueError("x0 and y0 should have the same length")
 
@@ -129,11 +134,13 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
-        If `n_random_starts` > 0, `n_calls - n_random_starts`
-        additional evaluations of `func` are made that are guided
-        by the `base_estimator`. If `x0` is provided but not `y0`
-        then `n_calls - len(x0) - n_random_starts` evaluations
-        are made instead of `n_calls - n_random_starts` .
+        If `x0` is provided but not `y0`, then the elements of `x0` are
+        first evaluated, followed by `n_random_starts` evaluations.
+        Finally, `n_calls - len(x0) - n_random_starts` evaluations are
+        made guided by the surrogate model. If `x0` and `y0` are both
+        provided then `n_random_starts` evaluations are first made then
+        `n_calls - n_random_starts` subsequent evaluations are made
+        guided by the surrogate model.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
@@ -142,9 +149,11 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     * `n_points` [int, default=20]:
         Number of points to sample when minimizing the acquisition function.
 
-    * `x0` [list or list of lists]:
+    * `x0` [list or list of lists or None]:
         List of initial input points (if it is a list of lists)
-        or an initial input point (if it is a list).
+        or an initial input point (if it is a list). if it is
+        `None`, no initial points are used and only random starts
+        are used to bootstrap the surrogate model.
 
     * `y0` [list or scalar]
         if `y0` is a list, then it corresponds to evaluations of the function
@@ -266,9 +275,10 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
 
-    * `x0` [list or list of lists]:
+    * `x0` [list or list of lists or None]:
         List of initial input points (if it is a list of lists)
-        or an initial input point (if it is a list).
+        or an initial input point (if it is a list). if it is
+        `None`, no initial points are used.
 
     * `y0` [list or scalar]
         if `y0` is a list, then it corresponds to evaluations of the function
