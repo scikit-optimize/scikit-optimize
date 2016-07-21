@@ -69,23 +69,25 @@ def test_integer():
 
 
 def test_categorical_transform():
-    categories = ["apple", "orange", "banana"]
+    categories = ["apple", "orange", "banana", None]
     cat = Categorical(categories)
 
-    apple = [1.0, 0.0, 0.0]
-    banana = [0., 1., 0.]
-    orange = [0., 0., 1]
+    apple = [0., 1.0, 0.0, 0.0]
+    banana = [0., 0., 1., 0.]
+    orange = [0., 0., 0., 1.]
+    none = [1., 0., 0., 0.]
 
     assert_equal(cat.transformed_size, 3)
     assert_equal(cat.transformed_size, cat.transform(["apple"]).size)
     assert_array_equal(cat.transform(categories), [apple, orange, banana])
+    assert_array_equal(cat.transform(categories), [apple, orange, banana, none])
     assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
     assert_array_equal(cat.transform(["apple", "banana"]), [apple, banana])
     assert_array_equal(cat.inverse_transform([apple, orange]),
                        ["apple", "orange"])
     assert_array_equal(cat.inverse_transform([apple, banana]),
                        ["apple", "banana"])
-    ent_inverse = cat.inverse_transform([apple, orange, banana])
+    ent_inverse = cat.inverse_transform([apple, orange, banana, none])
     assert_array_equal(ent_inverse, categories)
 
 
