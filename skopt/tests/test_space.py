@@ -65,22 +65,40 @@ def test_integer():
     assert_array_equal(a.inverse_transform(random_values), random_values)
 
 
-def test_categorical_transform():
-    categories = ["apple", "orange", "banana"]
+def test_categorical_transform_binary():
+    categories = ["apple", "orange"]
     cat = Categorical(categories)
 
-    apple = [1.0, 0.0, 0.0]
-    banana = [0., 1., 0.]
-    orange = [0., 0., 1]
+    apple = [0.]
+    orange = [1.]
 
-    assert_array_equal(cat.transform(categories), [apple, orange, banana])
+    assert_equal(cat.transform(["apple"]).size, cat.transformed_size)
+    assert_array_equal(cat.transform(categories), [apple, orange])
+    assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
+    assert_array_equal(cat.inverse_transform([apple, orange]),
+                       ["apple", "orange"])
+    ent_inverse = cat.inverse_transform([apple, orange])
+    assert_array_equal(ent_inverse, categories)
+
+
+def test_categorical_transform():
+    categories = [None, "apple", "orange", "banana"]
+    cat = Categorical(categories)
+
+    none = [1., 0., 0., 0.]
+    apple = [0., 1., 0., 0.]
+    banana = [0., 0., 1., 0.]
+    orange = [0., 0., 0., 1.]
+
+    assert_equal(cat.transform(["apple"]).size, cat.transformed_size)
+    assert_array_equal(cat.transform(categories), [none, apple, orange, banana])
     assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
     assert_array_equal(cat.transform(["apple", "banana"]), [apple, banana])
     assert_array_equal(cat.inverse_transform([apple, orange]),
                        ["apple", "orange"])
     assert_array_equal(cat.inverse_transform([apple, banana]),
                        ["apple", "banana"])
-    ent_inverse = cat.inverse_transform([apple, orange, banana])
+    ent_inverse = cat.inverse_transform([none, apple, orange, banana])
     assert_array_equal(ent_inverse, categories)
 
 

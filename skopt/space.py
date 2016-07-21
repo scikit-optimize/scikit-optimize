@@ -10,6 +10,16 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 
+@np.vectorize
+def encode_none(a):
+    return a if a is not None else '__None__'
+
+
+@np.vectorize
+def decode_none(a):
+    return a if a != '__None__' else None
+
+
 class _Identity:
     """Identity transform."""
 
@@ -51,7 +61,7 @@ class _CategoricalEncoder:
         * `X` [array-like, shape=(n_categories,)]:
             List of categories.
         """
-        self._lb.fit(X)
+        self._lb.fit(encode_none(X))
         self.n_classes = len(self._lb.classes_)
 
         return self
@@ -69,7 +79,7 @@ class _CategoricalEncoder:
         * `Xt` [array-like, shape=(n_samples, n_categories)]:
             The one-hot encoded categories.
         """
-        return self._lb.transform(X)
+        return self._lb.transform(encode_none(X))
 
     def inverse_transform(self, Xt):
         """Inverse transform one-hot encoded categories back to their original
@@ -86,7 +96,7 @@ class _CategoricalEncoder:
             The original categories.
         """
         Xt = np.asarray(Xt)
-        return self._lb.inverse_transform(Xt)
+        return decode_none(self._lb.inverse_transform(Xt))
 
 
 class Dimension(object):
@@ -255,7 +265,9 @@ class Categorical(Dimension):
 
     @property
     def transformed_size(self):
-        return len(self.categories)
+        size = len(self.categories)
+        # when len(categories) == 2 CategoricalEncoder outputs a single vector
+        return size if size != 2 else 1
 
     @property
     def bounds(self):
