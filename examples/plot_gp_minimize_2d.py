@@ -42,8 +42,8 @@ vals = np.c_[x_ax.ravel(), y_ax.ravel()]
 subplot_no = 221
 
 res = gp_minimize(
-    branin, dimensions, search='lbfgs', maxiter=10, random_state=0,
-    acq="LCB", n_start=1, n_restarts_optimizer=2)
+    branin, dimensions, search='lbfgs', n_calls=10, random_state=0,
+    acq="LCB", n_random_starts=1, n_restarts_optimizer=2)
 gp_model = res.models[-1]
 opt_points = res['x_iters']
 
