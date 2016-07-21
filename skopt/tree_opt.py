@@ -1,5 +1,5 @@
 """Tree based minimization algorithms."""
-
+from collections import Iterable
 import numpy as np
 
 from scipy.optimize import OptimizeResult
@@ -16,8 +16,6 @@ from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
 
-from collections import Iterable
-
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
                    n_points, n_random_starts, x0=None, y0=None,
@@ -32,7 +30,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     if x0 is None:
         x0 = []
     x0 = list(x0)
-    if len(x0) > 0 and type(x0[0]) is not list:
+    if x0 and not isinstance(x0[0], list):
         x0 = [x0]
 
     n_init = len(x0) if y0 is None else 0
@@ -111,6 +109,16 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     best point. Thereby finding the minimum of `func` with as
     few evaluations as possible.
 
+    The total number of evaluations, `n_calls`, are performed like the
+    following. If `x0` is provided but not `y0`, then the elements of `x0`
+    are first evaluated, followed by `n_random_starts` evaluations.
+    Finally, `n_calls - len(x0) - n_random_starts` evaluations are
+    made guided by the surrogate model. If `x0` and `y0` are both
+    provided then `n_random_starts` evaluations are first made then
+    `n_calls - n_random_starts` subsequent evaluations are made
+    guided by the surrogate model.
+
+
     Parameters
     ----------
     * `func` [callable]:
@@ -133,14 +141,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         The regressor to use as surrogate model
 
     * `n_calls` [int, default=100]:
-        Number of calls to `func`.
-        If `x0` is provided but not `y0`, then the elements of `x0` are
-        first evaluated, followed by `n_random_starts` evaluations.
-        Finally, `n_calls - len(x0) - n_random_starts` evaluations are
-        made guided by the surrogate model. If `x0` and `y0` are both
-        provided then `n_random_starts` evaluations are first made then
-        `n_calls - n_random_starts` subsequent evaluations are made
-        guided by the surrogate model.
+        Maximum number of calls to `func`.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
@@ -228,6 +229,16 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     the expensive function at the next best point. Thereby finding the
     minimum of `func` with as few evaluations as possible.
 
+    The total number of evaluations, `n_calls`, are performed like the
+    following. If `x0` is provided but not `y0`, then the elements of `x0`
+    are first evaluated, followed by `n_random_starts` evaluations.
+    Finally, `n_calls - len(x0) - n_random_starts` evaluations are
+    made guided by the surrogate model. If `x0` and `y0` are both
+    provided then `n_random_starts` evaluations are first made then
+    `n_calls - n_random_starts` subsequent evaluations are made
+    guided by the surrogate model.
+
+
     Parameters
     ----------
     * `func` [callable]:
@@ -262,11 +273,6 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
-        If `n_random_starts` > 0, `n_calls - n_random_starts`
-        additional evaluations of `func` are made that are guided
-        by the `base_estimator`. If `x0` is also provided but not `y0`
-        then `n_calls - len(x0) - n_random_starts` evaluations
-        are made instead of `n_calls - n_random_starts` .
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points

@@ -1,3 +1,4 @@
+from collections import Iterable
 import numpy as np
 import warnings
 
@@ -11,8 +12,6 @@ from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
 from .space import Space
-
-from collections import Iterable
 
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
@@ -34,7 +33,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     If every function evaluation is expensive, for instance
     when the parameters are the hyperparameters of a neural network
     and the function evaluation is the mean cross-validation score across
-    ten folds, optimizing the hyperparameters by standared optimization
+    ten folds, optimizing the hyperparameters by standard optimization
     routines would take for ever!
 
     The idea is to approximate the function using a Gaussian process.
@@ -43,6 +42,16 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     GP kernel between the parameters. Then a smart choice to choose the
     next parameter to evaluate can be made by the acquisition function
     over the Gaussian prior which is much quicker to evaluate.
+
+    The total number of evaluations, `n_calls`, are performed like the
+    following. If `x0` is provided but not `y0`, then the elements of `x0`
+    are first evaluated, followed by `n_random_starts` evaluations.
+    Finally, `n_calls - len(x0) - n_random_starts` evaluations are
+    made guided by the surrogate model. If `x0` and `y0` are both
+    provided then `n_random_starts` evaluations are first made then
+    `n_calls - n_random_starts` subsequent evaluations are made
+    guided by the surrogate model.
+
 
     Parameters
     ----------
@@ -95,14 +104,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         over the Gaussian prior.
 
     * `n_calls` [int, default=100]:
-        Number of calls to `func`.
-        If `x0` is provided but not `y0`, then the elements of `x0` are
-        first evaluated, followed by `n_random_starts` evaluations.
-        Finally, `n_calls - len(x0) - n_random_starts` evaluations are
-        made guided by the surrogate model. If `x0` and `y0` are both
-        provided then `n_random_starts` evaluations are first made then
-        `n_calls - n_random_starts` subsequent evaluations are made
-        guided by the surrogate model.
+        Maximum number of calls to `func`.
 
     * `n_points` [int, default=500]:
         Number of points to sample to determine the next "best" point.
@@ -167,7 +169,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     if x0 is None:
         x0 = []
     x0 = list(x0)
-    if len(x0) > 0 and type(x0[0]) is not list:
+    if x0 and not isinstance(x0[0], list):
         x0 = [x0]
 
     n_init = len(x0) if y0 is None else 0

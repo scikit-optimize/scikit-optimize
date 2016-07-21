@@ -1,11 +1,10 @@
+from collections import Iterable
 import numpy as np
 
 from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
 from .space import Space
-
-from collections import Iterable
 
 
 def dummy_minimize(func, dimensions, n_calls=100,
@@ -31,7 +30,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
           `Categorical`).
 
     * `n_calls` [int, default=1000]:
-        Number of calls to `func` to find the minimum.
+        Maximum number of calls to `func` to find the minimum.
 
     * `x0` [list or list of lists or None]:
         List of initial input points (if it is a list of lists)
@@ -73,7 +72,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
     if x0 is None:
         x0 = []
     x0 = list(x0)
-    if len(x0) > 0 and type(x0[0]) is not list:
+    if x0 and not isinstance(x0[0], list):
         x0 = [x0]
     n_random_starts = n_calls
     if y0 is None:
