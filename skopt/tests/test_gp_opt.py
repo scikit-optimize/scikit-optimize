@@ -1,10 +1,7 @@
 import numpy as np
 from itertools import product
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_raises
 
 from skopt.gp_opt import gp_minimize
 from skopt.benchmarks import bench1
@@ -32,19 +29,3 @@ def test_gp_minimize():
                search, acq, 0.1, 50)
         yield (check_minimize, hart6, -3.32, np.tile((0., 1.), (6, 1)),
                search, acq, 1.0, 100)
-
-
-def test_api():
-    res = gp_minimize(
-        branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0,
-        n_calls=20)
-    assert_array_equal(len(res.x), 2)
-    assert_array_equal(len(res.x_iters), 20)
-    assert_array_equal(len(res.x_iters[0]), 2)
-    assert(isinstance(res.x_iters, list))
-    assert(isinstance(res.x_iters[0], list))
-    assert_array_equal(res.func_vals.shape, (20,))
-    assert_array_less(res.x_iters, np.tile([10, 15], (20, 1)))
-    assert_array_less(np.tile([-5, 0], (20, 1)), res.x_iters)
-
-    assert_raises(ValueError, gp_minimize, lambda x: x, [[-5, 10]])

@@ -3,9 +3,6 @@ from functools import partial
 import numpy as np
 
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raise_message
 
@@ -49,23 +46,6 @@ def test_one_iteration():
                              "Expected n_calls >= 10",
                              minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
                              n_calls=1, random_state=1)
-
-
-def test_seven_iterations():
-    for minimizer in MINIMIZERS:
-        result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                           n_random_starts=3, n_calls=7,
-                           random_state=1)
-
-        assert_equal(len(result.models), 4)
-        assert_equal(len(result.x_iters), 7)
-        assert_equal(len(result.x_iters[0]), 2)
-        assert_array_equal(result.func_vals.shape, (7,))
-        assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
-        assert_almost_equal(result.fun, branin(result.x))
-        assert(isinstance(result.x_iters, list))
-        assert(isinstance(result.x_iters[0], list))
-        assert(isinstance(result.x, list))
 
 
 def test_forest_minimize_api():
