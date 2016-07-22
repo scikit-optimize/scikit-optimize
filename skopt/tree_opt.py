@@ -61,7 +61,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
         next_y = func(next_x)
-        Xi = np.vstack((Xi, next_x))
+        Xi.append(next_x)
         yi.append(next_y)
 
     res = OptimizeResult()
@@ -133,7 +133,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         - `x` [float]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
-        - `x_iters` [array]: location of function evaluation for each
+        - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
@@ -222,7 +222,7 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         - `x` [float]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
-        - `x_iters` [array]: location of function evaluation for each
+        - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.

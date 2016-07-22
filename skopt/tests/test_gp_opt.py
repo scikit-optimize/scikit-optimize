@@ -38,8 +38,11 @@ def test_api():
     res = gp_minimize(
         branin, [(-5.0, 10.0), (0.0, 15.0)], random_state=0,
         n_calls=20)
-    assert_array_equal(res.x.shape, (2,))
-    assert_array_equal(res.x_iters.shape, (20, 2))
+    assert_array_equal(len(res.x), 2)
+    assert_array_equal(len(res.x_iters), 20)
+    assert_array_equal(len(res.x_iters[0]), 2)
+    assert(isinstance(res.x_iters, list))
+    assert(isinstance(res.x_iters[0], list))
     assert_array_equal(res.func_vals.shape, (20,))
     assert_array_less(res.x_iters, np.tile([10, 15], (20, 1)))
     assert_array_less(np.tile([-5, 0], (20, 1)), res.x_iters)

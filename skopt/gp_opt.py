@@ -121,7 +121,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
         - `x` [float]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
-        - `x_iters` [array]: location of function evaluation for each
+        - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
@@ -198,7 +198,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
         next_y = func(next_x)
-        Xi = np.vstack((Xi, next_x))
+        Xi.append(next_x)
         yi.append(next_y)
 
     # Pack results

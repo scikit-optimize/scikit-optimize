@@ -42,7 +42,7 @@ def dummy_minimize(func, dimensions, n_calls=100, random_state=None):
 
         - `x` [float]: location of the minimum.
         - `fun` [float]: function value at the minimum.
-        - `x_iters` [array]: location of function evaluation for each
+        - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimisation space.
