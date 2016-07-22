@@ -26,8 +26,8 @@ def test_dimensions():
     yield (check_dimension, Real, (1, 4), 2.251066014107722)
     yield (check_dimension, Integer, (1, 4), 2)
     yield (check_dimension, Integer, (1., 4.), 2)
-    yield (check_categorical, (('a', 'b', 'c', 'd')), 'b')
-    yield (check_categorical, ((1., 2., 3., 4.)), 2.)
+    yield (check_categorical, ('a', 'b', 'c', 'd'), 'b')
+    yield (check_categorical, (1., 2., 3., 4.), 2.)
 
 def check_limits(value, lower_bound, upper_bound):
     assert_less_equal(lower_bound, value)
