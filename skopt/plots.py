@@ -125,12 +125,18 @@ def plot_scatter_matrix(result, bins=20):
                 ax[i, i].hist(samples[:, i], bins=bins)
             else:
                 ax[i, j].scatter(samples[:, j], samples[:, i],
-                                 c=order, s=40, lw=0., alpha=0.6)
+                                 c=order, s=40, lw=0., alpha=0.6, cmap='Blues')
+                ax[i, j].scatter(result.x[j], result.x[i],
+                              c=['r'], s=10, lw=0.)
 
     # Deal with formatting axes
     for i in range(result.space.n_dims):
         for j in range(result.space.n_dims):
             ax_ = ax[i, j]
+
+            if j > i:
+                ax_.axis("off")
+
             if i < result.space.n_dims - 1:
                 ax_.set_xticklabels([])
             # bottom row
