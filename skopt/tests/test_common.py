@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_raises
 from skopt.benchmarks import branin
 from skopt.dummy_opt import dummy_minimize
 from skopt.gp_opt import gp_minimize
+from skopt.space import Space
 from skopt.tree_opt import forest_minimize
 from skopt.tree_opt import gbrt_minimize
 
@@ -25,6 +26,7 @@ MINIMIZERS = (gp_minimize,
 
 
 def check_minimizer_api(result, n_models):
+    assert(isinstance(result.space, Space))
     assert_equal(len(result.models), n_models)
     assert_equal(len(result.x_iters), 7)
     assert_array_equal(result.func_vals.shape, (7,))
@@ -36,6 +38,8 @@ def check_minimizer_api(result, n_models):
     for n in range(7):
         assert(isinstance(result.x_iters[n], list))
         assert_equal(len(result.x_iters[n]), 2)
+
+        assert(isinstance(result.func_vals[n], float))
 
     assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
     assert_almost_equal(result.fun, branin(result.x))
