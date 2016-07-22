@@ -17,9 +17,11 @@ def check_dimension(Dimension, vals, random_val):
     x = Dimension(*vals)
     assert_equal(x.rvs(random_state=1), random_val)
 
+
 def check_categorical(vals, random_val):
     x = Categorical(vals)
     assert_equal(x.rvs(random_state=1), random_val)
+
 
 def test_dimensions():
     yield (check_dimension, Real, (1., 4.), 2.251066014107722)
@@ -28,6 +30,7 @@ def test_dimensions():
     yield (check_dimension, Integer, (1., 4.), 2)
     yield (check_categorical, ('a', 'b', 'c', 'd'), 'b')
     yield (check_categorical, (1., 2., 3., 4.), 2.)
+
 
 def check_limits(value, lower_bound, upper_bound):
     assert_less_equal(lower_bound, value)
@@ -157,6 +160,10 @@ def test_space_api():
     samples = space.rvs(n_samples=10, random_state=0)
     assert_equal(len(samples), 10)
     assert_equal(len(samples[0]), 4)
+
+    assert_true(isinstance(samples, list))
+    for n in range(4):
+        assert_true(isinstance(samples[n], list))
 
     assert_true(isinstance(samples[0][0], numbers.Real))
     assert_true(isinstance(samples[0][1], numbers.Integral))

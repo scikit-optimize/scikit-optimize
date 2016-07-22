@@ -67,5 +67,7 @@ def dummy_minimize(func, dimensions, n_calls=100, random_state=None):
     res.func_vals = y
     res.x_iters = X
     res.space = space
+    # create attribute even though it is empty
+    res.models = []
 
     return res
