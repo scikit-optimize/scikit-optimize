@@ -4,6 +4,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
+from matplotlib.ticker import MaxNLocator
 
 from scipy.optimize import OptimizeResult
 
@@ -86,5 +87,61 @@ def plot_convergence(*args, **kwargs):
 
     if true_minimum or name:
         ax.legend(loc="best")
+
+    return ax
+
+
+def plot_scatter_matrix(result, bins=20):
+    """Plot scatter plot matrix of samples.
+
+    The diagonal shows a histogram for each dimension. Create pairwise
+    scatter plots of each dimension of the search space. Later
+    samples are shown in a darker color.
+
+    Parameters
+    ----------
+    * `result` [`OptimizeResult`]
+        The result for which to plot the scatter plot matrix.
+
+    * `bins` [int, bins=20]:
+        Number of bins to use for histograms on the diagonal.
+
+    Returns
+    -------
+    * `ax`: [`Axes`]:
+        The matplotlib axes.
+    """
+    samples = np.asarray(result.x_iters)
+    order = range(samples.shape[0])
+    fig, ax = plt.subplots(result.space.n_dims,
+                           result.space.n_dims,
+                           figsize=(8, 8))
+    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
+                        hspace=0.1, wspace=0.1)
+
+    for i in range(result.space.n_dims):
+        for j in range(i + 1):
+            if i == j:
+                ax[i, i].hist(samples[:, i], bins=bins)
+            else:
+                ax[i, j].scatter(samples[:, j], samples[:, i],
+                                 c=order, s=40, lw=0., alpha=0.6)
+
+    # Deal with formatting axes
+    for i in range(result.space.n_dims):
+        for j in range(result.space.n_dims):
+            ax_ = ax[i, j]
+            if i < result.space.n_dims - 1:
+                ax_.set_xticklabels([])
+            # bottom row
+            else:
+                ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
+                [l.set_rotation(45) for l in ax_.get_xticklabels()]
+
+            # first column
+            if j == 0:
+                ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
+            else:
+                ax_.set_yticklabels([])
 
     return ax
