@@ -10,15 +10,18 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .acquisition import gaussian_ei
+from .space import Categorical
 from .learning import DecisionTreeRegressor
 from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
+from .solvers import paramils_smac
 from .space import Space
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
-                   n_points, n_random_starts, random_state=None):
+                   n_points, n_random_starts, random_state=None,
+                   acq_min="sampling"):
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -54,11 +57,28 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         # has zero gradient over large distances. As a result we can not
         # use gradient based optimizers like BFGS, so using random sampling
         # for the moment.
-        X = space.transform(space.rvs(n_samples=n_points,
-                                      random_state=rng))
-        values = -gaussian_ei(X, rgr, np.min(yi))
-        next_x = X[np.argmin(values)]
-
+        curr_min = np.min(yi)
+        if acq_min == "sampling":
+            X = space.transform(space.rvs(n_samples=n_points,
+                                          random_state=rng))
+            values = -gaussian_ei(X, rgr, curr_min)
+            next_x = X[np.argmin(values)]
+        elif acq_min == "paramils":
+            for dimension in space.dimensions:
+                if isinstance(dimension, Categorical):
+                    raise ValueError("use sampling.")
+            Xi_transform = space.transform(Xi)
+            min_func = lambda X : -gaussian_ei(X, rgr, curr_min)
+            # XXX: SMAC says top 10.
+            # yi = np.asarray(yi)
+            # top_indices = np.argsort(-yi)[: min(len(yi), 10)]
+            # X_top = Xi_transform[top_indices, :]
+            next_x = paramils_smac(
+                min_func, Xi_transform, space.bounds, random_state=rng)
+            # yi = yi.tolist()
+        else:
+            raise ValueError("acq_min should be either sampling or paramils,"
+                             " got %s" % acq_min)
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
         next_y = func(next_x)
         Xi.append(next_x)
@@ -156,8 +176,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
-                    n_points=100, n_random_starts=10, random_state=None):
-    """Sequential optimization using decision trees.
+                    n_points=100, n_random_starts=10, random_state=None,
+                    acq_min="sampling"):
+    """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
     function `func`. The model is improved by sequentially evaluating
@@ -260,4 +281,4 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
-                          random_state=random_state)
+                          random_state=random_state, acq_min=acq_min)
