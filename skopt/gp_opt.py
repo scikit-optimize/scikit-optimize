@@ -32,7 +32,7 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
                 n_points=500, n_random_starts=10, n_restarts_optimizer=5,
-                x0=None, y0=None, random_state=None):
+                x0=None, y0=None, random_state=None, verbose=False):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -152,6 +152,10 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Set random state to something other than None for reproducible
         results.
 
+    * `verbose` [int, default=False]:
+        Control the verbosity. It is advised to set the verbosity to True
+        for long optimization runs.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -209,8 +213,26 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
+    func_call_no = 0
     if y0 is None and x0:
-        y0 = [func(x) for x in x0]
+        y0 = []
+        for i, x in enumerate(x0):
+
+            if verbose:
+                func_call_no += 1
+                print("Function evaluation No: %d at provided "
+                      "point started." % func_call_no)
+
+            curr_y = func(x)
+            y0.append(curr_y)
+
+            if verbose:
+                print("Function evaluation No: %d at provided "
+                      "point started." % func_call_no)
+                print("Function value obtained: %0.4f" % curr_y)
+                print("Current minimum: %0.4f" % np.min(y0))
+
+
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -227,8 +249,26 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     else:
         y0 = []
 
+    # Random function evaluations.
     Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
-    yi = y0 + [func(x) for x in Xi[len(x0):]]
+    yi = y0
+
+    for i, x in enumerate(Xi[len(x0):]):
+        if verbose:
+            func_call_no += 1
+            print("Function evaluation no: %d at a "
+                  "random point started" % func_call_no)
+            print("Current minimum: %0.4f" % np.min(yi))
+
+        curr_y = func(x)
+        yi.append(curr_y)
+
+        if verbose:
+            print("Function evaluation no: %d at a "
+                  "random point ended" % func_call_no)
+            print("Function value obtained: %0.4f" % curr_y)
+            print("Current minimum: %0.4f" % np.min(yi))
+
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
 
@@ -246,6 +286,9 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     models = []
     n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
+
+        if verbose:
+            print("Fitting GaussianProcessRegressor no: %d" % (i + 1))
         gp = clone(base_estimator)
 
         with warnings.catch_warnings():
@@ -281,9 +324,18 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                     next_x, best = x, a
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-        next_y = func(next_x)
+
+        if verbose:
+            func_call_no += 1
+            print("Function evaluation no: %d started" % func_call_no)
+
+        curr_y = func(next_x)
         Xi.append(next_x)
-        yi.append(next_y)
+        yi.append(curr_y)
+        if verbose:
+            print("Function evaluation no: %d ended" % func_call_no)
+            print("Function value obtained: %0.4f" % curr_y)
+            print("Current minimum: %0.4f" % np.min(yi))
 
     # Pack results
     res = OptimizeResult()

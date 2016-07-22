@@ -13,7 +13,7 @@ from .space import Space
 
 
 def dummy_minimize(func, dimensions, n_calls=100,
-                   x0=None, y0=None, random_state=None):
+                   x0=None, y0=None, random_state=None, verbose=False):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -58,6 +58,10 @@ def dummy_minimize(func, dimensions, n_calls=100,
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
+
+    * `verbose` [int, default=False]:
+        Control the verbosity. It is advised to set the verbosity to True
+        for long optimization runs.
 
     Returns
     -------
@@ -124,12 +128,20 @@ def dummy_minimize(func, dimensions, n_calls=100,
     first = True
 
     for i in range(len(y0), len(X)):
+
+        if verbose:
+            print("Function evaluation no: %d started" % (i + 1))
+
         y_i = func(X[i])
 
         if first:
             first = False
             if not np.isscalar(y_i):
                 raise ValueError("`func` should return a scalar")
+
+        if verbose:
+            print("Function evaluation no: %d ended" % (i + 1))
+            print("Function value obtained: %0.4f" % next_y)
 
         y.append(y_i)
 
