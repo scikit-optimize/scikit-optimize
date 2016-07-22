@@ -77,9 +77,8 @@ def test_categorical_transform():
     orange = [0., 0., 0., 1.]
     none = [1., 0., 0., 0.]
 
-    assert_equal(cat.transformed_size, 3)
+    assert_equal(cat.transformed_size, 4)
     assert_equal(cat.transformed_size, cat.transform(["apple"]).size)
-    assert_array_equal(cat.transform(categories), [apple, orange, banana])
     assert_array_equal(cat.transform(categories), [apple, orange, banana, none])
     assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
     assert_array_equal(cat.transform(["apple", "banana"]), [apple, banana])
