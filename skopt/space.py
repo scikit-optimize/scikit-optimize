@@ -239,7 +239,7 @@ class Categorical(Dimension):
             Prior probabilities for each category. By default all categories
             are equally likely.
         """
-        self.categories = np.asarray(categories)
+        self.categories = categories
         self.transformer = _CategoricalEncoder()
         self.transformer.fit(self.categories)
 
@@ -251,7 +251,11 @@ class Categorical(Dimension):
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
-        return self.categories[choices]
+
+        if isinstance(choices, numbers.Integral):
+            return self.categories[choices]
+        else:
+            return [self.categories[c] for c in choices]
 
     @property
     def transformed_size(self):
