@@ -151,20 +151,21 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Number of points to sample when minimizing the acquisition function.
 
     * `x0` [list or list of lists or None]:
-        List of initial input points (if it is a list of lists)
-        or an initial input point (if it is a list). if it is
-        `None`, no initial points are used and only random starts
-        are used to bootstrap the surrogate model.
+        Initial input points.
+        - If it is a list of lists, use it as a list of input points.
+        - if it is a list, use it as an initial input point.
+        - If it is `None`, no initial input points are used.
 
-    * `y0` [list or scalar]
-        if `y0` is a list, then it corresponds to evaluations of the function
-        at each element of `x0` : the i-th element of `y0` corresponds
-        to the function evaluated at the i-th element of `x0`. if `y0`
-        is a scalar then it corresponds to the evaluation of the function at
-        `x0`.
-        if only `x0` is provided but not `y0`, the function is evaluated
-        at each element of `x0`, otherwise the values provided in `y0`
-        are used.
+    * `y0` [list or scalar or None]
+        Evaluation of initial input points.
+        - if it is a lists, then it corresponds to evaluations of the function
+          at each element of `x0` : the i-th element of `y0` corresponds
+          to the function evaluated at the i-th element of `x0`.
+        - If it is a scalar, then it corresponds to the evaluation of the
+          function at `x0`.
+        - if it is None and `x0` is provided, then the function is evaluated
+          at each element of `x0`.
+
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -282,19 +283,20 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         Number of points to sample when minimizing the acquisition function.
 
     * `x0` [list or list of lists or None]:
-        List of initial input points (if it is a list of lists)
-        or an initial input point (if it is a list). if it is
-        `None`, no initial points are used.
+        Initial input points.
+        - If it is a list of lists, use it as a list of input points.
+        - if it is a list, use it as an initial input point.
+        - If it is `None`, no initial input points are used.
 
-    * `y0` [list or scalar]
-        if `y0` is a list, then it corresponds to evaluations of the function
-        at each element of `x0` : the i-th element of `y0` corresponds
-        to the function evaluated at the i-th element of `x0`. if `y0`
-        is a scalar then it corresponds to the evaluation of the function at
-        `x0`.
-        if only `x0` is provided but not `y0`, the function is evaluated
-        at each element of `x0`, otherwise the values provided in `y0`
-        are used.
+    * `y0` [list or scalar or None]
+        Evaluation of initial input points.
+        - if it is a list, then it corresponds to evaluations of the function
+          at each element of `x0` : the i-th element of `y0` corresponds
+          to the function evaluated at the i-th element of `x0`.
+        - If it is a scalar, then it corresponds to the evaluation of the
+          function at `x0`.
+        - if it is None and `x0` is provided, then the function is evaluated
+          at each element of `x0`.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible

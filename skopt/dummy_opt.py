@@ -29,23 +29,24 @@ def dummy_minimize(func, dimensions, n_calls=100,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `n_calls` [int, default=1000]:
+    * `n_calls` [int, default=100]:
         Maximum number of calls to `func` to find the minimum.
 
     * `x0` [list or list of lists or None]:
-        List of initial input points (if it is a list of lists)
-        or an initial input point (if it is a list). If it is
-        `None`, no initial input points are used.
+        Initial input points.
+        - If it is a list of lists, use it as a list of input points.
+        - if it is a list, use it as an initial input point.
+        - If it is `None`, no initial input points are used.
 
-    * `y0` [list or scalar]
-        if `y0` is a list, then it corresponds to evaluations of the function
-        at each element of `x0` : the i-th element of `y0` corresponds
-        to the function evaluated at the i-th element of `x0`. If `y0`
-        is a scalar then it corresponds to the evaluation of the function at
-        `x0`.
-        If only `x0` is provided but not `y0`, the function is evaluated
-        at each element of `x0`, otherwise the values provided in `y0`
-        are used.
+    * `y0` [list or scalar or None]
+        Evaluation of initial input points.
+        - if it is a list, then it corresponds to evaluations of the function
+          at each element of `x0` : the i-th element of `y0` corresponds
+          to the function evaluated at the i-th element of `x0`.
+        - If it is a scalar, then it corresponds to the evaluation of the
+          function at `x0`.
+        - if it is None and `x0` is provided, then the function is evaluated
+          at each element of `x0`.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -74,17 +75,16 @@ def dummy_minimize(func, dimensions, n_calls=100,
     x0 = list(x0)
     if x0 and not isinstance(x0[0], list):
         x0 = [x0]
-    n_random_starts = n_calls
     if y0 is None:
         y0 = [func(x) for x in x0]
-        n_random_starts -= len(y0)
+        n_calls -= len(y0)
     if isinstance(y0, Iterable):
         y0 = list(y0)
     else:
         y0 = [y0]
     if len(x0) != len(y0):
         raise ValueError("x0 and y0 should have the same length")
-    X = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
+    X = x0 + space.rvs(n_samples=n_calls, random_state=rng)
     init_provided = len(y0) != 0
     init_y = y0[0] if init_provided else func(X[0])
     if not np.isscalar(init_y):
