@@ -73,6 +73,8 @@ def test_categorical_transform():
     banana = [0., 1., 0.]
     orange = [0., 0., 1]
 
+    assert_equal(cat.transformed_size, 3)
+    assert_equal(cat.transformed_size, cat.transform(["apple"]).size)
     assert_array_equal(cat.transform(categories), [apple, orange, banana])
     assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
     assert_array_equal(cat.transform(["apple", "banana"]), [apple, banana])
@@ -81,6 +83,23 @@ def test_categorical_transform():
     assert_array_equal(cat.inverse_transform([apple, banana]),
                        ["apple", "banana"])
     ent_inverse = cat.inverse_transform([apple, orange, banana])
+    assert_array_equal(ent_inverse, categories)
+
+
+def test_categorical_transform_binary():
+    categories = ["apple", "orange"]
+    cat = Categorical(categories)
+
+    apple = [0.]
+    orange = [1.]
+
+    assert_equal(cat.transformed_size, 1)
+    assert_equal(cat.transformed_size, cat.transform(["apple"]).size)
+    assert_array_equal(cat.transform(categories), [apple, orange])
+    assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
+    assert_array_equal(cat.inverse_transform([apple, orange]),
+                       ["apple", "orange"])
+    ent_inverse = cat.inverse_transform([apple, orange])
     assert_array_equal(ent_inverse, categories)
 
 
