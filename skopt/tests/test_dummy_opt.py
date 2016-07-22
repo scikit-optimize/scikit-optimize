@@ -35,3 +35,6 @@ def test_api():
     assert_array_less(res.x_iters, np.tile([10, 15], (100, 1)))
     assert_array_less(np.tile([-5, 0], (100, 1)), res.x_iters)
     assert_raises(ValueError, dummy_minimize, lambda x: x, [[-5, 10]])
+    assert(isinstance(res.x, list))
+    assert(isinstance(res.x_iters, list))
+    assert(isinstance(res.x_iters[0], list))

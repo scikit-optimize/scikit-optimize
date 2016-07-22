@@ -133,7 +133,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         - `x` [float]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
-        - `x_iters` [array]: location of function evaluation for each
+        - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
@@ -222,7 +222,7 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         - `x` [float]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
-        - `x_iters` [array]: location of function evaluation for each
+        - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.

@@ -58,10 +58,14 @@ def test_seven_iterations():
                            random_state=1)
 
         assert_equal(len(result.models), 4)
-        assert_array_equal(result.x_iters.shape, (7, 2))
+        assert_equal(len(result.x_iters), 7)
+        assert_equal(len(result.x_iters[0]), 2)
         assert_array_equal(result.func_vals.shape, (7,))
         assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
         assert_almost_equal(result.fun, branin(result.x))
+        assert(isinstance(result.x_iters, list))
+        assert(isinstance(result.x_iters[0], list))
+        assert(isinstance(result.x, list))
 
 
 def test_forest_minimize_api():
