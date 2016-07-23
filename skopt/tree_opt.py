@@ -130,7 +130,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         The optimization result returned as a OptimizeResult object.
         Important attributes are:
 
-        - `x` [float]: location of the minimum.
+        - `x` [list]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
         - `x_iters` [list of lists]: location of function evaluation for each
@@ -219,7 +219,7 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         The optimization result returned as a OptimizeResult object.
         Important attributes are:
 
-        - `x` [float]: location of the minimum.
+        - `x` [list]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
         - `x_iters` [list of lists]: location of function evaluation for each

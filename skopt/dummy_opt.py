@@ -40,7 +40,7 @@ def dummy_minimize(func, dimensions, n_calls=100, random_state=None):
         The optimization result returned as a OptimizeResult object.
         Important attributes are:
 
-        - `x` [float]: location of the minimum.
+        - `x` [list]: location of the minimum.
         - `fun` [float]: function value at the minimum.
         - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
