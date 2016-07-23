@@ -37,8 +37,8 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     if not isinstance(x0, list):
         raise ValueError("Expected x0 to be a list, but got %s" % type(x0))
 
-    n_init = len(x0) if y0 is None else 0
-    n_total_init_calls = n_random_starts + n_init
+    n_init_func_calls = len(x0) if y0 is None else 0
+    n_total_init_calls = n_random_starts + n_init_func_calls
 
     if n_total_init_calls <= 0:
         # if x0 is not provided and n_random_starts is 0 then
