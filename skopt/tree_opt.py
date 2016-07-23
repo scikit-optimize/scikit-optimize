@@ -1,5 +1,6 @@
 """Tree based minimization algorithms."""
 from collections import Iterable
+import numbers
 import numpy as np
 
 from scipy.optimize import OptimizeResult
@@ -27,11 +28,14 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     if n_calls <= 0:
         raise ValueError(
             "Expected n_calls > 0, got %d" % n_random_starts)
+
     if x0 is None:
         x0 = []
-    x0 = list(x0)
-    if x0 and not isinstance(x0[0], list):
+    elif not isinstance(x0[0], list):
         x0 = [x0]
+
+    if not isinstance(x0, list):
+        raise ValueError("Expected x0 to be a list, but got %s" % type(x0))
 
     n_init = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init
@@ -46,16 +50,23 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         raise ValueError(
             "Expected n_calls >= %d, got %d" % (n_total_init_calls, n_calls))
 
-    if y0 is None:
+    if y0 is None and x0:
         y0 = [func(x) for x in x0]
-
-    if isinstance(y0, Iterable):
-        y0 = list(y0)
+    elif x0:
+        if isinstance(y0, Iterable):
+            y0 = list(y0)
+        elif isinstance(y0, numbers.Number):
+            y0 = [y0]
+        else:
+            raise ValueError(
+                "Expected y0 to be an iterable or a scalar, got %s" % type(y0))
+        if len(x0) != len(y0):
+            raise ValueError("x0 and y0 should have the same length")
+        if not all(map(np.isscalar, y0)):
+            raise ValueError(
+                "y0 elements should be scalars")
     else:
-        y0 = [y0]
-
-    if len(x0) != len(y0):
-        raise ValueError("x0 and y0 should have the same length")
+        y0 = []
 
     Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
     yi = y0 + [func(x) for x in Xi[len(x0):]]
@@ -141,7 +152,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         The regressor to use as surrogate model
 
     * `n_calls` [int, default=100]:
-        Maximum number of calls to `func`.
+        Number of calls to `func`.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points

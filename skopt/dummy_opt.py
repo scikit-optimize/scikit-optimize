@@ -1,4 +1,5 @@
 from collections import Iterable
+import numbers
 import numpy as np
 
 from scipy.optimize import OptimizeResult
@@ -30,7 +31,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
           `Categorical`).
 
     * `n_calls` [int, default=100]:
-        Maximum number of calls to `func` to find the minimum.
+        Number of calls to `func` to find the minimum.
 
     * `x0` [list or list of lists or None]:
         Initial input points.
@@ -72,29 +73,42 @@ def dummy_minimize(func, dimensions, n_calls=100,
     space = Space(dimensions)
     if x0 is None:
         x0 = []
-    x0 = list(x0)
-    if x0 and not isinstance(x0[0], list):
+    elif not isinstance(x0[0], list):
         x0 = [x0]
-    if y0 is None:
+
+    if not isinstance(x0, list):
+        raise ValueError("Expected x0 to be a list, but got %s" % type(x0))
+
+    if y0 is None and x0:
         y0 = [func(x) for x in x0]
-        n_calls -= len(y0)
-    if isinstance(y0, Iterable):
-        y0 = list(y0)
+        n_func_calls = len(y0)
+    elif x0:
+        if isinstance(y0, Iterable):
+            y0 = list(y0)
+        elif isinstance(y0, numbers.Number):
+            y0 = [y0]
+        else:
+            raise ValueError(
+                "Expected y0 to be an iterable or a scalar, got %s" % type(y0))
+        if len(x0) != len(y0):
+            raise ValueError("x0 and y0 should have the same length")
+        if not all(map(np.isscalar, y0)):
+            raise ValueError(
+                "y0 elements should be scalars")
+        n_func_calls = 0
     else:
-        y0 = [y0]
-    if len(x0) != len(y0):
-        raise ValueError("x0 and y0 should have the same length")
-    X = x0 + space.rvs(n_samples=n_calls, random_state=rng)
-    init_provided = len(y0) != 0
-    init_y = y0[0] if init_provided else func(X[0])
+        y0 = []
+        n_func_calls = 0
+
+    X_new = space.rvs(n_samples=n_calls - n_func_calls, random_state=rng)
+    init_y = func(X_new[0])
     if not np.isscalar(init_y):
         raise ValueError(
             "The function to be optimized should return a scalar")
-    if init_provided:
-        y = y0 + [func(x) for x in X[len(y0):]]
-    else:
-        y = [init_y] + [func(x) for x in X[1:]]
-
+    y_new = ([init_y] +
+             [func(X_new[i]) for i in range(1, n_calls - n_func_calls)])
+    X = x0 + X_new
+    y = y0 + y_new
     y = np.array(y)
     res = OptimizeResult()
     best = np.argmin(y)
