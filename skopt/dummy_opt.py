@@ -100,15 +100,15 @@ def dummy_minimize(func, dimensions, n_calls=100,
         y0 = []
         n_func_calls = 0
 
-    X_new = space.rvs(n_samples=n_calls - n_func_calls, random_state=rng)
-    init_y = func(X_new[0])
+    X_left = space.rvs(n_samples=n_calls - n_func_calls, random_state=rng)
+    init_y = func(X_left[0])
     if not np.isscalar(init_y):
         raise ValueError(
             "The function to be optimized should return a scalar")
-    y_new = ([init_y] +
-             [func(X_new[i]) for i in range(1, n_calls - n_func_calls)])
-    X = x0 + X_new
-    y = y0 + y_new
+    y_left = ([init_y] +
+              [func(X_left[i]) for i in range(1, n_calls - n_func_calls)])
+    X = x0 + X_left
+    y = y0 + y_left
     y = np.array(y)
     res = OptimizeResult()
     best = np.argmin(y)
