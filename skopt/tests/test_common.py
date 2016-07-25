@@ -47,8 +47,9 @@ def check_minimizer_api(result, n_models):
 
 def check_minimizer_bounds(result):
     # no values should be below or above the bounds
-    assert_array_less(result.x_iters, np.tile([10, 15], (7, 1)))
-    assert_array_less(np.tile([-5, 0], (7, 1)), result.x_iters)
+    eps = 10e-9  # check for assert_array_less OR equal
+    assert_array_less(result.x_iters, np.tile([10+eps, 15+eps], (7, 1)))
+    assert_array_less(np.tile([-5-eps, 0-eps], (7, 1)), result.x_iters)
 
 
 def test_minimizer_api():
