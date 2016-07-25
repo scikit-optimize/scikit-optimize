@@ -51,7 +51,9 @@ class _CategoricalEncoder:
         * `X` [array-like, shape=(n_categories,)]:
             List of categories.
         """
-        self._lb.fit(X)
+        self.mapping = {v: i for i, v in enumerate(X)}
+        self.inverse_mapping = {i: v for v, i in self.mapping.items()}
+        self._lb.fit([self.mapping[v] for v in X])
         self.n_classes = len(self._lb.classes_)
 
         return self
@@ -69,7 +71,7 @@ class _CategoricalEncoder:
         * `Xt` [array-like, shape=(n_samples, n_categories)]:
             The one-hot encoded categories.
         """
-        return self._lb.transform(X)
+        return self._lb.transform([self.mapping[v] for v in X])
 
     def inverse_transform(self, Xt):
         """Inverse transform one-hot encoded categories back to their original
@@ -86,7 +88,9 @@ class _CategoricalEncoder:
             The original categories.
         """
         Xt = np.asarray(Xt)
-        return self._lb.inverse_transform(Xt)
+        return [
+            self.inverse_mapping[i] for i in self._lb.inverse_transform(Xt)
+        ]
 
 
 class Dimension(object):
