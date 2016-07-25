@@ -10,7 +10,6 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
-from .acquisition import gaussian_ei
 from .learning import DecisionTreeRegressor
 from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
@@ -173,7 +172,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
-                          random_state=random_state, xi=xi, kappa=kappa)
+                          random_state=random_state, xi=xi, kappa=kappa,
+                          acq=acq)
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
