@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+from itertools import product
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
@@ -18,11 +19,14 @@ from skopt.tree_opt import gbrt_minimize
 
 # dummy_minimize does not support same parameters so
 # treated separately
-MINIMIZERS = (gp_minimize,
-              partial(forest_minimize, base_estimator='dt'),
-              partial(forest_minimize, base_estimator='et'),
-              partial(forest_minimize, base_estimator='rf'),
-              gbrt_minimize)
+MINIMIZERS = [gp_minimize,]
+ACQUISITION = ["LCB", "PI", "EI"]
+
+for est, acq in product(["dt", "et", "rf"], ACQUISITION):
+    MINIMIZERS.append(
+        partial(forest_minimize, base_estimator=est, acq=acq))
+for acq in ACQUISITION:
+    MINIMIZERS.append(partial(gbrt_minimize, acq=acq))
 
 
 def check_minimizer_api(result, n_models):

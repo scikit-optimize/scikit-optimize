@@ -9,7 +9,7 @@ from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
-from .acquisition import gaussian_ei
+from .acquisition import _gaussian_acquisition
 from .learning import DecisionTreeRegressor
 from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
@@ -18,7 +18,8 @@ from .space import Space
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
-                   n_points, n_random_starts, random_state=None):
+                   n_points, n_random_starts, random_state=None,
+                   acq="EI", xi=0.01, kappa=1.96):
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -56,9 +57,10 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         # for the moment.
         X = space.transform(space.rvs(n_samples=n_points,
                                       random_state=rng))
-        values = -gaussian_ei(X, rgr, np.min(yi))
+        values = _gaussian_acquisition(
+            X=X, model=rgr, y_opt=np.min(yi), method=acq,
+            xi=xi, kappa=kappa)
         next_x = X[np.argmin(values)]
-
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
         next_y = func(next_x)
         Xi.append(next_x)
@@ -77,7 +79,8 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
-                  n_points=20, n_random_starts=10, random_state=None):
+                  n_points=20, n_random_starts=10, random_state=None,
+                  acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -124,6 +127,23 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Set random state to something other than None for reproducible
         results.
 
+    * `acq` [string, default=`"LCB"`]:
+        Function to minimize over the forest posterior. Can be either
+
+        - `"LCB"` for lower confidence bound,
+        - `"EI"` for expected improvement,
+        - `"PI"` for probability of improvement.
+
+    * `xi` [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Used when the acquisition is either `"EI"` or `"PI"`.
+
+    * `kappa` [float, default=1.96]:
+        Controls how much of the variance in the predicted values should be
+        taken into account. If set to be very high, then we are favouring
+        exploration over exploitation and vice versa.
+        Used when the acquisition is `"LCB"`.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -152,11 +172,13 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
-                          random_state=random_state)
+                          random_state=random_state, xi=xi, kappa=kappa,
+                          acq=acq)
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
-                    n_points=100, n_random_starts=10, random_state=None):
+                    n_points=100, n_random_starts=10, random_state=None,
+                    acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimization using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -213,6 +235,23 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         Set random state to something other than None for reproducible
         results.
 
+    * `acq` [string, default=`"LCB"`]:
+        Function to minimize over the forest posterior. Can be either
+
+        - `"LCB"` for lower confidence bound,
+        - `"EI"` for expected improvement,
+        - `"PI"` for probability of improvement.
+
+    * `xi` [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Used when the acquisition is either `"EI"` or `"PI"`.
+
+    * `kappa` [float, default=1.96]:
+        Controls how much of the variance in the predicted values should be
+        taken into account. If set to be very high, then we are favouring
+        exploration over exploitation and vice versa.
+        Used when the acquisition is `"LCB"`.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -260,4 +299,5 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
-                          random_state=random_state)
+                          random_state=random_state, acq=acq, xi=xi,
+                          kappa=kappa)
