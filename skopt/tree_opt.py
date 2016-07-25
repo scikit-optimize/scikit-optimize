@@ -156,7 +156,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
-                    n_points=100, n_random_starts=10, random_state=None):
+                    n_points=10000, n_random_starts=10, random_state=None):
     """Sequential optimization using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -206,7 +206,7 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
 
-    * `n_points` [int, default=1000]:
+    * `n_points` [int, default=10000]:
         Number of points to sample when minimizing the acquisition function.
 
     * `random_state` [int, RandomState instance, or None (default)]:
