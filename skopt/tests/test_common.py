@@ -9,7 +9,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 
-from skopt.benchmarks import branin, bench4
+from skopt.benchmarks import branin
+from skopt.benchmarks import bench4
 from skopt.dummy_opt import dummy_minimize
 from skopt.gp_opt import gp_minimize
 from skopt.space import Space
@@ -95,7 +96,7 @@ def test_init_vals():
         yield (check_init_vals, optimizer, branin, space, x0, n_calls)
 
     space = [("-2", "-1", "0", "1", "2")]
-    x0 = [["1"], ["3"], ["5"]]
+    x0 = [["0"], ["1"], ["2"]]
     n_calls = 10
     for optimizer in optimizers:
         yield (check_init_vals, optimizer, bench4, space, x0, n_calls)

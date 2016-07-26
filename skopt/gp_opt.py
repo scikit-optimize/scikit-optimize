@@ -53,7 +53,6 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     `n_calls - n_random_starts` subsequent evaluations are made
     guided by the surrogate model.
 
-
     Parameters
     ----------
     * `func` [callable]:
@@ -121,17 +120,17 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     * `x0` [list or list of lists or None]:
         Initial input points.
         - If it is a list of lists, use it as a list of input points.
-        - if it is a list, use it as an initial input point.
+        - If it is a list, use it as a single initial input point.
         - If it is `None`, no initial input points are used.
 
     * `y0` [list or scalar or None]
         Evaluation of initial input points.
-        - if it is a list, then it corresponds to evaluations of the function
+        - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
           to the function evaluated at the i-th element of `x0`.
         - If it is a scalar, then it corresponds to the evaluation of the
           function at `x0`.
-        - if it is None and `x0` is provided, then the function is evaluated
+        - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
     * `random_state` [int, RandomState instance, or None (default)]:
@@ -209,7 +208,6 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
 
     Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
     yi = y0 + [func(x) for x in Xi[len(x0):]]
-
     if np.ndim(yi) != 1:
         raise ValueError(
             "The function to be optimized should return a scalar")
