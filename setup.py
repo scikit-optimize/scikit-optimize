@@ -12,4 +12,5 @@ setup(name='skopt',
                         ' contexts.'),
       url='https://scikit-optimize.github.io/',
       license='BSD',
+      author='The scikit-optimize contributors',
       packages=['skopt', 'skopt.learning'])
