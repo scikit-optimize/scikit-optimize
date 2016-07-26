@@ -273,7 +273,10 @@ class Categorical(Dimension):
 
     @property
     def transformed_bounds(self):
-        return [(0.0, 1.0) for i in range(self.transformed_size)]
+        if self.transformed_size == 1:
+            return (0.0, 1.0)
+        else:
+            return [(0.0, 1.0) for i in range(self.transformed_size)]
 
 
 class Space:
