@@ -23,8 +23,8 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
 
 
-def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
-                kappa=1.96, search="sampling", n_calls=100, n_points=500,
+def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
+                kappa=1.96, search="lbfgs", n_calls=100, n_points=500,
                 n_random_starts=10, n_restarts_optimizer=5, random_state=None):
     """Bayesian optimization using Gaussian Processes.
 
@@ -62,7 +62,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
 
-    * `acq` [string, default=`"LCB"`]:
+    * `acq` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
 
         - `"LCB"` for lower confidence bound,
@@ -79,7 +79,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `search` [string, `"sampling"` or `"lbfgs"`]:
+    * `search` [string, `"sampling"` or `"lbfgs"`, default="lbfgs"]:
         Searching for the next possible candidate to update the Gaussian prior
         with.
 
@@ -151,7 +151,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="LCB", xi=0.01,
             "Expected n_calls >= %d, got %d" % (n_random_starts, n_calls))
 
     n_model_iter = n_calls - n_random_starts
-    
+
     Xi = space.rvs(n_samples=n_random_starts, random_state=rng)
     yi = [func(x) for x in Xi]
     if np.ndim(yi) != 1:
