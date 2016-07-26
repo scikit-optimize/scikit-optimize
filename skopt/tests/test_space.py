@@ -155,17 +155,18 @@ def test_space_consistency():
 
 def test_space_api():
     space = Space([(0.0, 1.0), (-5, 5),
-                   ("a", "b", "c"), (1.0, 5.0, "log-uniform")])
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
 
-    assert_equal(len(space.dimensions), 4)
+    assert_equal(len(space.dimensions), 5)
     assert_true(isinstance(space.dimensions[0], Real))
     assert_true(isinstance(space.dimensions[1], Integer))
     assert_true(isinstance(space.dimensions[2], Categorical))
     assert_true(isinstance(space.dimensions[3], Real))
+    assert_true(isinstance(space.dimensions[4], Categorical))
 
     samples = space.rvs(n_samples=10, random_state=0)
     assert_equal(len(samples), 10)
-    assert_equal(len(samples[0]), 4)
+    assert_equal(len(samples[0]), 5)
 
     assert_true(isinstance(samples, list))
     for n in range(4):
@@ -175,10 +176,11 @@ def test_space_api():
     assert_true(isinstance(samples[0][1], numbers.Integral))
     assert_true(isinstance(samples[0][2], str))
     assert_true(isinstance(samples[0][3], numbers.Real))
+    assert_true(isinstance(samples[0][4], str))
 
     samples_transformed = space.transform(samples)
     assert_equal(samples_transformed.shape[0], len(samples))
-    assert_equal(samples_transformed.shape[1], 1 + 1 + 3 + 1)
+    assert_equal(samples_transformed.shape[1], 1 + 1 + 3 + 1 + 1)
     assert_array_equal(samples, space.inverse_transform(samples_transformed))
 
     samples = space.inverse_transform(samples_transformed)
@@ -186,13 +188,15 @@ def test_space_api():
     assert_true(isinstance(samples[0][1], numbers.Integral))
     assert_true(isinstance(samples[0][2], str))
     assert_true(isinstance(samples[0][3], numbers.Real))
+    assert_true(isinstance(samples[0][4], str))
 
     for b1, b2 in zip(space.bounds,
                       [(0.0, 1.0), (-5, 5),
-                       np.asarray(["a", "b", "c"]), (1.0, 5.0)]):
+                       np.asarray(["a", "b", "c"]), (1.0, 5.0),
+                       np.asarray(["e", "f"])]):
         assert_array_equal(b1, b2)
 
     for b1, b2 in zip(space.transformed_bounds,
                       [(0.0, 1.0), (-5, 5), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
-                       (np.log10(1.0), np.log10(5.0))]):
+                       (np.log10(1.0), np.log10(5.0)), (0.0, 1.0)]):
         assert_array_equal(b1, b2)
