@@ -121,7 +121,7 @@ def _format_scatter_plot_axes(ax, space):
     return ax
 
 
-def plot_objective_function(result, levels=10):
+def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
     """Pairwise scatter plot of objective function
 
     Pairwise scatter plots are shown on the off-diagonal for each
@@ -140,7 +140,15 @@ def plot_objective_function(result, levels=10):
 
     * `levels` [int, default=10]
         Number of levels to draw on the contour plot, passed directly
-        to `plt.contour()`
+        to `plt.contour()`.
+
+    * `n_points` [int, default=40]
+        Number of points at which to evaluate the partial dependence
+        along each dimension.
+
+    * `n_samples` [int, default=100]
+        Number of random samples to use for averaging the model function
+        at each of the `n_points`.
 
     Returns
     -------
@@ -150,7 +158,7 @@ def plot_objective_function(result, levels=10):
     space = result.space
     samples = np.asarray(result.x_iters)
     order = range(samples.shape[0])
-    rvs = space.rvs(n_samples=10)
+    rvs = space.transform(space.rvs(n_samples=n_samples))
 
     fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
 
@@ -161,7 +169,7 @@ def plot_objective_function(result, levels=10):
         for j in range(result.space.n_dims):
             if i == j:
                 bounds = space.dimensions[i].bounds
-                xi = np.linspace(bounds[0], bounds[1], 40)
+                xi = space.transform(np.linspace(bounds[0], bounds[1], n_points))
                 values = []
 
                 for x in xi:
@@ -177,9 +185,9 @@ def plot_objective_function(result, levels=10):
                 # define grid
                 # XXX use linspace(*args, 100) after python2 support ends
                 bounds = space.dimensions[j].bounds
-                xi = np.linspace(bounds[0], bounds[1], 40)
+                xi = space.transform(np.linspace(bounds[0], bounds[1], n_points))
                 bounds = space.dimensions[i].bounds
-                yi = np.linspace(bounds[0], bounds[1], 40)
+                yi = space.transform(np.linspace(bounds[0], bounds[1], n_points))
 
                 zi = []
                 for x_ in xi:

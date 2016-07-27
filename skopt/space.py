@@ -320,6 +320,9 @@ class Space:
     def rvs(self, n_samples=1, random_state=None):
         """Draw random samples.
 
+        The samples are in the original space. They need to be transformed
+        before being passed to a model or minimizer by `space.transform()`.
+
         Parameters
         ----------
         * `n_samples` [int, default=1]:
