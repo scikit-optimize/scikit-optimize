@@ -1,5 +1,7 @@
 """Tree-based minimization algorithms."""
 
+import copy
+import inspect
 import numbers
 import numpy as np
 
@@ -212,23 +214,31 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
+        - `specs` [dict]`: the call specifications.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    rng = check_random_state(random_state)
+    # Save call specifications
+    specs = {"args": copy.copy(inspect.currentframe().f_locals),
+             "function": inspect.currentframe().f_code.co_name}
 
     # Default estimator
+    rng = check_random_state(random_state)
+
     if base_estimator is None:
         gbrt = GradientBoostingRegressor(n_estimators=20, loss='quantile')
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
                                                            random_state=rng)
 
-    return _tree_minimize(func, dimensions, base_estimator,
-                          n_calls=n_calls,
-                          n_points=n_points, n_random_starts=n_random_starts,
-                          x0=x0, y0=y0, random_state=random_state, xi=xi,
-                          kappa=kappa, acq=acq)
+    res = _tree_minimize(func, dimensions, base_estimator,
+                         n_calls=n_calls,
+                         n_points=n_points, n_random_starts=n_random_starts,
+                         x0=x0, y0=y0, random_state=random_state, xi=xi,
+                         kappa=kappa, acq=acq)
+    res.specs = specs
+
+    return res
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
@@ -344,10 +354,16 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
+        - `specs` [dict]`: the call specifications.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
+    # Save call specifications
+    specs = {"args": copy.copy(inspect.currentframe().f_locals),
+             "function": inspect.currentframe().f_code.co_name}
+
+    # Default estimator
     rng = check_random_state(random_state)
 
     if isinstance(base_estimator, str):
@@ -375,8 +391,11 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                              " be a string or a regressor instance."
                              " '%s' is neither." % base_estimator)
 
-    return _tree_minimize(func, dimensions, base_estimator,
-                          n_calls=n_calls,
-                          n_points=n_points, n_random_starts=n_random_starts,
-                          x0=x0, y0=y0, random_state=random_state, acq=acq,
-                          xi=xi, kappa=kappa)
+    res = _tree_minimize(func, dimensions, base_estimator,
+                         n_calls=n_calls,
+                         n_points=n_points, n_random_starts=n_random_starts,
+                         x0=x0, y0=y0, random_state=random_state, acq=acq,
+                         xi=xi, kappa=kappa)
+    res.specs = specs
+
+    return res
