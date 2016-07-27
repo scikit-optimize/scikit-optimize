@@ -92,7 +92,7 @@ def plot_convergence(*args, **kwargs):
     return ax
 
 
-def _format_scatter_plot_axes(ax, space):
+def _format_scatter_plot_axes(ax, space, ylabel):
     # Deal with formatting of the axes
     for i in range(space.n_dims):
         for j in range(space.n_dims):
@@ -103,8 +103,16 @@ def _format_scatter_plot_axes(ax, space):
 
             # adjust bounds for every off-diagonal axis
             if i != j:
-                ax[i, j].set_ylim(*space.dimensions[i].bounds)
-                ax[i, j].set_xlim(*space.dimensions[j].bounds)
+                ax_.set_ylim(*space.dimensions[i].bounds)
+                ax_.set_xlim(*space.dimensions[j].bounds)
+                # keep y axis tick labels for the diagonal
+                if j > 0:
+                    ax_.set_yticklabels([])
+            else:
+                ax_.yaxis.tick_right()
+                ax_.yaxis.set_label_position('right')
+                ax_.yaxis.set_ticks_position('both')
+                ax_.set_ylabel(ylabel)
 
             ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
             ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
@@ -115,10 +123,99 @@ def _format_scatter_plot_axes(ax, space):
             else:
                 [l.set_rotation(45) for l in ax_.get_xticklabels()]
 
-            if j > 0:
-                ax_.set_yticklabels([])
-
     return ax
+
+
+def partial_dependence(space, model, i, j=None, sample_points=None,
+                       n_samples=100, n_points=40):
+    """Calculate partial dependence of `model` for dimensions `i` and `j`
+
+    The idea is that the partial dependence plot tells us how the
+    value of the dimensions `i` and `j` influence the `model` predictions
+    after we have "averaged out" the influence of all other dimensions.
+
+    Parameters
+    ----------
+    * `space` [`Space`]
+        The parameter space over which the minimization was performed.
+
+    * `model` [XXX]
+        Surrogate model for the objective function.
+
+    * `i` [int]
+        The first dimension for which to calculate the partial dependence.
+
+    * `j` [int, default=None]
+        The second dimension for which to calculate the partial dependence.
+        To calculate the 1D partial dependence on `i` alone set `j=None`.
+
+    * `sample_points` [list of lists, shape=(n_points, n_dims), default=None]
+        Randomly sampled and transformed points to use when averaging
+        the model function at each of the `n_points`.
+
+    * `n_samples` [int, default=100]
+        Number of random samples to use for averaging the model function
+        at each of the `n_points`. Only used when `sample_points=None`.
+
+    * `n_points` [int, default=40]
+        Number of points at which to evaluate the partial dependence
+        along each dimension `i` and `j`.
+
+    Returns
+    -------
+    For 1D partial dependence:
+
+    * `xi`: [np.array]:
+        The points at which the partial dependence was evaluated.
+
+    * `yi`: [np.array]:
+        The value of the model at each point `xi`.
+
+    For 2D partial dependence:
+
+    * `xi`: [np.array]:
+        The points at which the partial dependence was evaluated.
+    * `yi`: [np.array]:
+        The points at which the partial dependence was evaluated.
+    * `zi`: [np.array]:
+        The value of the model at each point `(xi, yi)`.
+    """
+    if sample_points is None:
+        sample_points = space.transform(space.rvs(n_samples=n_samples))
+
+    if j is None:
+        bounds = space.dimensions[i].bounds
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[i].transform(xi)
+
+        yi = []
+        for x_ in xi_transformed:
+            rvs_ = np.array(sample_points)
+            rvs_[:, i] = x_
+            yi.append(np.mean(model.predict(rvs_)))
+
+        return xi, yi
+
+    else:
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        bounds = space.dimensions[j].bounds
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[j].transform(xi)
+
+        bounds = space.dimensions[i].bounds
+        yi = np.linspace(bounds[0], bounds[1], n_points)
+        yi_transformed = space.dimensions[i].transform(yi)
+
+        zi = []
+        for x_ in xi_transformed:
+            row = []
+            for y_ in yi_transformed:
+                rvs_ = np.array(sample_points)
+                rvs_[:, (i, j)] = (x_, y_)
+                row.append(np.mean(model.predict(rvs_)))
+            zi.append(row)
+
+        return xi, yi, zi
 
 
 def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
@@ -128,10 +225,10 @@ def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
     dimension of the search space. A red point indicates the minimum.
 
     Note: the objective function contours are obtained by interpolating
-    between samples. The surrogate model is not used.
+          between samples. The surrogate model is not used.
 
     Note: search spaces that contain `Categorical` dimensions are
-    currently not supported by this function.
+          currently not supported by this function.
 
     Parameters
     ----------
@@ -158,7 +255,7 @@ def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
     space = result.space
     samples = np.asarray(result.x_iters)
     order = range(samples.shape[0])
-    rvs = space.transform(space.rvs(n_samples=n_samples))
+    rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
 
     fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
 
@@ -168,42 +265,25 @@ def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
     for i in range(result.space.n_dims):
         for j in range(result.space.n_dims):
             if i == j:
-                bounds = space.dimensions[i].bounds
-                xi = space.transform(np.linspace(bounds[0], bounds[1], n_points))
-                values = []
+                xi, yi = partial_dependence(space, result.models[-1], i, j=None,
+                                            sample_points=rvs_transformed,
+                                            n_points=n_points)
 
-                for x in xi:
-                    rvs_ = np.array(rvs)
-                    rvs_[:, i] = x
-                    values.append(np.mean(result.models[-1].predict(rvs_)))
-
-                ax[i, i].plot(xi, values)
+                ax[i, i].plot(xi, yi)
                 ax[i, i].axvline(result.x[i], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
-                # define grid
-                # XXX use linspace(*args, 100) after python2 support ends
-                bounds = space.dimensions[j].bounds
-                xi = space.transform(np.linspace(bounds[0], bounds[1], n_points))
-                bounds = space.dimensions[i].bounds
-                yi = space.transform(np.linspace(bounds[0], bounds[1], n_points))
-
-                zi = []
-                for x_ in xi:
-                    row = []
-                    for y_ in yi:
-                        rvs_ = np.array(rvs)
-                        rvs_[:, (i, j)] = (x_, y_)
-                        row.append(np.mean(result.models[-1].predict(rvs_)))
-                    zi.append(row)
+                xi, yi, zi = partial_dependence(space, result.models[-1],
+                                                i, j,
+                                                rvs_transformed, n_points)
 
                 ax[i, j].contour(xi, yi, zi, levels, linewidths=0.5, colors='k')
                 ax[i, j].contourf(xi, yi, zi, levels, cmap='viridis_r')
                 ax[i, j].scatter(samples[:, j], samples[:, i], c='k', s=10, lw=0.)
                 ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
 
-    return _format_scatter_plot_axes(ax, space)
+    return _format_scatter_plot_axes(ax, space, "Partial dependence")
 
 
 def plot_sampling_order(result, bins=20):
@@ -251,4 +331,4 @@ def plot_sampling_order(result, bins=20):
                 ax[i, j].scatter(result.x[j], result.x[i],
                                  c=['r'], s=20, lw=0.)
 
-    return _format_scatter_plot_axes(ax, space)
+    return _format_scatter_plot_axes(ax, space, "Number of samples")
