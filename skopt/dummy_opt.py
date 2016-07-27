@@ -76,7 +76,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call specifications
+    # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
 
@@ -142,8 +142,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
     res.fun = y[best]
     res.func_vals = y
     res.x_iters = X
-    res.space = space
     res.models = []  # Create attribute even though it is empty
+    res.space = space
+    res.random_state = rng
     res.specs = specs
 
     return res

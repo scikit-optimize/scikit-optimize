@@ -106,6 +106,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     res.x_iters = Xi
     res.models = models
     res.space = space
+    res.random_state = rng
 
     return res
 
@@ -219,13 +220,14 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call specifications
+    # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
 
-    # Default estimator
+    # Check params
     rng = check_random_state(random_state)
 
+    # Default estimator
     if base_estimator is None:
         gbrt = GradientBoostingRegressor(n_estimators=20, loss='quantile')
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
@@ -359,13 +361,14 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call specifications
+    # Save call args + rng
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
 
-    # Default estimator
+    # Check params
     rng = check_random_state(random_state)
 
+    # Default estimator
     if isinstance(base_estimator, str):
         if base_estimator not in ("rf", "et", "dt"):
             raise ValueError("Valid values for the base_estimator parameter"
