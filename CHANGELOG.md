@@ -14,8 +14,8 @@ First light!
 
 ### New features
 
-* gaussian process based SMBO
-* ensemble of and single decision tree based SMBO
+* gaussian process based sequential model-based optimization
+* ensemble of and single decision tree based sequential model-based optimization
 * convergence plots
 * specifying and sampling from a parameter space
 
