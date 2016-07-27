@@ -1,8 +1,10 @@
-from collections import Iterable
-import numbers
-import warnings
-import numpy as np
+"""Gaussian process-based minimization algorithms."""
 
+import numbers
+import numpy as np
+import warnings
+
+from collections import Iterable
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
 
@@ -27,7 +29,7 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 
 def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                 kappa=1.96, search="lbfgs", n_calls=100, n_points=500,
-                n_random_starts=10, n_restarts_optimizer=5, 
+                n_random_starts=10, n_restarts_optimizer=5,
                 x0=None, y0=None, random_state=None):
     """Bayesian optimization using Gaussian Processes.
 
@@ -117,14 +119,16 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     * `n_restarts_optimizer` [int, default=10]:
         The number of restarts of the optimizer when `search` is `"lbfgs"`.
 
-    * `x0` [list or list of lists or None]:
+    * `x0` [list, list of lists or `None`]:
         Initial input points.
+
         - If it is a list of lists, use it as a list of input points.
         - If it is a list, use it as a single initial input point.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list or scalar or None]
+    * `y0` [list, scalar or `None`]
         Evaluation of initial input points.
+
         - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
           to the function evaluated at the i-th element of `x0`.
@@ -173,7 +177,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         x0 = [x0]
 
     if not isinstance(x0, list):
-        raise ValueError("Expected x0 to be a list, but got %s" % type(x0))
+        raise ValueError("`x0` should be a list, but got %s" % type(x0))
 
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
@@ -182,11 +186,11 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         # if x0 is not provided and n_random_starts is 0 then
         # it will ask for n_random_starts to be > 0.
         raise ValueError(
-            "Expected n_random_starts > 0, got %d" % n_random_starts)
+            "Expected `n_random_starts` > 0, got %d" % n_random_starts)
 
     if n_calls < n_total_init_calls:
         raise ValueError(
-            "Expected n_calls >= %d, got %d" % (n_total_init_calls, n_calls))
+            "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
     if y0 is None and x0:
         y0 = [func(x) for x in x0]
@@ -197,20 +201,19 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
             y0 = [y0]
         else:
             raise ValueError(
-                "Expected y0 to be an iterable or a scalar, got %s" % type(y0))
+                "`y0` should be an iterable or a scalar, got %s" % type(y0))
         if len(x0) != len(y0):
-            raise ValueError("x0 and y0 should have the same length")
+            raise ValueError("`x0` and `y0` should have the same length")
         if not all(map(np.isscalar, y0)):
             raise ValueError(
-                "y0 elements should be scalars")
+                "`y0` elements should be scalars")
     else:
         y0 = []
 
     Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
     yi = y0 + [func(x) for x in Xi[len(x0):]]
     if np.ndim(yi) != 1:
-        raise ValueError(
-            "The function to be optimized should return a scalar")
+        raise ValueError("`func` should return a scalar")
 
     # Bayesian optimization loop
     models = []

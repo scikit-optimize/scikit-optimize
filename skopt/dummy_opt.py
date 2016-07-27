@@ -1,7 +1,9 @@
-from collections import Iterable
+"""Random search."""
+
 import numbers
 import numpy as np
 
+from collections import Iterable
 from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
@@ -33,14 +35,16 @@ def dummy_minimize(func, dimensions, n_calls=100,
     * `n_calls` [int, default=100]:
         Number of calls to `func` to find the minimum.
 
-    * `x0` [list or list of lists or None]:
+    * `x0` [list, list of lists or `None`]:
         Initial input points.
+
         - If it is a list of lists, use it as a list of input points.
         - If it is a list, use it as a single initial input point.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list or scalar or None]
+    * `y0` [list, scalar or `None`]
         Evaluation of initial input points.
+
         - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
           to the function evaluated at the i-th element of `x0`.
@@ -71,51 +75,51 @@ def dummy_minimize(func, dimensions, n_calls=100,
     """
     rng = check_random_state(random_state)
     space = Space(dimensions)
+
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], list):
         x0 = [x0]
 
     if not isinstance(x0, list):
-        raise ValueError("Expected x0 to be a list, but got %s" % type(x0))
+        raise ValueError("`x0` should be a list, got %s" % type(x0))
 
-    if y0 is None and x0:
-        init_y = func(x0[0])
-        if not np.isscalar(init_y):
-            raise ValueError(
-                "The function to be optimized should return a scalar")
-        y0 = [init_y] + [func(x) for x in x0[1:]]
-        n_calls -= len(y0)
-    elif x0:
+    if x0 and y0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
         elif isinstance(y0, numbers.Number):
             y0 = [y0]
         else:
-            raise ValueError(
-                "Expected y0 to be an iterable or a scalar, got %s" % type(y0))
+            raise ValueError("`y0` should be an iterable or a scalar, got %s"
+                             % type(y0))
         if len(x0) != len(y0):
-            raise ValueError("x0 and y0 should have the same length")
+            raise ValueError("`x0` and `y0` should have the same length")
         if not all(map(np.isscalar, y0)):
-            raise ValueError(
-                "y0 elements should be scalars")
+            raise ValueError("`y0` elements should be scalars")
+    elif not x0 and y0:
+        raise ValueError("`x0`cannot be `None` when `y0` is provided")
     else:
         y0 = []
 
-    X_left = space.rvs(n_samples=n_calls, random_state=rng)
-    if y0:
-        y_left = [func(X_left[i]) for i in range(0, n_calls)]
-    else:
-        init_y = func(X_left[0])
-        if not np.isscalar(init_y):
-            raise ValueError(
-                "The function to be optimized should return a scalar")
-        y_left = ([init_y] +
-                  [func(X_left[i]) for i in range(1, n_calls)])
+    X = x0
+    y = y0
 
-    X = x0 + X_left
-    y = y0 + y_left
+    X = X + space.rvs(n_samples=n_calls - len(X), random_state=rng)
+    first = True
+
+    for i in range(len(y0), len(X)):
+        y_i = func(X[i])
+
+        if first:
+            first = False
+            if not np.isscalar(y_i):
+                raise ValueError("`func` should return a scalar")
+
+        y.append(y_i)
+
     y = np.array(y)
+
+    # Pack results
     res = OptimizeResult()
     best = np.argmin(y)
     res.x = X[best]
@@ -123,7 +127,6 @@ def dummy_minimize(func, dimensions, n_calls=100,
     res.func_vals = y
     res.x_iters = X
     res.space = space
-    # create attribute even though it is empty
-    res.models = []
+    res.models = []  # Create attribute even though it is empty
 
     return res

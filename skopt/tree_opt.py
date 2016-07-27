@@ -1,8 +1,9 @@
-"""Tree based minimization algorithms."""
-from collections import Iterable
+"""Tree-based minimization algorithms."""
+
 import numbers
 import numpy as np
 
+from collections import Iterable
 from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
@@ -27,7 +28,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     # Initialize with provided points (x0 and y0) and/or random points
     if n_calls <= 0:
         raise ValueError(
-            "Expected n_calls > 0, got %d" % n_random_starts)
+            "Expected `n_calls` > 0, got %d" % n_random_starts)
 
     if x0 is None:
         x0 = []
@@ -35,7 +36,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         x0 = [x0]
 
     if not isinstance(x0, list):
-        raise ValueError("Expected x0 to be a list, but got %s" % type(x0))
+        raise ValueError("`x0` should be a list, but got %s" % type(x0))
 
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
@@ -44,11 +45,11 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         # if x0 is not provided and n_random_starts is 0 then
         # it will ask for n_random_starts to be > 0.
         raise ValueError(
-            "Expected n_random_starts > 0, got %d" % n_random_starts)
+            "Expected `n_random_starts` > 0, got %d" % n_random_starts)
 
     if n_calls < n_total_init_calls:
         raise ValueError(
-            "Expected n_calls >= %d, got %d" % (n_total_init_calls, n_calls))
+            "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
     if y0 is None and x0:
         y0 = [func(x) for x in x0]
@@ -59,20 +60,18 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             y0 = [y0]
         else:
             raise ValueError(
-                "Expected y0 to be an iterable or a scalar, got %s" % type(y0))
+                "`y0` should be an iterable or a scalar, got %s" % type(y0))
         if len(x0) != len(y0):
-            raise ValueError("x0 and y0 should have the same length")
+            raise ValueError("`x0` and `y0` should have the same length")
         if not all(map(np.isscalar, y0)):
-            raise ValueError(
-                "y0 elements should be scalars")
+            raise ValueError("`y0` elements should be scalars")
     else:
         y0 = []
 
     Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
     yi = y0 + [func(x) for x in Xi[len(x0):]]
     if np.ndim(yi) != 1:
-        raise ValueError(
-            "The function to be optimized should return a scalar")
+        raise ValueError("`func` should return a scalar")
 
     # Tree-based optimization loop
     models = []
@@ -161,14 +160,16 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     * `n_points` [int, default=20]:
         Number of points to sample when minimizing the acquisition function.
 
-    * `x0` [list or list of lists or None]:
+    * `x0` [list, list of lists or `None`]:
         Initial input points.
+
         - If it is a list of lists, use it as a list of input points.
         - If it is a list, use it as a single initial input point.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list or scalar or None]
+    * `y0` [list, scalar or `None`]:
         Evaluation of initial input points.
+
         - If it is a lists, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
           to the function evaluated at the i-th element of `x0`.
@@ -249,7 +250,6 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     `n_calls - n_random_starts` subsequent evaluations are made
     guided by the surrogate model.
 
-
     Parameters
     ----------
     * `func` [callable]:
@@ -292,14 +292,16 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
 
-    * `x0` [list or list of lists or None]:
+    * `x0` [list, list of lists or `None`]:
         Initial input points.
+
         - If it is a list of lists, use it as a list of input points.
         - If it is a list, use it as a single initial input point.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list or scalar or None]
+    * `y0` [list, scalar or `None`]:
         Evaluation of initial input points.
+
         - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
           to the function evaluated at the i-th element of `x0`.
@@ -372,6 +374,7 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
             raise ValueError("The base_estimator parameter has to either"
                              " be a string or a regressor instance."
                              " '%s' is neither." % base_estimator)
+
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
