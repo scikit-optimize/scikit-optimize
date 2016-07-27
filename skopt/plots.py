@@ -93,6 +93,13 @@ def plot_convergence(*args, **kwargs):
 
 
 def _format_scatter_plot_axes(ax, space, ylabel):
+    # Work out min, max of y axis for the diagonal so we can adjust
+    # them all to the same value
+    diagonal_ylim = (np.min([ax[i, i].get_ylim()[0]
+                             for i in range(space.n_dims)]),
+                     np.max([ax[i, i].get_ylim()[1]
+                             for i in range(space.n_dims)]))
+
     # Deal with formatting of the axes
     for i in range(space.n_dims): # rows
         for j in range(space.n_dims): # columns
@@ -112,6 +119,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                 else:
                     ax_.set_ylabel("$X_{%i,%i}$" % (i, j))
             else:
+                ax_.set_ylim(*diagonal_ylim)
                 ax_.yaxis.tick_right()
                 ax_.yaxis.set_label_position('right')
                 ax_.yaxis.set_ticks_position('both')
@@ -155,7 +163,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         The second dimension for which to calculate the partial dependence.
         To calculate the 1D partial dependence on `i` alone set `j=None`.
 
-    * `sample_points` [list of lists, shape=(n_points, n_dims), default=None]
+    * `sample_points` [np.array, shape=(n_points, n_dims), default=None]
         Randomly sampled and transformed points to use when averaging
         the model function at each of the `n_points`.
 
@@ -179,11 +187,11 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
     For 2D partial dependence:
 
-    * `xi`: [np.array]:
+    * `xi`: [np.array, shape=n_points]:
         The points at which the partial dependence was evaluated.
-    * `yi`: [np.array]:
+    * `yi`: [np.array, shape=n_points]:
         The points at which the partial dependence was evaluated.
-    * `zi`: [np.array]:
+    * `zi`: [list of lists, n_points by n_points]:
         The value of the model at each point `(xi, yi)`.
     """
     if sample_points is None:
