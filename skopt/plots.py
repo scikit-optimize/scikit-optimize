@@ -150,6 +150,8 @@ def plot_objective_function(result, levels=10):
     space = result.space
     samples = np.asarray(result.x_iters)
     order = range(samples.shape[0])
+    rvs = space.rvs(n_samples=10)
+
     fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
@@ -157,16 +159,36 @@ def plot_objective_function(result, levels=10):
 
     for i in range(result.space.n_dims):
         for j in range(result.space.n_dims):
+            if i == j:
+                bounds = space.dimensions[i].bounds
+                xi = np.linspace(bounds[0], bounds[1], 40)
+                values = []
+
+                for x in xi:
+                    rvs_ = np.array(rvs)
+                    rvs_[:, i] = x
+                    values.append(np.mean(result.models[-1].predict(rvs_)))
+
+                ax[i, i].plot(xi, values)
+                ax[i, i].axvline(result.x[i], linestyle="--", color="r", lw=1)
+
             # lower triangle
-            if i > j:
+            elif i > j:
                 # define grid
                 # XXX use linspace(*args, 100) after python2 support ends
                 bounds = space.dimensions[j].bounds
-                xi = np.linspace(bounds[0], bounds[1], 100)
+                xi = np.linspace(bounds[0], bounds[1], 40)
                 bounds = space.dimensions[i].bounds
-                yi = np.linspace(bounds[0], bounds[1], 100)
-                zi = griddata((samples[:, j], samples[:, i]), result.func_vals,
-                              (xi[None, :], yi[:, None]), method='cubic')
+                yi = np.linspace(bounds[0], bounds[1], 40)
+
+                zi = []
+                for x_ in xi:
+                    row = []
+                    for y_ in yi:
+                        rvs_ = np.array(rvs)
+                        rvs_[:, (i, j)] = (x_, y_)
+                        row.append(np.mean(result.models[-1].predict(rvs_)))
+                    zi.append(row)
 
                 ax[i, j].contour(xi, yi, zi, levels, linewidths=0.5, colors='k')
                 ax[i, j].contourf(xi, yi, zi, levels, cmap='viridis_r')
