@@ -94,20 +94,23 @@ def plot_convergence(*args, **kwargs):
 
 def _format_scatter_plot_axes(ax, space, ylabel):
     # Deal with formatting of the axes
-    for i in range(space.n_dims):
-        for j in range(space.n_dims):
+    for i in range(space.n_dims): # rows
+        for j in range(space.n_dims): # columns
             ax_ = ax[i, j]
 
             if j > i:
                 ax_.axis("off")
 
-            # adjust bounds for every off-diagonal axis
+            # off-diagonal axis
             if i != j:
+                # plots on the diagonal are special, like Texas. They have
+                # their own range so do not mess with them.
                 ax_.set_ylim(*space.dimensions[i].bounds)
                 ax_.set_xlim(*space.dimensions[j].bounds)
-                # keep y axis tick labels for the diagonal
                 if j > 0:
                     ax_.set_yticklabels([])
+                else:
+                    ax_.set_ylabel("$X_{%i,%i}$" % (i, j))
             else:
                 ax_.yaxis.tick_right()
                 ax_.yaxis.set_label_position('right')
@@ -117,29 +120,32 @@ def _format_scatter_plot_axes(ax, space, ylabel):
             ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
             ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
 
+            # for all rows except ...
             if i < space.n_dims - 1:
                 ax_.set_xticklabels([])
-            # bottom row
+            # ... the bottom row
             else:
                 [l.set_rotation(45) for l in ax_.get_xticklabels()]
+                ax_.set_xlabel("$X_{%i,%i}$" % (i, j))
 
     return ax
 
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
                        n_samples=100, n_points=40):
-    """Calculate partial dependence of `model` for dimensions `i` and `j`
+    """Calculate the partial dependence for dimensions `i` and `j` with
+    respect to the objective value, as approximated by `model`.
 
-    The idea is that the partial dependence plot tells us how the
-    value of the dimensions `i` and `j` influence the `model` predictions
-    after we have "averaged out" the influence of all other dimensions.
+    The partial dependence plot shows how the value of the dimensions
+    `i` and `j` influence the `model` predictions after "averaging out"
+    the influence of all other dimensions.
 
     Parameters
     ----------
     * `space` [`Space`]
         The parameter space over which the minimization was performed.
 
-    * `model` [XXX]
+    * `model`
         Surrogate model for the objective function.
 
     * `i` [int]
@@ -185,6 +191,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
     if j is None:
         bounds = space.dimensions[i].bounds
+        # XXX use linspace(*bounds, n_points) after python2 support ends
         xi = np.linspace(bounds[0], bounds[1], n_points)
         xi_transformed = space.dimensions[i].transform(xi)
 
@@ -219,13 +226,17 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 
 def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
-    """Pairwise scatter plot of objective function
+    """Pairwise partial dependence plot of the objective function.
 
-    Pairwise scatter plots are shown on the off-diagonal for each
-    dimension of the search space. A red point indicates the minimum.
+    The diagonal shows the partial dependence for dimension `i` with
+    respect to the objective function. The off-diagonal shows the
+    partial dependence for dimensions `i` and `j` with
+    respect to the objective function. The objective function is
+    approximated by `result.model.`
 
-    Note: the objective function contours are obtained by interpolating
-          between samples. The surrogate model is not used.
+    Pairwise scatter plots of the points at which the objective
+    function was directly evaluated are shown on the off-diagonal.
+    A red point indicates the found minimum.
 
     Note: search spaces that contain `Categorical` dimensions are
           currently not supported by this function.
@@ -262,8 +273,8 @@ def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
 
-    for i in range(result.space.n_dims):
-        for j in range(result.space.n_dims):
+    for i in range(space.n_dims):
+        for j in range(space.n_dims):
             if i == j:
                 xi, yi = partial_dependence(space, result.models[-1], i, j=None,
                                             sample_points=rvs_transformed,
@@ -287,16 +298,18 @@ def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
 
 
 def plot_sampling_order(result, bins=20):
-    """Visualize order in which points where sampled
+    """Visualize the order in which points where sampled.
 
-    Pairwise scatter plots are shown on the off-diagonal for each
-    dimension of the search space. The order in which samples were
-    evaluated is as the colour of each point. The diagonal shows a
-    histogram of sampled values for each dimension. A red point
-    indicates the minimum.
+    The scatter plot matrix shows at which points in the search
+    space and in which order samples were evaluated. Pairwise
+    scatter plots are shown on the off-diagonal for each
+    dimension of the search space. The order in which samples
+    were evaluated is encoded in each point's color.
+    The diagonal shows a histogram of sampled values for each
+    dimension. A red point indicates the found minimum.
 
     Note: search spaces that contain `Categorical` dimensions are
-    currently not supported by this function.
+          currently not supported by this function.
 
     Parameters
     ----------
@@ -319,10 +332,11 @@ def plot_sampling_order(result, bins=20):
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
 
-    for i in range(result.space.n_dims):
-        for j in range(result.space.n_dims):
+    for i in range(space.n_dims):
+        for j in range(space.n_dims):
             if i == j:
-                ax[i, i].hist(samples[:, j], bins=bins)
+                ax[i, i].hist(samples[:, j], bins=bins,
+                              range=space.dimensions[j].bounds)
 
             # lower triangle
             elif i > j:
