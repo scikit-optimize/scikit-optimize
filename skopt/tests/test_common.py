@@ -49,6 +49,10 @@ def check_minimizer_api(result, n_models):
     assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
     assert_almost_equal(result.fun, branin(result.x))
 
+    assert(isinstance(result.specs, dict))
+    assert("args" in result.specs)
+    assert("function" in result.specs)
+
 
 def check_minimizer_bounds(result):
     # no values should be below or above the bounds

@@ -1,5 +1,7 @@
 """Gaussian process-based minimization algorithms."""
 
+import copy
+import inspect
 import numbers
 import numpy as np
 import warnings
@@ -154,10 +156,16 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
+        - `specs` [dict]`: the call specifications.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
+    # Save call args 
+    specs = {"args": copy.copy(inspect.currentframe().f_locals),
+             "function": inspect.currentframe().f_code.co_name}
+
+    # Check params
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -267,5 +275,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     res.x_iters = Xi
     res.models = models
     res.space = space
+    res.random_state = rng
+    res.specs = specs
 
     return res

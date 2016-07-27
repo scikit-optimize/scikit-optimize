@@ -1,5 +1,7 @@
 """Random search."""
 
+import copy
+import inspect
 import numbers
 import numpy as np
 
@@ -69,10 +71,16 @@ def dummy_minimize(func, dimensions, n_calls=100,
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimisation space.
+        - `specs` [dict]`: the call specifications.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
+    # Save call args
+    specs = {"args": copy.copy(inspect.currentframe().f_locals),
+             "function": inspect.currentframe().f_code.co_name}
+
+    # Check params
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -111,6 +119,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
     X = x0
     y = y0
 
+    # Random search
     X = X + space.rvs(n_samples=n_calls, random_state=rng)
     first = True
 
@@ -133,7 +142,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
     res.fun = y[best]
     res.func_vals = y
     res.x_iters = X
-    res.space = space
     res.models = []  # Create attribute even though it is empty
+    res.space = space
+    res.random_state = rng
+    res.specs = specs
 
     return res
