@@ -1,5 +1,7 @@
-import numpy as np
+from collections import Iterable
+import numbers
 import warnings
+import numpy as np
 
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
@@ -25,13 +27,14 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 
 def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                 kappa=1.96, search="lbfgs", n_calls=100, n_points=500,
-                n_random_starts=10, n_restarts_optimizer=5, random_state=None):
+                n_random_starts=10, n_restarts_optimizer=5, 
+                x0=None, y0=None, random_state=None):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
     when the parameters are the hyperparameters of a neural network
     and the function evaluation is the mean cross-validation score across
-    ten folds, optimizing the hyperparameters by standared optimization
+    ten folds, optimizing the hyperparameters by standard optimization
     routines would take for ever!
 
     The idea is to approximate the function using a Gaussian process.
@@ -40,6 +43,15 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     GP kernel between the parameters. Then a smart choice to choose the
     next parameter to evaluate can be made by the acquisition function
     over the Gaussian prior which is much quicker to evaluate.
+
+    The total number of evaluations, `n_calls`, are performed like the
+    following. If `x0` is provided but not `y0`, then the elements of `x0`
+    are first evaluated, followed by `n_random_starts` evaluations.
+    Finally, `n_calls - len(x0) - n_random_starts` evaluations are
+    made guided by the surrogate model. If `x0` and `y0` are both
+    provided then `n_random_starts` evaluations are first made then
+    `n_calls - n_random_starts` subsequent evaluations are made
+    guided by the surrogate model.
 
     Parameters
     ----------
@@ -93,9 +105,6 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
-        If `n_random_starts` > 0, `n_calls - n_random_starts`
-        additional evaluations of `func` are made that are guided
-        by the `base_estimator`.
 
     * `n_points` [int, default=500]:
         Number of points to sample to determine the next "best" point.
@@ -107,6 +116,22 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
 
     * `n_restarts_optimizer` [int, default=10]:
         The number of restarts of the optimizer when `search` is `"lbfgs"`.
+
+    * `x0` [list or list of lists or None]:
+        Initial input points.
+        - If it is a list of lists, use it as a list of input points.
+        - If it is a list, use it as a single initial input point.
+        - If it is `None`, no initial input points are used.
+
+    * `y0` [list or scalar or None]
+        Evaluation of initial input points.
+        - If it is a list, then it corresponds to evaluations of the function
+          at each element of `x0` : the i-th element of `y0` corresponds
+          to the function evaluated at the i-th element of `x0`.
+        - If it is a scalar, then it corresponds to the evaluation of the
+          function at `x0`.
+        - If it is None and `x0` is provided, then the function is evaluated
+          at each element of `x0`.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -141,26 +166,55 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                            nu=2.5)),
             normalize_y=True, alpha=10e-6, random_state=random_state)
 
-    # First points
-    if n_random_starts <= 0:
+    # Initialize with provided points (x0 and y0) and/or random points
+    if x0 is None:
+        x0 = []
+    elif not isinstance(x0[0], list):
+        x0 = [x0]
+
+    if not isinstance(x0, list):
+        raise ValueError("Expected x0 to be a list, but got %s" % type(x0))
+
+    n_init_func_calls = len(x0) if y0 is None else 0
+    n_total_init_calls = n_random_starts + n_init_func_calls
+
+    if n_total_init_calls <= 0:
+        # if x0 is not provided and n_random_starts is 0 then
+        # it will ask for n_random_starts to be > 0.
         raise ValueError(
-            "Expected n_random_start > 0, got %d" % n_random_starts)
+            "Expected n_random_starts > 0, got %d" % n_random_starts)
 
-    if n_calls < n_random_starts:
+    if n_calls < n_total_init_calls:
         raise ValueError(
-            "Expected n_calls >= %d, got %d" % (n_random_starts, n_calls))
+            "Expected n_calls >= %d, got %d" % (n_total_init_calls, n_calls))
 
-    n_model_iter = n_calls - n_random_starts
+    if y0 is None and x0:
+        y0 = [func(x) for x in x0]
+    elif x0:
+        if isinstance(y0, Iterable):
+            y0 = list(y0)
+        elif isinstance(y0, numbers.Number):
+            y0 = [y0]
+        else:
+            raise ValueError(
+                "Expected y0 to be an iterable or a scalar, got %s" % type(y0))
+        if len(x0) != len(y0):
+            raise ValueError("x0 and y0 should have the same length")
+        if not all(map(np.isscalar, y0)):
+            raise ValueError(
+                "y0 elements should be scalars")
+    else:
+        y0 = []
 
-    Xi = space.rvs(n_samples=n_random_starts, random_state=rng)
-    yi = [func(x) for x in Xi]
+    Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
+    yi = y0 + [func(x) for x in Xi[len(x0):]]
     if np.ndim(yi) != 1:
         raise ValueError(
             "The function to be optimized should return a scalar")
 
     # Bayesian optimization loop
     models = []
-
+    n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
         gp = clone(base_estimator)
 
