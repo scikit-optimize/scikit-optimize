@@ -84,7 +84,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, got %s" % type(x0))
 
-    if x0 and y0:
+    if len(x0) > 0 and y0 is not None:
         if isinstance(y0, Iterable):
             y0 = list(y0)
         elif isinstance(y0, numbers.Number):
@@ -94,17 +94,24 @@ def dummy_minimize(func, dimensions, n_calls=100,
                              % type(y0))
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
+
         if not all(map(np.isscalar, y0)):
             raise ValueError("`y0` elements should be scalars")
-    elif not x0 and y0:
+
+    elif len(x0) > 0 and y0 is None:
+        y0 = []
+        n_calls -= len(x0)
+
+    elif len(x0) == 0 and y0 is not None:
         raise ValueError("`x0`cannot be `None` when `y0` is provided")
-    else:
+
+    else:  # len(x0) == 0 and y0 is None
         y0 = []
 
     X = x0
     y = y0
 
-    X = X + space.rvs(n_samples=n_calls - len(X), random_state=rng)
+    X = X + space.rvs(n_samples=n_calls, random_state=rng)
     first = True
 
     for i in range(len(y0), len(X)):

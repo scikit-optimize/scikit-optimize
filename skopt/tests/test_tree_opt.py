@@ -23,12 +23,12 @@ MINIMIZERS = (partial(forest_minimize, base_estimator='dt'),
 
 
 def check_no_iterations(minimizer):
-    assert_raise_message(ValueError, "Expected n_calls > 0",
+    assert_raise_message(ValueError, "Expected `n_calls` > 0",
                          minimizer,
                          branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=0,
                          random_state=1)
 
-    assert_raise_message(ValueError, "Expected n_random_starts > 0",
+    assert_raise_message(ValueError, "Expected `n_random_starts` > 0",
                          minimizer,
                          branin, [(-5.0, 10.0), (0.0, 15.0)],
                          n_random_starts=0,
@@ -43,7 +43,7 @@ def test_no_iterations():
 def test_one_iteration():
     for minimizer in MINIMIZERS:
         assert_raise_message(ValueError,
-                             "Expected n_calls >= 10",
+                             "Expected `n_calls` >= 10",
                              minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
                              n_calls=1, random_state=1)
 
@@ -73,6 +73,7 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin, n_calls):
     # converging might just be luck.
     success = 0
     N = 3
+    
     for n in range(1, N + 1):
         r = minimizer(
             func, dimensions, n_calls=n_calls, random_state=n)
