@@ -117,7 +117,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                 if j > 0:
                     ax_.set_yticklabels([])
                 else:
-                    ax_.set_ylabel("$X_{%i,%i}$" % (i, j))
+                    ax_.set_ylabel("$X_{%i}$" % i)
             else:
                 ax_.set_ylim(*diagonal_ylim)
                 ax_.yaxis.tick_right()
@@ -134,7 +134,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
             # ... the bottom row
             else:
                 [l.set_rotation(45) for l in ax_.get_xticklabels()]
-                ax_.set_xlabel("$X_{%i,%i}$" % (i, j))
+                ax_.set_xlabel("$X_{%i}$" % j)
 
     return ax
 
@@ -233,7 +233,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         return xi, yi, zi
 
 
-def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
+def plot_objective(result, levels=10, n_points=40, n_samples=100):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -305,7 +305,7 @@ def plot_objective_function(result, levels=10, n_points=40, n_samples=100):
     return _format_scatter_plot_axes(ax, space, "Partial dependence")
 
 
-def plot_sampling_order(result, bins=20):
+def plot_evaluations(result, bins=20):
     """Visualize the order in which points where sampled.
 
     The scatter plot matrix shows at which points in the search
