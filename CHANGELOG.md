@@ -1,25 +1,17 @@
 # Release history
 
-## Version 0.2
-
-### New features
-
-* Awesome feature. By [greatcontributor].
-
----
-
 ## Version 0.1
 
 First light!
 
 ### New features
 
-* gaussian process based sequential model-based optimization
-* ensemble of and single decision tree based sequential model-based optimization
-* convergence plots
-* specifying and sampling from a parameter space
+* Bayesian optimization via `gp_minimize`. 
+* Ensemble of and single decision tree based sequential model-based optimization via `forest_minimize` and `gbrt_minimize`.
+* Convergence plots.
+* Specifying and sampling from a parameter space.
 
-### Contributors (by ABC)
+### Contributors (in alphabetical order)
 
 [Nuno Campos][nfcampos], [Mehdi Cherti][mehdidc],
 [Alexander Fabisch][AlexanderFabisch], [Tim Head][betatim], [Manoj Kumar][mechcoder],
