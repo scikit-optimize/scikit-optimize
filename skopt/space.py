@@ -23,6 +23,23 @@ class _Identity:
         return Xt
 
 
+class _Normalize:
+    """Normalize transform."""
+
+    def __init__(self, lower, upper):
+        self.lower = float(lower)
+        self.upper = float(upper)
+
+    def fit(self, X):
+        return self
+
+    def transform(self, X):
+        return (np.asarray(X, dtype=np.float) - self.lower) / (self.upper - self.lower)
+
+    def inverse_transform(self, Xt):
+        return Xt * (self.upper - self.lower) + self.lower
+
+
 class _Log10:
     """Base 10 logarithm transform."""
 
@@ -110,7 +127,7 @@ class Dimension(object):
         """
         rng = check_random_state(random_state)
         samples = self._rvs.rvs(size=n_samples, random_state=rng)
-        return self.inverse_transform(samples)
+        return samples
 
     def transform(self, X):
         """Transform samples form the original space to a warped space."""
@@ -164,7 +181,7 @@ class Real(Dimension):
 
         if prior == "uniform":
             self._rvs = uniform(self._low, self._high - self._low)
-            self.transformer = _Identity()
+            self.transformer = _Normalize(self._low, self._high)
 
         elif prior == "log-uniform":
             self._rvs = uniform(
@@ -176,6 +193,26 @@ class Real(Dimension):
             raise ValueError(
                 "Prior should be either 'uniform' or 'log-uniform', "
                 "got '%s'." % self._rvs)
+
+    def rvs(self, n_samples=1, random_state=None):
+        """Draw random samples.
+
+        Parameters
+        ----------
+        * `n_samples` [int or None]:
+            The number of samples to be drawn.
+
+        * `random_state` [int, RandomState instance, or None (default)]:
+            Set random state to something other than None for reproducible
+            results.
+        """
+        rng = check_random_state(random_state)
+        samples = self._rvs.rvs(size=n_samples, random_state=rng)
+
+        if self.prior == "uniform":
+            return samples
+        elif self.prior == "log-uniform":
+            return self.inverse_transform(samples)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
@@ -190,7 +227,7 @@ class Real(Dimension):
     @property
     def transformed_bounds(self):
         if self.prior == "uniform":
-            return (self._low, self._high)
+            return (0., 1.)
 
         else:  # self.prior == "log-uniform"
             return (np.log10(self._low), np.log10(self._high))
@@ -211,7 +248,7 @@ class Integer(Dimension):
         self._low = low
         self._high = high
         self._rvs = randint(self._low, self._high + 1)
-        self.transformer = _Identity()
+        self.transformer = _Normalize(self._low, self._high)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
@@ -227,7 +264,7 @@ class Integer(Dimension):
 
     @property
     def transformed_bounds(self):
-        return (self._low, self._high)
+        return (0., 1.)
 
 
 class Categorical(Dimension):

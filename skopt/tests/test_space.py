@@ -43,8 +43,8 @@ def test_real():
         yield (check_limits, a.rvs(random_state=i), 1, 25)
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
-    assert_array_equal(a.transform(random_values), random_values)
-    assert_array_equal(a.inverse_transform(random_values), random_values)
+    assert_array_equal(random_values,
+                       a.inverse_transform(a.transform(random_values)))
 
     log_uniform = Real(10**-5, 10**5, prior="log-uniform")
     for i in range(50):
@@ -64,8 +64,8 @@ def test_integer():
         yield (check_limits, a.rvs(random_state=i), 1, 11)
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
-    assert_array_equal(a.transform(random_values), random_values)
-    assert_array_equal(a.inverse_transform(random_values), random_values)
+    assert_array_equal(random_values,
+                       a.inverse_transform(a.transform(random_values)))
 
 
 def test_categorical_transform():
@@ -197,6 +197,6 @@ def test_space_api():
         assert_array_equal(b1, b2)
 
     for b1, b2 in zip(space.transformed_bounds,
-                      [(0.0, 1.0), (-5, 5), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
+                      [(0.0, 1.0), (0.0, 1.), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
                        (np.log10(1.0), np.log10(5.0)), (0.0, 1.0)]):
         assert_array_equal(b1, b2)
