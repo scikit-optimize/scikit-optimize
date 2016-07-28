@@ -4,7 +4,9 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
+from matplotlib.ticker import MaxNLocator
 
+from scipy.interpolate import griddata
 from scipy.optimize import OptimizeResult
 
 
@@ -88,3 +90,267 @@ def plot_convergence(*args, **kwargs):
         ax.legend(loc="best")
 
     return ax
+
+
+def _format_scatter_plot_axes(ax, space, ylabel):
+    # Work out min, max of y axis for the diagonal so we can adjust
+    # them all to the same value
+    diagonal_ylim = (np.min([ax[i, i].get_ylim()[0]
+                             for i in range(space.n_dims)]),
+                     np.max([ax[i, i].get_ylim()[1]
+                             for i in range(space.n_dims)]))
+
+    # Deal with formatting of the axes
+    for i in range(space.n_dims): # rows
+        for j in range(space.n_dims): # columns
+            ax_ = ax[i, j]
+
+            if j > i:
+                ax_.axis("off")
+
+            # off-diagonal axis
+            if i != j:
+                # plots on the diagonal are special, like Texas. They have
+                # their own range so do not mess with them.
+                ax_.set_ylim(*space.dimensions[i].bounds)
+                ax_.set_xlim(*space.dimensions[j].bounds)
+                if j > 0:
+                    ax_.set_yticklabels([])
+                else:
+                    ax_.set_ylabel("$X_{%i}$" % i)
+            else:
+                ax_.set_ylim(*diagonal_ylim)
+                ax_.yaxis.tick_right()
+                ax_.yaxis.set_label_position('right')
+                ax_.yaxis.set_ticks_position('both')
+                ax_.set_ylabel(ylabel)
+
+            ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
+            ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
+
+            # for all rows except ...
+            if i < space.n_dims - 1:
+                ax_.set_xticklabels([])
+            # ... the bottom row
+            else:
+                [l.set_rotation(45) for l in ax_.get_xticklabels()]
+                ax_.set_xlabel("$X_{%i}$" % j)
+
+    return ax
+
+
+def partial_dependence(space, model, i, j=None, sample_points=None,
+                       n_samples=100, n_points=40):
+    """Calculate the partial dependence for dimensions `i` and `j` with
+    respect to the objective value, as approximated by `model`.
+
+    The partial dependence plot shows how the value of the dimensions
+    `i` and `j` influence the `model` predictions after "averaging out"
+    the influence of all other dimensions.
+
+    Parameters
+    ----------
+    * `space` [`Space`]
+        The parameter space over which the minimization was performed.
+
+    * `model`
+        Surrogate model for the objective function.
+
+    * `i` [int]
+        The first dimension for which to calculate the partial dependence.
+
+    * `j` [int, default=None]
+        The second dimension for which to calculate the partial dependence.
+        To calculate the 1D partial dependence on `i` alone set `j=None`.
+
+    * `sample_points` [np.array, shape=(n_points, n_dims), default=None]
+        Randomly sampled and transformed points to use when averaging
+        the model function at each of the `n_points`.
+
+    * `n_samples` [int, default=100]
+        Number of random samples to use for averaging the model function
+        at each of the `n_points`. Only used when `sample_points=None`.
+
+    * `n_points` [int, default=40]
+        Number of points at which to evaluate the partial dependence
+        along each dimension `i` and `j`.
+
+    Returns
+    -------
+    For 1D partial dependence:
+
+    * `xi`: [np.array]:
+        The points at which the partial dependence was evaluated.
+
+    * `yi`: [np.array]:
+        The value of the model at each point `xi`.
+
+    For 2D partial dependence:
+
+    * `xi`: [np.array, shape=n_points]:
+        The points at which the partial dependence was evaluated.
+    * `yi`: [np.array, shape=n_points]:
+        The points at which the partial dependence was evaluated.
+    * `zi`: [list of lists, n_points by n_points]:
+        The value of the model at each point `(xi, yi)`.
+    """
+    if sample_points is None:
+        sample_points = space.transform(space.rvs(n_samples=n_samples))
+
+    if j is None:
+        bounds = space.dimensions[i].bounds
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[i].transform(xi)
+
+        yi = []
+        for x_ in xi_transformed:
+            rvs_ = np.array(sample_points)
+            rvs_[:, i] = x_
+            yi.append(np.mean(model.predict(rvs_)))
+
+        return xi, yi
+
+    else:
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        bounds = space.dimensions[j].bounds
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[j].transform(xi)
+
+        bounds = space.dimensions[i].bounds
+        yi = np.linspace(bounds[0], bounds[1], n_points)
+        yi_transformed = space.dimensions[i].transform(yi)
+
+        zi = []
+        for x_ in xi_transformed:
+            row = []
+            for y_ in yi_transformed:
+                rvs_ = np.array(sample_points)
+                rvs_[:, (i, j)] = (x_, y_)
+                row.append(np.mean(model.predict(rvs_)))
+            zi.append(row)
+
+        return xi, yi, zi
+
+
+def plot_objective(result, levels=10, n_points=40, n_samples=100):
+    """Pairwise partial dependence plot of the objective function.
+
+    The diagonal shows the partial dependence for dimension `i` with
+    respect to the objective function. The off-diagonal shows the
+    partial dependence for dimensions `i` and `j` with
+    respect to the objective function. The objective function is
+    approximated by `result.model.`
+
+    Pairwise scatter plots of the points at which the objective
+    function was directly evaluated are shown on the off-diagonal.
+    A red point indicates the found minimum.
+
+    Note: search spaces that contain `Categorical` dimensions are
+          currently not supported by this function.
+
+    Parameters
+    ----------
+    * `result` [`OptimizeResult`]
+        The result for which to create the scatter plot matrix.
+
+    * `levels` [int, default=10]
+        Number of levels to draw on the contour plot, passed directly
+        to `plt.contour()`.
+
+    * `n_points` [int, default=40]
+        Number of points at which to evaluate the partial dependence
+        along each dimension.
+
+    * `n_samples` [int, default=100]
+        Number of random samples to use for averaging the model function
+        at each of the `n_points`.
+
+    Returns
+    -------
+    * `ax`: [`Axes`]:
+        The matplotlib axes.
+    """
+    space = result.space
+    samples = np.asarray(result.x_iters)
+    order = range(samples.shape[0])
+    rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
+
+    fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
+
+    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
+                        hspace=0.1, wspace=0.1)
+
+    for i in range(space.n_dims):
+        for j in range(space.n_dims):
+            if i == j:
+                xi, yi = partial_dependence(space, result.models[-1], i, j=None,
+                                            sample_points=rvs_transformed,
+                                            n_points=n_points)
+
+                ax[i, i].plot(xi, yi)
+                ax[i, i].axvline(result.x[i], linestyle="--", color="r", lw=1)
+
+            # lower triangle
+            elif i > j:
+                xi, yi, zi = partial_dependence(space, result.models[-1],
+                                                i, j,
+                                                rvs_transformed, n_points)
+
+                ax[i, j].contour(xi, yi, zi, levels, linewidths=0.5, colors='k')
+                ax[i, j].contourf(xi, yi, zi, levels, cmap='viridis_r')
+                ax[i, j].scatter(samples[:, j], samples[:, i], c='k', s=10, lw=0.)
+                ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
+
+    return _format_scatter_plot_axes(ax, space, "Partial dependence")
+
+
+def plot_evaluations(result, bins=20):
+    """Visualize the order in which points where sampled.
+
+    The scatter plot matrix shows at which points in the search
+    space and in which order samples were evaluated. Pairwise
+    scatter plots are shown on the off-diagonal for each
+    dimension of the search space. The order in which samples
+    were evaluated is encoded in each point's color.
+    The diagonal shows a histogram of sampled values for each
+    dimension. A red point indicates the found minimum.
+
+    Note: search spaces that contain `Categorical` dimensions are
+          currently not supported by this function.
+
+    Parameters
+    ----------
+    * `result` [`OptimizeResult`]
+        The result for which to create the scatter plot matrix.
+
+    * `bins` [int, bins=20]:
+        Number of bins to use for histograms on the diagonal.
+
+    Returns
+    -------
+    * `ax`: [`Axes`]:
+        The matplotlib axes.
+    """
+    space = result.space
+    samples = np.asarray(result.x_iters)
+    order = range(samples.shape[0])
+    fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
+
+    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
+                        hspace=0.1, wspace=0.1)
+
+    for i in range(space.n_dims):
+        for j in range(space.n_dims):
+            if i == j:
+                ax[i, i].hist(samples[:, j], bins=bins,
+                              range=space.dimensions[j].bounds)
+
+            # lower triangle
+            elif i > j:
+                ax[i, j].scatter(samples[:, j], samples[:, i], c=order,
+                                 s=40, lw=0., cmap='viridis')
+                ax[i, j].scatter(result.x[j], result.x[i],
+                                 c=['r'], s=20, lw=0.)
+
+    return _format_scatter_plot_axes(ax, space, "Number of samples")
