@@ -13,6 +13,8 @@ Contributions should follow these guidelines:
   changes are);
 * someone else has to merge your PR;
 * new code needs to come with a test;
+* apply [PEP8](https://www.python.org/dev/peps/pep-0008/) as much
+  as possible, but not too much;
 * no merging if travis is red.
 
 These are not hard rules to be enforced by :police_car: but instead guidelines.
