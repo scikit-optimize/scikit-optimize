@@ -94,3 +94,22 @@ def test_gbrt_with_std():
     mean, std = model.predict(X_, return_std=True)
     assert_array_equal(mean, c)
     assert_array_equal(std, (h - l) / 2.0)
+
+
+def test_gbrt_in_parallel():
+    # check estimate quantiles with parallel
+    rng = np.random.RandomState(1)
+    N = 10000
+    X = np.ones((N, 1))
+    y = rng.normal(size=N)
+
+    rgr = GradientBoostingQuantileRegressor(n_jobs=1)
+    rgr.fit(X, y)
+    estimates = rgr.predict(X)
+
+    rgr.set_params(n_jobs=2)
+    rgr.fit(X, y)
+    estimates_parallel = rgr.predict(X)
+
+    assert_almost_equal(np.mean(estimates, axis=0),
+                        np.mean(estimates_parallel, axis=0))
