@@ -140,7 +140,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
 
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
-                       n_samples=100, n_points=40):
+                       n_samples=250, n_points=40):
     """Calculate the partial dependence for dimensions `i` and `j` with
     respect to the objective value, as approximated by `model`.
 
@@ -226,14 +226,14 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
             row = []
             for y_ in yi_transformed:
                 rvs_ = np.array(sample_points)
-                rvs_[:, (i, j)] = (x_, y_)
+                rvs_[:, (j, i)] = (x_, y_)
                 row.append(np.mean(model.predict(rvs_)))
             zi.append(row)
 
         return xi, yi, zi
 
 
-def plot_objective(result, levels=10, n_points=40, n_samples=100):
+def plot_objective(result, levels=10, n_points=40, n_samples=250):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -262,7 +262,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=100):
         Number of points at which to evaluate the partial dependence
         along each dimension.
 
-    * `n_samples` [int, default=100]
+    * `n_samples` [int, default=250]
         Number of random samples to use for averaging the model function
         at each of the `n_points`.
 
@@ -273,7 +273,6 @@ def plot_objective(result, levels=10, n_points=40, n_samples=100):
     """
     space = result.space
     samples = np.asarray(result.x_iters)
-    order = range(samples.shape[0])
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
 
     fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
@@ -284,7 +283,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=100):
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
-                xi, yi = partial_dependence(space, result.models[-1], i, j=None,
+                xi, yi = partial_dependence(space, result.models[-1], i,
+                                            j=None,
                                             sample_points=rvs_transformed,
                                             n_points=n_points)
 
