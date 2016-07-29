@@ -239,7 +239,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250,
-                   z_scale='linear'):
+                   zscale='linear'):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -272,7 +272,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
         Number of random samples to use for averaging the model function
         at each of the `n_points`.
 
-    * `z_scale` [str, default='linear']
+    * `zscale` [str, default='linear']
         Scale to use for the z axis of the contour plots. Either 'linear'
         or 'log'.
 
@@ -285,13 +285,13 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
     samples = np.asarray(result.x_iters)
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
 
-    if z_scale == 'log':
+    if zscale == 'log':
         locator = LogLocator()
-    elif z_scale == 'linear':
+    elif zscale == 'linear':
         locator = None
     else:
-        raise ValueError("Valid values for z_scale are 'linear' and 'log',"
-                         " not '%s'." % z_scale)
+        raise ValueError("Valid values for zscale are 'linear' and 'log',"
+                         " not '%s'." % zscale)
 
     fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
 
