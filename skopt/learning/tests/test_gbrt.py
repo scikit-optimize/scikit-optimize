@@ -103,13 +103,13 @@ def test_gbrt_in_parallel():
     X = np.ones((N, 1))
     y = rng.normal(size=N)
 
-    rgr = GradientBoostingQuantileRegressor(n_jobs=1)
+    rgr = GradientBoostingQuantileRegressor(
+        n_jobs=1, random_state=np.random.RandomState(1))
     rgr.fit(X, y)
     estimates = rgr.predict(X)
 
-    rgr.set_params(n_jobs=2)
+    rgr.set_params(n_jobs=2, random_state=np.random.RandomState(1))
     rgr.fit(X, y)
     estimates_parallel = rgr.predict(X)
 
-    assert_almost_equal(np.mean(estimates, axis=0),
-                        np.mean(estimates_parallel, axis=0))
+    assert_array_equal(estimates, estimates_parallel)
