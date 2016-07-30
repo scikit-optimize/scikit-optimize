@@ -29,7 +29,7 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
         of `GradientBoostingRegressor` are supported. Use this to change
         the hyper-parameters of the estimator.
 
-    * `random-state` [int, RandomState instance, or None (default)]:
+    * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
 
