@@ -113,7 +113,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                   n_points=1000, n_random_starts=10, x0=None, y0=None,
-                  random_state=None, acq="EI", xi=0.01, kappa=1.96):
+                  n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -181,6 +181,10 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
+    * `n_jobs` [int, default=1]:
+        The number of jobs to run in parallel for `fit`.
+        If -1, then the number of jobs is set to the number of cores.
+
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
@@ -231,6 +235,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     if base_estimator is None:
         gbrt = GradientBoostingRegressor(n_estimators=30, loss='quantile')
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
+                                                           n_jobs=n_jobs,
                                                            random_state=rng)
 
     res = _tree_minimize(func, dimensions, base_estimator,
