@@ -79,7 +79,7 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
             regressors.append(regressor)
 
-        self.regressors_ = Parallel(n_jobs=self.n_jobs)(
+        self.regressors_ = Parallel(n_jobs=self.n_jobs, backend='threading')(
             delayed(_parallel_fit)(regressor, X, y)
             for regressor in regressors)
 
