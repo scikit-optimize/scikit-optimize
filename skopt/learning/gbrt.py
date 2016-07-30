@@ -29,17 +29,17 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
         of `GradientBoostingRegressor` are supported. Use this to change
         the hyper-parameters of the estimator.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
-        Set random state to something other than None for reproducible
-        results.
-
     * `n_jobs` [int, default=1]:
         The number of jobs to run in parallel for `fit`.
         If -1, then the number of jobs is set to the number of cores.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
     """
 
     def __init__(self, quantiles=[0.16, 0.5, 0.84], base_estimator=None,
-                 random_state=None, n_jobs=1):
+                 n_jobs=1, random_state=None):
         self.quantiles = quantiles
         self.random_state = random_state
         self.base_estimator = base_estimator
