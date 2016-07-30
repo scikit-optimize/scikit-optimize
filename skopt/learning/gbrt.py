@@ -72,10 +72,13 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError('base_estimator has to use quantile'
                                  ' loss not %s' % base_estimator.loss)
 
+        # The predictions for different quantiles should be sorted.
+        # Therefore each of the regressors need the same seed.
+        base_estimator.set_params(random_state=rng)
         regressors = []
         for q in self.quantiles:
             regressor = clone(base_estimator)
-            regressor.set_params(alpha=q, random_state=rng)
+            regressor.set_params(alpha=q)
 
             regressors.append(regressor)
 
