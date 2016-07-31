@@ -30,7 +30,7 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 
 
 def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
-                kappa=1.96, search="lbfgs", n_calls=100, n_points=500,
+                kappa=1.96, search="auto", n_calls=100, n_points=500,
                 n_random_starts=10, n_restarts_optimizer=5,
                 x0=None, y0=None, random_state=None):
     """Bayesian optimization using Gaussian Processes.
@@ -95,9 +95,13 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `search` [string, `"sampling"` or `"lbfgs"`, default="lbfgs"]:
+    * `search` [string, `"auto"``, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Searching for the next possible candidate to update the Gaussian prior
         with.
+
+        If search is set to `"auto"`, then it is set to `"lbfgs"`` if
+        all the search dimensions are Real(continuous). It defaults to
+        `"sampling"` for all other cases.
 
         If search is set to `"sampling"`, `n_points` are sampled randomly
         and the Gaussian Process prior is updated with the point that gives
@@ -161,7 +165,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call args 
+    # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
 
@@ -222,6 +226,16 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     yi = y0 + [func(x) for x in Xi[len(x0):]]
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
+
+    if search == "auto":
+        if space.is_real:
+            search = "lbfgs"
+        else:
+            search = "sampling"
+    elif search not in ["lbfgs", "sampling"]:
+        raise ValueError(
+            "Expected search to be 'lbfgs', 'sampling' or 'auto', "
+            "got %s" % search)
 
     # Bayesian optimization loop
     models = []
