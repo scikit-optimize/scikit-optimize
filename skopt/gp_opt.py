@@ -228,7 +228,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         raise ValueError("`func` should return a scalar")
 
     if search == "auto":
-        if all([isinstance(dim, Real) for dim in space.dimensions]):
+        if space.is_real:
             search = "lbfgs"
         else:
             search = "sampling"

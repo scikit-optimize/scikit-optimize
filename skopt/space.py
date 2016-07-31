@@ -324,6 +324,13 @@ class Space:
 
         self.dimensions = _dimensions
 
+    @property
+    def is_real(self):
+        """
+        Returns true if all dimensions are Real
+        """
+        return all([isinstance(dim, Real) for dim in self.dimensions])
+
     def rvs(self, n_samples=1, random_state=None):
         """Draw random samples.
 
