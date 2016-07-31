@@ -17,6 +17,8 @@ from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
 from .space import Space
+from .space import Categorical
+from .space import Integer
 from .utils import in2d
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
@@ -168,6 +170,8 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     # Check params
     rng = check_random_state(random_state)
     space = Space(dimensions)
+    is_discrete_space = all(
+        [isinstance(dim, (Categorical, Integer)) for dim in space.dimensions])
 
     # Default GP
     if base_estimator is None:
@@ -241,20 +245,21 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
             X = space.transform(space.rvs(n_samples=n_points,
                                           random_state=rng))
 
-            # Choose the point that gives the best acquisition
-            # value AND has not been reevaluated at before.
-            # This prevents costly function reevaluations.
-            # while exploring more of the search space.
-            X_in_Xi_transform = in2d(X, Xi_transform)
+            if is_discrete_space:
+                # Choose the point that gives the best acquisition
+                # value AND has not been reevaluated at before.
+                # This prevents costly function reevaluations.
+                # while exploring more of the search space.
+                X_in_Xi_transform = in2d(X, Xi_transform)
 
-            # Highly unlikely corner case.
-            if np.all(X_in_Xi_transform):
-                warnings.warn(
-                    "Optimization procedure ended prematurely since the "
-                    "search space has been exhaustively searched. Set "
-                    "'n_points' to a higher value.")
-                break
-            X = X[~X_in_Xi_transform]
+                # Highly unlikely corner case.
+                if np.all(X_in_Xi_transform):
+                    warnings.warn(
+                        "Optimization procedure ended prematurely since the "
+                        "search space has been exhaustively searched. Set "
+                        "'n_points' to a higher value.")
+                    break
+                X = X[~X_in_Xi_transform]
             values = _gaussian_acquisition(
                 X=X, model=gp, y_opt=np.min(yi), method=acq,
                 xi=xi, kappa=kappa)
@@ -282,15 +287,16 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
             X = np.asarray(X)
             values = np.asarray(values)
 
-            X_in_Xi_transform = in2d(X, Xi_transform)
-            if np.all(X_in_Xi_transform):
-                warnings.warn(
-                    "Optimization procedure ended prematurely since the "
-                    "search space has been exhaustively searched. Set "
-                    "'n_restarts_optimizer' to a higher value.")
-                break
-            X = X[~X_in_Xi_transform]
-            values = values[~X_in_Xi_transform]
+            if is_discrete_space:
+                X_in_Xi_transform = in2d(X, Xi_transform)
+                if np.all(X_in_Xi_transform):
+                    warnings.warn(
+                        "Optimization procedure ended prematurely since the "
+                        "search space has been exhaustively searched. Set "
+                        "'n_restarts_optimizer' to a higher value.")
+                    break
+                X = X[~X_in_Xi_transform]
+                values = values[~X_in_Xi_transform]
             next_x = X[np.argmin(values)]
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]

@@ -20,6 +20,8 @@ from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
+from .space import Categorical
+from .space import Integer
 from .utils import in2d
 
 
@@ -28,6 +30,8 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
                    random_state=None, acq="EI", xi=0.01, kappa=1.96):
     rng = check_random_state(random_state)
     space = Space(dimensions)
+    is_discrete_space = all(
+        [isinstance(dim, (Categorical, Integer)) for dim in space.dimensions])
 
     # Initialize with provided points (x0 and y0) and/or random points
     if n_calls <= 0:
@@ -93,20 +97,21 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         # for the moment.
         X = space.transform(space.rvs(n_samples=n_points, random_state=rng))
 
-        # Choose the point that gives the best acquisition
-        # value AND has not been reevaluated at before.
-        # This prevents costly function reevaluations.
-        # while exploring more of the search space.
-        X_in_Xi_transform = in2d(X, Xi_transform)
+        if is_discrete_space:
+            # Choose the point that gives the best acquisition
+            # value AND has not been reevaluated at before.
+            # This prevents costly function reevaluations.
+            # while exploring more of the search space.
+            X_in_Xi_transform = in2d(X, Xi_transform)
 
-        # Highly unlikely corner case.
-        if np.all(X_in_Xi_transform):
-            warnings.warn("Optimization procedure ended prematurely since "
-                          " the search space has been exhaustively "
-                          "searched. Set 'n_restarts_optimizer' to a higher "
-                          "value.")
-            break
-        X = X[~X_in_Xi_transform]
+            # Highly unlikely corner case.
+            if np.all(X_in_Xi_transform):
+                warnings.warn("Optimization procedure ended prematurely since"
+                              " the search space has been exhaustively "
+                              "searched. Set 'n_restarts_optimizer' to a "
+                              "higher value.")
+                break
+            X = X[~X_in_Xi_transform]
         values = _gaussian_acquisition(
             X=X, model=rgr, y_opt=np.min(yi), method=acq,
             xi=xi, kappa=kappa)
