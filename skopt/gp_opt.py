@@ -17,7 +17,9 @@ from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
 from .space import Space
-
+from .space import Categorical
+from .space import Integer
+from .utils import in2d
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
@@ -172,6 +174,8 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     # Check params
     rng = check_random_state(random_state)
     space = Space(dimensions)
+    is_discrete_space = all(
+        [isinstance(dim, (Categorical, Integer)) for dim in space.dimensions])
 
     # Default GP
     if base_estimator is None:
@@ -194,7 +198,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
 
-    if n_total_init_calls <= 0:
+    if n_random_starts + len(x0) <= 0:
         # if x0 is not provided and n_random_starts is 0 then
         # it will ask for n_random_starts to be > 0.
         raise ValueError(
@@ -241,28 +245,48 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     models = []
     n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
+        Xi_transform = space.transform(Xi)
         gp = clone(base_estimator)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            gp.fit(space.transform(Xi), yi)
+            gp.fit(Xi_transform, yi)
 
         models.append(gp)
 
         if search == "sampling":
+
             X = space.transform(space.rvs(n_samples=n_points,
                                           random_state=rng))
+
+            if is_discrete_space:
+                # Choose the point that gives the best acquisition
+                # value AND has not been reevaluated at before.
+                # This prevents costly function reevaluations.
+                # while exploring more of the search space.
+                X_in_Xi_transform = in2d(X, Xi_transform)
+
+                # Highly unlikely corner case.
+                if np.all(X_in_Xi_transform):
+                    warnings.warn(
+                        "Optimization procedure ended prematurely since the "
+                        "search space has been exhaustively searched. Set "
+                        "'n_points' to a higher value.")
+                    break
+                X = X[~X_in_Xi_transform]
             values = _gaussian_acquisition(
-                X=X, model=gp,  y_opt=np.min(yi), method=acq,
+                X=X, model=gp, y_opt=np.min(yi), method=acq,
                 xi=xi, kappa=kappa)
+
             next_x = X[np.argmin(values)]
 
         elif search == "lbfgs":
             best = np.inf
-
-            for j in range(n_restarts_optimizer):
-                x0 = space.transform(space.rvs(n_samples=1,
-                                               random_state=rng))[0]
+            X0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
+                                           random_state=rng))
+            X = []
+            values = []
+            for x0 in X0:
 
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
@@ -271,9 +295,23 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                         args=(gp, np.min(yi), acq, xi, kappa),
                         bounds=space.transformed_bounds,
                         approx_grad=True, maxiter=10)
+                    X.append(x)
+                    values.append(a)
 
-                if a < best:
-                    next_x, best = x, a
+            X = np.asarray(X)
+            values = np.asarray(values)
+
+            if is_discrete_space:
+                X_in_Xi_transform = in2d(X, Xi_transform)
+                if np.all(X_in_Xi_transform):
+                    warnings.warn(
+                        "Optimization procedure ended prematurely since the "
+                        "search space has been exhaustively searched. Set "
+                        "'n_restarts_optimizer' to a higher value.")
+                    break
+                X = X[~X_in_Xi_transform]
+                values = values[~X_in_Xi_transform]
+            next_x = X[np.argmin(values)]
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
         next_y = func(next_x)

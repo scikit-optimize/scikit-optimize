@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from skopt.benchmarks import branin
 from skopt.benchmarks import bench4
@@ -99,11 +100,41 @@ def test_init_vals():
     for optimizer in optimizers:
         yield (check_init_vals, optimizer, branin, space, x0, n_calls)
 
-    space = [("-2", "-1", "0", "1", "2")]
-    x0 = [["0"], ["1"], ["2"]]
+
+def test_no_repeats():
+    """
+    Test that function evaluations do not take place at a point more
+    than a time.
+    """
     n_calls = 10
+    optimizers = [
+        partial(gp_minimize, search="sampling"),
+        forest_minimize,
+        gbrt_minimize
+    ]
+
+    space = [("-2", "-1", "0", "1", "2")]
+    x0 = [["1"], ["2"]]
     for optimizer in optimizers:
-        yield (check_init_vals, optimizer, bench4, space, x0, n_calls)
+        yield (check_no_repeats, optimizer, bench4, space, x0, n_calls)
+
+
+def check_no_repeats(optimizer, func, space, x0, n_calls, n_random_starts=0):
+    y0 = list(map(func, x0))
+    # testing whether the provided points with their evaluations
+    # are taken into account
+
+    res = assert_warns(
+        UserWarning, optimizer, func, space, x0=x0, y0=y0,
+        random_state=0, n_calls=n_calls, n_random_starts=n_random_starts)
+    assert_array_equal(res.x_iters[0:len(x0)], x0)
+    assert_array_equal(res.func_vals[0:len(y0)], y0)
+    assert_equal(len(res.func_vals), 5)
+    assert_equal(len(res.models), 4)
+    assert_equal(res.fun, 0)
+    assert_array_equal(
+        sorted([int(x[0]) for x in res.x_iters]),
+        [-2, -1, 0, 1, 2])
 
 
 def check_init_vals(optimizer, func, space, x0, n_calls):
