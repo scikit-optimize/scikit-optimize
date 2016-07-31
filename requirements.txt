@@ -3,4 +3,3 @@ scipy
 cython
 -e git+https://github.com/scikit-learn/scikit-learn.git#egg=sklearn
 matplotlib
-nose
