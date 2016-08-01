@@ -6,21 +6,12 @@ First light!
 
 ### New features
 
-* Bayesian optimization via `gp_minimize`. 
-* Ensemble of and single decision tree based sequential model-based optimization via `forest_minimize` and `gbrt_minimize`.
-* Convergence plots.
+* Bayesian optimization via `gp_minimize`.
+* Tree-based sequential model-based optimization via `forest_minimize` and `gbrt_minimize`.
+* Support of LCB, EI and PI as acquisition functions.
+* Plotting functions for inspecting convergence, evaluations and the objective function.
 * Specifying and sampling from a parameter space.
 
-### Contributors (in alphabetical order)
+# Contributors
 
-[Nuno Campos][nfcampos], [Mehdi Cherti][mehdidc],
-[Alexander Fabisch][AlexanderFabisch], [Tim Head][betatim], [Manoj Kumar][mechcoder],
-[Gilles Louppe][glouppe], [cmmalone][cmmalone].
-
-[AlexanderFabisch]: https://github.com/AlexanderFabisch
-[mehdidc]: https://github.com/mehdidc
-[nfcampos]: https://github.com/nfcampos
-[betatim]: https://github.com/betatim
-[mechcoder]: https://github.com/MechCoder
-[glouppe]: https://github.com/glouppe
-[cmmalone]: https://github.com/cmmalone
+See `AUTHORS.md`.
