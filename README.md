@@ -10,7 +10,7 @@ The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 ![Approximated objective](https://github.com/scikit-optimize/scikit-optimize/blob/master/media/bo-objective.png)
 
-_Approximated objective function after 20 iterations of `gp_minimize`. [Plot made using `skopt.plots.plot_objective`]_
+_Approximated objective function after 50 iterations of `gp_minimize`. Plot made using `skopt.plots.plot_objective`._
 
 ## Documentation
 
