@@ -4,6 +4,11 @@ from sklearn.base import clone
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
+from sklearn.externals.joblib import Parallel, delayed
+
+
+def _parallel_fit(regressor, X, y):
+    return regressor.fit(X, y)
 
 
 class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
@@ -24,16 +29,21 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
         of `GradientBoostingRegressor` are supported. Use this to change
         the hyper-parameters of the estimator.
 
-    * `random-state` [int, RandomState instance, or None (default)]:
+    * `n_jobs` [int, default=1]:
+        The number of jobs to run in parallel for `fit`.
+        If -1, then the number of jobs is set to the number of cores.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
     """
 
     def __init__(self, quantiles=[0.16, 0.5, 0.84], base_estimator=None,
-                 random_state=None):
+                 n_jobs=1, random_state=None):
         self.quantiles = quantiles
         self.random_state = random_state
         self.base_estimator = base_estimator
+        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         """Fit one regressor for each quantile.
@@ -62,13 +72,19 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError('base_estimator has to use quantile'
                                  ' loss not %s' % base_estimator.loss)
 
-        self.regressors_ = []
+        # The predictions for different quantiles should be sorted.
+        # Therefore each of the regressors need the same seed.
+        base_estimator.set_params(random_state=rng)
+        regressors = []
         for q in self.quantiles:
             regressor = clone(base_estimator)
-            regressor.set_params(alpha=q, random_state=rng)
-            regressor.fit(X, y)
+            regressor.set_params(alpha=q)
 
-            self.regressors_.append(regressor)
+            regressors.append(regressor)
+
+        self.regressors_ = Parallel(n_jobs=self.n_jobs, backend='threading')(
+            delayed(_parallel_fit)(regressor, X, y)
+            for regressor in regressors)
 
         return self
 
