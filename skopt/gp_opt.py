@@ -29,9 +29,9 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
 
 
-def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
-                kappa=1.96, search="auto", n_calls=100, n_points=500,
-                n_random_starts=10, n_restarts_optimizer=5,
+def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
+                acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
+                n_points=500, n_random_starts=10, n_restarts_optimizer=5,
                 x0=None, y0=None, random_state=None):
     """Bayesian optimization using Gaussian Processes.
 
@@ -78,6 +78,11 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
 
+    * `alpha` [float, default=1e-10]:
+        Value added to the diagonal of the kernel matrix during fitting.
+        Larger values correspond to increased noise level in the observations
+        and reduce potential numerical issue during fitting.
+
     * `acq` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
 
@@ -95,7 +100,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `search` [string, `"auto"``, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+    * `search` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Searching for the next possible candidate to update the Gaussian prior
         with.
 
@@ -180,7 +185,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                     Matern(length_scale=np.ones(space.transformed_n_dims),
                            length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
                            nu=2.5)),
-            normalize_y=True, alpha=10e-6, random_state=random_state)
+            normalize_y=True, alpha=alpha, random_state=random_state)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
