@@ -207,8 +207,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         for x_ in xi_transformed:
             rvs_ = np.array(sample_points)
             rvs_[:, i] = x_
+            model.predict(rvs_)
             yi.append(np.mean(model.predict(rvs_)))
-
         return xi, yi
 
     else:
@@ -231,7 +231,6 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
             zi.append(row)
 
         return xi, yi, zi
-
 
 def plot_objective(result, levels=10, n_points=40, n_samples=100):
     """Pairwise partial dependence plot of the objective function.
