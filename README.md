@@ -8,9 +8,9 @@ The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 [![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
 
-![Convergence plot](https://github.com/scikit-optimize/scikit-optimize/blob/master/media/bo-convergence.png)
 ![Approximated objective](https://github.com/scikit-optimize/scikit-optimize/blob/master/media/bo-objective.png)
-_Convergence plot and approximated objective function after 20 iterations._
+
+_Approximated objective function after 20 iterations of `gp_minimize`. [Plot made using `skopt.plots.plot_objective`]_
 
 ## Documentation
 
