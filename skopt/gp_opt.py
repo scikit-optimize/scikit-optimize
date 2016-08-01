@@ -80,8 +80,8 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
 
     * `alpha` [float, default=1e-10]:
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting.
+        Larger values correspond to an increased noise level in the
+        observations and reduce potential numerical issues during fitting.
 
     * `acq` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
