@@ -270,7 +270,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                         _acquisition, x0,
                         args=(gp, np.min(yi), acq, xi, kappa),
                         bounds=space.transformed_bounds,
-                        approx_grad=True, maxiter=10)
+                        approx_grad=True, maxiter=20)
 
                 if a < best:
                     next_x, best = x, a

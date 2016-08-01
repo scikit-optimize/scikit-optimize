@@ -16,10 +16,10 @@ from skopt.tree_opt import gbrt_minimize
 from skopt.tree_opt import forest_minimize
 
 
-MINIMIZERS = (partial(forest_minimize, base_estimator='dt'),
-              partial(forest_minimize, base_estimator='et'),
-              partial(forest_minimize, base_estimator='rf'),
-              gbrt_minimize)
+MINIMIZERS = [("dt", partial(forest_minimize, base_estimator='dt')),
+              ("et", partial(forest_minimize, base_estimator='et')),
+              ("rf", partial(forest_minimize, base_estimator='rf')),
+              ("gbrt", gbrt_minimize)]
 
 
 def check_no_iterations(minimizer):
@@ -36,12 +36,12 @@ def check_no_iterations(minimizer):
 
 
 def test_no_iterations():
-    for minimizer in MINIMIZERS:
+    for name, minimizer in MINIMIZERS:
         yield (check_no_iterations, minimizer)
 
 
 def test_one_iteration():
-    for minimizer in MINIMIZERS:
+    for name, minimizer in MINIMIZERS:
         assert_raise_message(ValueError,
                              "Expected `n_calls` >= 10",
                              minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
@@ -73,7 +73,7 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin, n_calls):
     # converging might just be luck.
     success = 0
     N = 3
-    
+
     for n in range(1, N + 1):
         r = minimizer(
             func, dimensions, n_calls=n_calls, random_state=n)
@@ -84,13 +84,23 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin, n_calls):
 
 
 def test_tree_based_minimize():
-    for minimizer in MINIMIZERS:
-        yield (check_minimize, minimizer, bench1, 0., [(-2.0, 2.0)], 0.05, 25)
-        yield (check_minimize, minimizer, bench2, -5, [(-6.0, 6.0)], 0.05, 60)
-        yield (check_minimize, minimizer, bench3, -0.9, [(-2.0, 2.0)], 0.05, 25)
+    for name, minimizer in MINIMIZERS:
+        yield (check_minimize, minimizer, bench1, 0.,
+               [(-2.0, 2.0)], 0.05, 25)
+        yield (check_minimize, minimizer, bench2, -5,
+               [(-6.0, 6.0)], 0.05, 125)
+        yield (check_minimize, minimizer, bench3, -0.9,
+               [(-2.0, 2.0)], 0.05, 25)
         yield (check_minimize, minimizer, bench4, 0.0,
                [("-2", "-1", "0", "1", "2")], 0.05, 10)
-        yield (check_minimize, minimizer, branin, 0.39,
-               [(-5.0, 10.0), (0.0, 15.0)], 0.1, 100)
-        yield (check_minimize, minimizer, hart6, -3.32,
-               np.tile((0.0, 1.0), (6, 1)), 1.0, 25)
+
+        if name == "dt":
+            yield (check_minimize, minimizer, branin, 0.39,
+                   [(-5.0, 10.0), (0.0, 15.0)], 0.1, 200)
+            yield (check_minimize, minimizer, hart6, -3.32,
+                   np.tile((0.0, 1.0), (6, 1)), 1.0, 100)
+        else:
+            yield (check_minimize, minimizer, branin, 0.39,
+                   [(-5.0, 10.0), (0.0, 15.0)], 0.1, 125)
+            yield (check_minimize, minimizer, hart6, -3.32,
+                   np.tile((0.0, 1.0), (6, 1)), 1.0, 30)
