@@ -11,6 +11,8 @@ First light!
 * Support of LCB, EI and PI as acquisition functions.
 * Plotting functions for inspecting convergence, evaluations and the objective function.
 * Specifying and sampling from a parameter space.
+* Parallel fitting and predicting for `forest_minimize`, parallel fitting for
+  `gbrt_minimize`
 
 # Contributors
 

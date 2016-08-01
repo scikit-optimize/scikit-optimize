@@ -9,6 +9,7 @@ Scikit-Optimize is a community effort. Contributors include, in alphabetical ord
 * [Manoj Kumar][mechcoder]
 * [Gilles Louppe][glouppe]
 * [cmmalone][cmmalone]
+* [nel215][nel215]
 
 [AlexanderFabisch]: https://github.com/AlexanderFabisch
 [mehdidc]: https://github.com/mehdidc
@@ -17,3 +18,4 @@ Scikit-Optimize is a community effort. Contributors include, in alphabetical ord
 [mechcoder]: https://github.com/MechCoder
 [glouppe]: https://github.com/glouppe
 [cmmalone]: https://github.com/cmmalone
+[nel215]: https://github.com/nel215
