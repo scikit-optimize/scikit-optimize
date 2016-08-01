@@ -20,7 +20,7 @@ from skopt.tree_opt import gbrt_minimize
 
 # dummy_minimize does not support same parameters so
 # treated separately
-MINIMIZERS = [gp_minimize,]
+MINIMIZERS = [gp_minimize]
 ACQUISITION = ["LCB", "PI", "EI"]
 
 for est, acq in product(["dt", "et", "rf"], ACQUISITION):

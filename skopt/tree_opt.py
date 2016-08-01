@@ -112,7 +112,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
-                  n_points=20, n_random_starts=10, x0=None, y0=None,
+                  n_points=1000, n_random_starts=10, x0=None, y0=None,
                   random_state=None, acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimization using gradient boosted trees.
 
@@ -160,7 +160,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
 
-    * `n_points` [int, default=20]:
+    * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
 
     * `x0` [list, list of lists or `None`]:
@@ -229,7 +229,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
     # Default estimator
     if base_estimator is None:
-        gbrt = GradientBoostingRegressor(n_estimators=20, loss='quantile')
+        gbrt = GradientBoostingRegressor(n_estimators=30, loss='quantile')
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
                                                            random_state=rng)
 
@@ -244,7 +244,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
-                    n_points=100, n_random_starts=10, x0=None, y0=None,
+                    n_points=1000, n_random_starts=10, x0=None, y0=None,
                     random_state=None, acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimisation using decision trees.
 
@@ -371,8 +371,9 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     # Default estimator
     if isinstance(base_estimator, str):
         if base_estimator not in ("rf", "et", "dt"):
-            raise ValueError("Valid values for the base_estimator parameter"
-                             " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
+            raise ValueError(
+                "Valid values for the base_estimator parameter"
+                " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
 
         if base_estimator == "rf":
             base_estimator = RandomForestRegressor(n_estimators=100,
