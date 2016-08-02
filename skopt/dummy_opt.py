@@ -11,10 +11,11 @@ from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
 from .space import Space
-
+from .utils import pack_optimize_result
 
 def dummy_minimize(func, dimensions, n_calls=100,
-                   x0=None, y0=None, random_state=None, verbose=False):
+                   x0=None, y0=None, random_state=None, verbose=False,
+                   callback=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -63,6 +64,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
     * `verbose` [boolean, default=False]:
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
+
+    * `callback` [callable, optiona]
+        If provided, then `callback(res)` is called after call to func.
 
     Returns
     -------
@@ -148,18 +152,8 @@ def dummy_minimize(func, dimensions, n_calls=100,
 
         y.append(y_i)
 
+        if callback is not None:
+            callback(pack_optimize_result(X[: i + 1], y, space, rng, specs))
+
     y = np.array(y)
-
-    # Pack results
-    res = OptimizeResult()
-    best = np.argmin(y)
-    res.x = X[best]
-    res.fun = y[best]
-    res.func_vals = y
-    res.x_iters = X
-    res.models = []  # Create attribute even though it is empty
-    res.space = space
-    res.random_state = rng
-    res.specs = specs
-
-    return res
+    return pack_optimize_result(X, y, space, rng, specs)

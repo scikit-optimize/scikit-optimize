@@ -20,12 +20,13 @@ from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
+from .utils import pack_optimize_result
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
                    n_points, n_random_starts, x0=None, y0=None,
                    random_state=None, acq="EI", xi=0.01, kappa=1.96,
-                   verbose=False):
+                   verbose=False, specs=None, callback=None):
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -75,7 +76,8 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
                 print("Time taken: %0.4f" % (time() - t))
                 print("Function value obtained: %0.4f" % curr_y)
                 print("Current minimum: %0.4f" % np.min(y0))
-
+            if callback is not None:
+                callback(pack_optimize_result(x0, y0, space, rng, specs))
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -92,10 +94,11 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         y0 = []
 
     # Random function evaluations.
-    Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
+    X_rand = space.rvs(n_samples=n_random_starts, random_state=rng)
+    Xi = x0 + X_rand
     yi = y0
 
-    for i, x in enumerate(Xi[len(x0):]):
+    for i, x in enumerate(X_rand):
         if verbose:
             func_call_no += 1
             print("Function evaluation no: %d at a "
@@ -111,6 +114,9 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             print("Time taken: %0.4f" % (time() - t))
             print("Function value obtained: %0.4f" % curr_y)
             print("Current minimum: %0.4f" % np.min(yi))
+        if callback is not None:
+            callback(pack_optimize_result(
+                x0 + X_rand[:i + 1], yi, space, rng, specs))
 
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
@@ -154,23 +160,16 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             print("Function value obtained: %0.4f" % curr_y)
             print("Current minimum: %0.4f" % np.min(yi))
 
-    res = OptimizeResult()
-    best = np.argmin(yi)
-    res.x = Xi[best]
-    res.fun = yi[best]
-    res.func_vals = np.array(yi)
-    res.x_iters = Xi
-    res.models = models
-    res.space = space
-    res.random_state = rng
+        if callback is not None:
+            callback(pack_optimize_result(Xi, yi, space, rng, specs))
 
-    return res
+    return pack_optimize_result(Xi, yi, space, rng, specs, models)
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                   n_points=1000, n_random_starts=10, x0=None, y0=None,
                   n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96,
-                  verbose=False):
+                  verbose=False, callback=None):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -187,7 +186,6 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     provided then `n_random_starts` evaluations are first made then
     `n_calls - n_random_starts` subsequent evaluations are made
     guided by the surrogate model.
-
 
     Parameters
     ----------
@@ -267,6 +265,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
+    * `callback` [callable, optiona]
+        If provided, then `callback(res)` is called after call to func.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -299,12 +300,11 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                                                            n_jobs=n_jobs,
                                                            random_state=rng)
 
-    res = _tree_minimize(func, dimensions, base_estimator,
-                         n_calls=n_calls,
-                         n_points=n_points, n_random_starts=n_random_starts,
-                         x0=x0, y0=y0, random_state=random_state, xi=xi,
-                         kappa=kappa, acq=acq)
-    res.specs = specs
+    return _tree_minimize(func, dimensions, base_estimator,
+                          n_calls=n_calls,
+                          n_points=n_points, n_random_starts=n_random_starts,
+                          x0=x0, y0=y0, random_state=random_state, xi=xi,
+                          kappa=kappa, acq=acq, specs=specs, callback=callback)
 
     return res
 
@@ -312,7 +312,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                     n_points=1000, n_random_starts=10, x0=None, y0=None,
                     n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96,
-                    verbose=False):
+                    verbose=False, callback=None):
     """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -418,6 +418,9 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
+    * `callback` [callable, optiona]
+        If provided, then `callback(res)` is called after call to func.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -472,11 +475,9 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                              " be a string or a regressor instance."
                              " '%s' is neither." % base_estimator)
 
-    res = _tree_minimize(func, dimensions, base_estimator,
-                         n_calls=n_calls,
-                         n_points=n_points, n_random_starts=n_random_starts,
-                         x0=x0, y0=y0, random_state=random_state, acq=acq,
-                         xi=xi, kappa=kappa, verbose=verbose)
-    res.specs = specs
-
-    return res
+    return _tree_minimize(func, dimensions, base_estimator,
+                          n_calls=n_calls,
+                          n_points=n_points, n_random_starts=n_random_starts,
+                          x0=x0, y0=y0, random_state=random_state, acq=acq,
+                          xi=xi, kappa=kappa, verbose=verbose, specs=specs,
+                          callback=callback)

@@ -18,6 +18,7 @@ from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
 from .space import Space
+from .utils import pack_optimize_result
 
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
@@ -33,7 +34,8 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
                 n_points=500, n_random_starts=10, n_restarts_optimizer=5,
-                x0=None, y0=None, random_state=None, verbose=False):
+                x0=None, y0=None, random_state=None, verbose=False,
+                callback=None):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -157,6 +159,9 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
+    * `callback` [callable, optiona]
+        If provided, then `callback(res)` is called after call to func.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -234,6 +239,10 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 print("Time taken: %0.4f" % (time() - t))
                 print("Function value obtained: %0.4f" % curr_y)
                 print("Current minimum: %0.4f" % np.min(y0))
+
+            if callback is not None:
+                callback(pack_optimize_result(x0, y0, space, rng, specs))
+
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -251,10 +260,11 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         y0 = []
 
     # Random function evaluations.
-    Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
+    X_rand = space.rvs(n_samples=n_random_starts, random_state=rng)
+    Xi = x0 + X_rand
     yi = y0
 
-    for i, x in enumerate(Xi[len(x0):]):
+    for i, x in enumerate(X_rand):
         if verbose:
             func_call_no += 1
             print("Function evaluation no: %d at a "
@@ -270,6 +280,10 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
             print("Time taken: %0.4f" % (time() - t))
             print("Function value obtained: %0.4f" % curr_y)
             print("Current minimum: %0.4f" % np.min(yi))
+
+        if callback is not None:
+            callback(pack_optimize_result(
+                x0 + X_rand[:i + 1], yi, space, rng, specs))
 
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
@@ -341,16 +355,8 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
             print("Function value obtained: %0.4f" % curr_y)
             print("Current minimum: %0.4f" % np.min(yi))
 
-    # Pack results
-    res = OptimizeResult()
-    best = np.argmin(yi)
-    res.x = Xi[best]
-    res.fun = yi[best]
-    res.func_vals = np.array(yi)
-    res.x_iters = Xi
-    res.models = models
-    res.space = space
-    res.random_state = rng
-    res.specs = specs
+        if callback is not None:
+            callback(pack_optimize_result(Xi, yi, space, rng, specs))
 
-    return res
+    # Pack results
+    return pack_optimize_result(Xi, yi, space, rng, specs, models)
