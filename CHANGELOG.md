@@ -7,12 +7,11 @@ First light!
 ### New features
 
 * Bayesian optimization via `gp_minimize`.
-* Tree-based sequential model-based optimization via `forest_minimize` and `gbrt_minimize`.
+* Tree-based sequential model-based optimization via `forest_minimize` and `gbrt_minimize`, with support for multi-threading.
 * Support of LCB, EI and PI as acquisition functions.
 * Plotting functions for inspecting convergence, evaluations and the objective function.
-* Specifying and sampling from a parameter space.
-* Parallel fitting and predicting for `forest_minimize`, parallel fitting for
-  `gbrt_minimize`
+* API for specifying and sampling from a parameter space.
+
 
 # Contributors
 
