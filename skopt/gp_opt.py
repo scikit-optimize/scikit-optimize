@@ -4,6 +4,7 @@ import copy
 import inspect
 import numbers
 import numpy as np
+from time import time
 import warnings
 
 from collections import Iterable
@@ -152,7 +153,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Set random state to something other than None for reproducible
         results.
 
-    * `verbose` [int, default=False]:
+    * `verbose` [boolean, default=False]:
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
@@ -222,17 +223,17 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 func_call_no += 1
                 print("Function evaluation No: %d at provided "
                       "point started." % func_call_no)
+                t = time()
 
             curr_y = func(x)
             y0.append(curr_y)
 
             if verbose:
                 print("Function evaluation No: %d at provided "
-                      "point started." % func_call_no)
+                      "point ended." % func_call_no)
+                print("Time taken: %0.4f" % (time() - t))
                 print("Function value obtained: %0.4f" % curr_y)
                 print("Current minimum: %0.4f" % np.min(y0))
-
-
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -258,7 +259,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
             func_call_no += 1
             print("Function evaluation no: %d at a "
                   "random point started" % func_call_no)
-            print("Current minimum: %0.4f" % np.min(yi))
+            t = time()
 
         curr_y = func(x)
         yi.append(curr_y)
@@ -266,6 +267,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         if verbose:
             print("Function evaluation no: %d at a "
                   "random point ended" % func_call_no)
+            print("Time taken: %0.4f" % (time() - t))
             print("Function value obtained: %0.4f" % curr_y)
             print("Current minimum: %0.4f" % np.min(yi))
 
@@ -328,12 +330,14 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         if verbose:
             func_call_no += 1
             print("Function evaluation no: %d started" % func_call_no)
+            t = time()
 
         curr_y = func(next_x)
         Xi.append(next_x)
         yi.append(curr_y)
         if verbose:
             print("Function evaluation no: %d ended" % func_call_no)
+            print("Time taken: %0.4f" % (time() - t))
             print("Function value obtained: %0.4f" % curr_y)
             print("Current minimum: %0.4f" % np.min(yi))
 

@@ -4,6 +4,7 @@ import copy
 import inspect
 import numbers
 import numpy as np
+from time import time
 
 from collections import Iterable
 from scipy.optimize import OptimizeResult
@@ -59,7 +60,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         Set random state to something other than None for reproducible
         results.
 
-    * `verbose` [int, default=False]:
+    * `verbose` [boolean, default=False]:
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
@@ -131,6 +132,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
 
         if verbose:
             print("Function evaluation no: %d started" % (i + 1))
+            t = time()
 
         y_i = func(X[i])
 
@@ -141,7 +143,8 @@ def dummy_minimize(func, dimensions, n_calls=100,
 
         if verbose:
             print("Function evaluation no: %d ended" % (i + 1))
-            print("Function value obtained: %0.4f" % next_y)
+            print("Time taken: %0.4f" % (time() - t))
+            print("Function value obtained: %0.4f" % y_i)
 
         y.append(y_i)
 

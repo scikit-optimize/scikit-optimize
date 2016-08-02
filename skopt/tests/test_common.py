@@ -64,25 +64,28 @@ def check_minimizer_bounds(result):
 def test_minimizer_api():
     # dummy_minimize is special as it does not support all parameters
     # and does not fit any models
-    result = dummy_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                            n_calls=7, random_state=1)
+    for verbose in [True, False]:
+        result = dummy_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                                n_calls=7, random_state=1,
+                                verbose=verbose)
 
-    yield (check_minimizer_api, result, 0)
-    yield (check_minimizer_bounds, result)
-    assert_raises(ValueError, dummy_minimize, lambda x: x, [[-5, 10]])
-
-    n_calls = 7
-    n_random_starts = 3
-    n_models = n_calls - n_random_starts
-    for minimizer in MINIMIZERS:
-        result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                           n_random_starts=n_random_starts,
-                           n_calls=n_calls,
-                           random_state=1)
-
-        yield (check_minimizer_api, result, n_models)
+        yield (check_minimizer_api, result, 0)
         yield (check_minimizer_bounds, result)
-        assert_raises(ValueError, minimizer, lambda x: x, [[-5, 10]])
+        assert_raises(ValueError, dummy_minimize, lambda x: x, [[-5, 10]])
+
+        n_calls = 7
+        n_random_starts = 3
+        n_models = n_calls - n_random_starts
+        for minimizer in MINIMIZERS:
+            result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                               n_random_starts=n_random_starts,
+                               n_calls=n_calls,
+                               random_state=1,
+                               verbose=verbose)
+
+            yield (check_minimizer_api, result, n_models)
+            yield (check_minimizer_bounds, result)
+            assert_raises(ValueError, minimizer, lambda x: x, [[-5, 10]])
 
 
 def test_init_vals():
