@@ -136,6 +136,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                 ax_.set_ylabel(ylabel)
 
                 ax_.xaxis.tick_top()
+                ax_.xaxis.set_label_position('top')
                 ax_.set_xlabel("$X_{%i}$" % j)
 
             ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
