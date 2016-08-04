@@ -4,13 +4,13 @@ import copy
 import inspect
 import numbers
 import numpy as np
-from time import time
 
 from collections import Iterable
 from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
 from .space import Space
+from .utils import check_callback
 from .utils import create_result
 from .utils import verbose_func
 
@@ -95,13 +95,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
-    if callback is not None:
-        if isinstance(callback, Callable):
-            callback = [callback]
-        elif not (isinstance(callback, list) and
-                  all([isinstance(c, Callable) for c in callback])):
-            raise ValueError("callback should be either a callable or "
-                             "a list of callables.")
+    callbacks = check_callback(callback)
 
     if x0 is None:
         x0 = []
@@ -143,7 +137,6 @@ def dummy_minimize(func, dimensions, n_calls=100,
     first = True
 
     for i in range(len(y0), len(X)):
-
         y.append(verbose_func(
             func, X[i], verbose=verbose, prev_ys=y, x_info="random",
             func_call_no=i+1))
@@ -153,9 +146,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
             if not np.isscalar(y[-1]):
                 raise ValueError("`func` should return a scalar")
 
-        if callback is not None:
+        if callbacks is not None:
             curr_res = create_result(X[: i + 1], y, space, rng, specs)
-            for c in callback:
+            for c in callbacks:
                 c(curr_res)
 
     y = np.array(y)

@@ -4,7 +4,6 @@ import copy
 import inspect
 import numbers
 import numpy as np
-from time import time
 
 from collections import Iterable
 from scipy.optimize import OptimizeResult
@@ -20,25 +19,19 @@ from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
+from .utils import check_callback
 from .utils import create_result
 from .utils import verbose_func
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
-                   n_points, n_random_starts, x0=None, y0=None,
+                   n_points, n_random_starts, specs, x0=None, y0=None,
                    random_state=None, acq="EI", xi=0.01, kappa=1.96,
-                   verbose=False, specs=None, callback=None):
-
-    if callback is not None:
-        if isinstance(callback, Callable):
-            callback = [callback]
-        elif not (isinstance(callback, list) and
-                  all([isinstance(c, Callable) for c in callback])):
-            raise ValueError("callback should be either a callable or "
-                             "a list of callables.")
+                   verbose=False, callback=None):
 
     rng = check_random_state(random_state)
     space = Space(dimensions)
+    callbacks = check_callback(callback)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if n_calls <= 0:
@@ -70,15 +63,14 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     if y0 is None and x0:
         y0 = []
         for i, x in enumerate(x0):
-
             y0.append(verbose_func(
                 func, x, verbose=verbose, prev_ys=y0, x_info="provided",
                 func_call_no=func_call_no))
             func_call_no += 1
 
-            if callback is not None:
+            if callbacks is not None:
                 curr_res = create_result(x0, y0, space, rng, specs)
-                for c in callback:
+                for c in callbacks:
                     c(curr_res)
     elif x0:
         if isinstance(y0, Iterable):
@@ -101,16 +93,15 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     yi = y0
 
     for i, x in enumerate(X_rand):
-
         yi.append(verbose_func(
             func, x, verbose=verbose, prev_ys=yi, x_info="random",
             func_call_no=func_call_no))
         func_call_no += 1
 
-        if callback is not None:
+        if callbacks is not None:
             curr_res = create_result(
                 x0 + X_rand[:i + 1], yi, space, rng, specs)
-            for c in callback:
+            for c in callbacks:
                 c(curr_res)
 
     if np.ndim(yi) != 1:
@@ -120,7 +111,6 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     models = []
     n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
-
         if verbose:
             print("Fitting model no: %d" % (i + 1))
 
@@ -147,9 +137,9 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
         Xi.append(next_x)
 
-        if callback is not None:
+        if callbacks is not None:
             curr_res = create_result(Xi, yi, space, rng, specs)
-            for c in callback:
+            for c in callbacks:
                 c(curr_res)
 
     return create_result(Xi, yi, space, rng, specs, models)
@@ -468,6 +458,6 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     return _tree_minimize(func, dimensions, base_estimator,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
-                          x0=x0, y0=y0, random_state=random_state, acq=acq,
-                          xi=xi, kappa=kappa, verbose=verbose, specs=specs,
+                          specs=specs, x0=x0, y0=y0, random_state=random_state,
+                          acq=acq, xi=xi, kappa=kappa, verbose=verbose,
                           callback=callback)

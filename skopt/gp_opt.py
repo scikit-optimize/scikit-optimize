@@ -3,12 +3,11 @@
 import copy
 import inspect
 import numbers
-import numpy as np
-from collections import Callable
-from time import time
 import warnings
-
 from collections import Iterable
+
+import numpy as np
+
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
 
@@ -19,6 +18,7 @@ from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
 from .space import Space
+from .utils import check_callback
 from .utils import create_result
 from .utils import verbose_func
 
@@ -186,14 +186,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
-
-    if callback is not None:
-        if isinstance(callback, Callable):
-            callback = [callback]
-        elif not (isinstance(callback, list) and
-                  all([isinstance(c, Callable) for c in callback])):
-            raise ValueError("callback should be either a callable or "
-                             "a list of callables.")
+    callbacks = check_callback(callback)
 
     # Check params
     rng = check_random_state(random_state)
@@ -234,15 +227,14 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     if y0 is None and x0:
         y0 = []
         for i, x in enumerate(x0):
-
             y0.append(verbose_func(
                 func, x, verbose=verbose, prev_ys=y0, x_info="provided",
                 func_call_no=func_call_no))
             func_call_no += 1
 
-            if callback is not None:
+            if callbacks is not None:
                 curr_res = create_result(x0, y0, space, rng, specs)
-                for c in callback:
+                for c in callbacks:
                     c(curr_res)
 
     elif x0:
@@ -267,14 +259,13 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     yi = y0
 
     for i, x in enumerate(X_rand):
-
         yi.append(verbose_func(
             func, x, verbose=verbose, prev_ys=yi, x_info="random",
             func_call_no=func_call_no))
         func_call_no += 1
 
-        if callback is not None:
-            for c in callback:
+        if callbacks is not None:
+            for c in callbacks:
                 curr_res = create_result(
                     x0 + X_rand[:i + 1], yi, space, rng, specs)
                 c(curr_res)
@@ -296,7 +287,6 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     models = []
     n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
-
         if verbose:
             print("Fitting GaussianProcessRegressor no: %d" % (i + 1))
         gp = clone(base_estimator)
@@ -340,9 +330,9 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         func_call_no += 1
         Xi.append(next_x)
 
-        if callback is not None:
+        if callbacks is not None:
             curr_res = create_result(Xi, yi, space, rng, specs)
-            for c in callback:
+            for c in callbacks:
                 c(curr_res)
 
     # Pack results

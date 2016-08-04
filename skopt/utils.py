@@ -1,3 +1,4 @@
+from collections import Callable
 from time import time
 
 import numpy as np
@@ -34,13 +35,12 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     * `res` [`OptimizeResult`, scipy object]:
         OptimizeResult instance with the required information.
     """
-    if models is None:
-        models = []
     res = OptimizeResult()
+    yi = np.asarray(yi)
     best = np.argmin(yi)
     res.x = Xi[best]
     res.fun = yi[best]
-    res.func_vals = np.array(yi)
+    res.func_vals = yi
     res.x_iters = Xi
     res.models = models
     res.space = space
@@ -85,3 +85,17 @@ def verbose_func(func, x, verbose=False, prev_ys=None, x_info='',
         print("Function value obtained: %0.4f" % curr_y)
         print("Current minimum: %0.4f" % np.min(prev_ys + [curr_y]))
     return curr_y
+
+
+def check_callback(callback):
+    """
+    Check if callback is a callable or a list of callables.
+    """
+    if callback is not None:
+        if isinstance(callback, Callable):
+            callback = [callback]
+        elif not (isinstance(callback, list) and
+                  all([isinstance(c, Callable) for c in callback])):
+            raise ValueError("callback should be either a callable or "
+                             "a list of callables.")
+    return callback
