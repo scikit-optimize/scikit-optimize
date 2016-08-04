@@ -28,10 +28,6 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     space = Space(dimensions)
 
     # Initialize with provided points (x0 and y0) and/or random points
-    if n_calls <= 0:
-        raise ValueError(
-            "Expected `n_calls` > 0, got %d" % n_random_starts)
-
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], list):
@@ -42,6 +38,9 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
+
+    if n_calls <= 0:
+        raise ValueError("Expected `n_calls` > 0, got %d" % n_calls)
 
     if n_random_starts < 0:
         raise ValueError(

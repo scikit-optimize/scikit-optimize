@@ -21,33 +21,6 @@ MINIMIZERS = [("dt", partial(forest_minimize, base_estimator='dt')),
               ("rf", partial(forest_minimize, base_estimator='rf')),
               ("gbrt", gbrt_minimize)]
 
-
-def check_no_iterations(minimizer):
-    assert_raise_message(ValueError, "Expected `n_calls` > 0",
-                         minimizer,
-                         branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=0,
-                         random_state=1)
-
-    assert_raise_message(ValueError, "Expected `n_random_starts` > 0",
-                         minimizer,
-                         branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_random_starts=0,
-                         random_state=1)
-
-
-def test_no_iterations():
-    for name, minimizer in MINIMIZERS:
-        yield (check_no_iterations, minimizer)
-
-
-def test_one_iteration():
-    for name, minimizer in MINIMIZERS:
-        assert_raise_message(ValueError,
-                             "Expected `n_calls` >= 10",
-                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
-                             n_calls=1, random_state=1)
-
-
 def test_forest_minimize_api():
     # invalid string value
     assert_raise_message(ValueError,

@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 
 from skopt.benchmarks import branin
 from skopt.benchmarks import bench4
@@ -152,3 +153,40 @@ def check_init_vals(optimizer, func, space, x0, n_calls):
     # the number of input points and the number of evaluations differ
     assert_raises(ValueError, dummy_minimize, func,
                   space, x0=x0, y0=[1])
+
+
+def test_invalid_n_calls_arguments():
+    for minimizer in MINIMIZERS:
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` > 0",
+                             minimizer,
+                             branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=0,
+                             random_state=1)
+
+        assert_raise_message(ValueError,
+                             "set `n_random_starts` > 0, or provide `x0`",
+                             minimizer,
+                             branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_random_starts=0,
+                             random_state=1)
+
+        # n_calls >= n_random_starts
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` >= 10",
+                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_calls=1, n_random_starts=10, random_state=1)
+
+        # n_calls >= n_random_starts + len(x0)
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` >= 10",
+                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
+                             random_state=1, n_random_starts=7)
+
+        # n_calls >= n_random_starts when x0 and y0 are provided.
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` >= 7",
+                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
+                             y0=[2.0, 3.0, 5.0],
+                             random_state=1, n_random_starts=7)
