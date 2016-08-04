@@ -1,7 +1,8 @@
 from functools import partial
+from itertools import product
 
 import numpy as np
-from itertools import product
+from scipy.optimize import OptimizeResult
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
@@ -65,11 +66,20 @@ def check_minimizer_bounds(result):
     assert_array_less(np.tile([-5-eps, 0-eps], (7, 1)), result.x_iters)
 
 
+def check_result_callable(res):
+    """
+    Check that the result instance is set right at every callable call.
+    """
+    assert(isinstance(res, OptimizeResult))
+    assert_equal(len(res.x_iters), len(res.func_vals))
+    assert_equal(np.min(res.func_vals), res.fun)
+
+
 def test_minimizer_api():
     # dummy_minimize is special as it does not support all parameters
     # and does not fit any models
     call_single = lambda res: res.x
-    call_list = [lambda res: res.x, lambda res: res.func_vals + 1]
+    call_list = [call_single, check_result_callable]
 
     for verbose, call in product([True, False], [call_single, call_list]):
         result = dummy_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],

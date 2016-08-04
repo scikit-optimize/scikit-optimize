@@ -69,7 +69,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             func_call_no += 1
 
             if callbacks is not None:
-                curr_res = create_result(x0, y0, space, rng, specs)
+                curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
                 for c in callbacks:
                     c(curr_res)
     elif x0:
