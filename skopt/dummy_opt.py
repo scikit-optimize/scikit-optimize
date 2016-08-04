@@ -11,7 +11,7 @@ from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
 from .space import Space
-from .utils import set_results
+from .utils import create_result
 from .utils import verbose_func
 
 def dummy_minimize(func, dimensions, n_calls=100,
@@ -66,8 +66,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, optiona]
-        If provided, then `callback(res)` is called after call to func.
+    * `callback` [callable, list of callables, optional]
+        If callable then `callback(res)` is called after each call to func.
+        If list of callables, then each callable in the list is called.
 
     Returns
     -------
@@ -93,6 +94,14 @@ def dummy_minimize(func, dimensions, n_calls=100,
     # Check params
     rng = check_random_state(random_state)
     space = Space(dimensions)
+
+    if callback is not None:
+        if isinstance(callback, Callable):
+            callback = [callback]
+        elif not (isinstance(callback, list) and
+                  all([isinstance(c, Callable) for c in callback])):
+            raise ValueError("callback should be either a callable or "
+                             "a list of callables.")
 
     if x0 is None:
         x0 = []
@@ -145,7 +154,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
                 raise ValueError("`func` should return a scalar")
 
         if callback is not None:
-            callback(set_results(X[: i + 1], y, space, rng, specs))
+            curr_res = create_result(X[: i + 1], y, space, rng, specs)
+            for c in callback:
+                c(curr_res)
 
     y = np.array(y)
-    return set_results(X, y, space, rng, specs)
+    return create_result(X, y, space, rng, specs)

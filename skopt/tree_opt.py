@@ -20,7 +20,7 @@ from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
-from .utils import set_results
+from .utils import create_result
 from .utils import verbose_func
 
 
@@ -28,6 +28,15 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
                    n_points, n_random_starts, x0=None, y0=None,
                    random_state=None, acq="EI", xi=0.01, kappa=1.96,
                    verbose=False, specs=None, callback=None):
+
+    if callback is not None:
+        if isinstance(callback, Callable):
+            callback = [callback]
+        elif not (isinstance(callback, list) and
+                  all([isinstance(c, Callable) for c in callback])):
+            raise ValueError("callback should be either a callable or "
+                             "a list of callables.")
+
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -68,7 +77,9 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             func_call_no += 1
 
             if callback is not None:
-                callback(set_results(x0, y0, space, rng, specs))
+                curr_res = create_result(x0, y0, space, rng, specs)
+                for c in callback:
+                    c(curr_res)
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -97,8 +108,10 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         func_call_no += 1
 
         if callback is not None:
-            callback(set_results(
-                x0 + X_rand[:i + 1], yi, space, rng, specs))
+            curr_res = create_result(
+                x0 + X_rand[:i + 1], yi, space, rng, specs)
+            for c in callback:
+                c(curr_res)
 
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
@@ -135,9 +148,11 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         Xi.append(next_x)
 
         if callback is not None:
-            callback(set_results(Xi, yi, space, rng, specs))
+            curr_res = create_result(Xi, yi, space, rng, specs)
+            for c in callback:
+                c(curr_res)
 
-    return set_results(Xi, yi, space, rng, specs, models)
+    return create_result(Xi, yi, space, rng, specs, models)
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
@@ -239,8 +254,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, optional]
-        If provided, then `callback(res)` is called after call to func.
+    * `callback` [callable, list of callables, optional]
+        If callable then `callback(res)` is called after each call to func.
+        If list of callables, then each callable in the list is called.
 
     Returns
     -------

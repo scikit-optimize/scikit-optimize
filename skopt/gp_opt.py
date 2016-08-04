@@ -4,6 +4,7 @@ import copy
 import inspect
 import numbers
 import numpy as np
+from collections import Callable
 from time import time
 import warnings
 
@@ -18,7 +19,7 @@ from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
 from .space import Space
-from .utils import set_results
+from .utils import create_result
 from .utils import verbose_func
 
 
@@ -160,8 +161,9 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, optiona]
-        If provided, then `callback(res)` is called after call to func.
+    * `callback` [callable, list of callables, optional]
+        If callable then `callback(res)` is called after each call to func.
+        If list of callables, then each callable in the list is called.
 
     Returns
     -------
@@ -184,6 +186,14 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
+
+    if callback is not None:
+        if isinstance(callback, Callable):
+            callback = [callback]
+        elif not (isinstance(callback, list) and
+                  all([isinstance(c, Callable) for c in callback])):
+            raise ValueError("callback should be either a callable or "
+                             "a list of callables.")
 
     # Check params
     rng = check_random_state(random_state)
@@ -231,7 +241,9 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
             func_call_no += 1
 
             if callback is not None:
-                callback(set_results(x0, y0, space, rng, specs))
+                curr_res = create_result(x0, y0, space, rng, specs)
+                for c in callback:
+                    c(curr_res)
 
     elif x0:
         if isinstance(y0, Iterable):
@@ -255,14 +267,17 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     yi = y0
 
     for i, x in enumerate(X_rand):
+
         yi.append(verbose_func(
             func, x, verbose=verbose, prev_ys=yi, x_info="random",
             func_call_no=func_call_no))
         func_call_no += 1
 
         if callback is not None:
-            callback(set_results(
-                x0 + X_rand[:i + 1], yi, space, rng, specs))
+            for c in callback:
+                curr_res = create_result(
+                    x0 + X_rand[:i + 1], yi, space, rng, specs)
+                c(curr_res)
 
     if np.ndim(y0) != 1:
         raise ValueError("`func` should return a scalar")
@@ -326,7 +341,9 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Xi.append(next_x)
 
         if callback is not None:
-            callback(set_results(Xi, yi, space, rng, specs))
+            curr_res = create_result(Xi, yi, space, rng, specs)
+            for c in callback:
+                c(curr_res)
 
     # Pack results
-    return set_results(Xi, yi, space, rng, specs, models)
+    return create_result(Xi, yi, space, rng, specs, models)

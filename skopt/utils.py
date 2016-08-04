@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import OptimizeResult
 
 
-def set_results(Xi, yi, space=None, rng=None, specs=None, models=None):
+def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     """
     Return an instance of OptimizeResult() with the required
     information.
