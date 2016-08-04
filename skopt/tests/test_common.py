@@ -86,18 +86,19 @@ def test_minimizer_api():
 
 
 def test_init_vals():
-    n_random_starts = 5
-    optimizers = [
-        dummy_minimize,
-        partial(gp_minimize, n_random_starts=n_random_starts),
-        partial(forest_minimize, n_random_starts=n_random_starts),
-        partial(gbrt_minimize, n_random_starts=n_random_starts)
-    ]
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = 10
-    for optimizer in optimizers:
-        yield (check_init_vals, optimizer, branin, space, x0, n_calls)
+
+    for n_random_starts in [0, 5]:
+        optimizers = [
+            dummy_minimize,
+            partial(gp_minimize, n_random_starts=n_random_starts),
+            partial(forest_minimize, n_random_starts=n_random_starts),
+            partial(gbrt_minimize, n_random_starts=n_random_starts)
+        ]
+        for optimizer in optimizers:
+            yield (check_init_vals, optimizer, branin, space, x0, n_calls)
 
     space = [("-2", "-1", "0", "1", "2")]
     x0 = [["0"], ["1"], ["2"]]
