@@ -12,6 +12,7 @@ from sklearn.utils import check_random_state
 
 from .space import Space
 from .utils import set_results
+from .utils import verbose_func
 
 def dummy_minimize(func, dimensions, n_calls=100,
                    x0=None, y0=None, random_state=None, verbose=False,
@@ -134,23 +135,14 @@ def dummy_minimize(func, dimensions, n_calls=100,
 
     for i in range(len(y0), len(X)):
 
-        if verbose:
-            print("Function evaluation no: %d started" % (i + 1))
-            t = time()
-
-        y_i = func(X[i])
+        y.append(verbose_func(
+            func, X[i], verbose=verbose, prev_ys=y, x_info="random",
+            func_call_no=i+1))
 
         if first:
             first = False
-            if not np.isscalar(y_i):
+            if not np.isscalar(y[-1]):
                 raise ValueError("`func` should return a scalar")
-
-        if verbose:
-            print("Function evaluation no: %d ended" % (i + 1))
-            print("Time taken: %0.4f" % (time() - t))
-            print("Function value obtained: %0.4f" % y_i)
-
-        y.append(y_i)
 
         if callback is not None:
             callback(set_results(X[: i + 1], y, space, rng, specs))

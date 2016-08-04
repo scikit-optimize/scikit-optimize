@@ -19,6 +19,7 @@ from sklearn.utils import check_random_state
 from .acquisition import _gaussian_acquisition
 from .space import Space
 from .utils import set_results
+from .utils import verbose_func
 
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
@@ -224,21 +225,10 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         y0 = []
         for i, x in enumerate(x0):
 
-            if verbose:
-                func_call_no += 1
-                print("Function evaluation No: %d at provided "
-                      "point started." % func_call_no)
-                t = time()
-
-            curr_y = func(x)
-            y0.append(curr_y)
-
-            if verbose:
-                print("Function evaluation No: %d at provided "
-                      "point ended." % func_call_no)
-                print("Time taken: %0.4f" % (time() - t))
-                print("Function value obtained: %0.4f" % curr_y)
-                print("Current minimum: %0.4f" % np.min(y0))
+            y0.append(verbose_func(
+                func, x, verbose=verbose, prev_ys=y0, x_info="provided",
+                func_call_no=func_call_no))
+            func_call_no += 1
 
             if callback is not None:
                 callback(set_results(x0, y0, space, rng, specs))
@@ -265,27 +255,16 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     yi = y0
 
     for i, x in enumerate(X_rand):
-        if verbose:
-            func_call_no += 1
-            print("Function evaluation no: %d at a "
-                  "random point started" % func_call_no)
-            t = time()
-
-        curr_y = func(x)
-        yi.append(curr_y)
-
-        if verbose:
-            print("Function evaluation no: %d at a "
-                  "random point ended" % func_call_no)
-            print("Time taken: %0.4f" % (time() - t))
-            print("Function value obtained: %0.4f" % curr_y)
-            print("Current minimum: %0.4f" % np.min(yi))
+        yi.append(verbose_func(
+            func, x, verbose=verbose, prev_ys=yi, x_info="random",
+            func_call_no=func_call_no))
+        func_call_no += 1
 
         if callback is not None:
             callback(set_results(
                 x0 + X_rand[:i + 1], yi, space, rng, specs))
 
-    if np.ndim(yi) != 1:
+    if np.ndim(y0) != 1:
         raise ValueError("`func` should return a scalar")
 
     if search == "auto":
@@ -340,20 +319,11 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                     next_x, best = x, a
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-
-        if verbose:
-            func_call_no += 1
-            print("Function evaluation no: %d started" % func_call_no)
-            t = time()
-
-        curr_y = func(next_x)
+        yi.append(verbose_func(
+            func, next_x, verbose=verbose, prev_ys=yi,
+            func_call_no=func_call_no))
+        func_call_no += 1
         Xi.append(next_x)
-        yi.append(curr_y)
-        if verbose:
-            print("Function evaluation no: %d ended" % func_call_no)
-            print("Time taken: %0.4f" % (time() - t))
-            print("Function value obtained: %0.4f" % curr_y)
-            print("Current minimum: %0.4f" % np.min(yi))
 
         if callback is not None:
             callback(set_results(Xi, yi, space, rng, specs))

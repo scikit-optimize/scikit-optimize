@@ -1,5 +1,8 @@
+from time import time
+
 import numpy as np
 from scipy.optimize import OptimizeResult
+
 
 def set_results(Xi, yi, space=None, rng=None, specs=None, models=None):
     """
@@ -44,3 +47,41 @@ def set_results(Xi, yi, space=None, rng=None, specs=None, models=None):
     res.random_state = rng
     res.specs = specs
     return res
+
+
+def verbose_func(func, x, verbose=False, prev_ys=None, x_info='',
+                 func_call_no=1):
+    """
+    Call func at a given point x, but with a set verbosity
+
+    Parameters
+    ----------
+    * `func` [callable] :
+        Expensive function to evaluate.
+
+    * `x` [list, shape=(n_features,)] :
+        Point at which the function should be evaluated
+
+    * `verbose` [boolean, optional] :
+        Set verbosity
+
+    * `prev_ys` [list, shape=(n_iters-1,)] :
+        Function evaluations at previous (n_iters-1,) iterations.
+
+    * `x_info` [str, 'provided' or 'random', optional]:
+        Whether the point `x` is provided by the user, random.
+    """
+    prev_ys = list(prev_ys)
+    if verbose:
+        print("Function evaluation No: %d at %s point started." %
+              (func_call_no, x_info))
+        t = time()
+
+    curr_y = func(x)
+    if verbose:
+        print("Function evaluation No: %d at %s point ended." %
+              (func_call_no, x_info))
+        print("Time taken: %0.4f" % (time() - t))
+        print("Function value obtained: %0.4f" % curr_y)
+        print("Current minimum: %0.4f" % np.min(prev_ys + [curr_y]))
+    return curr_y
