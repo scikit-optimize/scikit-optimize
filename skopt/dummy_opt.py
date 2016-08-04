@@ -11,7 +11,7 @@ from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
 from .space import Space
-from .utils import pack_optimize_result
+from .utils import set_results
 
 def dummy_minimize(func, dimensions, n_calls=100,
                    x0=None, y0=None, random_state=None, verbose=False,
@@ -153,7 +153,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         y.append(y_i)
 
         if callback is not None:
-            callback(pack_optimize_result(X[: i + 1], y, space, rng, specs))
+            callback(set_results(X[: i + 1], y, space, rng, specs))
 
     y = np.array(y)
-    return pack_optimize_result(X, y, space, rng, specs)
+    return set_results(X, y, space, rng, specs)

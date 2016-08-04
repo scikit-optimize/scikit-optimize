@@ -1,9 +1,35 @@
 import numpy as np
 from scipy.optimize import OptimizeResult
 
-def pack_optimize_result(Xi, yi, space, rng, specs, models=None):
+def set_results(Xi, yi, space=None, rng=None, specs=None, models=None):
     """
-    Instantiate OptimizeResult() with the required information.
+    Return an instance of OptimizeResult() with the required
+    information.
+
+    Parameters
+    ----------
+    * `Xi` [list of lists, shape=(n_iters, n_features)]:
+        Location of the minimum at every iteration.
+
+    * `yi` [array-like, shape=(n_iters,)]:
+        Minimum value obtained at every iteration.
+
+    * `space` [Space instance, optional]:
+        Search space.
+
+    * `rng` [RandomState instance, optional]:
+        State of the random state.
+
+    * `specs` [dict, optional]:
+        Call specifications.
+
+    * `models` [list, optional]:
+        List of fit surrogate models.
+
+    Returns
+    -------
+    * `res` [`OptimizeResult`, scipy object]:
+        OptimizeResult instance with the required information.
     """
     if models is None:
         models = []

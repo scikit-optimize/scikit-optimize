@@ -20,7 +20,7 @@ from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
-from .utils import pack_optimize_result
+from .utils import set_results
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
@@ -77,7 +77,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
                 print("Function value obtained: %0.4f" % curr_y)
                 print("Current minimum: %0.4f" % np.min(y0))
             if callback is not None:
-                callback(pack_optimize_result(x0, y0, space, rng, specs))
+                callback(set_results(x0, y0, space, rng, specs))
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -115,7 +115,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             print("Function value obtained: %0.4f" % curr_y)
             print("Current minimum: %0.4f" % np.min(yi))
         if callback is not None:
-            callback(pack_optimize_result(
+            callback(set_results(
                 x0 + X_rand[:i + 1], yi, space, rng, specs))
 
     if np.ndim(yi) != 1:
@@ -161,9 +161,9 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             print("Current minimum: %0.4f" % np.min(yi))
 
         if callback is not None:
-            callback(pack_optimize_result(Xi, yi, space, rng, specs))
+            callback(set_results(Xi, yi, space, rng, specs))
 
-    return pack_optimize_result(Xi, yi, space, rng, specs, models)
+    return set_results(Xi, yi, space, rng, specs, models)
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
@@ -265,7 +265,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, optiona]
+    * `callback` [callable, optional]
         If provided, then `callback(res)` is called after call to func.
 
     Returns

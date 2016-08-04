@@ -18,7 +18,7 @@ from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
 from .space import Space
-from .utils import pack_optimize_result
+from .utils import set_results
 
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
@@ -241,7 +241,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 print("Current minimum: %0.4f" % np.min(y0))
 
             if callback is not None:
-                callback(pack_optimize_result(x0, y0, space, rng, specs))
+                callback(set_results(x0, y0, space, rng, specs))
 
     elif x0:
         if isinstance(y0, Iterable):
@@ -282,7 +282,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
             print("Current minimum: %0.4f" % np.min(yi))
 
         if callback is not None:
-            callback(pack_optimize_result(
+            callback(set_results(
                 x0 + X_rand[:i + 1], yi, space, rng, specs))
 
     if np.ndim(yi) != 1:
@@ -356,7 +356,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
             print("Current minimum: %0.4f" % np.min(yi))
 
         if callback is not None:
-            callback(pack_optimize_result(Xi, yi, space, rng, specs))
+            callback(set_results(Xi, yi, space, rng, specs))
 
     # Pack results
-    return pack_optimize_result(Xi, yi, space, rng, specs, models)
+    return set_results(Xi, yi, space, rng, specs, models)
