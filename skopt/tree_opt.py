@@ -220,6 +220,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
         - `specs` [dict]`: the call specifications.
+        - `rng` [RandomState instance]: State of the random state
+           at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
