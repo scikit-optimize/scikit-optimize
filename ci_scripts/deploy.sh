@@ -13,7 +13,7 @@ cd ./doc/skopt/notebooks
 OIFS="$IFS"
 IFS=$'\n'
 for nb in ${TRAVIS_BUILD_DIR}/examples/*ipynb; do
-    jupyter nbconvert --execute "$nb" --to markdown
+    jupyter nbconvert "$nb" --to markdown
 done
 cp ${TRAVIS_BUILD_DIR}/examples/*md .
 cp -r ${TRAVIS_BUILD_DIR}/examples/*_files .
