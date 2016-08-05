@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 
 from skopt.benchmarks import branin
 from skopt.benchmarks import bench4
@@ -86,18 +87,19 @@ def test_minimizer_api():
 
 
 def test_init_vals():
-    n_random_starts = 5
-    optimizers = [
-        dummy_minimize,
-        partial(gp_minimize, n_random_starts=n_random_starts),
-        partial(forest_minimize, n_random_starts=n_random_starts),
-        partial(gbrt_minimize, n_random_starts=n_random_starts)
-    ]
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = 10
-    for optimizer in optimizers:
-        yield (check_init_vals, optimizer, branin, space, x0, n_calls)
+
+    for n_random_starts in [0, 5]:
+        optimizers = [
+            dummy_minimize,
+            partial(gp_minimize, n_random_starts=n_random_starts),
+            partial(forest_minimize, n_random_starts=n_random_starts),
+            partial(gbrt_minimize, n_random_starts=n_random_starts)
+        ]
+        for optimizer in optimizers:
+            yield (check_init_vals, optimizer, branin, space, x0, n_calls)
 
     space = [("-2", "-1", "0", "1", "2")]
     x0 = [["0"], ["1"], ["2"]]
@@ -151,3 +153,40 @@ def check_init_vals(optimizer, func, space, x0, n_calls):
     # the number of input points and the number of evaluations differ
     assert_raises(ValueError, dummy_minimize, func,
                   space, x0=x0, y0=[1])
+
+
+def test_invalid_n_calls_arguments():
+    for minimizer in MINIMIZERS:
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` > 0",
+                             minimizer,
+                             branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=0,
+                             random_state=1)
+
+        assert_raise_message(ValueError,
+                             "set `n_random_starts` > 0, or provide `x0`",
+                             minimizer,
+                             branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_random_starts=0,
+                             random_state=1)
+
+        # n_calls >= n_random_starts
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` >= 10",
+                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_calls=1, n_random_starts=10, random_state=1)
+
+        # n_calls >= n_random_starts + len(x0)
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` >= 10",
+                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
+                             random_state=1, n_random_starts=7)
+
+        # n_calls >= n_random_starts when x0 and y0 are provided.
+        assert_raise_message(ValueError,
+                             "Expected `n_calls` >= 7",
+                             minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
+                             y0=[2.0, 3.0, 5.0],
+                             random_state=1, n_random_starts=7)

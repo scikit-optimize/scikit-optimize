@@ -201,11 +201,15 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
 
-    if n_total_init_calls <= 0:
-        # if x0 is not provided and n_random_starts is 0 then
-        # it will ask for n_random_starts to be > 0.
+    if n_calls <= 0:
+        raise ValueError("Expected `n_calls` > 0, got %d" % n_calls)
+
+    if n_random_starts < 0:
         raise ValueError(
-            "Expected `n_random_starts` > 0, got %d" % n_random_starts)
+            "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
+
+    if n_random_starts == 0 and not x0:
+        raise ValueError("Either set `n_random_starts` > 0, or provide `x0`")
 
     if n_calls < n_total_init_calls:
         raise ValueError(
