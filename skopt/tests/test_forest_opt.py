@@ -40,33 +40,40 @@ def test_forest_minimize_api():
                          base_estimator=DecisionTreeClassifier())
 
 
-def check_minimize(minimizer, func, y_opt, dimensions, margin, n_calls):
-    # The result depends on random sampling so run the test several
-    # times and pass if majority of tests converge. Any single instance
-    # converging might just be luck.
-    success = 0
-    N = 3
-
-    for n in range(1, N + 1):
+def check_minimize(minimizer, func, y_opt, dimensions, margin,
+                        n_calls, n_random_starts=10, x0=None):
+    for n in range(3):
         r = minimizer(
-            func, dimensions, n_calls=n_calls, random_state=n)
-        if r.fun <= y_opt + margin:
-            success += 1
-
-    assert_less(N * 0.5, success)
-
+            func, dimensions, n_calls=n_calls, random_state=n,
+            n_random_starts=n_random_starts, x0=x0)
+        assert_less(r.fun, y_opt + margin)
 
 def test_tree_based_minimize():
+    rng = np.random.RandomState(0)
     for name, minimizer in MINIMIZERS:
         yield (check_minimize, minimizer, bench1, 0.,
-               [(-2.0, 2.0)], 0.05, 25)
+               [(-2.0, 2.0)], 0.05, 25, 5)
+
+        # This benchmark contains 2 different functions
+        # when x < 0 and otherwise.
+        # Hence sample uniformly from [-6, 0] and
+        # [0, 6] and provide a warm-start.
+        X1 = (-6 + 6 * rng.rand(5, 1)).tolist()
+        X2 = (6 * rng.rand(5, 1)).tolist()
+        X0 = X1 + X2
         yield (check_minimize, minimizer, bench2, -5,
-               [(-6.0, 6.0)], 0.05, 125)
+               [(-6.0, 6.0)], 0.05, 100, 0, X0)
+
         yield (check_minimize, minimizer, bench3, -0.9,
                [(-2.0, 2.0)], 0.05, 25)
         yield (check_minimize, minimizer, bench4, 0.0,
                [("-2", "-1", "0", "1", "2")], 0.05, 10)
-        yield (check_minimize, minimizer, branin, 0.39,
-               [(-5.0, 10.0), (0.0, 15.0)], 0.1, 125)
         yield (check_minimize, minimizer, hart6, -3.32,
-               np.tile((0.0, 1.0), (6, 1)), 1.0, 30)
+               np.tile((0.0, 1.0), (6, 1)), 1.0, 50)
+
+        if name == "et":
+            yield (check_minimize, minimizer, branin, 0.39,
+                   [(-5.0, 10.0), (0.0, 15.0)], 0.15, 125)
+        else:
+            yield (check_minimize, minimizer, branin, 0.39,
+                   [(-5.0, 10.0), (0.0, 15.0)], 0.15, 200)
