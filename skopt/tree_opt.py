@@ -28,10 +28,6 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     space = Space(dimensions)
 
     # Initialize with provided points (x0 and y0) and/or random points
-    if n_calls <= 0:
-        raise ValueError(
-            "Expected `n_calls` > 0, got %d" % n_random_starts)
-
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], list):
@@ -43,11 +39,15 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
 
-    if n_total_init_calls <= 0:
-        # if x0 is not provided and n_random_starts is 0 then
-        # it will ask for n_random_starts to be > 0.
+    if n_calls <= 0:
+        raise ValueError("Expected `n_calls` > 0, got %d" % n_calls)
+
+    if n_random_starts < 0:
         raise ValueError(
-            "Expected `n_random_starts` > 0, got %d" % n_random_starts)
+            "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
+
+    if n_random_starts == 0 and not x0:
+        raise ValueError("Either set `n_random_starts` > 0, or provide `x0`")
 
     if n_calls < n_total_init_calls:
         raise ValueError(
@@ -112,8 +112,8 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
-                  n_points=20, n_random_starts=10, x0=None, y0=None,
-                  random_state=None, acq="EI", xi=0.01, kappa=1.96):
+                  n_points=1000, n_random_starts=10, x0=None, y0=None,
+                  n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -160,7 +160,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
 
-    * `n_points` [int, default=20]:
+    * `n_points` [int, default=1000]:
         Number of points to sample when minimizing the acquisition function.
 
     * `x0` [list, list of lists or `None`]:
@@ -180,6 +180,10 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
           function at `x0`.
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
+
+    * `n_jobs` [int, default=1]:
+        The number of jobs to run in parallel for `fit`.
+        If -1, then the number of jobs is set to the number of cores.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -216,6 +220,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
         - `specs` [dict]`: the call specifications.
+        - `rng` [RandomState instance]: State of the random state
+           at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
@@ -229,8 +235,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
     # Default estimator
     if base_estimator is None:
-        gbrt = GradientBoostingRegressor(n_estimators=20, loss='quantile')
+        gbrt = GradientBoostingRegressor(n_estimators=30, loss='quantile')
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
+                                                           n_jobs=n_jobs,
                                                            random_state=rng)
 
     res = _tree_minimize(func, dimensions, base_estimator,
@@ -244,8 +251,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
-                    n_points=100, n_random_starts=10, x0=None, y0=None,
-                    random_state=None, acq="EI", xi=0.01, kappa=1.96):
+                    n_points=1000, n_random_starts=10, x0=None, y0=None,
+                    n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96):
     """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -322,6 +329,10 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
+    * `n_jobs` [int, default=1]:
+        The number of jobs to run in parallel for `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
+
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
@@ -371,17 +382,20 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     # Default estimator
     if isinstance(base_estimator, str):
         if base_estimator not in ("rf", "et", "dt"):
-            raise ValueError("Valid values for the base_estimator parameter"
-                             " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
+            raise ValueError(
+                "Valid values for the base_estimator parameter"
+                " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
 
         if base_estimator == "rf":
             base_estimator = RandomForestRegressor(n_estimators=100,
                                                    min_samples_leaf=3,
+                                                   n_jobs=n_jobs,
                                                    random_state=rng)
 
         elif base_estimator == "et":
             base_estimator = ExtraTreesRegressor(n_estimators=100,
                                                  min_samples_leaf=3,
+                                                 n_jobs=n_jobs,
                                                  random_state=rng)
 
         elif base_estimator == "dt":

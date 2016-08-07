@@ -8,6 +8,10 @@ The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 [![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
 
+![Approximated objective](https://github.com/scikit-optimize/scikit-optimize/blob/master/media/bo-objective.png)
+
+_Approximated objective function after 50 iterations of `gp_minimize`. Plot made using `skopt.plots.plot_objective`._
+
 ## Documentation
 
 - [Static documentation](https://scikit-optimize.github.io/)

@@ -29,9 +29,9 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
 
 
-def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
-                kappa=1.96, search="lbfgs", n_calls=100, n_points=500,
-                n_random_starts=10, n_restarts_optimizer=5,
+def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
+                acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
+                n_points=500, n_random_starts=10, n_restarts_optimizer=5,
                 x0=None, y0=None, random_state=None):
     """Bayesian optimization using Gaussian Processes.
 
@@ -78,6 +78,11 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
 
+    * `alpha` [float, default=1e-10]:
+        Value added to the diagonal of the kernel matrix during fitting.
+        Larger values correspond to an increased noise level in the
+        observations and reduce potential numerical issues during fitting.
+
     * `acq` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
 
@@ -95,9 +100,13 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `search` [string, `"sampling"` or `"lbfgs"`, default="lbfgs"]:
+    * `search` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Searching for the next possible candidate to update the Gaussian prior
         with.
+
+        If search is set to `"auto"`, then it is set to `"lbfgs"`` if
+        all the search dimensions are Real(continuous). It defaults to
+        `"sampling"` for all other cases.
 
         If search is set to `"sampling"`, `n_points` are sampled randomly
         and the Gaussian Process prior is updated with the point that gives
@@ -157,11 +166,13 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
         - `specs` [dict]`: the call specifications.
+        - `rng` [RandomState instance]: State of the random state
+           at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call args 
+    # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
 
@@ -176,7 +187,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                     Matern(length_scale=np.ones(space.transformed_n_dims),
                            length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
                            nu=2.5)),
-            normalize_y=True, alpha=10e-6, random_state=random_state)
+            normalize_y=True, alpha=alpha, random_state=random_state)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
@@ -190,11 +201,15 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
 
-    if n_total_init_calls <= 0:
-        # if x0 is not provided and n_random_starts is 0 then
-        # it will ask for n_random_starts to be > 0.
+    if n_calls <= 0:
+        raise ValueError("Expected `n_calls` > 0, got %d" % n_calls)
+
+    if n_random_starts < 0:
         raise ValueError(
-            "Expected `n_random_starts` > 0, got %d" % n_random_starts)
+            "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
+
+    if n_random_starts == 0 and not x0:
+        raise ValueError("Either set `n_random_starts` > 0, or provide `x0`")
 
     if n_calls < n_total_init_calls:
         raise ValueError(
@@ -222,6 +237,16 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
     yi = y0 + [func(x) for x in Xi[len(x0):]]
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
+
+    if search == "auto":
+        if space.is_real:
+            search = "lbfgs"
+        else:
+            search = "sampling"
+    elif search not in ["lbfgs", "sampling"]:
+        raise ValueError(
+            "Expected search to be 'lbfgs', 'sampling' or 'auto', "
+            "got %s" % search)
 
     # Bayesian optimization loop
     models = []
@@ -256,7 +281,7 @@ def gp_minimize(func, dimensions, base_estimator=None, acq="EI", xi=0.01,
                         _acquisition, x0,
                         args=(gp, np.min(yi), acq, xi, kappa),
                         bounds=space.transformed_bounds,
-                        approx_grad=True, maxiter=10)
+                        approx_grad=True, maxiter=20)
 
                 if a < best:
                     next_x, best = x, a

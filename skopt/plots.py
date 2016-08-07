@@ -4,6 +4,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
+from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator
 
 from scipy.interpolate import griddata
@@ -118,6 +119,15 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                     ax_.set_yticklabels([])
                 else:
                     ax_.set_ylabel("$X_{%i}$" % i)
+
+                # for all rows except ...
+                if i < space.n_dims - 1:
+                    ax_.set_xticklabels([])
+                # ... the bottom row
+                else:
+                    [l.set_rotation(45) for l in ax_.get_xticklabels()]
+                    ax_.set_xlabel("$X_{%i}$" % j)
+
             else:
                 ax_.set_ylim(*diagonal_ylim)
                 ax_.yaxis.tick_right()
@@ -125,22 +135,17 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                 ax_.yaxis.set_ticks_position('both')
                 ax_.set_ylabel(ylabel)
 
+                ax_.xaxis.tick_top()
+                ax_.set_xlabel("$X_{%i}$" % j)
+
             ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
             ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
-
-            # for all rows except ...
-            if i < space.n_dims - 1:
-                ax_.set_xticklabels([])
-            # ... the bottom row
-            else:
-                [l.set_rotation(45) for l in ax_.get_xticklabels()]
-                ax_.set_xlabel("$X_{%i}$" % j)
 
     return ax
 
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
-                       n_samples=100, n_points=40):
+                       n_samples=250, n_points=40):
     """Calculate the partial dependence for dimensions `i` and `j` with
     respect to the objective value, as approximated by `model`.
 
@@ -191,7 +196,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         The points at which the partial dependence was evaluated.
     * `yi`: [np.array, shape=n_points]:
         The points at which the partial dependence was evaluated.
-    * `zi`: [list of lists, n_points by n_points]:
+    * `zi`: [np.array, shape=(n_points, n_points)]:
         The value of the model at each point `(xi, yi)`.
     """
     if sample_points is None:
@@ -226,14 +231,15 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
             row = []
             for y_ in yi_transformed:
                 rvs_ = np.array(sample_points)
-                rvs_[:, (i, j)] = (x_, y_)
+                rvs_[:, (j, i)] = (x_, y_)
                 row.append(np.mean(model.predict(rvs_)))
             zi.append(row)
 
-        return xi, yi, zi
+        return xi, yi, np.array(zi).T
 
 
-def plot_objective(result, levels=10, n_points=40, n_samples=100):
+def plot_objective(result, levels=10, n_points=40, n_samples=250,
+                   zscale='linear'):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -262,9 +268,13 @@ def plot_objective(result, levels=10, n_points=40, n_samples=100):
         Number of points at which to evaluate the partial dependence
         along each dimension.
 
-    * `n_samples` [int, default=100]
+    * `n_samples` [int, default=250]
         Number of random samples to use for averaging the model function
         at each of the `n_points`.
+
+    * `zscale` [str, default='linear']
+        Scale to use for the z axis of the contour plots. Either 'linear'
+        or 'log'.
 
     Returns
     -------
@@ -273,8 +283,15 @@ def plot_objective(result, levels=10, n_points=40, n_samples=100):
     """
     space = result.space
     samples = np.asarray(result.x_iters)
-    order = range(samples.shape[0])
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
+
+    if zscale == 'log':
+        locator = LogLocator()
+    elif zscale == 'linear':
+        locator = None
+    else:
+        raise ValueError("Valid values for zscale are 'linear' and 'log',"
+                         " not '%s'." % zscale)
 
     fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
 
@@ -284,7 +301,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=100):
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
-                xi, yi = partial_dependence(space, result.models[-1], i, j=None,
+                xi, yi = partial_dependence(space, result.models[-1], i,
+                                            j=None,
                                             sample_points=rvs_transformed,
                                             n_points=n_points)
 
@@ -297,8 +315,10 @@ def plot_objective(result, levels=10, n_points=40, n_samples=100):
                                                 i, j,
                                                 rvs_transformed, n_points)
 
-                ax[i, j].contour(xi, yi, zi, levels, linewidths=0.5, colors='k')
-                ax[i, j].contourf(xi, yi, zi, levels, cmap='viridis_r')
+                cs = ax[i, j].contour(xi, yi, zi, levels, locator=locator,
+                                      linewidths=0.5, colors='k')
+                ax[i, j].contourf(xi, yi, zi, levels,
+                                  locator=locator, cmap='viridis_r')
                 ax[i, j].scatter(samples[:, j], samples[:, i], c='k', s=10, lw=0.)
                 ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
 

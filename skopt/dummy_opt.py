@@ -71,7 +71,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
            iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimisation space.
-        - `specs` [dict]`: the call specifications.
+        - `specs` [dict]: the call specifications.
+        - `rng` [RandomState instance]: State of the random state
+           at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
