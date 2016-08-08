@@ -21,6 +21,7 @@ from .learning import RandomForestRegressor
 from .space import Space
 from .utils import check_callback
 from .utils import create_result
+from .utils import VerboseCallback
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
@@ -31,6 +32,8 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     rng = check_random_state(random_state)
     space = Space(dimensions)
     callbacks = check_callback(callback)
+    if verbose:
+        callbacks.append(VerboseCallback())
 
     # Initialize with provided points (x0 and y0) and/or random points
     if n_calls <= 0:
@@ -63,7 +66,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         for i, x in enumerate(x0):
             y0.append(func(x))
 
-            if callbacks is not None:
+            if callbacks:
                 curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
                 for c in callbacks:
                     c(curr_res)
@@ -90,7 +93,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     for i, x in enumerate(X_rand):
         yi.append(func(x))
 
-        if callbacks is not None:
+        if callbacks:
             curr_res = create_result(
                 x0 + X_rand[:i + 1], yi, space, rng, specs)
             for c in callbacks:
@@ -125,7 +128,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         yi.append(func(next_x))
         Xi.append(next_x)
 
-        if callbacks is not None:
+        if callbacks:
             curr_res = create_result(Xi, yi, space, rng, specs)
             for c in callbacks:
                 c(curr_res)

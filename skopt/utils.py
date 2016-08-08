@@ -49,40 +49,48 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     return res
 
 
-def check_callback(callback, verbose=False):
+def check_callback(callback):
     """
     Check if callback is a callable or a list of callables.
     """
-    if verbose:
-        callbacks = []
-    else:
-        callbacks = [VerboseCallback()]
     if callback is not None:
         if isinstance(callback, Callable):
-            callbacks.append(callback)
+            return [callback]
         elif (isinstance(callback, list) and
               all([isinstance(c, Callable) for c in callback])):
-            callbacks.extend(callback)
+            return callback
         else:
             raise ValueError("callback should be either a callable or "
                              "a list of callables.")
-    return callbacks
+    else:
+        return []
 
 
 class VerboseCallback(object):
-    def __init__(self):
+
+    def _get_x_info(self, func_call_no):
+        if func_call_no <= self.n_init:
+            return "provided point"
+        elif self.n_init < func_call_no <= (self.n_random + self.n_init):
+            return "random point"
+        else:
+            return "surrogate model driven point"
+
+    def __init__(self, n_init=0, n_random=0, n_total=0):
+        self.n_init = n_init
+        self.n_random = n_random
+        self.n_total = n_total
         self._func_call_no = 1
-        self.start_msg = "Function evaluation No: %d started"
-        self.end_msg = "Function evaluation No: %d ended"
-        self.start_time = time()
-        self.prev_results = None
-        self.curr_results = None
-        print(self.start_msg % self._func_call_no)
+        self._start_msg = "Function evaluation No: %d started at %s"
+        self._end_msg = "Function evaluation No: %d ended at %s"
+        self._start_time = time()
+        print(self._start_msg % (
+            self._func_call_no, self._get_x_info(self._func_call_no)))
 
     def __call__(self, res):
-        self.curr_results = res
-        time_taken = time() - self.start_time
-        print(self.end_msg % self._func_call_no)
+        time_taken = time() - self._start_time
+        print(self._end_msg % (
+            self._func_call_no, self._get_x_info(self._func_call_no)))
 
         curr_y = res.func_vals[-1]
         curr_min = res.fun
@@ -90,5 +98,6 @@ class VerboseCallback(object):
         print("Function value obtained: %0.4f" % curr_y)
         print("Current minimum: %0.4f" % curr_min)
         self._func_call_no += 1
-        print(self.start_msg % self._func_call_no)
-        self.prev_results = res
+        if self._func_call_no <= self.n_total:
+            print(self._start_msg % (
+                self._func_call_no, self._get_x_info(self._func_call_no)))

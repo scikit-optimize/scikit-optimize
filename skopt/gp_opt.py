@@ -20,6 +20,7 @@ from .acquisition import _gaussian_acquisition
 from .space import Space
 from .utils import check_callback
 from .utils import create_result
+from .utils import VerboseCallback
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
@@ -184,7 +185,6 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
-    callbacks = check_callback(callback, verbose=False)
 
     # Check params
     rng = check_random_state(random_state)
@@ -221,13 +221,21 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
+    callbacks = check_callback(callback)
+    if verbose:
+        callbacks.append(VerboseCallback(
+            n_init=n_init_func_calls, n_random=n_random_starts,
+            n_total=n_calls))
+
     if y0 is None and x0:
         y0 = []
         for i, x in enumerate(x0):
             y0.append(func(x))
             curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
-            for c in callbacks:
-                c(curr_res)
+
+            if callbacks:
+                for c in callbacks:
+                    c(curr_res)
 
     elif x0:
         if isinstance(y0, Iterable):
@@ -256,8 +264,9 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         if callbacks is not None:
             curr_res = create_result(
                 x0 + X_rand[:i + 1], yi, space, rng, specs)
-            for c in callbacks:
-                c(curr_res)
+            if callbacks:
+                for c in callbacks:
+                    c(curr_res)
 
     if np.ndim(y0) != 1:
         raise ValueError("`func` should return a scalar")
@@ -317,7 +326,8 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Xi.append(next_x)
         curr_res = create_result(Xi, yi, space, rng, specs)
         for c in callbacks:
-            c(curr_res)
+            if callbacks:
+                c(curr_res)
 
     # Pack results
     return create_result(Xi, yi, space, rng, specs, models)

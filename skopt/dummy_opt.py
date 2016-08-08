@@ -12,6 +12,7 @@ from sklearn.utils import check_random_state
 from .space import Space
 from .utils import check_callback
 from .utils import create_result
+from .utils import VerboseCallback
 
 def dummy_minimize(func, dimensions, n_calls=100,
                    x0=None, y0=None, random_state=None, verbose=False,
@@ -95,6 +96,8 @@ def dummy_minimize(func, dimensions, n_calls=100,
     space = Space(dimensions)
 
     callbacks = check_callback(callback)
+    if verbose:
+        callbacks.append(VerboseCallback())
 
     if x0 is None:
         x0 = []
@@ -143,7 +146,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
             if not np.isscalar(y[-1]):
                 raise ValueError("`func` should return a scalar")
 
-        if callbacks is not None:
+        if callbacks:
             curr_res = create_result(X[: i + 1], y, space, rng, specs)
             for c in callbacks:
                 c(curr_res)
