@@ -20,8 +20,6 @@ from .acquisition import _gaussian_acquisition
 from .space import Space
 from .utils import check_callback
 from .utils import create_result
-from .utils import verbose_func
-
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
@@ -186,7 +184,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
-    callbacks = check_callback(callback)
+    callbacks = check_callback(callback, verbose=False)
 
     # Check params
     rng = check_random_state(random_state)
@@ -223,19 +221,13 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
-    func_call_no = 0
     if y0 is None and x0:
         y0 = []
         for i, x in enumerate(x0):
-            y0.append(verbose_func(
-                func, x, verbose=verbose, prev_ys=y0, x_info="provided",
-                func_call_no=func_call_no))
-            func_call_no += 1
-
-            if callbacks is not None:
-                curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
-                for c in callbacks:
-                    c(curr_res)
+            y0.append(func(x))
+            curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
+            for c in callbacks:
+                c(curr_res)
 
     elif x0:
         if isinstance(y0, Iterable):
@@ -259,15 +251,12 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     yi = y0
 
     for i, x in enumerate(X_rand):
-        yi.append(verbose_func(
-            func, x, verbose=verbose, prev_ys=yi, x_info="random",
-            func_call_no=func_call_no))
-        func_call_no += 1
+        yi.append(func(x))
 
         if callbacks is not None:
+            curr_res = create_result(
+                x0 + X_rand[:i + 1], yi, space, rng, specs)
             for c in callbacks:
-                curr_res = create_result(
-                    x0 + X_rand[:i + 1], yi, space, rng, specs)
                 c(curr_res)
 
     if np.ndim(y0) != 1:
@@ -324,16 +313,11 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                     next_x, best = x, a
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-        yi.append(verbose_func(
-            func, next_x, verbose=verbose, prev_ys=yi,
-            func_call_no=func_call_no))
-        func_call_no += 1
+        yi.append(func(next_x))
         Xi.append(next_x)
-
-        if callbacks is not None:
-            curr_res = create_result(Xi, yi, space, rng, specs)
-            for c in callbacks:
-                c(curr_res)
+        curr_res = create_result(Xi, yi, space, rng, specs)
+        for c in callbacks:
+            c(curr_res)
 
     # Pack results
     return create_result(Xi, yi, space, rng, specs, models)

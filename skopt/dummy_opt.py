@@ -12,7 +12,6 @@ from sklearn.utils import check_random_state
 from .space import Space
 from .utils import check_callback
 from .utils import create_result
-from .utils import verbose_func
 
 def dummy_minimize(func, dimensions, n_calls=100,
                    x0=None, y0=None, random_state=None, verbose=False,
@@ -137,9 +136,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
     first = True
 
     for i in range(len(y0), len(X)):
-        y.append(verbose_func(
-            func, X[i], verbose=verbose, prev_ys=y, x_info="random",
-            func_call_no=i+1))
+        y.append(func(X[i]))
 
         if first:
             first = False

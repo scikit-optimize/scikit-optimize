@@ -21,7 +21,6 @@ from .learning import RandomForestRegressor
 from .space import Space
 from .utils import check_callback
 from .utils import create_result
-from .utils import verbose_func
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
@@ -59,14 +58,10 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
-    func_call_no = 1
     if y0 is None and x0:
         y0 = []
         for i, x in enumerate(x0):
-            y0.append(verbose_func(
-                func, x, verbose=verbose, prev_ys=y0, x_info="provided",
-                func_call_no=func_call_no))
-            func_call_no += 1
+            y0.append(func(x))
 
             if callbacks is not None:
                 curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
@@ -93,10 +88,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     yi = y0
 
     for i, x in enumerate(X_rand):
-        yi.append(verbose_func(
-            func, x, verbose=verbose, prev_ys=yi, x_info="random",
-            func_call_no=func_call_no))
-        func_call_no += 1
+        yi.append(func(x))
 
         if callbacks is not None:
             curr_res = create_result(
@@ -130,11 +122,7 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         next_x = X[np.argmin(values)]
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
 
-        yi.append(verbose_func(
-            func, next_x, verbose=verbose, prev_ys=yi,
-            func_call_no=func_call_no))
-        func_call_no += 1
-
+        yi.append(func(next_x))
         Xi.append(next_x)
 
         if callbacks is not None:
