@@ -86,7 +86,7 @@ def test_minimizer_api():
                                 n_calls=7, random_state=1,
                                 verbose=verbose, callback=call)
 
-        assert(not result.models)
+        assert(result.models is None)
         yield (check_minimizer_api, result)
         yield (check_minimizer_bounds, result)
         assert_raise_message(ValueError,

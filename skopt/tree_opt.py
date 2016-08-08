@@ -14,14 +14,14 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
+from .callbacks import check_callback
+from .callbacks import VerboseCallback
 from .learning import DecisionTreeRegressor
 from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
-from .utils import check_callback
 from .utils import create_result
-from .utils import VerboseCallback
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
@@ -31,9 +31,6 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
 
     rng = check_random_state(random_state)
     space = Space(dimensions)
-    callbacks = check_callback(callback)
-    if verbose:
-        callbacks.append(VerboseCallback())
 
     # Initialize with provided points (x0 and y0) and/or random points
     if n_calls <= 0:
@@ -60,6 +57,12 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     if n_calls < n_total_init_calls:
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
+
+    callbacks = check_callback(callback)
+    if verbose:
+        callbacks.append(VerboseCallback(
+            n_init=n_init_func_calls, n_random=n_random_starts,
+            n_total=n_calls))
 
     if y0 is None and x0:
         y0 = []
@@ -106,9 +109,6 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     models = []
     n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
-        if verbose:
-            print("Fitting model no: %d" % (i + 1))
-
         rgr = clone(base_estimator)
         rgr.fit(space.transform(Xi), yi)
         models.append(rgr)
@@ -236,7 +236,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         for long optimization runs.
 
     * `callback` [callable, list of callables, optional]
-        If callable then `callback(res)` is called after each call to func.
+        If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
     Returns

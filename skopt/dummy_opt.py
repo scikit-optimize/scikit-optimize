@@ -9,10 +9,11 @@ from collections import Iterable
 from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
+from .callbacks import check_callback
+from .callbacks import VerboseCallback
 from .space import Space
-from .utils import check_callback
 from .utils import create_result
-from .utils import VerboseCallback
+
 
 def dummy_minimize(func, dimensions, n_calls=100,
                    x0=None, y0=None, random_state=None, verbose=False,
@@ -67,7 +68,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         for long optimization runs.
 
     * `callback` [callable, list of callables, optional]
-        If callable then `callback(res)` is called after each call to func.
+        If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
     Returns
@@ -95,10 +96,6 @@ def dummy_minimize(func, dimensions, n_calls=100,
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
-    callbacks = check_callback(callback)
-    if verbose:
-        callbacks.append(VerboseCallback())
-
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], list):
@@ -107,6 +104,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, got %s" % type(x0))
 
+    n_init_func_calls = 0
     if len(x0) > 0 and y0 is not None:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -124,12 +122,18 @@ def dummy_minimize(func, dimensions, n_calls=100,
     elif len(x0) > 0 and y0 is None:
         y0 = []
         n_calls -= len(x0)
+        n_init_func_calls = len(x0)
 
     elif len(x0) == 0 and y0 is not None:
         raise ValueError("`x0`cannot be `None` when `y0` is provided")
 
     else:  # len(x0) == 0 and y0 is None
         y0 = []
+
+    callbacks = check_callback(callback)
+    if verbose:
+        callbacks.append(VerboseCallback(
+            n_init=n_init_func_calls, n_total=n_calls))
 
     X = x0
     y = y0
@@ -139,13 +143,14 @@ def dummy_minimize(func, dimensions, n_calls=100,
     first = True
 
     for i in range(len(y0), len(X)):
-        y.append(func(X[i]))
+        y_i = func(X[i])
 
         if first:
             first = False
-            if not np.isscalar(y[-1]):
+            if not np.isscalar(y_i):
                 raise ValueError("`func` should return a scalar")
 
+        y.append(y_i)
         if callbacks:
             curr_res = create_result(X[: i + 1], y, space, rng, specs)
             for c in callbacks:

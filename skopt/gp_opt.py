@@ -17,10 +17,11 @@ from sklearn.gaussian_process.kernels import Matern, ConstantKernel
 from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
+from .callbacks import check_callback
+from .callbacks import VerboseCallback
 from .space import Space
-from .utils import check_callback
 from .utils import create_result
-from .utils import VerboseCallback
+
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
@@ -161,7 +162,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         for long optimization runs.
 
     * `callback` [callable, list of callables, optional]
-        If callable then `callback(res)` is called after each call to func.
+        If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
     Returns
@@ -268,7 +269,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 for c in callbacks:
                     c(curr_res)
 
-    if np.ndim(y0) != 1:
+    if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
 
     if search == "auto":
@@ -285,8 +286,6 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     models = []
     n_model_iter = n_calls - n_total_init_calls
     for i in range(n_model_iter):
-        if verbose:
-            print("Fitting GaussianProcessRegressor no: %d" % (i + 1))
         gp = clone(base_estimator)
 
         with warnings.catch_warnings():
