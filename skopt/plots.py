@@ -136,6 +136,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                 ax_.set_ylabel(ylabel)
 
                 ax_.xaxis.tick_top()
+                ax_.xaxis.set_label_position('top')
                 ax_.set_xlabel("$X_{%i}$" % j)
 
             ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
@@ -293,7 +294,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
 
-    fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
+    fig, ax = plt.subplots(space.n_dims, space.n_dims,
+                           figsize=(2 * space.n_dims, 2 * space.n_dims))
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
@@ -355,7 +357,8 @@ def plot_evaluations(result, bins=20):
     space = result.space
     samples = np.asarray(result.x_iters)
     order = range(samples.shape[0])
-    fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(8, 8))
+    fig, ax = plt.subplots(space.n_dims, space.n_dims,
+                           figsize=(2 * space.n_dims, 2 * space.n_dims))
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
