@@ -29,8 +29,8 @@ from . import space
 
 from .gp_opt import gp_minimize
 from .dummy_opt import dummy_minimize
-from .tree_opt import forest_minimize
-from .tree_opt import gbrt_minimize
+from .forest_opt import forest_minimize
+from .forest_opt import gbrt_minimize
 
 
 __version__ = "0.0"

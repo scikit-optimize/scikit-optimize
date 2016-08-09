@@ -6,7 +6,6 @@ import numbers
 import numpy as np
 
 from collections import Iterable
-from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
 from sklearn.base import is_regressor
@@ -16,7 +15,6 @@ from sklearn.utils import check_random_state
 from .acquisition import _gaussian_acquisition
 from .callbacks import check_callback
 from .callbacks import VerboseCallback
-from .learning import DecisionTreeRegressor
 from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
@@ -325,7 +323,6 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
 
         - `"rf"` for random forest regressor
         - `"et"` for extra trees regressor
-        - `"dt"` for single decision tree regressor
         - instance of regressor with support for `return_std` in its predict
           method
 
@@ -421,10 +418,10 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
 
     # Default estimator
     if isinstance(base_estimator, str):
-        if base_estimator not in ("rf", "et", "dt"):
+        if base_estimator not in ("rf", "et"):
             raise ValueError(
                 "Valid values for the base_estimator parameter"
-                " are: 'rf', 'et' or 'dt', not '%s'" % base_estimator)
+                " are: 'rf' or 'et', not '%s'" % base_estimator)
 
         if base_estimator == "rf":
             base_estimator = RandomForestRegressor(n_estimators=100,
@@ -437,10 +434,6 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                                                  min_samples_leaf=3,
                                                  n_jobs=n_jobs,
                                                  random_state=rng)
-
-        elif base_estimator == "dt":
-            base_estimator = DecisionTreeRegressor(min_samples_leaf=3,
-                                                   random_state=rng)
 
     else:
         if not is_regressor(base_estimator):

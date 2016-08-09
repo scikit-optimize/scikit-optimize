@@ -6,20 +6,20 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raise_message
 
+from skopt import gbrt_minimize
+from skopt import forest_minimize
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import bench4
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
-from skopt.tree_opt import gbrt_minimize
-from skopt.tree_opt import forest_minimize
 
 
-MINIMIZERS = [("dt", partial(forest_minimize, base_estimator='dt')),
-              ("et", partial(forest_minimize, base_estimator='et')),
+MINIMIZERS = [("et", partial(forest_minimize, base_estimator='et')),
               ("rf", partial(forest_minimize, base_estimator='rf')),
               ("gbrt", gbrt_minimize)]
+
 
 def test_forest_minimize_api():
     # invalid string value
@@ -66,14 +66,7 @@ def test_tree_based_minimize():
                [(-2.0, 2.0)], 0.05, 25)
         yield (check_minimize, minimizer, bench4, 0.0,
                [("-2", "-1", "0", "1", "2")], 0.05, 10)
-
-        if name == "dt":
-            yield (check_minimize, minimizer, branin, 0.39,
-                   [(-5.0, 10.0), (0.0, 15.0)], 0.1, 200)
-            yield (check_minimize, minimizer, hart6, -3.32,
-                   np.tile((0.0, 1.0), (6, 1)), 1.0, 100)
-        else:
-            yield (check_minimize, minimizer, branin, 0.39,
-                   [(-5.0, 10.0), (0.0, 15.0)], 0.1, 125)
-            yield (check_minimize, minimizer, hart6, -3.32,
-                   np.tile((0.0, 1.0), (6, 1)), 1.0, 30)
+        yield (check_minimize, minimizer, branin, 0.39,
+               [(-5.0, 10.0), (0.0, 15.0)], 0.1, 125)
+        yield (check_minimize, minimizer, hart6, -3.32,
+               np.tile((0.0, 1.0), (6, 1)), 1.0, 30)

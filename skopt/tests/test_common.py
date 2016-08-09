@@ -10,15 +10,14 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
 
+from skopt import dummy_minimize
+from skopt import gp_minimize
+from skopt import forest_minimize
+from skopt import gbrt_minimize
 from skopt.benchmarks import branin
 from skopt.benchmarks import bench4
-from skopt.dummy_opt import dummy_minimize
-from skopt.gp_opt import gp_minimize
 from skopt.space import Space
-from skopt.tree_opt import forest_minimize
-from skopt.tree_opt import gbrt_minimize
 
 
 # dummy_minimize does not support same parameters so
@@ -26,7 +25,8 @@ from skopt.tree_opt import gbrt_minimize
 MINIMIZERS = [gp_minimize]
 ACQUISITION = ["LCB", "PI", "EI"]
 
-for est, acq in product(["dt", "et", "rf"], ACQUISITION):
+
+for est, acq in product(["et", "rf"], ACQUISITION):
     MINIMIZERS.append(
         partial(forest_minimize, base_estimator=est, acq=acq))
 for acq in ACQUISITION:
