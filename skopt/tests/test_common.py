@@ -26,7 +26,8 @@ from skopt.tree_opt import gbrt_minimize
 MINIMIZERS = [gp_minimize]
 ACQUISITION = ["LCB", "PI", "EI"]
 
-for est, acq in product(["dt", "et", "rf"], ACQUISITION):
+
+for est, acq in product(["et", "rf"], ACQUISITION):
     MINIMIZERS.append(
         partial(forest_minimize, base_estimator=est, acq=acq))
 for acq in ACQUISITION:

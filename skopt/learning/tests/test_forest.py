@@ -3,7 +3,6 @@ from functools import partial
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
-from skopt.learning import DecisionTreeRegressor
 from skopt.learning import RandomForestRegressor
 from skopt.learning import ExtraTreesRegressor
 
@@ -25,8 +24,7 @@ def check_variance_toy_data(Regressor):
 
 def test_variance_toy_data():
     """Test that `return_std` behaves expected on toy data."""
-    for Regressor in [DecisionTreeRegressor,
-                      partial(RandomForestRegressor, bootstrap=False),
+    for Regressor in [partial(RandomForestRegressor, bootstrap=False),
                       ExtraTreesRegressor]:
         yield check_variance_toy_data, Regressor
 
@@ -52,8 +50,7 @@ def test_variance_no_split():
     no information gain which enables us to verify the mean and
     standard deviation.
     """
-    for Regressor in [DecisionTreeRegressor,
-                      partial(RandomForestRegressor, bootstrap=False),
+    for Regressor in [partial(RandomForestRegressor, bootstrap=False),
                       ExtraTreesRegressor]:
         yield check_variance_no_split, Regressor
 
@@ -62,8 +59,8 @@ def test_min_variance():
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 1))
     y = np.ones(1000)
-    dt = DecisionTreeRegressor(min_variance=0.1)
-    dt.fit(X, y)
-    mean, std = dt.predict(X, return_std=True)
-    assert_array_equal(mean, y)
-    assert_array_equal(std, np.sqrt(0.1*np.ones(1000)))
+    rf = RandomForestRegressor(min_variance=0.1)
+    rf.fit(X, y)
+    mean, std = rf.predict(X, return_std=True)
+    assert_array_almost_equal(mean, y)
+    assert_array_almost_equal(std, np.sqrt(0.1*np.ones(1000)))
