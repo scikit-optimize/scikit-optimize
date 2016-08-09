@@ -1,12 +1,14 @@
 from functools import partial
+from itertools import product
 
 import numpy as np
-from itertools import product
+from scipy.optimize import OptimizeResult
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 
@@ -31,9 +33,12 @@ for acq in ACQUISITION:
     MINIMIZERS.append(partial(gbrt_minimize, acq=acq))
 
 
-def check_minimizer_api(result, n_models):
+def check_minimizer_api(result, n_models=None):
     assert(isinstance(result.space, Space))
-    assert_equal(len(result.models), n_models)
+
+    if n_models is not None:
+        assert_equal(len(result.models), n_models)
+
     assert_equal(len(result.x_iters), 7)
     assert_array_equal(result.func_vals.shape, (7,))
 
@@ -62,28 +67,49 @@ def check_minimizer_bounds(result):
     assert_array_less(np.tile([-5-eps, 0-eps], (7, 1)), result.x_iters)
 
 
+def check_result_callable(res):
+    """
+    Check that the result instance is set right at every callable call.
+    """
+    assert(isinstance(res, OptimizeResult))
+    assert_equal(len(res.x_iters), len(res.func_vals))
+    assert_equal(np.min(res.func_vals), res.fun)
+
+
 def test_minimizer_api():
     # dummy_minimize is special as it does not support all parameters
     # and does not fit any models
-    result = dummy_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                            n_calls=7, random_state=1)
+    call_single = lambda res: res.x
+    call_list = [call_single, check_result_callable]
 
-    yield (check_minimizer_api, result, 0)
-    yield (check_minimizer_bounds, result)
-    assert_raises(ValueError, dummy_minimize, lambda x: x, [[-5, 10]])
+    for verbose, call in product([True, False], [call_single, call_list]):
+        result = dummy_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                                n_calls=7, random_state=1,
+                                verbose=verbose, callback=call)
 
-    n_calls = 7
-    n_random_starts = 3
-    n_models = n_calls - n_random_starts
-    for minimizer in MINIMIZERS:
-        result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                           n_random_starts=n_random_starts,
-                           n_calls=n_calls,
-                           random_state=1)
-
-        yield (check_minimizer_api, result, n_models)
+        assert(result.models is None)
+        yield (check_minimizer_api, result)
         yield (check_minimizer_bounds, result)
-        assert_raises(ValueError, minimizer, lambda x: x, [[-5, 10]])
+        assert_raise_message(ValueError,
+                             "return a scalar",
+                             dummy_minimize, lambda x: x, [[-5, 10]])
+
+        n_calls = 7
+        n_random_starts = 3
+        n_models = n_calls - n_random_starts
+
+        for minimizer in MINIMIZERS:
+            result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                               n_random_starts=n_random_starts,
+                               n_calls=n_calls,
+                               random_state=1,
+                               verbose=verbose, callback=call)
+
+            yield (check_minimizer_api, result, n_models)
+            yield (check_minimizer_bounds, result)
+            assert_raise_message(ValueError,
+                                 "return a scalar",
+                                 minimizer, lambda x: x, [[-5, 10]])
 
 
 def test_init_vals():

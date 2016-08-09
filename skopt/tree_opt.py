@@ -14,16 +14,21 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
+from .callbacks import check_callback
+from .callbacks import VerboseCallback
 from .learning import DecisionTreeRegressor
 from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .space import Space
+from .utils import create_result
 
 
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
-                   n_points, n_random_starts, x0=None, y0=None,
-                   random_state=None, acq="EI", xi=0.01, kappa=1.96):
+                   n_points, n_random_starts, specs, x0=None, y0=None,
+                   random_state=None, acq="EI", xi=0.01, kappa=1.96,
+                   verbose=False, callback=None):
+
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
@@ -53,8 +58,21 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
+    callbacks = check_callback(callback)
+    if verbose:
+        callbacks.append(VerboseCallback(
+            n_init=n_init_func_calls, n_random=n_random_starts,
+            n_total=n_calls))
+
     if y0 is None and x0:
-        y0 = [func(x) for x in x0]
+        y0 = []
+        for i, x in enumerate(x0):
+            y0.append(func(x))
+
+            if callbacks:
+                curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
+                for c in callbacks:
+                    c(curr_res)
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -70,8 +88,20 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
     else:
         y0 = []
 
-    Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
-    yi = y0 + [func(x) for x in Xi[len(x0):]]
+    # Random function evaluations.
+    X_rand = space.rvs(n_samples=n_random_starts, random_state=rng)
+    Xi = x0 + X_rand
+    yi = y0
+
+    for i, x in enumerate(X_rand):
+        yi.append(func(x))
+
+        if callbacks:
+            curr_res = create_result(
+                x0 + X_rand[:i + 1], yi, space, rng, specs)
+            for c in callbacks:
+                c(curr_res)
+
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
 
@@ -94,26 +124,22 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             xi=xi, kappa=kappa)
         next_x = X[np.argmin(values)]
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-        next_y = func(next_x)
+
+        yi.append(func(next_x))
         Xi.append(next_x)
-        yi.append(next_y)
 
-    res = OptimizeResult()
-    best = np.argmin(yi)
-    res.x = Xi[best]
-    res.fun = yi[best]
-    res.func_vals = np.array(yi)
-    res.x_iters = Xi
-    res.models = models
-    res.space = space
-    res.random_state = rng
+        if callbacks:
+            curr_res = create_result(Xi, yi, space, rng, specs)
+            for c in callbacks:
+                c(curr_res)
 
-    return res
+    return create_result(Xi, yi, space, rng, specs, models)
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                   n_points=1000, n_random_starts=10, x0=None, y0=None,
-                  n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96):
+                  n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96,
+                  verbose=False, callback=None):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -130,7 +156,6 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
     provided then `n_random_starts` evaluations are first made then
     `n_calls - n_random_starts` subsequent evaluations are made
     guided by the surrogate model.
-
 
     Parameters
     ----------
@@ -206,6 +231,14 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
+    * `verbose` [boolean, default=False]:
+        Control the verbosity. It is advised to set the verbosity to True
+        for long optimization runs.
+
+    * `callback` [callable, list of callables, optional]
+        If callable then `callback(res)` is called after each call to `func`.
+        If list of callables, then each callable in the list is called.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -240,19 +273,19 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                                                            n_jobs=n_jobs,
                                                            random_state=rng)
 
-    res = _tree_minimize(func, dimensions, base_estimator,
-                         n_calls=n_calls,
-                         n_points=n_points, n_random_starts=n_random_starts,
-                         x0=x0, y0=y0, random_state=random_state, xi=xi,
-                         kappa=kappa, acq=acq)
-    res.specs = specs
+    return _tree_minimize(func, dimensions, base_estimator,
+                          n_calls=n_calls,
+                          n_points=n_points, n_random_starts=n_random_starts,
+                          x0=x0, y0=y0, random_state=random_state, xi=xi,
+                          kappa=kappa, acq=acq, specs=specs, callback=callback)
 
     return res
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                     n_points=1000, n_random_starts=10, x0=None, y0=None,
-                    n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96):
+                    n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96,
+                    verbose=False, callback=None):
     """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -354,6 +387,13 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
+    * `verbose` [boolean, default=False]:
+        Control the verbosity. It is advised to set the verbosity to True
+        for long optimization runs.
+
+    * `callback` [callable, optional]
+        If provided, then `callback(res)` is called after call to func.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -408,11 +448,9 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                              " be a string or a regressor instance."
                              " '%s' is neither." % base_estimator)
 
-    res = _tree_minimize(func, dimensions, base_estimator,
-                         n_calls=n_calls,
-                         n_points=n_points, n_random_starts=n_random_starts,
-                         x0=x0, y0=y0, random_state=random_state, acq=acq,
-                         xi=xi, kappa=kappa)
-    res.specs = specs
-
-    return res
+    return _tree_minimize(func, dimensions, base_estimator,
+                          n_calls=n_calls,
+                          n_points=n_points, n_random_starts=n_random_starts,
+                          specs=specs, x0=x0, y0=y0, random_state=random_state,
+                          acq=acq, xi=xi, kappa=kappa, verbose=verbose,
+                          callback=callback)

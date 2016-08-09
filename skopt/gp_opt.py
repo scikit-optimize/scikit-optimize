@@ -3,10 +3,11 @@
 import copy
 import inspect
 import numbers
-import numpy as np
 import warnings
-
 from collections import Iterable
+
+import numpy as np
+
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import OptimizeResult
 
@@ -16,7 +17,10 @@ from sklearn.gaussian_process.kernels import Matern, ConstantKernel
 from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
+from .callbacks import check_callback
+from .callbacks import VerboseCallback
 from .space import Space
+from .utils import create_result
 
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
@@ -32,7 +36,8 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
 def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
                 n_points=500, n_random_starts=10, n_restarts_optimizer=5,
-                x0=None, y0=None, random_state=None):
+                x0=None, y0=None, random_state=None, verbose=False,
+                callback=None):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -152,6 +157,14 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Set random state to something other than None for reproducible
         results.
 
+    * `verbose` [boolean, default=False]:
+        Control the verbosity. It is advised to set the verbosity to True
+        for long optimization runs.
+
+    * `callback` [callable, list of callables, optional]
+        If callable then `callback(res)` is called after each call to `func`.
+        If list of callables, then each callable in the list is called.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -215,8 +228,22 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
 
+    callbacks = check_callback(callback)
+    if verbose:
+        callbacks.append(VerboseCallback(
+            n_init=n_init_func_calls, n_random=n_random_starts,
+            n_total=n_calls))
+
     if y0 is None and x0:
-        y0 = [func(x) for x in x0]
+        y0 = []
+        for i, x in enumerate(x0):
+            y0.append(func(x))
+            curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
+
+            if callbacks:
+                for c in callbacks:
+                    c(curr_res)
+
     elif x0:
         if isinstance(y0, Iterable):
             y0 = list(y0)
@@ -233,8 +260,21 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     else:
         y0 = []
 
-    Xi = x0 + space.rvs(n_samples=n_random_starts, random_state=rng)
-    yi = y0 + [func(x) for x in Xi[len(x0):]]
+    # Random function evaluations.
+    X_rand = space.rvs(n_samples=n_random_starts, random_state=rng)
+    Xi = x0 + X_rand
+    yi = y0
+
+    for i, x in enumerate(X_rand):
+        yi.append(func(x))
+
+        if callbacks is not None:
+            curr_res = create_result(
+                x0 + X_rand[:i + 1], yi, space, rng, specs)
+            if callbacks:
+                for c in callbacks:
+                    c(curr_res)
+
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
 
@@ -287,20 +327,12 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                     next_x, best = x, a
 
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-        next_y = func(next_x)
+        yi.append(func(next_x))
         Xi.append(next_x)
-        yi.append(next_y)
+        curr_res = create_result(Xi, yi, space, rng, specs)
+        for c in callbacks:
+            if callbacks:
+                c(curr_res)
 
     # Pack results
-    res = OptimizeResult()
-    best = np.argmin(yi)
-    res.x = Xi[best]
-    res.fun = yi[best]
-    res.func_vals = np.array(yi)
-    res.x_iters = Xi
-    res.models = models
-    res.space = space
-    res.random_state = rng
-    res.specs = specs
-
-    return res
+    return create_result(Xi, yi, space, rng, specs, models)
