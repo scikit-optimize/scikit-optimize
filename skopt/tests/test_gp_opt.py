@@ -3,7 +3,7 @@ from itertools import product
 
 from sklearn.utils.testing import assert_less
 
-from skopt.gp_opt import gp_minimize
+from skopt import gp_minimize
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3

@@ -6,14 +6,14 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raise_message
 
+from skopt import gbrt_minimize
+from skopt import forest_minimize
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import bench4
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
-from skopt.tree_opt import gbrt_minimize
-from skopt.tree_opt import forest_minimize
 
 
 MINIMIZERS = [("et", partial(forest_minimize, base_estimator='et')),
