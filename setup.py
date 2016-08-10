@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='skopt',
-      version='0.0',
+      version='0.1',
       description='Sequential model-based optimization toolbox.',
       long_description=('Scikit-Optimize, or skopt, is a simple and efficient'
                         ' library for sequential model-based optimization,'
