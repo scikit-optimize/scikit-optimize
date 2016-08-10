@@ -7,6 +7,14 @@ The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 [![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
 
+## Install
+
+You can install the latest release of `skopt` with:
+
+```
+pip install skopt
+```
+
 ## Development
 
 The library is still experimental and under heavy development.

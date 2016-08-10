@@ -17,6 +17,24 @@ _Approximated objective function after 50 iterations of `gp_minimize`. Plot made
 - [Static documentation](https://scikit-optimize.github.io/)
 - Examples can be found under the [`examples/`](https://github.com/scikit-optimize/scikit-optimize/tree/master/examples) directory.
 
+
+## Install
+
+These instructions will setup the latest released version of `scikit-optimize`.
+Currently `scikit-optimize` relies on a yet unreleased version of `scikit-learn`.
+This means you will have to install that version by hand and probably want to
+create a separate virtualenv or conda environment for it.
+
+```
+pip install -e git+https://github.com/scikit-learn/scikit-learn.git#egg=scikit-learn-0.18dev
+```
+
+After this you can install `scikit-optimize` with:
+```
+pip install scikit-optimize
+```
+
+
 ## Development
 
 The library is still experimental and under heavy development.
