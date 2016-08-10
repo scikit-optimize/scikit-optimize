@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
 # Scikit-Optimize
 
 Scikit-Optimize, or `skopt`, is a simple and efficient library
@@ -6,16 +7,18 @@ contexts.
 
 The library is built on top of NumPy, SciPy and Scikit-Learn.
 
-[![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
+We do not do gradient-based optimization. For gradient-based optimization you should be looking at [`scipy.optimize`](http://docs.scipy.org/doc/scipy/reference/optimize.html)
 
 ![Approximated objective](https://github.com/scikit-optimize/scikit-optimize/blob/master/media/bo-objective.png)
 
 _Approximated objective function after 50 iterations of `gp_minimize`. Plot made using `skopt.plots.plot_objective`._
 
-## Documentation
+## Important links
 
-- [Static documentation](https://scikit-optimize.github.io/)
-- Examples can be found under the [`examples/`](https://github.com/scikit-optimize/scikit-optimize/tree/master/examples) directory.
+- Static documentation - [Static documentation](https://scikit-optimize.github.io/)
+- Example notebooks - can be found under the [`examples/`](https://github.com/scikit-optimize/scikit-optimize/tree/master/examples) directory.
+- Issue tracker - https://github.com/scikit-optimize/scikit-optimize/issues
+- Releases - https://pypi.python.org/pypi/scikit-optimize
 
 
 ## Install
