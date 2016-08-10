@@ -33,7 +33,7 @@ from .forest_opt import forest_minimize
 from .forest_opt import gbrt_minimize
 
 
-__version__ = "0.0"
+__version__ = "0.1"
 
 
 __all__ = ("acquisition",
