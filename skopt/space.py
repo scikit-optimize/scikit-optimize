@@ -279,7 +279,7 @@ class Categorical(Dimension):
             return [(0.0, 1.0) for i in range(self.transformed_size)]
 
 
-class Space:
+class Space(object):
     """Search space."""
 
     def __init__(self, dimensions):
