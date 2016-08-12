@@ -515,10 +515,10 @@ class DictSpace(Space):
 def make_space(dimensions):
     if isinstance(dimensions, Space):
         return dimensions
-    elif type(dimensions) in (list, tuple):
+    elif type(dimensions) in (list, tuple, np.ndarray):
         return Space(dimensions)
     elif type(dimensions) is dict:
         return DictSpace(dimensions)
     else:
         raise ValueError(
-            "dimensions must be one of list, tuple, dict, Space, DictSpace")
+            "dimensions must be one of list, tuple, ndarray, dict, Space, DictSpace")
