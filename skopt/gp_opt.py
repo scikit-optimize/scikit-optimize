@@ -18,7 +18,7 @@ from sklearn.utils import check_random_state
 from .acquisition import _gaussian_acquisition
 from .callbacks import check_callback
 from .callbacks import VerboseCallback
-from .space import Space
+from .space import make_space
 from .utils import create_result
 
 
@@ -190,7 +190,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
 
     # Check params
     rng = check_random_state(random_state)
-    space = Space(dimensions)
+    space = make_space(dimensions)
 
     # Default GP
     if base_estimator is None:

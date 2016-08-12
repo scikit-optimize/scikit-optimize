@@ -486,3 +486,36 @@ class Space:
                 b.extend(dim.transformed_bounds)
 
         return b
+
+
+class DictSpace(Space):
+
+    def __init__(self, dimensions):
+        self.keys = sorted(list(dimensions.keys()))
+        super(DictSpace, self).__init__([dimensions[k] for k in self.keys])
+
+    def rvs(self, n_samples=1, random_state=None):
+        return [
+            dict(zip(self.keys, sample))
+            for sample in super(DictSpace, self).rvs(n_samples, random_state)
+        ]
+
+    def transform(self, X):
+        return super(DictSpace, self).transform([
+            [sample[k] for k in self.keys] for sample in X
+        ])
+
+    def inverse_transform(self, Xt):
+        return [
+            dict(zip(self.keys, sample))
+            for sample in super(DictSpace, self).inverse_transform(Xt)
+        ]
+
+
+def make_space(dimensions):
+    if isinstance(dimensions, Space):
+        return dimensions
+    elif type(dimensions) in (list, tuple):
+        return Space(dimensions)
+    elif type(dimensions) is dict:
+        return DictSpace(dimensions)
