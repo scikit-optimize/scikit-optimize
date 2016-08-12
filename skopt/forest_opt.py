@@ -277,8 +277,6 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                           x0=x0, y0=y0, random_state=random_state, xi=xi,
                           kappa=kappa, acq=acq, specs=specs, callback=callback)
 
-    return res
-
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                     n_points=1000, n_random_starts=10, x0=None, y0=None,

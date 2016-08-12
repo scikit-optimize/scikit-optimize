@@ -9,7 +9,6 @@ from collections import Iterable
 import numpy as np
 
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.optimize import OptimizeResult
 
 from sklearn.base import clone
 from sklearn.gaussian_process import GaussianProcessRegressor
