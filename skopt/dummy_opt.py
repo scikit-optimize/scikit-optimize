@@ -99,7 +99,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
 
     if x0 is None:
         x0 = []
-    elif not isinstance(x0[0], list):
+    elif type(x0) is dict or not isinstance(x0[0], list):
         x0 = [x0]
 
     if not isinstance(x0, list):

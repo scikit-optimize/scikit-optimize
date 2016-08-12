@@ -204,7 +204,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
         x0 = []
-    elif not isinstance(x0[0], list):
+    elif type(x0) is dict or not isinstance(x0[0], list):
         x0 = [x0]
 
     if not isinstance(x0, list):
