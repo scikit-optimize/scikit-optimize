@@ -177,6 +177,16 @@ class Real(Dimension):
                 "Prior should be either 'uniform' or 'log-uniform', "
                 "got '%s'." % self._rvs)
 
+    def __eq__(self, other):
+        return (type(self) is type(other)
+                and self._low == other._low
+                and self._high == other._high
+                and self.prior == other.prior)
+
+    def __repr__(self):
+        return "Real(low={}, high={}, prior={})".format(
+            self._low, self._high, self.prior)
+
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
            orignal space.
@@ -213,6 +223,14 @@ class Integer(Dimension):
         self._rvs = randint(self._low, self._high + 1)
         self.transformer = _Identity()
 
+    def __eq__(self, other):
+        return (type(self) is type(other)
+                and self._low == other._low
+                and self._high == other._high)
+
+    def __repr__(self):
+        return "Integer(low={}, high={})".format(self._low, self._high)
+
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
            orignal space.
@@ -246,12 +264,22 @@ class Categorical(Dimension):
         self.categories = categories
         self.transformer = _CategoricalEncoder()
         self.transformer.fit(self.categories)
+        self._prior = prior
 
         if prior is None:
             prior = np.tile(1. / len(self.categories), len(self.categories))
 
         # XXX check that sum(prior) == 1
         self._rvs = rv_discrete(values=(range(len(self.categories)), prior))
+
+    def __eq__(self, other):
+        return (type(self) is type(other)
+                and self.categories == other.categories
+                and self._prior == other._prior)
+
+    def __repr__(self):
+        return "Categorical(categories={}, prior={})".format(
+            self.categories, self._prior)
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
@@ -323,6 +351,13 @@ class Space:
                 raise ValueError("Invalid grid component (got %s)." % dim)
 
         self.dimensions = _dimensions
+
+    def __eq__(self, other):
+        return all([a == b for a, b in zip(self.dimensions, other.dimensions)])
+
+    def __repr__(self):
+        return "Space([{}])".format(
+            ',\n       '.join(map(str, self.dimensions)))
 
     @property
     def is_real(self):
