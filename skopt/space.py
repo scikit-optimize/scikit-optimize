@@ -519,3 +519,6 @@ def make_space(dimensions):
         return Space(dimensions)
     elif type(dimensions) is dict:
         return DictSpace(dimensions)
+    else:
+        raise ValueError(
+            "dimensions must be one of list, tuple, dict, Space, DictSpace")
