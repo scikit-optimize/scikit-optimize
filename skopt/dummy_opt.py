@@ -6,7 +6,6 @@ import numbers
 import numpy as np
 
 from collections import Iterable
-from scipy.optimize import OptimizeResult
 from sklearn.utils import check_random_state
 
 from .callbacks import check_callback
