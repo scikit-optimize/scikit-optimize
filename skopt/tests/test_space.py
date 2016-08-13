@@ -7,7 +7,9 @@ from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 
+from skopt.space import make_space
 from skopt.space import Space
+from skopt.space import DictSpace
 from skopt.space import Real
 from skopt.space import Integer
 from skopt.space import Categorical
@@ -149,7 +151,61 @@ def test_space_consistency():
 
     # Categoricals
     s1 = Space([Categorical(["a", "b", "c"])]).rvs(n_samples=10, random_state=0)
-    s2 = Space([Categorical(["a", "b", "c"])]).rvs(n_samples=10, random_state=0)
+    s2 = Space([["a", "b", "c"]]).rvs(n_samples=10, random_state=0)
+    assert_array_equal(s1, s2)
+
+
+def test_dict_space_consistency():
+    # Reals (uniform)
+    s1 = DictSpace({'a': Real(0.0, 1.0)}).rvs(n_samples=10, random_state=0)
+    s2 = DictSpace({'a': Real(0.0, 1.0)}).rvs(n_samples=10, random_state=0)
+    s3 = DictSpace({'a': Real(0, 1)}).rvs(n_samples=10, random_state=0)
+    s4 = DictSpace({'a': (0.0, 1.0)}).rvs(n_samples=10, random_state=0)
+    s5 = DictSpace(
+        {'a': (0.0, 1.0, "uniform")}).rvs(n_samples=10, random_state=0)
+    assert_array_equal(s1, s2)
+    assert_array_equal(s1, s3)
+    assert_array_equal(s1, s4)
+    assert_array_equal(s1, s5)
+
+    # Reals (log-uniform)
+    s1 = Space({'b': Real(10**-3.0,
+                     10**3.0,
+                     prior="log-uniform")}).rvs(n_samples=10, random_state=0)
+    s2 = Space({'b': Real(10**-3.0,
+                     10**3.0,
+                     prior="log-uniform")}).rvs(n_samples=10, random_state=0)
+    s3 = Space({'b': Real(10**-3,
+                     10**3,
+                     prior="log-uniform")}).rvs(n_samples=10, random_state=0)
+    s4 = Space({'b': (10**-3.0, 10**3.0, "log-uniform")}).rvs(n_samples=10,
+                                                         random_state=0)
+    assert_array_equal(s1, s2)
+    assert_array_equal(s1, s3)
+    assert_array_equal(s1, s4)
+
+    # Integers
+    s1 = Space({'c': Integer(1, 5)}).rvs(n_samples=10, random_state=0)
+    s2 = Space({'c': Integer(1.0, 5.0)}).rvs(n_samples=10, random_state=0)
+    s3 = Space({'c': (1, 5)}).rvs(n_samples=10, random_state=0)
+    assert_array_equal(s1, s2)
+    assert_array_equal(s1, s3)
+
+    # Categoricals
+    s1 = Space(
+        {'d': Categorical(["a", "b", "c"])}).rvs(n_samples=10, random_state=0)
+    s2 = Space({'d': ["a", "b", "c"]}).rvs(n_samples=10, random_state=0)
+    assert_array_equal(s1, s2)
+
+    # several keys
+    s1 = DictSpace({
+            'b': Categorical(["a", "b", "c"]),
+            'a': Real(0.0, 1.0),
+        }).rvs(n_samples=10, random_state=0)
+    s2 = DictSpace({
+            'a': Real(0.0, 1.0),
+            'b': Categorical(["a", "b", "c"]),
+        }).rvs(n_samples=10, random_state=0)
     assert_array_equal(s1, s2)
 
 
@@ -200,3 +256,68 @@ def test_space_api():
                       [(0.0, 1.0), (-5, 5), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
                        (np.log10(1.0), np.log10(5.0)), (0.0, 1.0)]):
         assert_array_equal(b1, b2)
+
+
+def test_dict_space_api():
+    space = DictSpace({
+        'a': (0.0, 1.0),
+        'b': (-5, 5),
+        'c': ("a", "b", "c"),
+        'd': (1.0, 5.0, "log-uniform"),
+        'e': ("e", "f")
+    })
+
+    assert_equal(len(space.dimensions), 5)
+    assert_true(isinstance(space.dimensions[0], Real))
+    assert_true(isinstance(space.dimensions[1], Integer))
+    assert_true(isinstance(space.dimensions[2], Categorical))
+    assert_true(isinstance(space.dimensions[3], Real))
+    assert_true(isinstance(space.dimensions[4], Categorical))
+
+    samples = space.rvs(n_samples=10, random_state=0)
+    assert_equal(len(samples), 10)
+    assert_equal(len(samples[0]), 5)
+
+    assert_true(isinstance(samples, list))
+    for n in range(4):
+        assert_true(isinstance(samples[n], dict))
+
+    assert_true(isinstance(samples[0]['a'], numbers.Real))
+    assert_true(isinstance(samples[0]['b'], numbers.Integral))
+    assert_true(isinstance(samples[0]['c'], str))
+    assert_true(isinstance(samples[0]['d'], numbers.Real))
+    assert_true(isinstance(samples[0]['e'], str))
+
+    samples_transformed = space.transform(samples)
+    assert_equal(samples_transformed.shape[0], len(samples))
+    assert_equal(samples_transformed.shape[1], 1 + 1 + 3 + 1 + 1)
+    assert_array_equal(samples, space.inverse_transform(samples_transformed))
+
+    samples = space.inverse_transform(samples_transformed)
+    assert_true(isinstance(samples[0]['a'], numbers.Real))
+    assert_true(isinstance(samples[0]['b'], numbers.Integral))
+    assert_true(isinstance(samples[0]['c'], str))
+    assert_true(isinstance(samples[0]['d'], numbers.Real))
+    assert_true(isinstance(samples[0]['e'], str))
+
+    for b1, b2 in zip(space.bounds,
+                      [(0.0, 1.0), (-5, 5),
+                       np.asarray(["a", "b", "c"]), (1.0, 5.0),
+                       np.asarray(["e", "f"])]):
+        assert_array_equal(b1, b2)
+
+    for b1, b2 in zip(space.transformed_bounds,
+                      [(0.0, 1.0), (-5, 5), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
+                       (np.log10(1.0), np.log10(5.0)), (0.0, 1.0)]):
+        assert_array_equal(b1, b2)
+
+
+def test_make_space():
+    list_space = make_space([(0.0, 1.0), ("a", "b", "c")])
+    assert_true(type(list_space) is Space)
+    assert_true(make_space(list_space) is list_space)
+    assert_true(len(list_space.dimensions) is 2)
+    dict_space = make_space({'num': (0.0, 1.0), 'cat': ("a", "b", "c")})
+    assert_true(type(dict_space) is DictSpace)
+    assert_true(make_space(dict_space) is dict_space)
+    assert_true(len(dict_space.dimensions) is 2)

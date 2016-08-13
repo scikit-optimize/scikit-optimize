@@ -18,7 +18,7 @@ from .callbacks import VerboseCallback
 from .learning import ExtraTreesRegressor
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
-from .space import Space
+from .space import make_space
 from .utils import create_result
 
 
@@ -28,12 +28,12 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
                    verbose=False, callback=None):
 
     rng = check_random_state(random_state)
-    space = Space(dimensions)
+    space = make_space(dimensions)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
         x0 = []
-    elif not isinstance(x0[0], list):
+    elif type(x0) is dict or not isinstance(x0[0], list):
         x0 = [x0]
 
     if not isinstance(x0, list):
