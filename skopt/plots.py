@@ -68,18 +68,19 @@ def plot_convergence(*args, **kwargs):
             n_calls = len(results.x_iters)
             mins = [np.min(results.func_vals[:i])
                     for i in range(1, n_calls + 1)]
-            ax.plot(range(n_calls), mins, c=color,
+            ax.plot(range(1, n_calls + 1), mins, c=color,
                     marker=".", markersize=12, lw=2, label=name)
 
         elif isinstance(results, list):
             n_calls = len(results[0].x_iters)
-            mins = [[np.min(r.func_vals[:i])
-                     for i in range(1, n_calls + 1)] for r in results]
+            iterations = range(1, n_calls + 1)
+            mins = [[np.min(r.func_vals[:i]) for i in iterations]
+                    for r in results]
 
             for m in mins:
-                ax.plot(range(n_calls), m, c=color, alpha=0.2)
+                ax.plot(iterations, m, c=color, alpha=0.2)
 
-            ax.plot(range(n_calls), np.mean(mins, axis=0), c=color,
+            ax.plot(iterations, np.mean(mins, axis=0), c=color,
                     marker=".", markersize=12, lw=2, label=name)
 
     if true_minimum:
