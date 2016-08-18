@@ -23,6 +23,26 @@ After this you can install `scikit-optimize` with:
 pip install scikit-optimize
 ```
 
+## Getting started
+
+Find the minimum of the noisy function `f(x)` over the range `-2 < x < 2`
+with `skopt`:
+
+```python
+import numpy as np
+from skopt import gp_minimize
+
+def f(x):
+    return (np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) *
+            np.random.randn() * 0.1)
+
+res = gp_minimize(f, [(-2.0, 2.0)])
+```
+
+For more read our [introduction to bayesian optimization](https://scikit-optimize.github.io/notebooks/bayesian-optimization.html)
+and the other [examples](https://github.com/scikit-optimize/scikit-optimize/tree/master/examples).
+
+
 ## Development
 
 The library is still experimental and under heavy development.
