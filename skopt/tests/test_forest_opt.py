@@ -49,20 +49,19 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin,
         assert_less(r.fun, y_opt + margin)
 
 def test_tree_based_minimize():
-    rng = np.random.RandomState(0)
     for name, minimizer in MINIMIZERS:
         yield (check_minimize, minimizer, bench1, 0.,
                [(-2.0, 2.0)], 0.05, 25, 5)
 
-        # This benchmark contains 2 different functions
-        # when x < 0 and otherwise.
-        # Hence sample uniformly from [-6, 0] and
-        # [0, 6] and provide a warm-start.
-        X1 = (-6 + 6 * rng.rand(5, 1)).tolist()
-        X2 = (6 * rng.rand(5, 1)).tolist()
-        X0 = X1 + X2
+        # XXX: We supply points at the edge of the search
+        # space as an initial point to the minimizer.
+        # This makes sure that the RF model can find the minimum even
+        # if all the randomly sampled points are one side of the
+        # the minimum, since for a decision tree any point greater than
+        # max(sampled_points) would give a constant value.
+        X0 = [[-5.6], [-5.8], [5.8], [5.6]]
         yield (check_minimize, minimizer, bench2, -5,
-               [(-6.0, 6.0)], 0.05, 100, 0, X0)
+               [(-6.0, 6.0)], 0.1, 100, 10, X0)
 
         yield (check_minimize, minimizer, bench3, -0.9,
                [(-2.0, 2.0)], 0.05, 25)
