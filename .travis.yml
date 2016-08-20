@@ -12,10 +12,10 @@ env:
     - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="true"
     - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
 
-install: source ci_scripts/install.sh
+install: source build_tools/travis/install.sh
 
 script:
   nosetests
 
 after_success:
-    - '([ "${TRAVIS_PULL_REQUEST}" == "false" ] && [ "${PYTHON_VERSION}" == "3.5" ] && source ci_scripts/deploy.sh) || echo pass'
+    - '([ "${TRAVIS_PULL_REQUEST}" == "false" ] && [ "${PYTHON_VERSION}" == "3.5" ] && source build_tools/travis/deploy.sh) || echo pass'
