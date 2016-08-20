@@ -1,7 +1,9 @@
 # Adapted shamelessly from https://github.com/scikit-learn-contrib/project-template/blob/master/ci_scripts/install.sh
 # Deactivate the travis-provided virtual environment and setup a
 # conda-based environment instead
-deactivate
+if [[ `type -t deactivate` ]]; then
+  deactivate
+fi
 
 # Use the miniconda installer for faster download / install of conda
 # itself
@@ -23,18 +25,18 @@ export PATH="$HOME/miniconda3/bin:$PATH"
 conda update --yes conda
 popd
 
-# Configure the conda environment and put it in the path using the
-# provided versions
-conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-   numpy scipy cython matplotlib
-source activate testenv
-pip install git+http://github.com/scikit-learn/scikit-learn.git
-
-if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
-fi
-
-python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python setup.py develop
+# # Configure the conda environment and put it in the path using the
+# # provided versions
+# conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+#    numpy scipy cython matplotlib
+# source activate testenv
+# pip install git+http://github.com/scikit-learn/scikit-learn.git
+#
+# if [[ "$COVERAGE" == "true" ]]; then
+#     pip install coverage coveralls
+# fi
+#
+# python --version
+# python -c "import numpy; print('numpy %s' % numpy.__version__)"
+# python -c "import scipy; print('scipy %s' % scipy.__version__)"
+# python setup.py develop

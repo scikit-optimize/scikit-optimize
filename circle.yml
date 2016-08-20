@@ -1,6 +1,6 @@
 dependencies:
   override:
-    - sh ./build_tools/travis/install.sh
+    - sh ./build_tools/circle/install.sh
 
 test:
   override:
