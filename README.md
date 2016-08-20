@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master)](https://travis-ci.org/scikit-optimize/scikit-optimize)
+[![Build Status](https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/scikit-optimize/scikit-optimize)
+
 # Scikit-Optimize
 
 Scikit-Optimize, or `skopt`, is a simple and efficient library
