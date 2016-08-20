@@ -12,7 +12,7 @@ env:
     - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="true"
     - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
 
-install: source build_tools/travis/install.sh
+install: source build_tools/install.sh
 
 script:
   nosetests
