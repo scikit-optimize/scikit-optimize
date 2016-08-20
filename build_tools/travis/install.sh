@@ -1,5 +1,9 @@
 # Adapted shamelessly from https://github.com/scikit-learn-contrib/project-template/blob/master/ci_scripts/install.sh
 
+if [ $CIRCLECI ]; then
+    export PYTHON_VERSION=python3
+fi
+
 # Deactivate the travis-provided virtual environment and setup a
 # conda-based environment instead
 deactivate
@@ -20,7 +24,7 @@ if [[ ! -f miniconda.sh ]]
    fi
 chmod +x miniconda.sh && ./miniconda.sh -b
 cd ..
-export PATH=/home/travis/miniconda3/bin:$PATH
+export PATH="$HOME/miniconda3/bin:$PATH"
 conda update --yes conda
 popd
 
