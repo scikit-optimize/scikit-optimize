@@ -20,7 +20,7 @@ cp -r ${TRAVIS_BUILD_DIR}/examples/*_files .
 IFS="$OIFS"
 
 cd ~
-python ${TRAVIS_BUILD_DIR}/ci_scripts/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${TRAVIS_BUILD_DIR}/ci_scripts/templates --notebook-dir ./doc/skopt/notebooks skopt
+python ${TRAVIS_BUILD_DIR}/build_tools/travis/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${TRAVIS_BUILD_DIR}/build_tools/travis/templates --notebook-dir ./doc/skopt/notebooks skopt
 
 # Copying to github pages
 echo "Copying built files"
