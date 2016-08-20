@@ -1,3 +1,3 @@
 dependencies:
   override:
-    - ./build_tools/circle/install.sh
+    - sh ./build_tools/circle/install.sh
