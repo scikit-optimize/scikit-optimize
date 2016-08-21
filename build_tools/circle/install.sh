@@ -50,3 +50,9 @@ cd ./doc/skopt/notebooks
 for nb in ${HOME}/examples/*ipynb; do
     jupyter nbconvert "$nb" --to markdown | tee -a ~/nb_to_md.txt
 done
+
+cp ${HOME}/examples/*md .
+cp -r ${HOME}/examples/*_files .
+
+cd ~
+python ${HOME}/build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${HOME}/build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt

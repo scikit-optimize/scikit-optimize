@@ -7,6 +7,12 @@ test:
   override:
     - cat ~/nb_to_md.txt && if grep -q "Traceback (most recent call last):" ~/nb_to_md.txt; then false; else true; fi
 
+deployment:
+ push:
+   branch: master
+   commands:
+     - bash build_tools/circle/deploy.sh
+
 general:
   # Open the doc to the API
   artifacts:
