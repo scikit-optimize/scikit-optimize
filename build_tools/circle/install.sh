@@ -38,18 +38,18 @@ python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
 python setup.py develop
+export SKOPT_HOME=$(pwd)
 
 conda install --yes jupyter
 pip install pdoc==0.3.2 pygments
 
 # Generating documentation
-cd ~
-mkdir -p ./doc/skopt/notebooks
-
 for nb in examples/*ipynb; do
     jupyter nbconvert "$nb" --to markdown | tee -a ~/nb_to_md.txt
 done
 
-cp examples/*md ./doc/skopt/notebooks
-cp -r examples/*_files ./doc/skopt/notebooks
+cd ~
+mkdir -p ./doc/skopt/notebooks
+cp ${SKOPT_HOME}/examples/*md ./doc/skopt/notebooks
+cp -r ${SKOPT_HOME}/examples/*_files ./doc/skopt/notebooks
 python build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
