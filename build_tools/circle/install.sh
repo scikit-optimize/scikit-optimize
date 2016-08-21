@@ -44,15 +44,16 @@ pip install pdoc==0.3.2 pygments
 
 # Generating documentation
 cd ~
+echo $(pwd)
 mkdir -p ./doc/skopt/notebooks
-cd ./doc/skopt/notebooks
 
-for nb in ${HOME}/examples/*ipynb; do
+for nb in examples/*ipynb; do
     jupyter nbconvert "$nb" --to markdown | tee -a ~/nb_to_md.txt
 done
 
-cp ${HOME}/examples/*md .
-cp -r ${HOME}/examples/*_files .
-
-cd ~
-python ${HOME}/build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${HOME}/build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
+# cd ./doc/skopt/notebooks
+# cp ${HOME}/examples/*md .
+# cp -r ${HOME}/examples/*_files .
+#
+# cd ~
+# python ${HOME}/build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${HOME}/build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
