@@ -41,7 +41,6 @@ git add -A
 git commit --allow-empty -m "Deploying documentation for ${TRAVIS_COMMIT}" || exit 1
 
 # Push to branch
-git push origin master > /dev/null 2>&1 || exit 1
+git push
 
 echo "Pushed deployment successfully"
-exit 0
