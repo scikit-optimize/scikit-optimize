@@ -10,5 +10,4 @@ test:
 general:
   # Open the doc to the API
   artifacts:
-    - "doc/_build/html"
-    - "~/log.txt"
+    - "~/nb_to_md.txt"

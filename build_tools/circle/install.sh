@@ -7,6 +7,8 @@ fi
 
 # Use the miniconda installer for faster download / install of conda
 # itself
+# XXX: Most of this is very similar to travis/install.sh. We should
+# probably refactor it later.
 pushd .
 cd
 mkdir -p download
@@ -35,4 +37,16 @@ pip install git+http://github.com/scikit-learn/scikit-learn.git
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python setup.py develop | tee ~/log.txt
+python setup.py develop
+
+conda install --yes jupyter
+pip install pdoc==0.3.2 pygments
+
+# Generating documentation
+cd ~
+mkdir -p ./doc/skopt/notebooks
+cd ./doc/skopt/notebooks
+
+for nb in ${HOME}/examples/*ipynb; do
+    jupyter nbconvert "$nb" --to markdown | tee -a ~/nb_to_md.txt
+done
