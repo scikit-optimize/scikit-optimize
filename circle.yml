@@ -3,5 +3,12 @@ dependencies:
     - bash ./build_tools/circle/install.sh
 
 test:
+  # Grep error on the documentation
   override:
-    - nosetests3 skopt
+    - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
+
+general:
+  # Open the doc to the API
+  artifacts:
+    - "doc/_build/html"
+    - "~/log.txt"
