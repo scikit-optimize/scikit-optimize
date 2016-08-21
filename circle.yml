@@ -4,4 +4,4 @@ dependencies:
 
 test:
   override:
-    - nosetests skopt
+    - nosetests3 skopt
