@@ -52,4 +52,4 @@ cd ~
 mkdir -p ./doc/skopt/notebooks
 cp ${SKOPT_HOME}/examples/*md ./doc/skopt/notebooks
 cp -r ${SKOPT_HOME}/examples/*_files ./doc/skopt/notebooks
-python build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
+python ${SKOPT_HOME}/build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${SKOPT_HOME}/build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
