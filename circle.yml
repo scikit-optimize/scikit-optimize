@@ -5,7 +5,7 @@ dependencies:
 test:
   # Grep error on the documentation
   override:
-    - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
+    - cat ~/nb_to_md.txt && if grep -q "Traceback (most recent call last):" ~/nb_to_md.txt; then false; else true; fi
 
 general:
   # Open the doc to the API
