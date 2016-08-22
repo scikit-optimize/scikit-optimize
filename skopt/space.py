@@ -185,8 +185,8 @@ class Real(Dimension):
 
     def __eq__(self, other):
         return (type(self) is type(other)
-                and self.low == other.low
-                and self.high == other.high
+                and np.allclose([self.low], [other.low])
+                and np.allclose([self.high], [other.high])
                 and self.prior == other.prior)
 
     def __repr__(self):
@@ -231,8 +231,8 @@ class Integer(Dimension):
 
     def __eq__(self, other):
         return (type(self) is type(other)
-                and self.low == other.low
-                and self.high == other.high)
+                and np.allclose([self.low], [other.low])
+                and np.allclose([self.high], [other.high]))
 
     def __repr__(self):
         return "Integer(low={}, high={})".format(self.low, self.high)
@@ -279,9 +279,19 @@ class Categorical(Dimension):
         self._rvs = rv_discrete(values=(range(len(self.categories)), prior))
 
     def __eq__(self, other):
+        def priors_are_equal(one, two):
+            # both are None
+            if one is None and two is None:
+                return True
+            # only one is None
+            if one is None or two is None:
+                return False
+            # both are sequences
+            return np.allclose(one, two)
+
         return (type(self) is type(other)
                 and self.categories == other.categories
-                and self.prior == other.prior)
+                and priors_are_equal(self.prior, other.prior))
 
     def __repr__(self):
         if len(self.categories) > 7:
@@ -289,7 +299,7 @@ class Categorical(Dimension):
         else:
             cats = self.categories
 
-        if len(self.prior) > 7:
+        if self.prior is not None and len(self.prior) > 7:
             prior = self.prior[:3] + [_Ellipsis()] + self.prior[-3:]
         else:
             prior = self.prior
