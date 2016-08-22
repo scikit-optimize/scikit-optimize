@@ -10,6 +10,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 
+# helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
     def __repr__(self):
         return '...'
@@ -287,8 +288,14 @@ class Categorical(Dimension):
             cats = self.categories[:3] + [_Ellipsis()] + self.categories[-3:]
         else:
             cats = self.categories
+
+        if len(self.prior) > 7:
+            prior = self.prior[:3] + [_Ellipsis()] + self.prior[-3:]
+        else:
+            prior = self.prior
+
         return "Categorical(categories={}, prior={})".format(
-            cats, self.prior)
+            cats, prior)
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
