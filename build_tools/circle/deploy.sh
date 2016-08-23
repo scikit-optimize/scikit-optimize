@@ -21,7 +21,7 @@ echo "Committing and pushing to Github"
 echo "$USERNAME"
 git config --global user.name $USERNAME
 git config --global user.email "skoptci@gmail.com"
-git config --global push default matching
+git config --global push.default matching
 git add -A
 git commit --allow-empty -m "$MSG"
 git push
