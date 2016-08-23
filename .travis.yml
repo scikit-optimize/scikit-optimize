@@ -16,6 +16,3 @@ install: source build_tools/travis/install.sh
 
 script:
   nosetests
-
-after_success:
-    - '([ "${TRAVIS_PULL_REQUEST}" == "false" ] && [ "${PYTHON_VERSION}" == "3.5" ] && source build_tools/travis/deploy.sh) || echo pass'
