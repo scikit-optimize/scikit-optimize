@@ -21,6 +21,7 @@ cd deploy
 
 # Commit changes, allowing empty changes (when unchanged)
 echo "Committing and pushing to Github"
+echo "$USERNAME"
 git config --global user.name $USERNAME
 git config --global user.email "skoptci@gmail.com"
 git config --global push default matching
