@@ -10,6 +10,12 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 
+# helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
+class _Ellipsis:
+    def __repr__(self):
+        return '...'
+
+
 class _Identity:
     """Identity transform."""
 
@@ -158,24 +164,34 @@ class Real(Dimension):
             - If `"log-uniform"`, points are sampled uniformly between
               `log10(lower)` and `log10(upper)`.`
         """
-        self._low = low
-        self._high = high
+        self.low = low
+        self.high = high
         self.prior = prior
 
         if prior == "uniform":
-            self._rvs = uniform(self._low, self._high - self._low)
+            self._rvs = uniform(self.low, self.high - self.low)
             self.transformer = _Identity()
 
         elif prior == "log-uniform":
             self._rvs = uniform(
-                np.log10(self._low),
-                np.log10(self._high) - np.log10(self._low))
+                np.log10(self.low),
+                np.log10(self.high) - np.log10(self.low))
             self.transformer = _Log10()
 
         else:
             raise ValueError(
                 "Prior should be either 'uniform' or 'log-uniform', "
                 "got '%s'." % self._rvs)
+
+    def __eq__(self, other):
+        return (type(self) is type(other)
+                and np.allclose([self.low], [other.low])
+                and np.allclose([self.high], [other.high])
+                and self.prior == other.prior)
+
+    def __repr__(self):
+        return "Real(low={}, high={}, prior={})".format(
+            self.low, self.high, self.prior)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
@@ -185,15 +201,15 @@ class Real(Dimension):
 
     @property
     def bounds(self):
-        return (self._low, self._high)
+        return (self.low, self.high)
 
     @property
     def transformed_bounds(self):
         if self.prior == "uniform":
-            return (self._low, self._high)
+            return (self.low, self.high)
 
         else:  # self.prior == "log-uniform"
-            return (np.log10(self._low), np.log10(self._high))
+            return (np.log10(self.low), np.log10(self.high))
 
 
 class Integer(Dimension):
@@ -208,10 +224,18 @@ class Integer(Dimension):
         * `high` [float]:
             Upper bound (inclusive).
         """
-        self._low = low
-        self._high = high
-        self._rvs = randint(self._low, self._high + 1)
+        self.low = low
+        self.high = high
+        self._rvs = randint(self.low, self.high + 1)
         self.transformer = _Identity()
+
+    def __eq__(self, other):
+        return (type(self) is type(other)
+                and np.allclose([self.low], [other.low])
+                and np.allclose([self.high], [other.high]))
+
+    def __repr__(self):
+        return "Integer(low={}, high={})".format(self.low, self.high)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
@@ -223,11 +247,11 @@ class Integer(Dimension):
 
     @property
     def bounds(self):
-        return (self._low, self._high)
+        return (self.low, self.high)
 
     @property
     def transformed_bounds(self):
-        return (self._low, self._high)
+        return (self.low, self.high)
 
 
 class Categorical(Dimension):
@@ -246,12 +270,42 @@ class Categorical(Dimension):
         self.categories = categories
         self.transformer = _CategoricalEncoder()
         self.transformer.fit(self.categories)
+        self.prior = prior
 
         if prior is None:
             prior = np.tile(1. / len(self.categories), len(self.categories))
 
         # XXX check that sum(prior) == 1
         self._rvs = rv_discrete(values=(range(len(self.categories)), prior))
+
+    def __eq__(self, other):
+        def priors_are_equal(one, two):
+            # both are None
+            if one is None and two is None:
+                return True
+            # only one is None
+            if one is None or two is None:
+                return False
+            # both are sequences
+            return np.allclose(one, two)
+
+        return (type(self) is type(other)
+                and self.categories == other.categories
+                and priors_are_equal(self.prior, other.prior))
+
+    def __repr__(self):
+        if len(self.categories) > 7:
+            cats = self.categories[:3] + [_Ellipsis()] + self.categories[-3:]
+        else:
+            cats = self.categories
+
+        if self.prior is not None and len(self.prior) > 7:
+            prior = self.prior[:3] + [_Ellipsis()] + self.prior[-3:]
+        else:
+            prior = self.prior
+
+        return "Categorical(categories={}, prior={})".format(
+            cats, prior)
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
@@ -323,6 +377,17 @@ class Space:
                 raise ValueError("Invalid grid component (got %s)." % dim)
 
         self.dimensions = _dimensions
+
+    def __eq__(self, other):
+        return all([a == b for a, b in zip(self.dimensions, other.dimensions)])
+
+    def __repr__(self):
+        if len(self.dimensions) > 31:
+            dims = self.dimensions[:15] + [_Ellipsis()] + self.dimensions[-15:]
+        else:
+            dims = self.dimensions
+        return "Space([{}])".format(
+            ',\n       '.join(map(str, dims)))
 
     @property
     def is_real(self):

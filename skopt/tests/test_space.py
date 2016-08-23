@@ -3,6 +3,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
@@ -15,11 +16,16 @@ from skopt.space import Categorical
 
 def check_dimension(Dimension, vals, random_val):
     x = Dimension(*vals)
+    assert_equal(x, Dimension(*vals))
+    assert_not_equal(x, Dimension(vals[0], vals[1] + 1))
+    assert_not_equal(x, Dimension(vals[0] + 1, vals[1]))
     assert_equal(x.rvs(random_state=1), random_val)
 
 
 def check_categorical(vals, random_val):
     x = Categorical(vals)
+    assert_equal(x, Categorical(vals))
+    assert_not_equal(x, Categorical(vals[:-1] + ('zzz',)))
     assert_equal(x.rvs(random_state=1), random_val)
 
 
@@ -47,6 +53,7 @@ def test_real():
     assert_array_equal(a.inverse_transform(random_values), random_values)
 
     log_uniform = Real(10**-5, 10**5, prior="log-uniform")
+    assert_not_equal(log_uniform, Real(10**-5, 10**5))
     for i in range(50):
         random_val = log_uniform.rvs(random_state=i)
         yield (check_limits, random_val, 10**-5, 10**5)
@@ -114,43 +121,61 @@ def test_categorical_transform_binary():
 
 def test_space_consistency():
     # Reals (uniform)
-    s1 = Space([Real(0.0, 1.0)]).rvs(n_samples=10, random_state=0)
-    s2 = Space([Real(0.0, 1.0)]).rvs(n_samples=10, random_state=0)
-    s3 = Space([Real(0, 1)]).rvs(n_samples=10, random_state=0)
-    s4 = Space([(0.0, 1.0)]).rvs(n_samples=10, random_state=0)
-    s5 = Space([(0.0, 1.0, "uniform")]).rvs(n_samples=10, random_state=0)
-    assert_array_equal(s1, s2)
-    assert_array_equal(s1, s3)
-    assert_array_equal(s1, s4)
-    assert_array_equal(s1, s5)
+
+    s1 = Space([Real(0.0, 1.0)])
+    s2 = Space([Real(0.0, 1.0)])
+    s3 = Space([Real(0, 1)])
+    s4 = Space([(0.0, 1.0)])
+    s5 = Space([(0.0, 1.0, "uniform")])
+    a1 = s1.rvs(n_samples=10, random_state=0)
+    a2 = s2.rvs(n_samples=10, random_state=0)
+    a3 = s3.rvs(n_samples=10, random_state=0)
+    a4 = s4.rvs(n_samples=10, random_state=0)
+    a5 = s5.rvs(n_samples=10, random_state=0)
+    assert_equal(s1, s2)
+    assert_equal(s1, s3)
+    assert_equal(s1, s4)
+    assert_equal(s1, s5)
+    assert_array_equal(a1, a2)
+    assert_array_equal(a1, a3)
+    assert_array_equal(a1, a4)
+    assert_array_equal(a1, a5)
 
     # Reals (log-uniform)
-    s1 = Space([Real(10**-3.0,
-                     10**3.0,
-                     prior="log-uniform")]).rvs(n_samples=10, random_state=0)
-    s2 = Space([Real(10**-3.0,
-                     10**3.0,
-                     prior="log-uniform")]).rvs(n_samples=10, random_state=0)
-    s3 = Space([Real(10**-3,
-                     10**3,
-                     prior="log-uniform")]).rvs(n_samples=10, random_state=0)
-    s4 = Space([(10**-3.0, 10**3.0, "log-uniform")]).rvs(n_samples=10,
-                                                         random_state=0)
-    assert_array_equal(s1, s2)
-    assert_array_equal(s1, s3)
-    assert_array_equal(s1, s4)
+    s1 = Space([Real(10**-3.0, 10**3.0, prior="log-uniform")])
+    s2 = Space([Real(10**-3.0, 10**3.0, prior="log-uniform")])
+    s3 = Space([Real(10**-3, 10**3, prior="log-uniform")])
+    s4 = Space([(10**-3.0, 10**3.0, "log-uniform")])
+    a1 = s1.rvs(n_samples=10, random_state=0)
+    a2 = s2.rvs(n_samples=10, random_state=0)
+    a3 = s3.rvs(n_samples=10, random_state=0)
+    a4 = s4.rvs(n_samples=10, random_state=0)
+    assert_equal(s1, s2)
+    assert_equal(s1, s3)
+    assert_equal(s1, s4)
+    assert_array_equal(a1, a2)
+    assert_array_equal(a1, a3)
+    assert_array_equal(a1, a4)
 
     # Integers
-    s1 = Space([Integer(1, 5)]).rvs(n_samples=10, random_state=0)
-    s2 = Space([Integer(1.0, 5.0)]).rvs(n_samples=10, random_state=0)
-    s3 = Space([(1, 5)]).rvs(n_samples=10, random_state=0)
-    assert_array_equal(s1, s2)
-    assert_array_equal(s1, s3)
+    s1 = Space([Integer(1, 5)])
+    s2 = Space([Integer(1.0, 5.0)])
+    s3 = Space([(1, 5)])
+    a1 = s1.rvs(n_samples=10, random_state=0)
+    a2 = s2.rvs(n_samples=10, random_state=0)
+    a3 = s3.rvs(n_samples=10, random_state=0)
+    assert_equal(s1, s2)
+    assert_equal(s1, s3)
+    assert_array_equal(a1, a2)
+    assert_array_equal(a1, a3)
 
     # Categoricals
-    s1 = Space([Categorical(["a", "b", "c"])]).rvs(n_samples=10, random_state=0)
-    s2 = Space([Categorical(["a", "b", "c"])]).rvs(n_samples=10, random_state=0)
-    assert_array_equal(s1, s2)
+    s1 = Space([Categorical(["a", "b", "c"])])
+    s2 = Space([Categorical(["a", "b", "c"])])
+    a1 = s1.rvs(n_samples=10, random_state=0)
+    a2 = s2.rvs(n_samples=10, random_state=0)
+    assert_equal(s1, s2)
+    assert_array_equal(a1, a2)
 
 
 def test_space_api():
