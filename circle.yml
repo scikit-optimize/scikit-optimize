@@ -1,6 +1,6 @@
 dependencies:
   override:
-    - bash ./build_tools/circle/install.sh
+    - bash ./build_tools/circle/install.sh:
         timeout: 900
 
 test:
