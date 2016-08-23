@@ -273,25 +273,17 @@ class Categorical(Dimension):
         self.prior = prior
 
         if prior is None:
-            prior = np.tile(1. / len(self.categories), len(self.categories))
+            self.prior_ = np.tile(1. / len(self.categories), len(self.categories))
+        else:
+            self.prior_ = prior
 
         # XXX check that sum(prior) == 1
-        self._rvs = rv_discrete(values=(range(len(self.categories)), prior))
+        self._rvs = rv_discrete(values=(range(len(self.categories)), self.prior_))
 
     def __eq__(self, other):
-        def priors_are_equal(one, two):
-            # both are None
-            if one is None and two is None:
-                return True
-            # only one is None
-            if one is None or two is None:
-                return False
-            # both are sequences
-            return np.allclose(one, two)
-
         return (type(self) is type(other)
                 and self.categories == other.categories
-                and priors_are_equal(self.prior, other.prior))
+                and np.allclose(self.prior_, other.prior_))
 
     def __repr__(self):
         if len(self.categories) > 7:
