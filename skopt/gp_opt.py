@@ -81,11 +81,11 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
 
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
-
-    * `alpha` [float, default=1e-10]:
-        Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to an increased noise level in the
-        observations and reduce potential numerical issues during fitting.
+        By default, a Matern kernel is used with the following
+        hyperparameters tuned.
+        - All the length scales of the Matern kernel.
+        - The covariance amplitude that each element is multiplied with.
+        - Noise that is added to the matern kernel.
 
     * `acq` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
@@ -194,12 +194,14 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
 
     # Default GP
     if base_estimator is None:
+        cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
+        matern = Matern(length_scale=np.ones(space.transformed_n_dims),
+                        length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
+                        nu=2.5)
+        noise = WhiteKernel()
         base_estimator = GaussianProcessRegressor(
-            kernel=(ConstantKernel(1.0, (0.01, 1000.0)) *
-                    Matern(length_scale=np.ones(space.transformed_n_dims),
-                           length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
-                           nu=2.5)),
-            normalize_y=True, alpha=alpha, random_state=random_state)
+            kernel=cov_amplitude * matern + noise,
+            normalize_y=True, random_state=random_state)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
