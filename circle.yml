@@ -17,4 +17,4 @@ deployment:
 general:
   # Open the doc to the API
   artifacts:
-    - "~/nb_to_md.txt"
+    - nb_to_md.txt"
