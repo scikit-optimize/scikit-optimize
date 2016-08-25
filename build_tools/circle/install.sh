@@ -45,7 +45,7 @@ pip install pdoc==0.3.2 pygments
 
 # Generating documentation
 for nb in examples/*ipynb; do
-    jupyter nbconvert --ExecutePreprocessor.timeout=900 --execute "$nb" --to markdown | tee -a ~/nb_to_md.txt
+    jupyter nbconvert --ExecutePreprocessor.timeout=900 --execute "$nb" --to markdown |& tee -a nb_to_md.txt
 done
 
 cd ~

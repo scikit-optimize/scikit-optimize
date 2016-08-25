@@ -6,7 +6,7 @@ dependencies:
 test:
   # Grep error on the documentation
   override:
-    - cat ~/nb_to_md.txt && if grep -q "Traceback (most recent call last):" ~/nb_to_md.txt; then false; else true; fi
+    - if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
 
 deployment:
  push:
