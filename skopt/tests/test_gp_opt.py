@@ -26,6 +26,6 @@ def test_gp_minimize():
         yield (check_minimize, bench4, 0.0,
                [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)
         yield (check_minimize, branin, 0.39, [(-5.0, 10), (0.0, 15.)],
-               search, acq, 0.1, 50)
+               search, acq, 0.1, 75)
         yield (check_minimize, hart6, -3.32, np.tile((0., 1.), (6, 1)),
                search, acq, 1.0, 100)
