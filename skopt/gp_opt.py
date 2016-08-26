@@ -12,7 +12,9 @@ from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import clone
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern, ConstantKernel
+from sklearn.gaussian_process.kernels import Matern
+from sklearn.gaussian_process.kernels import ConstantKernel
+from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.utils import check_random_state
 
 from .acquisition import _gaussian_acquisition
@@ -201,7 +203,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         noise = WhiteKernel()
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * matern + noise,
-            normalize_y=True, random_state=random_state)
+            normalize_y=True, random_state=random_state, alpha=0.0)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
