@@ -15,7 +15,10 @@ env:
 install: source build_tools/travis/install.sh
 
 script:
-  nosetests --with-timer --timer-top-n 20
+  - if [ ${COVERAGE} == "true" ];
+    then nosetests --with-coverage --with-timer --timer-top-n 20; else
+    nosetests --with-timer --timer-top-n 20;
+    fi
 
 after_success:
   - if [ ${COVERAGE} == "true" ]; then
