@@ -16,8 +16,8 @@ install: source build_tools/travis/install.sh
 
 script:
   - if [ ${COVERAGE} == "true" ];
-    then nosetests --with-coverage --with-timer --timer-top-n 20; else
-    nosetests --with-timer --timer-top-n 20;
+    then nosetests --with-coverage --cover-package=skopt --with-timer --timer-top-n 10; else
+    nosetests --with-timer --timer-top-n 10;
     fi
 
 after_success:
