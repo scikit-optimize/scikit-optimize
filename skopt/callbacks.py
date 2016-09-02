@@ -91,3 +91,31 @@ class VerboseCallback(object):
         if self.iter_no <= self.n_total:
             self._print_info(start=True)
             self._start_time = time()
+
+
+class TimerCallback(object):
+    """
+    Log the elapsed time between each iteration of the minimization loop.
+
+    The time for each iteration is stored in the `iter_time` attribute which you
+    can inspect after the minimization has completed.
+
+    Attributes
+    ----------
+    `iter_time`: [list, shape=(n_iter,)]:
+        `iter_time[i-1]` gives the time taken to complete iteration `i`
+    """
+    def __init__(self):
+        self._time = time()
+        self.iter_time = []
+
+    def __call__(self, res):
+        """
+        Parameters
+        ----------
+        * `res` [`OptimizeResult`, scipy object]:
+            The optimization as a OptimizeResult object.
+        """
+        elapsed_time = time() - self._time
+        self.iter_time.append(elapsed_time)
+        self._time = time()
