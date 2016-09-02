@@ -91,3 +91,23 @@ class VerboseCallback(object):
         if self.iter_no <= self.n_total:
             self._print_info(start=True)
             self._start_time = time()
+
+
+class TimerCallback(object):
+    """
+    A timer callback that logs the time for every iteration.
+    """
+    def __init__(self):
+        self._time = time()
+        self.iter_time = []
+
+    def __call__(self, res):
+        """
+        Parameters
+        ----------
+        * `res` [`OptimizeResult`, scipy object]:
+            The optimization as a OptimizeResult object.
+        """
+        elapsed_time = time() - self._time
+        self.iter_time.append(elapsed_time)
+        self._time = time()
