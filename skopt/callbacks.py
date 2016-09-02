@@ -95,7 +95,15 @@ class VerboseCallback(object):
 
 class TimerCallback(object):
     """
-    A timer callback that logs the time for every iteration.
+    Log the elapsed time between each iteration of the minimization loop.
+
+    The time for each iteration is stored in the `iter_time` attribute which you
+    can inspect after the minimization has completed.
+
+    Attributes
+    ----------
+    `iter_time`: [list, shape=(n_iter,)]:
+        `iter_time[i-1]` gives the time taken to complete iteration `i`
     """
     def __init__(self):
         self._time = time()
