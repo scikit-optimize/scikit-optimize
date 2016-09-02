@@ -1,7 +1,7 @@
 dependencies:
   override:
     - bash ./build_tools/circle/install.sh:
-        timeout: 900
+        timeout: 1100
 
 test:
   # Grep error on the documentation
