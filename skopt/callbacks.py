@@ -41,12 +41,16 @@ class VerboseCallback(object):
     ----------
     * `iter_no`: [int]:
         Number of iterations of the optimization routine.
+
+    * `total_time`: [list]:
+        total_time[n_iter-1] gives the time of that particular iteration.
     """
 
     def __init__(self, n_total, n_init=0, n_random=0):
         self.n_init = n_init
         self.n_random = n_random
         self.n_total = n_total
+        self.total_time = []
         self.iter_no = 1
         self._start_time = time()
         self._print_info(start=True)
@@ -80,6 +84,7 @@ class VerboseCallback(object):
             The optimization as a OptimizeResult object.
         """
         time_taken = time() - self._start_time
+        self.total_time.append(time_taken)
         self._print_info(start=False)
 
         curr_y = res.func_vals[-1]
