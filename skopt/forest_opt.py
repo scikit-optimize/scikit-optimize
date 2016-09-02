@@ -25,7 +25,7 @@ from .utils import create_result
 def _tree_minimize(func, dimensions, base_estimator, n_calls,
                    n_points, n_random_starts, specs, x0=None, y0=None,
                    random_state=None, acq="EI", xi=0.01, kappa=1.96,
-                   verbose=False, callback=None):
+                   verbose=False, callback=None, return_callbacks=False):
 
     rng = check_random_state(random_state)
     space = Space(dimensions)
@@ -131,13 +131,14 @@ def _tree_minimize(func, dimensions, base_estimator, n_calls,
             for c in callbacks:
                 c(curr_res)
 
-    return create_result(Xi, yi, space, rng, specs, models)
+    callbacks = return_callbacks and callbacks
+    return create_result(Xi, yi, space, rng, specs, models, callbacks=callbacks)
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                   n_points=1000, n_random_starts=10, x0=None, y0=None,
                   n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96,
-                  verbose=False, callback=None):
+                  verbose=False, callback=None, return_callbacks=False):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -233,9 +234,15 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, list of callables, optional]
+    * `callback` [callable, list of callables, optional]:
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
+
+    * `return_callbacks` [boolean, optional]:
+        If set to True, set `callbacks` attribute to the list of provided callbacks
+        in the returned OptimizeResult instance.
+        If this and `verbose=True`, in addition to the provided `callbacks`, a
+        `VerboseCallback` instance is also included.
 
     Returns
     -------
@@ -275,13 +282,14 @@ def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
                           n_calls=n_calls,
                           n_points=n_points, n_random_starts=n_random_starts,
                           x0=x0, y0=y0, random_state=random_state, xi=xi,
-                          kappa=kappa, acq=acq, specs=specs, callback=callback)
+                          kappa=kappa, acq=acq, specs=specs, callback=callback,
+                          verbose=verbose, return_callbacks=return_callbacks)
 
 
 def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                     n_points=1000, n_random_starts=10, x0=None, y0=None,
                     n_jobs=1, random_state=None, acq="EI", xi=0.01, kappa=1.96,
-                    verbose=False, callback=None):
+                    verbose=False, callback=None, return_callbacks=False):
     """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -386,8 +394,15 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, optional]
-        If provided, then `callback(res)` is called after call to func.
+    * `callback` [callable, list of callables, optional]:
+        If callable then `callback(res)` is called after each call to `func`.
+        If list of callables, then each callable in the list is called.
+
+    * `return_callbacks` [boolean, optional]:
+        If set to True, set `callbacks` attribute to the list of provided callbacks
+        in the returned OptimizeResult instance.
+        If this and `verbose=True`, in addition to the provided `callbacks`, a
+        `VerboseCallback` instance is also included.
 
     Returns
     -------
@@ -444,4 +459,4 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
                           n_points=n_points, n_random_starts=n_random_starts,
                           specs=specs, x0=x0, y0=y0, random_state=random_state,
                           acq=acq, xi=xi, kappa=kappa, verbose=verbose,
-                          callback=callback)
+                          callback=callback, return_callbacks=return_callbacks)

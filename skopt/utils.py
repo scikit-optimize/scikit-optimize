@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import OptimizeResult
 
 
-def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
+def create_result(Xi, yi, space=None, rng=None, specs=None, models=None, callbacks=False):
     """
     Return an instance of OptimizeResult() with the required
     information.
@@ -27,6 +27,9 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     * `models` [list, optional]:
         List of fit surrogate models.
 
+    * `callbacks` [list, optional]:
+        List of callbacks.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -43,4 +46,5 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     res.space = space
     res.random_state = rng
     res.specs = specs
+    res.callbacks = callbacks
     return res

@@ -16,7 +16,7 @@ from .utils import create_result
 
 def dummy_minimize(func, dimensions, n_calls=100,
                    x0=None, y0=None, random_state=None, verbose=False,
-                   callback=None):
+                   callback=None, return_callbacks=False):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -66,9 +66,15 @@ def dummy_minimize(func, dimensions, n_calls=100,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, list of callables, optional]
+    * `callback` [callable, list of callables, optional]:
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
+
+    * `return_callbacks` [boolean, optional]:
+        If set to True, set `callbacks` attribute to the list of provided callbacks
+        in the returned OptimizeResult instance.
+        If this and `verbose=True`, in addition to the provided `callbacks`, a
+        `VerboseCallback` instance is also included.
 
     Returns
     -------
@@ -158,4 +164,5 @@ def dummy_minimize(func, dimensions, n_calls=100,
                 c(curr_res)
 
     y = np.array(y)
-    return create_result(X, y, space, rng, specs)
+    callbacks = return_callbacks and callbacks
+    return create_result(X, y, space, rng, specs, callbacks=callbacks)

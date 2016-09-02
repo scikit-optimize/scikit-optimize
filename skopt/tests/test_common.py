@@ -8,8 +8,10 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 from skopt import dummy_minimize
 from skopt import gp_minimize
@@ -17,12 +19,13 @@ from skopt import forest_minimize
 from skopt import gbrt_minimize
 from skopt.benchmarks import branin
 from skopt.benchmarks import bench4
+from skopt.callbacks import VerboseCallback
 from skopt.space import Space
 
 
 # dummy_minimize does not support same parameters so
 # treated separately
-MINIMIZERS = [gp_minimize]
+MINIMIZERS = [partial(gp_minimize)]
 ACQUISITION = ["LCB", "PI", "EI"]
 
 
@@ -216,3 +219,16 @@ def test_invalid_n_calls_arguments():
                              n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
                              y0=[2.0, 3.0, 5.0],
                              random_state=1, n_random_starts=7)
+
+def check_return_callbacks(minimizer, func, space, n_calls, n_random_starts=1):
+    res = minimizer(func, space, n_calls=n_calls, n_random_starts=n_random_starts,
+                    verbose=True, return_callbacks=True)
+    callbacks = res.callbacks
+    assert_true(isinstance(callbacks, list))
+    assert_true(isinstance(callbacks[0], VerboseCallback))
+    # Note: If the line below fails, we have discovered time travel.
+    assert_greater(np.sum(callbacks[0].total_time), 0.0)
+
+def test_return_callbacks():
+    for minimizer in MINIMIZERS:
+        yield check_return_callbacks, minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)], 10

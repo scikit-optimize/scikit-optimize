@@ -38,7 +38,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                 acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
                 n_points=500, n_random_starts=10, n_restarts_optimizer=5,
                 x0=None, y0=None, random_state=None, verbose=False,
-                callback=None):
+                callback=None, return_callbacks=False):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -163,9 +163,15 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, list of callables, optional]
+    * `callback` [callable, list of callables, optional]:
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
+
+    * `return_callbacks` [boolean, optional]:
+        If set to True, set `callbacks` attribute to the list of provided callbacks
+        in the returned OptimizeResult instance.
+        If this and `verbose=True`, in addition to the provided `callbacks`, a
+        `VerboseCallback` instance is also included.
 
     Returns
     -------
@@ -278,12 +284,11 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     for i, x in enumerate(X_rand):
         yi.append(func(x))
 
-        if callbacks is not None:
+        if callbacks:
             curr_res = create_result(
                 x0 + X_rand[:i + 1], yi, space, rng, specs)
-            if callbacks:
-                for c in callbacks:
-                    c(curr_res)
+            for c in callbacks:
+                c(curr_res)
 
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
@@ -340,9 +345,10 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         yi.append(func(next_x))
         Xi.append(next_x)
         curr_res = create_result(Xi, yi, space, rng, specs)
-        for c in callbacks:
-            if callbacks:
+        if callbacks:
+            for c in callbacks:
                 c(curr_res)
 
     # Pack results
-    return create_result(Xi, yi, space, rng, specs, models)
+    callbacks = return_callbacks and callbacks
+    return create_result(Xi, yi, space, rng, specs, models, callbacks=callbacks)
