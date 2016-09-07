@@ -59,14 +59,14 @@ Run the tests by executing `nosetests` in the top level directory.
 
 from . import acquisition
 from . import benchmarks
+from . import callbacks
 from . import learning
 from . import plots
 from . import space
-
-from .gp_opt import gp_minimize
-from .dummy_opt import dummy_minimize
-from .forest_opt import forest_minimize
-from .forest_opt import gbrt_minimize
+from .optimizer import dummy_minimize
+from .optimizer import forest_minimize
+from .optimizer import gbrt_minimize
+from .optimizer import gp_minimize
 
 
 __version__ = "0.1"
@@ -76,9 +76,6 @@ __all__ = ("acquisition",
            "benchmarks",
            "callbacks",
            "learning",
+           "optimizer",
            "plots",
-           "space",
-           "gp_minimize",
-           "dummy_minimize",
-           "forest_minimize",
-           "gbrt_minimize")
+           "space")

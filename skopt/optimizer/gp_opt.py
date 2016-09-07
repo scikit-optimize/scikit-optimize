@@ -1,14 +1,6 @@
 """Gaussian process-based minimization algorithms."""
 
-import copy
-import inspect
-import numbers
-import warnings
-from collections import Iterable
-
 import numpy as np
-
-from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import clone
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -17,28 +9,16 @@ from sklearn.gaussian_process.kernels import ConstantKernel
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.utils import check_random_state
 
-from .acquisition import _gaussian_acquisition
-from .callbacks import check_callback
-from .callbacks import VerboseCallback
-from .space import Space
-from .utils import create_result
+from .base_opt import base_minimize
+from ..space import Space
 
 
-def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
-    """
-    A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
-
-    This is because lbfgs allows only 1-D input.
-    """
-    X = np.expand_dims(X, axis=0)
-    return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
-
-
-def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
-                acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
-                n_points=500, n_random_starts=10, n_restarts_optimizer=5,
-                x0=None, y0=None, random_state=None, verbose=False,
-                callback=None):
+def gp_minimize(func, dimensions, base_estimator=None,
+                acq_func="EI", xi=0.01, kappa=1.96,
+                acq_optimizer="auto",
+                n_calls=100, n_points=500, n_random_starts=10,
+                n_restarts_optimizer=5, x0=None, y0=None,
+                random_state=None, verbose=False, callback=None):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -90,7 +70,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         - Noise that is added to the matern kernel. The noise is assumed
           to be iid gaussian.
 
-    * `acq` [string, default=`"EI"`]:
+    * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
 
         - `"LCB"` for lower confidence bound,
@@ -107,19 +87,19 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `search` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+    * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Searching for the next possible candidate to update the Gaussian prior
         with.
 
-        If search is set to `"auto"`, then it is set to `"lbfgs"`` if
+        If acq_optimizer is set to `"auto"`, then it is set to `"lbfgs"`` if
         all the search dimensions are Real(continuous). It defaults to
         `"sampling"` for all other cases.
 
-        If search is set to `"sampling"`, `n_points` are sampled randomly
+        If acq_optimizer is set to `"sampling"`, `n_points` are sampled randomly
         and the Gaussian Process prior is updated with the point that gives
         the best acquisition value over the Gaussian prior.
 
-        If search is set to `"lbfgs"`, then a point is sampled randomly, and
+        If acq_optimizer is set to `"lbfgs"`, then a point is sampled randomly, and
         lbfgs is run for 10 iterations optimizing the acquisition function
         over the Gaussian prior.
 
@@ -128,14 +108,14 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
 
     * `n_points` [int, default=500]:
         Number of points to sample to determine the next "best" point.
-        Useless if search is set to `"lbfgs"`.
+        Useless if acq_optimizer is set to `"lbfgs"`.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
 
-    * `n_restarts_optimizer` [int, default=10]:
-        The number of restarts of the optimizer when `search` is `"lbfgs"`.
+    * `n_restarts_optimizer` [int, default=5]:
+        The number of restarts of the optimizer when `acq_optimizer` is `"lbfgs"`.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
@@ -187,162 +167,26 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call args
-    specs = {"args": copy.copy(inspect.currentframe().f_locals),
-             "function": inspect.currentframe().f_code.co_name}
-
     # Check params
     rng = check_random_state(random_state)
     space = Space(dimensions)
 
     # Default GP
     if base_estimator is None:
-        if space.transformed_n_dims == 1:
-            length_scale = 1.0
-            length_scale_bounds = (0.01, 100)
-        else:
-            length_scale = np.ones(space.transformed_n_dims)
-            length_scale_bounds = [(0.01, 100)] * space.transformed_n_dims
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
-        matern = Matern(length_scale=length_scale,
-                        length_scale_bounds=length_scale_bounds,
+        matern = Matern(length_scale=np.ones(space.transformed_n_dims),
+                        length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
                         nu=2.5)
         noise = WhiteKernel()
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * matern + noise,
             normalize_y=True, random_state=random_state, alpha=0.0)
 
-    # Initialize with provided points (x0 and y0) and/or random points
-    if x0 is None:
-        x0 = []
-    elif not isinstance(x0[0], list):
-        x0 = [x0]
-
-    if not isinstance(x0, list):
-        raise ValueError("`x0` should be a list, but got %s" % type(x0))
-
-    n_init_func_calls = len(x0) if y0 is None else 0
-    n_total_init_calls = n_random_starts + n_init_func_calls
-
-    if n_calls <= 0:
-        raise ValueError("Expected `n_calls` > 0, got %d" % n_calls)
-
-    if n_random_starts < 0:
-        raise ValueError(
-            "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
-
-    if n_random_starts == 0 and not x0:
-        raise ValueError("Either set `n_random_starts` > 0, or provide `x0`")
-
-    if n_calls < n_total_init_calls:
-        raise ValueError(
-            "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
-
-    callbacks = check_callback(callback)
-    if verbose:
-        callbacks.append(VerboseCallback(
-            n_init=n_init_func_calls, n_random=n_random_starts,
-            n_total=n_calls))
-
-    if y0 is None and x0:
-        y0 = []
-        for i, x in enumerate(x0):
-            y0.append(func(x))
-            curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
-
-            if callbacks:
-                for c in callbacks:
-                    c(curr_res)
-
-    elif x0:
-        if isinstance(y0, Iterable):
-            y0 = list(y0)
-        elif isinstance(y0, numbers.Number):
-            y0 = [y0]
-        else:
-            raise ValueError(
-                "`y0` should be an iterable or a scalar, got %s" % type(y0))
-        if len(x0) != len(y0):
-            raise ValueError("`x0` and `y0` should have the same length")
-        if not all(map(np.isscalar, y0)):
-            raise ValueError(
-                "`y0` elements should be scalars")
-    else:
-        y0 = []
-
-    # Random function evaluations.
-    X_rand = space.rvs(n_samples=n_random_starts, random_state=rng)
-    Xi = x0 + X_rand
-    yi = y0
-
-    for i, x in enumerate(X_rand):
-        yi.append(func(x))
-
-        if callbacks is not None:
-            curr_res = create_result(
-                x0 + X_rand[:i + 1], yi, space, rng, specs)
-            if callbacks:
-                for c in callbacks:
-                    c(curr_res)
-
-    if np.ndim(yi) != 1:
-        raise ValueError("`func` should return a scalar")
-
-    if search == "auto":
-        if space.is_real:
-            search = "lbfgs"
-        else:
-            search = "sampling"
-    elif search not in ["lbfgs", "sampling"]:
-        raise ValueError(
-            "Expected search to be 'lbfgs', 'sampling' or 'auto', "
-            "got %s" % search)
-
-    # Bayesian optimization loop
-    models = []
-    n_model_iter = n_calls - n_total_init_calls
-    for i in range(n_model_iter):
-        gp = clone(base_estimator)
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            gp.fit(space.transform(Xi), yi)
-
-        models.append(gp)
-
-        if search == "sampling":
-            X = space.transform(space.rvs(n_samples=n_points,
-                                          random_state=rng))
-            values = _gaussian_acquisition(
-                X=X, model=gp,  y_opt=np.min(yi), method=acq,
-                xi=xi, kappa=kappa)
-            next_x = X[np.argmin(values)]
-
-        elif search == "lbfgs":
-            best = np.inf
-
-            for j in range(n_restarts_optimizer):
-                x0 = space.transform(space.rvs(n_samples=1,
-                                               random_state=rng))[0]
-
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    x, a, _ = fmin_l_bfgs_b(
-                        _acquisition, x0,
-                        args=(gp, np.min(yi), acq, xi, kappa),
-                        bounds=space.transformed_bounds,
-                        approx_grad=True, maxiter=20)
-
-                if a < best:
-                    next_x, best = x, a
-
-        next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-        yi.append(func(next_x))
-        Xi.append(next_x)
-        curr_res = create_result(Xi, yi, space, rng, specs)
-        for c in callbacks:
-            if callbacks:
-                c(curr_res)
-
-    # Pack results
-    return create_result(Xi, yi, space, rng, specs, models)
+    return base_minimize(
+        func, dimensions, base_estimator=base_estimator,
+        acq_func=acq_func,
+        xi=xi, kappa=kappa, acq_optimizer=acq_optimizer, n_calls=n_calls,
+        n_points=n_points, n_random_starts=n_random_starts,
+        n_restarts_optimizer=n_restarts_optimizer,
+        x0=x0, y0=y0, random_state=random_state, verbose=verbose,
+        callback=callback)
