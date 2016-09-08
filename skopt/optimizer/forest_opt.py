@@ -142,7 +142,7 @@ def forest_minimize(func, dimensions, base_estimator='et', n_calls=100,
     if isinstance(base_estimator, str):
         if base_estimator not in ("rf", "et"):
             raise ValueError(
-                "Valid string values for the base_estimator parameter"
+                "Valid strings for the base_estimator parameter"
                 " are: 'rf' or 'et', not '%s'" % base_estimator)
 
         if base_estimator == "rf":

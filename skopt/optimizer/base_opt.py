@@ -166,7 +166,7 @@ def base_minimize(func, dimensions, base_estimator,
 
     if not is_regressor(base_estimator):
         raise ValueError(
-            "base_estimator has to be a regressor." % base_estimator)
+            "%s has to be a regressor." % base_estimator)
 
     # Check params
     rng = check_random_state(random_state)
