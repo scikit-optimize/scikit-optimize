@@ -9,16 +9,15 @@ from sklearn.gaussian_process.kernels import ConstantKernel
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.utils import check_random_state
 
-from .base_opt import base_minimize
+from .base import base_minimize
 from ..space import Space
 
 
 def gp_minimize(func, dimensions, base_estimator=None,
-                acq_func="EI", xi=0.01, kappa=1.96,
-                acq_optimizer="auto",
-                n_calls=100, n_points=500, n_random_starts=10,
-                n_restarts_optimizer=5, x0=None, y0=None,
-                random_state=None, verbose=False, callback=None):
+                n_calls=100, n_random_starts=10,
+                acq_func="EI", acq_optimizer="auto", x0=None, y0=None,
+                random_state=None, verbose=False, callback=None,
+                n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance

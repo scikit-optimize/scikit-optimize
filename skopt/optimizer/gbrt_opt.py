@@ -2,14 +2,15 @@
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
-from .base_opt import base_minimize
+from .base import base_minimize
 from ..learning import GradientBoostingQuantileRegressor
 
 
-def gbrt_minimize(func, dimensions, base_estimator=None, n_calls=100,
-                  n_points=1000, n_random_starts=10, x0=None, y0=None,
-                  n_jobs=1, random_state=None, acq_func="EI",
-                  xi=0.01, kappa=1.96, verbose=False, callback=None):
+def gbrt_minimize(func, dimensions, base_estimator=None,
+                  n_calls=100, n_random_starts=10,
+                  acq_func="EI", acq_optimizer="auto",
+                  x0=None, y0=None, random_state=None, verbose=False,
+                  callback=None, n_points=1000, xi=0.01, kappa=1.96, n_jobs=1):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
