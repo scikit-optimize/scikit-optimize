@@ -165,9 +165,8 @@ def base_minimize(func, dimensions, base_estimator,
              "function": inspect.currentframe().f_code.co_name}
 
     if not is_regressor(base_estimator):
-        raise ValueError("The base_estimator parameter has to either"
-                         " be a string or a regressor instance."
-                         " '%s' is neither." % base_estimator)
+        raise ValueError(
+            "base_estimator has to be a regressor." % base_estimator)
 
     # Check params
     rng = check_random_state(random_state)
