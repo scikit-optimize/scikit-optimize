@@ -3,7 +3,7 @@ from sklearn.utils.testing import assert_less
 
 from skopt.benchmarks import bench1
 from skopt.callbacks import TimerCallback
-from skopt.optimizer.dummy_opt import dummy_minimize
+from skopt.dummy_opt import dummy_minimize
 
 def test_timer_callback():
     callback = TimerCallback()

@@ -69,52 +69,35 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - Noise that is added to the matern kernel. The noise is assumed
           to be iid gaussian.
 
-    * `acq_func` [string, default=`"EI"`]:
-        Function to minimize over the gaussian prior. Can be either
-
-        - `"LCB"` for lower confidence bound,
-        - `"EI"` for expected improvement,
-        - `"PI"` for probability of improvement.
-
-    * `xi` [float, default=0.01]:
-        Controls how much improvement one wants over the previous best
-        values. Used when the acquisition is either `"EI"` or `"PI"`.
-
-    * `kappa` [float, default=1.96]:
-        Controls how much of the variance in the predicted values should be
-        taken into account. If set to be very high, then we are favouring
-        exploration over exploitation and vice versa.
-        Used when the acquisition is `"LCB"`.
-
-    * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
-        Searching for the next possible candidate to update the Gaussian prior
-        with.
-
-        If acq_optimizer is set to `"auto"`, then it is set to `"lbfgs"`` if
-        all the search dimensions are Real(continuous). It defaults to
-        `"sampling"` for all other cases.
-
-        If acq_optimizer is set to `"sampling"`, `n_points` are sampled randomly
-        and the Gaussian Process prior is updated with the point that gives
-        the best acquisition value over the Gaussian prior.
-
-        If acq_optimizer is set to `"lbfgs"`, then a point is sampled randomly, and
-        lbfgs is run for 10 iterations optimizing the acquisition function
-        over the Gaussian prior.
-
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
-
-    * `n_points` [int, default=500]:
-        Number of points to sample to determine the next "best" point.
-        Useless if acq_optimizer is set to `"lbfgs"`.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
 
-    * `n_restarts_optimizer` [int, default=5]:
-        The number of restarts of the optimizer when `acq_optimizer` is `"lbfgs"`.
+    * `acq_func` [string, default=`"EI"`]:
+        Function to minimize over the gaussian prior. Can be either
+
+        - `"LCB"` for lower confidence bound.
+        - `"EI"` for negative expected improvement.
+        - `"PI"` for negative probability of improvement.
+
+    * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+        Method to minimize the acquistion function. The prior over `func`
+        is updated with the optimal value obtained by optimizing `acq_func`
+        with `acq_optimizer`.
+
+        - If set to `"sampling"`, then `acq_func` is optimized by computing
+          `acq_func` at `n_points` sampled randomly.
+        - If set to `"lbfgs"`, then `acq_func` is optimized by
+              - Sampling `n_restarts_optimizer` points randomly.
+              - `"lbfgs"` is run for 20 iterations with these points as initial
+                points to find local minima.
+              - The optimal of these local minima is used to update the prior.
+        - If set to `"auto"`, then it is set to `"lbfgs"`` if
+          all the search dimensions are Real (continuous). It defaults to
+          `"sampling"` for all other cases.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
@@ -145,6 +128,23 @@ def gp_minimize(func, dimensions, base_estimator=None,
     * `callback` [callable, list of callables, optional]
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
+
+    * `n_points` [int, default=500]:
+        Number of points to sample to determine the next "best" point.
+        Useless if acq_optimizer is set to `"lbfgs"`.
+
+    * `n_restarts_optimizer` [int, default=5]:
+        The number of restarts of the optimizer when `acq_optimizer` is `"lbfgs"`.
+
+    * `kappa` [float, default=1.96]:
+        Controls how much of the variance in the predicted values should be
+        taken into account. If set to be very high, then we are favouring
+        exploration over exploitation and vice versa.
+        Used when the acquisition is `"LCB"`.
+
+    * `xi` [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Used when the acquisition is either `"EI"` or `"PI"`.
 
     Returns
     -------

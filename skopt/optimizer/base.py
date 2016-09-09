@@ -60,9 +60,9 @@ def base_minimize(func, dimensions, base_estimator,
           `Categorical`).
 
     * `base_estimator` [a Gaussian process estimator]:
-        Should be a sklearn Regressor. In addition, should have an optional
-        `return_std` argument, which returns `std(Y | x)`` along with
-        `E[Y | x]`
+        Should inherit from `linear_model.base.RegressorMixin`.
+        In addition, should have an optional `return_std` argument,
+        which returns `std(Y | x)`` along with `E[Y | x]`
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
@@ -75,24 +75,24 @@ def base_minimize(func, dimensions, base_estimator,
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound,
-        - `"EI"` for expected improvement,
-        - `"PI"` for probability of improvement.
+        - `"EI"` for negative expected improvement,
+        - `"PI"` for negative probability of improvement.
 
     * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
-        Searching for the next possible candidate to update the prior
-        with.
+        Method to minimize the acquistion function. The prior over `func`
+        is updated with the optimal value obtained by optimizing `acq_func`
+        with `acq_optimizer`.
 
-        If acq_optimizer is set to `"auto"`, then it is set to `"lbfgs"`` if
-        all the search dimensions are Real(continuous). It defaults to
-        `"sampling"` for all other cases.
-
-        If acq_optimizer is set to `"sampling"`, `n_points` are sampled randomly
-        and the Gaussian Process prior is updated with the point that gives
-        the best acquisition value over the Gaussian prior.
-
-        If acq_optimizer is set to `"lbfgs"`, then a point is sampled randomly, and
-        lbfgs is run for 5 iterations optimizing the acquisition function
-        over the Gaussian posterior.
+        - If set to `"sampling"`, then `acq_func` is optimized by computing
+          `acq_func` at `n_points` sampled randomly.
+        - If set to `"lbfgs"`, then `acq_func` is optimized by
+              - Sampling `n_restarts_optimizer` points randomly.
+              - `"lbfgs"` is run for 20 iterations with these points as initial
+                points to find local minima.
+              - The optimal of these local minima is used to update the prior.
+        - If set to `"auto"`, then it is set to `"lbfgs"`` if
+          all the search dimensions are Real (continuous). It defaults to
+          `"sampling"` for all other cases.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.

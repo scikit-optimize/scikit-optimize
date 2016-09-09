@@ -1,23 +1,23 @@
+"""Forest based minimization algorithms."""
 
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..learning import GradientBoostingQuantileRegressor
+from ..learning import ExtraTreesRegressor
+from ..learning import RandomForestRegressor
 
 
-def gbrt_minimize(func, dimensions, base_estimator=None,
-                  n_calls=100, n_random_starts=10,
-                  acq_func="EI", acq_optimizer="auto",
-                  x0=None, y0=None, random_state=None, verbose=False,
-                  callback=None, n_points=1000, xi=0.01, kappa=1.96, n_jobs=1):
-    """Sequential optimization using gradient boosted trees.
+def forest_minimize(func, dimensions, base_estimator="et",
+                    n_calls=100, n_random_starts=10,
+                    acq_func="EI", acq_optimizer="auto",
+                    x0=None, y0=None, random_state=None, verbose=False,
+                    callback=None, n_points=1000, xi=0.01, kappa=1.96, n_jobs=1):
+    """Sequential optimisation using decision trees.
 
-    Gradient boosted regression trees are used to model the (very)
-    expensive to evaluate function `func`. The model is improved
-    by sequentially evaluating the expensive function at the next
-    best point. Thereby finding the minimum of `func` with as
-    few evaluations as possible.
+    A tree based regression model is used to model the expensive to evaluate
+    function `func`. The model is improved by sequentially evaluating
+    the expensive function at the next best point. Thereby finding the
+    minimum of `func` with as few evaluations as possible.
 
     The total number of evaluations, `n_calls`, are performed like the
     following. If `x0` is provided but not `y0`, then the elements of `x0`
@@ -46,8 +46,18 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [`GradientBoostingQuantileRegressor`]:
-        The regressor to use as surrogate model
+    * `base_estimator` [string or `Regressor`, default=`"et"`]:
+        The regressor to use as surrogate model. Can be either
+
+        - `"rf"` for random forest regressor
+        - `"et"` for extra trees regressor
+        - instance of regressor with support for `return_std` in its predict
+          method
+
+        The predefined models are initilized with good defaults. If you
+        want to adjust the model parameters pass your own instance of
+        a regressor which returns the mean and standard deviation when
+        making predictions.
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
@@ -56,8 +66,12 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
 
-    * `n_points` [int, default=1000]:
-        Number of points to sample when minimizing the acquisition function.
+    * `acq_func` [string, default=`"LCB"`]:
+        Function to minimize over the forest posterior. Can be either
+
+        - `"LCB"` for lower confidence bound.
+        - `"EI"` for negative expected improvement.
+        - `"PI"` for negative probability of improvement.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
@@ -69,7 +83,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     * `y0` [list, scalar or `None`]:
         Evaluation of initial input points.
 
-        - If it is a lists, then it corresponds to evaluations of the function
+        - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
           to the function evaluated at the i-th element of `x0`.
         - If it is a scalar, then it corresponds to the evaluation of the
@@ -77,20 +91,19 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
-    * `n_jobs` [int, default=1]:
-        The number of jobs to run in parallel for `fit`.
-        If -1, then the number of jobs is set to the number of cores.
-
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
 
-    * `acq_func` [string, default=`"LCB"`]:
-        Function to minimize over the forest posterior. Can be either
+    * `verbose` [boolean, default=False]:
+        Control the verbosity. It is advised to set the verbosity to True
+        for long optimization runs.
 
-        - `"LCB"` for lower confidence bound,
-        - `"EI"` for expected improvement,
-        - `"PI"` for probability of improvement.
+    * `callback` [callable, optional]
+        If provided, then `callback(res)` is called after call to func.
+
+    * `n_points` [int, default=1000]:
+        Number of points to sample when minimizing the acquisition function.
 
     * `xi` [float, default=0.01]:
         Controls how much improvement one wants over the previous best
@@ -102,13 +115,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `verbose` [boolean, default=False]:
-        Control the verbosity. It is advised to set the verbosity to True
-        for long optimization runs.
-
-    * `callback` [callable, list of callables, optional]
-        If callable then `callback(res)` is called after each call to `func`.
-        If list of callables, then each callable in the list is called.
+    * `n_jobs` [int, default=1]:
+        The number of jobs to run in parallel for `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     Returns
     -------
@@ -124,25 +133,35 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
         - `specs` [dict]`: the call specifications.
-        - `rng` [RandomState instance]: State of the random state
-           at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Check params
     rng = check_random_state(random_state)
 
     # Default estimator
-    if base_estimator is None:
-        gbrt = GradientBoostingRegressor(n_estimators=30, loss='quantile')
-        base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
-                                                           n_jobs=n_jobs,
-                                                           random_state=rng)
+    if isinstance(base_estimator, str):
+        if base_estimator not in ("rf", "et"):
+            raise ValueError(
+                "Valid strings for the base_estimator parameter"
+                " are: 'rf' or 'et', not '%s'" % base_estimator)
+
+        if base_estimator == "rf":
+            base_estimator = RandomForestRegressor(n_estimators=100,
+                                                   min_samples_leaf=3,
+                                                   n_jobs=n_jobs,
+                                                   random_state=rng)
+
+        elif base_estimator == "et":
+            base_estimator = ExtraTreesRegressor(n_estimators=100,
+                                                 min_samples_leaf=3,
+                                                 n_jobs=n_jobs,
+                                                 random_state=rng)
 
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,
-                         x0=x0, y0=y0, random_state=random_state, xi=xi,
-                         kappa=kappa, acq_func=acq_func,
+                         x0=x0, y0=y0, random_state=random_state,
+                         acq_func=acq_func,
+                         xi=xi, kappa=kappa, verbose=verbose,
                          callback=callback, acq_optimizer="sampling")
