@@ -7,7 +7,7 @@ from ..learning import ExtraTreesRegressor
 from ..learning import RandomForestRegressor
 
 
-def forest_minimize(func, dimensions, base_estimator=None,
+def forest_minimize(func, dimensions, base_estimator="et",
                     n_calls=100, n_random_starts=10,
                     acq_func="EI", acq_optimizer="auto",
                     x0=None, y0=None, random_state=None, verbose=False,
