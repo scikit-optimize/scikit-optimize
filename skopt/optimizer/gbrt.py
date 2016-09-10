@@ -109,7 +109,6 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         The number of jobs to run in parallel for `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
-
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:

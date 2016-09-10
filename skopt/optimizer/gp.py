@@ -84,7 +84,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - `"PI"` for negative probability of improvement.
 
     * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
-        Method to minimize the acquistion function. The prior over `func`
+        Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 

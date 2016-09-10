@@ -59,8 +59,8 @@ def base_minimize(func, dimensions, base_estimator,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [a Gaussian process estimator]:
-        Should inherit from `linear_model.base.RegressorMixin`.
+    * `base_estimator` [sklearn regressor]:
+        Should inherit from `sklearn.base.RegressorMixin`.
         In addition, should have an optional `return_std` argument,
         which returns `std(Y | x)`` along with `E[Y | x]`
 
@@ -79,7 +79,7 @@ def base_minimize(func, dimensions, base_estimator,
         - `"PI"` for negative probability of improvement.
 
     * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
-        Method to minimize the acquistion function. The prior over `func`
+        Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
