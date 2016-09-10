@@ -8,10 +8,10 @@ import numpy as np
 from collections import Iterable
 from sklearn.utils import check_random_state
 
-from .callbacks import check_callback
-from .callbacks import VerboseCallback
-from .space import Space
-from .utils import create_result
+from ..callbacks import check_callback
+from ..callbacks import VerboseCallback
+from ..space import Space
+from ..utils import create_result
 
 
 def dummy_minimize(func, dimensions, n_calls=100,

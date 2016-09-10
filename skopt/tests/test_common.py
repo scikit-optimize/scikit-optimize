@@ -28,9 +28,9 @@ ACQUISITION = ["LCB", "PI", "EI"]
 
 for est, acq in product(["et", "rf"], ACQUISITION):
     MINIMIZERS.append(
-        partial(forest_minimize, base_estimator=est, acq=acq))
+        partial(forest_minimize, base_estimator=est, acq_func=acq))
 for acq in ACQUISITION:
-    MINIMIZERS.append(partial(gbrt_minimize, acq=acq))
+    MINIMIZERS.append(partial(gbrt_minimize, acq_func=acq))
 
 
 def check_minimizer_api(result, n_models=None):

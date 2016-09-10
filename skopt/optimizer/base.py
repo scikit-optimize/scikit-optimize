@@ -1,4 +1,8 @@
-"""Gaussian process-based minimization algorithms."""
+"""
+Abstraction for optimizers.
+
+It is sufficient that one re-implements the base estimator.
+"""
 
 import copy
 import inspect
@@ -11,18 +15,14 @@ import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import clone
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern
-from sklearn.gaussian_process.kernels import ConstantKernel
-from sklearn.gaussian_process.kernels import WhiteKernel
+from sklearn.base import is_regressor
 from sklearn.utils import check_random_state
 
-from .acquisition import _gaussian_acquisition
-from .callbacks import check_callback
-from .callbacks import VerboseCallback
-from .space import Space
-from .utils import create_result
-
+from ..acquisition import _gaussian_acquisition
+from ..callbacks import check_callback
+from ..callbacks import VerboseCallback
+from ..space import Space
+from ..utils import create_result
 
 def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     """
@@ -34,35 +34,13 @@ def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
     return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
 
 
-def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
-                acq="EI", xi=0.01, kappa=1.96, search="auto", n_calls=100,
-                n_points=500, n_random_starts=10, n_restarts_optimizer=5,
-                x0=None, y0=None, random_state=None, verbose=False,
-                callback=None):
-    """Bayesian optimization using Gaussian Processes.
-
-    If every function evaluation is expensive, for instance
-    when the parameters are the hyperparameters of a neural network
-    and the function evaluation is the mean cross-validation score across
-    ten folds, optimizing the hyperparameters by standard optimization
-    routines would take for ever!
-
-    The idea is to approximate the function using a Gaussian process.
-    In other words the function values are assumed to follow a multivariate
-    gaussian. The covariance of the function values are given by a
-    GP kernel between the parameters. Then a smart choice to choose the
-    next parameter to evaluate can be made by the acquisition function
-    over the Gaussian prior which is much quicker to evaluate.
-
-    The total number of evaluations, `n_calls`, are performed like the
-    following. If `x0` is provided but not `y0`, then the elements of `x0`
-    are first evaluated, followed by `n_random_starts` evaluations.
-    Finally, `n_calls - len(x0) - n_random_starts` evaluations are
-    made guided by the surrogate model. If `x0` and `y0` are both
-    provided then `n_random_starts` evaluations are first made then
-    `n_calls - n_random_starts` subsequent evaluations are made
-    guided by the surrogate model.
-
+def base_minimize(func, dimensions, base_estimator,
+                  n_calls=100, n_random_starts=10,
+                  acq_func="EI", acq_optimizer="auto",
+                  x0=None, y0=None, random_state=None, verbose=False,
+                  callback=None, n_points=10000, n_restarts_optimizer=5,
+                  xi=0.01, kappa=1.96):
+    """
     Parameters
     ----------
     * `func` [callable]:
@@ -81,61 +59,40 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [a Gaussian process estimator]:
-        The Gaussian process estimator to use for optimization.
-        By default, a Matern kernel is used with the following
-        hyperparameters tuned.
-        - All the length scales of the Matern kernel.
-        - The covariance amplitude that each element is multiplied with.
-        - Noise that is added to the matern kernel. The noise is assumed
-          to be iid gaussian.
-
-    * `acq` [string, default=`"EI"`]:
-        Function to minimize over the gaussian prior. Can be either
-
-        - `"LCB"` for lower confidence bound,
-        - `"EI"` for expected improvement,
-        - `"PI"` for probability of improvement.
-
-    * `xi` [float, default=0.01]:
-        Controls how much improvement one wants over the previous best
-        values. Used when the acquisition is either `"EI"` or `"PI"`.
-
-    * `kappa` [float, default=1.96]:
-        Controls how much of the variance in the predicted values should be
-        taken into account. If set to be very high, then we are favouring
-        exploration over exploitation and vice versa.
-        Used when the acquisition is `"LCB"`.
-
-    * `search` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
-        Searching for the next possible candidate to update the Gaussian prior
-        with.
-
-        If search is set to `"auto"`, then it is set to `"lbfgs"`` if
-        all the search dimensions are Real(continuous). It defaults to
-        `"sampling"` for all other cases.
-
-        If search is set to `"sampling"`, `n_points` are sampled randomly
-        and the Gaussian Process prior is updated with the point that gives
-        the best acquisition value over the Gaussian prior.
-
-        If search is set to `"lbfgs"`, then a point is sampled randomly, and
-        lbfgs is run for 10 iterations optimizing the acquisition function
-        over the Gaussian prior.
+    * `base_estimator` [sklearn regressor]:
+        Should inherit from `sklearn.base.RegressorMixin`.
+        In addition, should have an optional `return_std` argument,
+        which returns `std(Y | x)`` along with `E[Y | x]`
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
-
-    * `n_points` [int, default=500]:
-        Number of points to sample to determine the next "best" point.
-        Useless if search is set to `"lbfgs"`.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
 
-    * `n_restarts_optimizer` [int, default=10]:
-        The number of restarts of the optimizer when `search` is `"lbfgs"`.
+    * `acq_func` [string, default=`"EI"`]:
+        Function to minimize over the posterior distribution. Can be either
+
+        - `"LCB"` for lower confidence bound,
+        - `"EI"` for negative expected improvement,
+        - `"PI"` for negative probability of improvement.
+
+    * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+        Method to minimize the acquistion function. The fit model
+        is updated with the optimal value obtained by optimizing `acq_func`
+        with `acq_optimizer`.
+
+        - If set to `"sampling"`, then `acq_func` is optimized by computing
+          `acq_func` at `n_points` sampled randomly.
+        - If set to `"lbfgs"`, then `acq_func` is optimized by
+              - Sampling `n_restarts_optimizer` points randomly.
+              - `"lbfgs"` is run for 20 iterations with these points as initial
+                points to find local minima.
+              - The optimal of these local minima is used to update the prior.
+        - If set to `"auto"`, then it is set to `"lbfgs"`` if
+          all the search dimensions are Real (continuous). It defaults to
+          `"sampling"` for all other cases.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
@@ -167,6 +124,23 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
+    * `n_points` [int, default=500]:
+        Number of points to sample to determine the next "best" point.
+        Useless if acq_optimizer is set to `"lbfgs"`.
+
+    * `n_restarts_optimizer` [int, default=5]:
+        The number of restarts of the optimizer when `acq_optimizer` is `"lbfgs"`.
+
+    * `xi` [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Used when the acquisition is either `"EI"` or `"PI"`.
+
+    * `kappa` [float, default=1.96]:
+        Controls how much of the variance in the predicted values should be
+        taken into account. If set to be very high, then we are favouring
+        exploration over exploitation and vice versa.
+        Used when the acquisition is `"LCB"`.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -187,30 +161,16 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call args
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
+
+    if not is_regressor(base_estimator):
+        raise ValueError(
+            "%s has to be a regressor." % base_estimator)
 
     # Check params
     rng = check_random_state(random_state)
     space = Space(dimensions)
-
-    # Default GP
-    if base_estimator is None:
-        if space.transformed_n_dims == 1:
-            length_scale = 1.0
-            length_scale_bounds = (0.01, 100)
-        else:
-            length_scale = np.ones(space.transformed_n_dims)
-            length_scale_bounds = [(0.01, 100)] * space.transformed_n_dims
-        cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
-        matern = Matern(length_scale=length_scale,
-                        length_scale_bounds=length_scale_bounds,
-                        nu=2.5)
-        noise = WhiteKernel()
-        base_estimator = GaussianProcessRegressor(
-            kernel=cov_amplitude * matern + noise,
-            normalize_y=True, random_state=random_state, alpha=0.0)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
@@ -288,15 +248,15 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
     if np.ndim(yi) != 1:
         raise ValueError("`func` should return a scalar")
 
-    if search == "auto":
+    if acq_optimizer == "auto":
         if space.is_real:
-            search = "lbfgs"
+            acq_optimizer = "lbfgs"
         else:
-            search = "sampling"
-    elif search not in ["lbfgs", "sampling"]:
+            acq_optimizer = "sampling"
+    elif acq_optimizer not in ["lbfgs", "sampling"]:
         raise ValueError(
-            "Expected search to be 'lbfgs', 'sampling' or 'auto', "
-            "got %s" % search)
+            "Expected acq_optimizer to be 'lbfgs', 'sampling' or 'auto', "
+            "got %s" % acq_optimizer)
 
     # Bayesian optimization loop
     models = []
@@ -310,15 +270,15 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
 
         models.append(gp)
 
-        if search == "sampling":
+        if acq_optimizer == "sampling":
             X = space.transform(space.rvs(n_samples=n_points,
                                           random_state=rng))
             values = _gaussian_acquisition(
-                X=X, model=gp,  y_opt=np.min(yi), method=acq,
+                X=X, model=gp,  y_opt=np.min(yi), method=acq_func,
                 xi=xi, kappa=kappa)
             next_x = X[np.argmin(values)]
 
-        elif search == "lbfgs":
+        elif acq_optimizer == "lbfgs":
             best = np.inf
 
             for j in range(n_restarts_optimizer):
@@ -329,7 +289,7 @@ def gp_minimize(func, dimensions, base_estimator=None, alpha=10e-10,
                     warnings.simplefilter("ignore")
                     x, a, _ = fmin_l_bfgs_b(
                         _acquisition, x0,
-                        args=(gp, np.min(yi), acq, xi, kappa),
+                        args=(gp, np.min(yi), acq_func, xi, kappa),
                         bounds=space.transformed_bounds,
                         approx_grad=True, maxiter=20)
 

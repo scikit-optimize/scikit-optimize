@@ -24,20 +24,16 @@ MINIMIZERS = [("et", partial(forest_minimize, base_estimator='et')),
 def test_forest_minimize_api():
     # invalid string value
     assert_raise_message(ValueError,
-                         "Valid values for the base_estimator parameter",
+                         "Valid strings for the base_estimator parameter",
                          forest_minimize, lambda x: 0., [],
                          base_estimator='abc')
 
-    # not a string nor a regressor
-    assert_raise_message(ValueError,
-                         "The base_estimator parameter has to either",
-                         forest_minimize, lambda x: 0., [],
-                         base_estimator=42)
-
-    assert_raise_message(ValueError,
-                         "The base_estimator parameter has to either",
-                         forest_minimize, lambda x: 0., [],
-                         base_estimator=DecisionTreeClassifier())
+    for base_estimator in [42, DecisionTreeClassifier()]:
+        # not a string nor a regressor
+        assert_raise_message(ValueError,
+                             "has to be a regressor",
+                             forest_minimize, lambda x: 0., [],
+                             base_estimator=base_estimator)
 
 
 def check_minimize(minimizer, func, y_opt, dimensions, margin,
