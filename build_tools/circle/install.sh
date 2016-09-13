@@ -49,7 +49,7 @@ python -c "import matplotlib.pyplot as plt"
 
 # Generating documentation
 for nb in examples/*ipynb; do
-    jupyter nbconvert --ExecutePreprocessor.timeout=900 --execute "$nb" --to markdown |& tee -a nb_to_md.txt
+    jupyter nbconvert --ExecutePreprocessor.timeout=1024 --execute "$nb" --to markdown |& tee -a nb_to_md.txt
 done
 
 cd ~
