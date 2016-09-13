@@ -53,3 +53,4 @@ mkdir -p ./doc/skopt/notebooks
 cp ${SKOPT_HOME}/examples/*md ${HOME}/doc/skopt/notebooks
 cp -r ${SKOPT_HOME}/examples/*_files ${HOME}/doc/skopt/notebooks
 python ${SKOPT_HOME}/build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${SKOPT_HOME}/build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
+cp -r ./doc ${CIRCLE_ARTIFACTS}
