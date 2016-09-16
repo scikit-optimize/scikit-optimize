@@ -3,7 +3,7 @@
 import numpy as np
 
 from sklearn.base import clone
-from sklearn.gaussian_process import GaussianProcessRegressor
+from skopt.learning import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process.kernels import ConstantKernel
 from sklearn.gaussian_process.kernels import WhiteKernel
