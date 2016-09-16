@@ -1,7 +1,7 @@
 dependencies:
   override:
     - bash ./build_tools/circle/install.sh:
-        timeout: 1100
+        timeout: 1024
 
 test:
   # Grep error on the documentation
@@ -17,4 +17,4 @@ deployment:
 general:
   # Open the doc to the API
   artifacts:
-    - nb_to_md.txt"
+    - ~/doc/skopt/notebooks
