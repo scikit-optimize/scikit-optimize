@@ -12,8 +12,7 @@ Scikit-Optimize is a community effort. Contributors include, in alphabetical ord
 * [nel215][nel215]
 
 The scikit-optimize logo was a contribution by
-
-* [Jeremy Anderson][objectadjective]
+[Jeremy Anderson][objectadjective] and **Rose Peng**.
 
 [AlexanderFabisch]: https://github.com/AlexanderFabisch
 [mehdidc]: https://github.com/mehdidc
