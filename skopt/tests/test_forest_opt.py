@@ -16,8 +16,8 @@ from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
 
 
-MINIMIZERS = [("et", partial(forest_minimize, base_estimator='et')),
-              ("rf", partial(forest_minimize, base_estimator='rf')),
+MINIMIZERS = [("ET", partial(forest_minimize, base_estimator='ET')),
+              ("RF", partial(forest_minimize, base_estimator='RF')),
               ("gbrt", gbrt_minimize)]
 
 
@@ -66,7 +66,7 @@ def test_tree_based_minimize():
         yield (check_minimize, minimizer, hart6, -3.32,
                np.tile((0.0, 1.0), (6, 1)), 1.0, 50)
 
-        if name == "et":
+        if name == "ET":
             yield (check_minimize, minimizer, branin, 0.39,
                    [(-5.0, 10.0), (0.0, 15.0)], 0.15, 125)
         else:
