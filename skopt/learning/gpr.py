@@ -30,7 +30,10 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         # The noise component of this kernel should be set to zero
         # while estimating K(X, X_test) and K(X_test, X_test)
         # Note that the term K(X, X) should include the noise but
-        # this (K(X, X))^-1y is precomputed as the attribute alpha.
+        # this (K(X, X))^-1y is precomputed as the attribute `alpha_`.
+        # (Notice the underscore).
+        # This has been described in Eq 2.24 of
+        # http://www.gaussianprocess.org/gpml/chapters/RW2.pdf
         if isinstance(self.kernel_, WhiteKernel):
             self.kernel_.set_params(noise_level=0.0)
         else:
