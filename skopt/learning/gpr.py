@@ -1,6 +1,7 @@
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel
 
+
 class GaussianProcessRegressor(sk_GaussianProcessRegressor):
     """
     GaussianProcessRegressor that allows noise tunability.
