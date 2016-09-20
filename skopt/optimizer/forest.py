@@ -7,7 +7,7 @@ from ..learning import ExtraTreesRegressor
 from ..learning import RandomForestRegressor
 
 
-def forest_minimize(func, dimensions, base_estimator="et",
+def forest_minimize(func, dimensions, base_estimator="ET",
                     n_calls=100, n_random_starts=10,
                     acq_func="EI", acq_optimizer="auto",
                     x0=None, y0=None, random_state=None, verbose=False,
@@ -46,11 +46,11 @@ def forest_minimize(func, dimensions, base_estimator="et",
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [string or `Regressor`, default=`"et"`]:
+    * `base_estimator` [string or `Regressor`, default=`"ET"`]:
         The regressor to use as surrogate model. Can be either
 
-        - `"rf"` for random forest regressor
-        - `"et"` for extra trees regressor
+        - `"RF"` for random forest regressor
+        - `"ET"` for extra trees regressor
         - instance of regressor with support for `return_std` in its predict
           method
 
@@ -141,18 +141,18 @@ def forest_minimize(func, dimensions, base_estimator="et",
 
     # Default estimator
     if isinstance(base_estimator, str):
-        if base_estimator not in ("rf", "et"):
+        if base_estimator not in ("RF", "ET"):
             raise ValueError(
                 "Valid strings for the base_estimator parameter"
-                " are: 'rf' or 'et', not '%s'" % base_estimator)
+                " are: 'RF' or 'ET', not '%s'" % base_estimator)
 
-        if base_estimator == "rf":
+        if base_estimator == "RF":
             base_estimator = RandomForestRegressor(n_estimators=100,
                                                    min_samples_leaf=3,
                                                    n_jobs=n_jobs,
                                                    random_state=rng)
 
-        elif base_estimator == "et":
+        elif base_estimator == "ET":
             base_estimator = ExtraTreesRegressor(n_estimators=100,
                                                  min_samples_leaf=3,
                                                  n_jobs=n_jobs,

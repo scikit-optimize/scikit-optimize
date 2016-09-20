@@ -26,7 +26,7 @@ MINIMIZERS = [gp_minimize]
 ACQUISITION = ["LCB", "PI", "EI"]
 
 
-for est, acq in product(["et", "rf"], ACQUISITION):
+for est, acq in product(["ET", "RF"], ACQUISITION):
     MINIMIZERS.append(
         partial(forest_minimize, base_estimator=est, acq_func=acq))
 for acq in ACQUISITION:
