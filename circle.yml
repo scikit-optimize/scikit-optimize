@@ -4,8 +4,10 @@ dependencies:
         timeout: 1024
 
 test:
-  # Grep error on the documentation
+  # Run and convert examplesto markdown, then grep for errors
   override:
+    - bash ./build_tools/circle/execute.sh:
+        timeout: 1024
     - if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
 
 deployment:

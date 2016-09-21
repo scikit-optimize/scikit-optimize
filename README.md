@@ -62,7 +62,10 @@ and the other [examples](https://github.com/scikit-optimize/scikit-optimize/tree
 
 ## Development
 
-The library is still experimental and under heavy development.
+The library is still experimental and under heavy development. Checkout the
+[ROADMAP](https://github.com/scikit-optimize/scikit-optimize/issues/202) for
+the next release or look at some [easy issues](https://github.com/scikit-optimize/scikit-optimize/issues?q=is%3Aissue+is%3Aopen+label%3AEasy)
+to get started contributing.
 
 The development version can be installed through:
 ```
