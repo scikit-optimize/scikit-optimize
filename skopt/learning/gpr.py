@@ -1,5 +1,16 @@
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel
+from sklearn.gaussian_process.kernels import Sum
+
+
+def _check_WhiteKernel_in_Sum(kernel):
+    if isinstance(kernel, Sum):
+        return (
+            _check_WhiteKernel_in_Sum(kernel.k1) or
+            _check_WhiteKernel_in_Sum(kernel.k2)
+        )
+    else:
+        return isinstance(kernel, WhiteKernel)
 
 
 class GaussianProcessRegressor(sk_GaussianProcessRegressor):
@@ -37,9 +48,9 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         # http://www.gaussianprocess.org/gpml/chapters/RW2.pdf
         if isinstance(self.kernel_, WhiteKernel):
             self.kernel_.set_params(noise_level=0.0)
-        else:
+        elif _check_WhiteKernel_in_Sum(self.kernel_):
             for param, value in self.kernel_.get_params().items():
                 if isinstance(value, WhiteKernel):
                     self.kernel_.set_params(
-                        **{param:WhiteKernel(noise_level=0.0)})
+                        **{param: WhiteKernel(noise_level=0.0)})
         return self
