@@ -3,20 +3,40 @@ from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.gaussian_process.kernels import Sum
 
 
-def _check_WhiteKernel_in_Sum(kernel):
+def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
+    """
+    Check if a WhiteKernel exists in a Sum Kernel
+    and if it does return the corresponding key in
+    `kernel.get_params()`
+    """
+    if kernel_str != "":
+        kernel_str = kernel_str + "__"
     if isinstance(kernel, Sum):
-        return (
-            _check_WhiteKernel_in_Sum(kernel.k1) or
-            _check_WhiteKernel_in_Sum(kernel.k2)
-        )
-    else:
-        return isinstance(kernel, WhiteKernel)
+        for param, child in kernel.get_params(deep=False).items():
+            if isinstance(child, WhiteKernel):
+                return True, kernel_str + param
+            else:
+                present, child_str = _param_for_white_kernel_in_Sum(
+                    child, kernel_str + param)
+                if present:
+                    return True, child_str
+    return False, "_"
 
 
 class GaussianProcessRegressor(sk_GaussianProcessRegressor):
     """
     GaussianProcessRegressor that allows noise tunability.
     """
+    def __init__(self, kernel=None, alpha=1e-10,
+                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
+                 normalize_y=False, copy_X_train=True, random_state=None,
+                 noise=None):
+        self.noise = noise
+        super(GaussianProcessRegressor, self).__init__(
+            kernel=kernel, alpha=alpha, optimizer=optimizer,
+            n_restarts_optimizer=n_restarts_optimizer,
+            normalize_y=normalize_y, copy_X_train=copy_X_train,
+            random_state=random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
@@ -33,24 +53,27 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         -------
         self : returns an instance of self.
         """
-        super(GaussianProcessRegressor, self).fit(X, y)
-        for param, value in self.kernel_.get_params().items():
-            if param.endswith('noise_level'):
-                self.noise_ = value
-                break
+        if noise is None:
+            # Nothing special
+            return super(GaussianProcessRegressor, self).fit(X, y)
+        # else:
 
-        # The noise component of this kernel should be set to zero
-        # while estimating K(X, X_test) and K(X_test, X_test)
-        # Note that the term K(X, X) should include the noise but
-        # this (K(X, X))^-1y is precomputed as the attribute `alpha_`.
-        # (Notice the underscore).
-        # This has been described in Eq 2.24 of
-        # http://www.gaussianprocess.org/gpml/chapters/RW2.pdf
-        if isinstance(self.kernel_, WhiteKernel):
-            self.kernel_.set_params(noise_level=0.0)
-        elif _check_WhiteKernel_in_Sum(self.kernel_):
-            for param, value in self.kernel_.get_params().items():
-                if isinstance(value, WhiteKernel):
-                    self.kernel_.set_params(
-                        **{param: WhiteKernel(noise_level=0.0)})
-        return self
+            # The noise component of this kernel should be set to zero
+            # while estimating K(X, X_test) and K(X_test, X_test)
+            # Note that the term K(X, X) should include the noise but
+            # this (K(X, X))^-1y is precomputed as the attribute `alpha_`.
+            # (Notice the underscore).
+            # This has been described in Eq 2.24 of
+            # http://www.gaussianprocess.org/gpml/chapters/RW2.pdf
+            # Hence this hack
+            # self._gp = sk_GaussianProcessRegressor()
+            # params = self.get_params().copy()
+            # params.pop['noise']
+            # self._gp.set_params(**params)
+            # self._gp.set_params(kernel=self.kernel + WhiteKernel())
+            # self._gp.fit(X, y)
+            # white_present, white_param = param_for_white_kernel_in_Sum(
+            #     self._gp.kernel_)
+            # if white_present:
+            #     self._gp.kernel_.set_params(
+            #         **{white_param: WhiteKernel(noise_level=0.0)})

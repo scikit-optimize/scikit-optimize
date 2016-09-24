@@ -176,10 +176,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
         matern = Matern(length_scale=np.ones(space.transformed_n_dims),
                         length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
                         nu=2.5)
-        noise = WhiteKernel()
         base_estimator = GaussianProcessRegressor(
-            kernel=cov_amplitude * matern + noise,
-            normalize_y=True, random_state=random_state, alpha=0.0)
+            kernel=cov_amplitude * matern,
+            normalize_y=True, random_state=random_state, alpha=0.0, noise="gaussian")
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,
