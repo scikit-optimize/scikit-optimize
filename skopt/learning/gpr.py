@@ -136,8 +136,12 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
     log_marginal_likelihood_value_: float
         The log-marginal-likelihood of ``self.kernel_.theta``
+
+    noise_: float
+        Estimate of the gaussian noise. Useful only when noise is set to
+        "gaussian".
     """
-    def __init__(self, kernel=None, alpha=1e-10,
+    def __init__(self, kernel=None, alpha=0.0,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None,
                  noise=None):
@@ -171,9 +175,10 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
             self.kernel = self.kernel + WhiteKernel()
         super(GaussianProcessRegressor, self).fit(X, y)
 
+        self.noise_ = None
         if self.noise:
             # The noise component of this kernel should be set to zero
-            # while estimating K(X, X_test) and K(X_test, X_test)
+            # while estimating K(X_test, X_test)
             # Note that the term K(X, X) should include the noise but
             # this (K(X, X))^-1y is precomputed as the attribute `alpha_`.
             # (Notice the underscore).
@@ -187,7 +192,8 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                     self.kernel_)
                 # This should always be true. Just in case.
                 if white_present:
-                    self.noise_ = self.kernel.get_params()[white_param]
+                    noise_kernel = self.kernel_.get_params()[white_param]
+                    self.noise_ = noise_kernel.noise_level
                     self.kernel_.set_params(
                         **{white_param: WhiteKernel(noise_level=0.0)})
         return self
