@@ -168,7 +168,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
     """
     # Check params
     rng = check_random_state(random_state)
-    space = Space(dimensions)
+    space = Space(dimensions, transform_space="hypercube")
 
     # Default GP
     if base_estimator is None:
@@ -187,4 +187,4 @@ def gp_minimize(func, dimensions, base_estimator=None,
         n_points=n_points, n_random_starts=n_random_starts,
         n_restarts_optimizer=n_restarts_optimizer,
         x0=x0, y0=y0, random_state=random_state, verbose=verbose,
-        callback=callback)
+        callback=callback, space=space)

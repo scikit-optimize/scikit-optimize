@@ -1,7 +1,9 @@
 import numbers
 import numpy as np
 
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_less_equal
@@ -225,3 +227,38 @@ def test_space_api():
                       [(0.0, 1.0), (-5, 5), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
                        (np.log10(1.0), np.log10(5.0)), (0.0, 1.0)]):
         assert_array_equal(b1, b2)
+
+
+def test_real_hypercube():
+    a = Real(2.0, 30.0, transform_space="hypercube")
+    for i in range(50):
+        yield (check_limits, a.rvs(random_state=i), 2, 30)
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(100)
+    X_scaled = 28 * (X - X.min()) / (X.max() - X.min()) + 2
+    X_scaled = np.clip(X_scaled, 2.01, 30.01)
+
+    # Check transform
+    assert_array_less(a.transform(X_scaled), np.ones_like(X))
+    assert_array_less(np.zeros_like(X), a.transform(X_scaled))
+
+    # Check inverse transform
+    assert_array_almost_equal(
+        a.inverse_transform(a.transform(X_scaled)), X_scaled)
+
+    # log-uniform prior
+    a = Real(10**2.0, 10**4.0, prior="log-uniform", transform_space="hypercube")
+    for i in range(50):
+        yield (check_limits, a.rvs(random_state=i), 10**2, 10**4)
+
+    rng = np.random.RandomState(0)
+    X = np.clip(10**3 * rng.randn(100), 101, 999)
+
+    # Check transform
+    assert_array_less(a.transform(X), np.ones_like(X))
+    assert_array_less(np.zeros_like(X), a.transform(X))
+
+    # Check inverse transform
+    assert_array_almost_equal(
+        a.inverse_transform(a.transform(X_scaled)), X_scaled)
