@@ -5,146 +5,71 @@ from scipy.stats.distributions import randint
 from scipy.stats.distributions import rv_discrete
 from scipy.stats.distributions import uniform
 
-from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
+from skopt.transformers import CategoricalEncoder
+from skopt.transformers import HyperCube
+from skopt.transformers import Identity
+from skopt.transformers import Log10
+from skopt.transformers import Pipeline
 
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
     def __repr__(self):
         return '...'
 
-# Base class for all 1-D transformers.
-class Transformer(object):
-    def fit(self, X):
-        return self
 
-    def transform(self, X):
-        raise NotImplementedError
-
-    def inverse_transform(self, X):
-        raise NotImplementedError
-
-class Identity(Transformer):
-    """Identity transform."""
-
-    def transform(self, X):
-        return X
-
-    def inverse_transform(self, Xt):
-        return Xt
-
-
-class Log10(Transformer):
-    """Base 10 logarithm transform."""
-
-    def transform(self, X):
-        return np.log10(np.asarray(X, dtype=np.float))
-
-    def inverse_transform(self, Xt):
-        return 10.0 ** np.asarray(Xt, dtype=np.float)
-
-
-class CategoricalEncoder(Transformer):
-    """OneHotEncoder that can handle categorical variables."""
-
-    def __init__(self):
-        """Convert labeled categories into one-hot encoded features."""
-        self._lb = LabelBinarizer()
-
-    def fit(self, X):
-        """Fit a list or array of categories.
-
-        Parameters
-        ----------
-        * `X` [array-like, shape=(n_categories,)]:
-            List of categories.
-        """
-        self.mapping_ = {v: i for i, v in enumerate(X)}
-        self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
-        self._lb.fit([self.mapping_[v] for v in X])
-        self.n_classes = len(self._lb.classes_)
-
-        return self
-
-    def transform(self, X):
-        """Transform an array of categories to a one-hot encoded representation.
-
-        Parameters
-        ----------
-        * `X` [array-like, shape=(n_samples,)]:
-            List of categories.
-
-        Returns
-        -------
-        * `Xt` [array-like, shape=(n_samples, n_categories)]:
-            The one-hot encoded categories.
-        """
-        return self._lb.transform([self.mapping_[v] for v in X])
-
-    def inverse_transform(self, Xt):
-        """Inverse transform one-hot encoded categories back to their original
-           representation.
-
-        Parameters
-        ----------
-        * `Xt` [array-like, shape=(n_samples, n_categories)]:
-            One-hot encoded categories.
-
-        Returns
-        -------
-        * `X` [array-like, shape=(n_samples,)]:
-            The original categories.
-        """
-        Xt = np.asarray(Xt)
-        return [
-            self.inverse_mapping_[i] for i in self._lb.inverse_transform(Xt)
-        ]
-
-
-class HyperCube(Transformer):
+def check_dimensions(dimensions, transform=None):
     """
-    Transform each dimension into [0, 1]
+    Parameters
+    ----------
+    * `dimensions` [list]:
+        List of search space dimensions.
+        Each search dimension can be defined either as
+
+        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+          dimensions),
+        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+          dimensions),
+        - as a list of categories (for `Categorical` dimensions), or
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
+
+    * `transform` ["hypercube", optional] :
+        If transform is set to "hypercube", it is assumed that
+        the optimizer space is [0, 1] and hence calling "transform"
+        on that particular dimension returns a value scaled between
+        0 and 1.
+
+    Returns
+    -------
+    * `dimensions` [list, shape=(n_dims,)]
+        A list of dimension instances.
     """
-    def __init__(self, low, high):
-        self.low = low
-        self.high = high
+    _dimensions = []
 
-    def transform(self, X):
-        return (np.asarray(X) - self.low) / (self.high - self.low)
+    for dim in dimensions:
+        if isinstance(dim, Dimension):
+            _dimensions.append(dim)
 
-    def inverse_transform(self, X):
-        return np.asarray(X) * (self.high - self.low) + self.low
+        elif (len(dim) == 3 and
+              isinstance(dim[0], numbers.Real) and
+              isinstance(dim[2], str)):
+            _dimensions.append(Real(*dim, transform=transform))
 
+        elif len(dim) > 2 or isinstance(dim[0], str):
+            _dimensions.append(Categorical(dim))
 
-class Pipeline(Transformer):
-    """
-    A lightweight pipeline
-    """
-    def __init__(self, transformers):
-        self.transformers = list(transformers)
-        for transformer in self.transformers:
-            if not isinstance(transformer, Transformer):
-                raise ValueError(
-                    "Provided transformers should be a Transformer "
-                    "instance. Got %s" % transformer
-                )
+        elif isinstance(dim[0], numbers.Integral):
+            _dimensions.append(Integer(*dim))
 
-    def fit(self, X):
-        for transformer in self.transformers:
-            transformer.fit(X)
-        return self
+        elif isinstance(dim[0], numbers.Real):
+            _dimensions.append(Real(*dim, transform=transform))
+        else:
+            raise ValueError("Invalid grid component (got %s)." % dim)
+    return _dimensions
 
-    def transform(self, X):
-        for transformer in self.transformers:
-            X = transformer.transform(X)
-        return X
-
-    def inverse_transform(self, X):
-        for transformer in self.transformers[::-1]:
-            X = transformer.inverse_transform(X)
-        return X
 
 class Dimension(object):
     """Base class for search space dimensions."""
@@ -193,7 +118,7 @@ class Dimension(object):
 
 
 class Real(Dimension):
-    def __init__(self, low, high, prior="uniform", transform_space=None):
+    def __init__(self, low, high, prior="uniform", transform=None):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -211,22 +136,22 @@ class Real(Dimension):
             - If `"log-uniform"`, points are sampled uniformly between
               `log10(lower)` and `log10(upper)`.`
 
-        * `transform_space` [None or "hypercube", optional]:
-            If `transform_space=hypercube`, the `transform` method returns points
+        * `transform` [None or "hypercube", optional]:
+            If `transform=hypercube`, the `transform` method returns points
             sampled uniform / log-uniformly from the given bounds and then
             scaled to [0, 1]
         """
         self.low = low
         self.high = high
         self.prior = prior
-        self.transform_space = transform_space
+        self.transform_ = transform
 
-        if self.transform_space and self.transform_space != "hypercube":
+        if self.transform_ and self.transform_ != "hypercube":
             raise ValueError(
-                "transform should be hypercube, got %s" % self.transform_space)
+                "transform should be hypercube, got %s" % self.transform_)
 
         if prior == "uniform":
-            if self.transform_space == "hypercube":
+            if self.transform_ == "hypercube":
                 self._rvs = uniform(0.0, 1.0)
                 pipe = [Identity(), HyperCube(low, high)]
                 self.transformer = Pipeline(pipe)
@@ -235,7 +160,7 @@ class Real(Dimension):
                 self.transformer = Identity()
 
         elif prior == "log-uniform":
-            if self.transform_space == "hypercube":
+            if self.transform_ == "hypercube":
                 self._rvs = uniform(0.0, 1.0)
                 pipe = [Log10(), HyperCube(np.log10(low), np.log10(high))]
                 self.transformer = Pipeline(pipe)
@@ -255,11 +180,11 @@ class Real(Dimension):
                 and np.allclose([self.low], [other.low])
                 and np.allclose([self.high], [other.high])
                 and self.prior == other.prior
-                and self.transform_space == other.transform_space)
+                and self.transform_ == other.transform_)
 
     def __repr__(self):
-        return "Real(low={}, high={}, prior={}, transform_space={})".format(
-            self.low, self.high, self.prior, self.transform_space)
+        return "Real(low={}, high={}, prior={}, transform={})".format(
+            self.low, self.high, self.prior, self.transform_)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
@@ -273,7 +198,7 @@ class Real(Dimension):
 
     @property
     def transformed_bounds(self):
-        if self.transform_space == "hypercube":
+        if self.transform_ == "hypercube":
             return (0.0, 1.0)
         elif self.prior == "uniform":
             return (self.low, self.high)
@@ -396,7 +321,7 @@ class Categorical(Dimension):
 class Space:
     """Search space."""
 
-    def __init__(self, dimensions, transform_space=None):
+    def __init__(self, dimensions):
         """Initialize a search space from given specifications.
 
         Parameters
@@ -412,38 +337,8 @@ class Space:
             - as a list of categories (for `Categorical` dimensions), or
             - an instance of a `Dimension` object (`Real`, `Integer` or
               `Categorical`).
-
-        * `transform_space` [None or "hypercube", optional]:
-            If `transform_space=hypercube`, for all `Real` dimensions`,
-            the transform` method returns points sampled uniform / log-uniformly
-            from the given bounds and then scaled to [0, 1]
         """
-        _dimensions = []
-
-        for dim in dimensions:
-            if isinstance(dim, Dimension):
-                _dimensions.append(dim)
-
-            elif (len(dim) == 3 and
-                  isinstance(dim[0], numbers.Real) and
-                  isinstance(dim[2], str)):
-                _dimensions.append(Real(
-                    *dim, transform_space=transform_space))
-
-            elif len(dim) > 2 or isinstance(dim[0], str):
-                _dimensions.append(Categorical(dim))
-
-            elif isinstance(dim[0], numbers.Integral):
-                _dimensions.append(Integer(*dim))
-
-            elif isinstance(dim[0], numbers.Real):
-                _dimensions.append(Real(
-                    *dim, transform_space=transform_space))
-
-            else:
-                raise ValueError("Invalid grid component (got %s)." % dim)
-
-        self.dimensions = _dimensions
+        self.dimensions = check_dimensions(dimensions)
 
     def __eq__(self, other):
         return all([a == b for a, b in zip(self.dimensions, other.dimensions)])

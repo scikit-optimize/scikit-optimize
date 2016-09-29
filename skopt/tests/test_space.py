@@ -230,7 +230,7 @@ def test_space_api():
 
 
 def test_real_hypercube():
-    a = Real(2.0, 30.0, transform_space="hypercube")
+    a = Real(2.0, 30.0, transform="hypercube")
     for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 2, 30)
 
@@ -248,7 +248,7 @@ def test_real_hypercube():
         a.inverse_transform(a.transform(X_scaled)), X_scaled)
 
     # log-uniform prior
-    a = Real(10**2.0, 10**4.0, prior="log-uniform", transform_space="hypercube")
+    a = Real(10**2.0, 10**4.0, prior="log-uniform", transform="hypercube")
     for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 10**2, 10**4)
 

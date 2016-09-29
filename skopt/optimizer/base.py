@@ -39,7 +39,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="auto",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, space=None):
+                  xi=0.01, kappa=1.96):
     """
     Parameters
     ----------
@@ -168,11 +168,9 @@ def base_minimize(func, dimensions, base_estimator,
         raise ValueError(
             "%s has to be a regressor." % base_estimator)
 
+    space = Space(dimensions)
     # Check params
     rng = check_random_state(random_state)
-
-    if space is None:
-        space = Space(dimensions)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:

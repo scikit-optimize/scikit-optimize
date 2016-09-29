@@ -63,6 +63,7 @@ from . import callbacks
 from . import learning
 from . import plots
 from . import space
+from . import transformers
 from .optimizer import dummy_minimize
 from .optimizer import forest_minimize
 from .optimizer import gbrt_minimize
@@ -79,6 +80,7 @@ __all__ = ("acquisition",
            "optimizer",
            "plots",
            "space",
+           "transformers",
            "gp_minimize",
            "dummy_minimize",
            "forest_minimize",
