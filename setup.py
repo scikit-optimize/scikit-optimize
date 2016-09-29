@@ -14,6 +14,6 @@ setup(name='scikit-optimize',
       license='BSD',
       author='The scikit-optimize contributors',
       packages=['skopt', 'skopt.learning', 'skopt.optimizer'],
-      install_requires=["numpy", "scipy", "scikit-learn>=0.18dev", "cython",
+      install_requires=["numpy", "scipy", "scikit-learn>=0.18",
                         "matplotlib"]
       )

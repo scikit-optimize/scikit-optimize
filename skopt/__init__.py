@@ -9,16 +9,6 @@ The library is built on top of NumPy, SciPy and Scikit-Learn.
 
 ## Install
 
-These instructions will setup the latest released version of `scikit-optimize`.
-Currently `scikit-optimize` relies on a yet unreleased version of `scikit-learn`.
-This means you will have to install that version by hand and probably want to
-create a separate virtualenv or conda environment for it.
-
-```
-pip install -e git+https://github.com/scikit-learn/scikit-learn.git#egg=scikit-learn-0.18dev
-```
-
-After this you can install `scikit-optimize` with:
 ```
 pip install scikit-optimize
 ```
