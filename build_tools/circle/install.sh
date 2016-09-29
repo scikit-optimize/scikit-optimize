@@ -30,9 +30,8 @@ popd
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n testenv --yes python pip nose \
-   numpy scipy cython matplotlib pyqt==4.11.4
+   numpy scipy scikit-learn matplotlib pyqt==4.11.4
 source activate testenv
-pip install git+http://github.com/scikit-learn/scikit-learn.git
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"

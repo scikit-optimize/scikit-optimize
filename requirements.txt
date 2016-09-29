@@ -1,5 +1,5 @@
 numpy
 scipy
 cython
--e git+https://github.com/scikit-learn/scikit-learn.git#egg=sklearn
+scikit-learn>=0.18
 matplotlib
