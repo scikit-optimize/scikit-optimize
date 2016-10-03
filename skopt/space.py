@@ -29,6 +29,51 @@ class _Identity:
         return Xt
 
 
+class Transformer(object):
+    def rvs(self, n_samples=1, random_state=None):
+        """Sample from the transformed dimension and convert it back
+        to the original dimension.
+
+        Parameters
+        ----------
+        * `n_samples` [int or None]:
+            The number of samples to be drawn.
+
+        * `random_state` [int, RandomState instance, or None (default)]:
+            Set random state to something other than None for reproducible
+            results.
+        """
+        rng = check_random_state(random_state)
+        samples = self.transformed_dim.rvs(
+            n_samples=n_samples, random_state=rng)
+        return self.inverse_transform(samples)
+
+    def fit(self, X):
+        return self
+
+    def transform(self, X):
+        raise NotImplementedError
+
+    def inverse_transform(self, X):
+        raise NotImplementedError
+
+
+class Log10(Transformer):
+    """Base 10 logarithm transform."""
+    def __init__(self, dim):
+        self.dim = dim
+        if not isinstance(dim, Real):
+            raise ValueError("Raise")
+        if isinstance(dim, Real):
+            self.transformed_dim = Real(np.log10(dim.low), np.log10(dim.high))
+
+    def transform(self, X):
+        return np.log10(np.asarray(X, dtype=np.float))
+
+    def inverse_transform(self, Xt):
+        return 10.0 ** np.asarray(Xt, dtype=np.float)
+
+
 class _Log10:
     """Base 10 logarithm transform."""
 
