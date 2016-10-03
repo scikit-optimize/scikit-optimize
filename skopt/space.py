@@ -79,12 +79,12 @@ class Log10(Transformer):
 class CategoricalEncoder(Transformer):
     """OneHotEncoder that can handle categorical variables."""
 
-    def __init__(self, dim):
+    def __init__(self, categories):
         """Convert labeled categories into one-hot encoded features."""
         self._lb = LabelBinarizer()
-        self.mapping_ = {v: i for i, v in enumerate(X)}
+        self.mapping_ = {v: i for i, v in enumerate(categories)}
         self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
-        self._lb.fit([self.mapping_[v] for v in X])
+        self._lb.fit([self.mapping_[v] for v in self.categories])
         self.n_classes = len(self._lb.classes_)
 
     def rvs(self, n_samples=None, random_state=None):
