@@ -16,19 +16,6 @@ class _Ellipsis:
         return '...'
 
 
-class _Identity:
-    """Identity transform."""
-
-    def fit(self, X):
-        return self
-
-    def transform(self, X):
-        return X
-
-    def inverse_transform(self, Xt):
-        return Xt
-
-
 class Transformer(object):
     def rvs(self, n_samples=1, random_state=None):
         """Sample from the transformed dimension and convert it back
@@ -56,6 +43,21 @@ class Transformer(object):
 
     def inverse_transform(self, X):
         raise NotImplementedError
+
+
+class Identity(Transformer):
+    """Base 10 logarithm transform."""
+    def __init__(self, dim):
+        self.dim = dim
+        if not isinstance(dim, Dimension):
+            raise ValueError("Raise")
+        self.transformed_dim = self.dim
+
+    def transform(self, X):
+        return X
+
+    def inverse_transform(self, Xt):
+        return Xt
 
 
 class Log10(Transformer):
@@ -86,6 +88,59 @@ class _Log10:
     def inverse_transform(self, Xt):
         return 10.0 ** np.asarray(Xt, dtype=np.float)
 
+
+class CategoricalEncoder(Transformer):
+    """OneHotEncoder that can handle categorical variables."""
+
+    def __init__(self, dim):
+        """Convert labeled categories into one-hot encoded features."""
+        self._lb = LabelBinarizer()
+        self.mapping_ = {v: i for i, v in enumerate(X)}
+        self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
+        self._lb.fit([self.mapping_[v] for v in X])
+        self.n_classes = len(self._lb.classes_)
+
+    def rvs(self, n_samples=None, random_state=None):
+        choices = self._rvs.rvs(size=n_samples, random_state=random_state)
+
+        if isinstance(choices, numbers.Integral):
+            return self.categories[choices]
+        else:
+            return [self.categories[c] for c in choices]
+
+    def transform(self, X):
+        """Transform an array of categories to a one-hot encoded representation.
+
+        Parameters
+        ----------
+        * `X` [array-like, shape=(n_samples,)]:
+            List of categories.
+
+        Returns
+        -------
+        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+            The one-hot encoded categories.
+        """
+        return self._lb.transform([self.mapping_[v] for v in X])
+
+    def inverse_transform(self, Xt):
+        """Inverse transform one-hot encoded categories back to their original
+           representation.
+
+        Parameters
+        ----------
+        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+            One-hot encoded categories.
+
+        Returns
+        -------
+        * `X` [array-like, shape=(n_samples,)]:
+            The original categories.
+        """
+        Xt = np.asarray(Xt)
+        return [
+            self.inverse_mapping_[i] for i in self._lb.inverse_transform(Xt)
+        ]
 
 class _CategoricalEncoder:
     """OneHotEncoder that can handle categorical variables."""
@@ -142,6 +197,19 @@ class _CategoricalEncoder:
         return [
             self.inverse_mapping_[i] for i in self._lb.inverse_transform(Xt)
         ]
+
+
+class _Identity:
+    """Identity transform."""
+
+    def fit(self, X):
+        return self
+
+    def transform(self, X):
+        return X
+
+    def inverse_transform(self, Xt):
+        return Xt
 
 
 class Dimension(object):
