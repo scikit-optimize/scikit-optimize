@@ -90,7 +90,7 @@ class CategoricalEncoder(Transformer):
         ]
 
 
-class HyperCube(Transformer):
+class Normalize(Transformer):
     """
     Transform each dimension into [0, 1]
     """
@@ -99,10 +99,20 @@ class HyperCube(Transformer):
         self.high = high
 
     def transform(self, X):
-        return (np.asarray(X) - self.low) / (self.high - self.low)
+        X = np.asarray(X)
+        if np.any(X > self.high):
+            raise ValueError("All values should be less than %f" % self.high)
+        if np.any(X < self.low):
+            raise ValueError("All values should be greater than %f" % self.low)
+        return (X - self.low) / (self.high - self.low)
 
     def inverse_transform(self, X):
-        return np.asarray(X) * (self.high - self.low) + self.low
+        X = np.asarray(X)
+        if np.any(X > 1.0):
+            raise ValueError("All values should be less than 1.0")
+        if np.any(X < 0.0):
+            raise ValueError("All values should be greater than 0.0")
+        return X * (self.high - self.low) + self.low
 
 
 class Pipeline(Transformer):

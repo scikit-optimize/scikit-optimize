@@ -8,11 +8,11 @@ from scipy.stats.distributions import uniform
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
-from skopt.transformers import CategoricalEncoder
-from skopt.transformers import HyperCube
-from skopt.transformers import Identity
-from skopt.transformers import Log10
-from skopt.transformers import Pipeline
+from .transformers import CategoricalEncoder
+from .transformers import Normalize
+from .transformers import Identity
+from .transformers import Log10
+from .transformers import Pipeline
 
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
@@ -20,12 +20,12 @@ class _Ellipsis:
         return '...'
 
 
-def check_dimensions(dimensions, transform=None):
+def check_dimension(dimension, transform=None):
     """
     Parameters
     ----------
-    * `dimensions` [list]:
-        List of search space dimensions.
+    * `dimension`:
+        Search space Dimension.
         Each search dimension can be defined either as
 
         - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
@@ -36,39 +36,32 @@ def check_dimensions(dimensions, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `transform` ["hypercube", optional] :
-        If transform is set to "hypercube", it is assumed that
-        the optimizer space is [0, 1] and hence calling "transform"
-        on that particular dimension returns a value scaled between
-        0 and 1.
+    * `transform` ["normalize", optional] :
+        If transform is set to "normalize", the transformed space is
+        normalized such that the values returned are between 0 and 1.
 
     Returns
     -------
-    * `dimensions` [list, shape=(n_dims,)]
-        A list of dimension instances.
+    * `dimension`:
+        Dimension instance.
     """
-    _dimensions = []
+    if isinstance(dimension, Dimension):
+        return dimension
 
-    for dim in dimensions:
-        if isinstance(dim, Dimension):
-            _dimensions.append(dim)
+    if (len(dimension) == 3 and
+        isinstance(dimension[0], numbers.Real) and
+        isinstance(dimension[2], str)):
+          return Real(*dimension, transform=transform)
 
-        elif (len(dim) == 3 and
-              isinstance(dim[0], numbers.Real) and
-              isinstance(dim[2], str)):
-            _dimensions.append(Real(*dim, transform=transform))
+    if len(dimension) > 2 or isinstance(dimension[0], str):
+        return Categorical(dimension)
 
-        elif len(dim) > 2 or isinstance(dim[0], str):
-            _dimensions.append(Categorical(dim))
+    if isinstance(dimension[0], numbers.Integral):
+        return Integer(*dimension)
 
-        elif isinstance(dim[0], numbers.Integral):
-            _dimensions.append(Integer(*dim))
-
-        elif isinstance(dim[0], numbers.Real):
-            _dimensions.append(Real(*dim, transform=transform))
-        else:
-            raise ValueError("Invalid grid component (got %s)." % dim)
-    return _dimensions
+    if isinstance(dimension[0], numbers.Real):
+        return Real(*dimension, transform=transform)
+    raise ValueError("Invalid grid component (got %s)." % dim)
 
 
 class Dimension(object):
@@ -136,8 +129,8 @@ class Real(Dimension):
             - If `"log-uniform"`, points are sampled uniformly between
               `log10(lower)` and `log10(upper)`.`
 
-        * `transform` [None or "hypercube", optional]:
-            If `transform=hypercube`, the `transform` method returns points
+        * `transform` [None or "normalize", optional]:
+            If `transform=normalize`, the `transform` method returns points
             sampled uniform / log-uniformly from the given bounds and then
             scaled to [0, 1]
         """
@@ -146,34 +139,30 @@ class Real(Dimension):
         self.prior = prior
         self.transform_ = transform
 
-        if self.transform_ and self.transform_ != "hypercube":
+        if self.transform_ and self.transform_ != "normalize":
             raise ValueError(
                 "transform should be hypercube, got %s" % self.transform_)
 
-        if prior == "uniform":
-            if self.transform_ == "hypercube":
-                self._rvs = uniform(0.0, 1.0)
-                pipe = [Identity(), HyperCube(low, high)]
-                self.transformer = Pipeline(pipe)
+        # Define _rvs and transformer spaces.
+        # The _rvs is for sampling in the transformed space.
+        if self.transform_ == "normalize":
+            self._rvs = uniform(0, 1)
+            if self.prior == "uniform":
+                self.transformer = Pipeline(
+                    [Identity(), Normalize(low, high)])
             else:
+                self.transformer = Pipeline(
+                    [Log10(), Normalize(np.log10(low), np.log10(high))]
+                )
+        else:
+            if self.prior == "uniform":
                 self._rvs = uniform(self.low, self.high - self.low)
                 self.transformer = Identity()
-
-        elif prior == "log-uniform":
-            if self.transform_ == "hypercube":
-                self._rvs = uniform(0.0, 1.0)
-                pipe = [Log10(), HyperCube(np.log10(low), np.log10(high))]
-                self.transformer = Pipeline(pipe)
             else:
                 self._rvs = uniform(
                     np.log10(self.low),
                     np.log10(self.high) - np.log10(self.low))
                 self.transformer = Log10()
-
-        else:
-            raise ValueError(
-                "Prior should be either 'uniform' or 'log-uniform', "
-                "got '%s'." % self._rvs)
 
     def __eq__(self, other):
         return (type(self) is type(other)
@@ -198,12 +187,13 @@ class Real(Dimension):
 
     @property
     def transformed_bounds(self):
-        if self.transform_ == "hypercube":
+        if self.transform_ == "normalize":
             return (0.0, 1.0)
-        elif self.prior == "uniform":
-            return (self.low, self.high)
-        else:  # self.prior == "log-uniform"
-            return (np.log10(self.low), np.log10(self.high))
+        else:
+            if self.prior == "uniform":
+                return (self.low, self.high)
+            else:  # self.prior == "log-uniform"
+                return (np.log10(self.low), np.log10(self.high))
 
 
 class Integer(Dimension):
@@ -338,7 +328,7 @@ class Space:
             - an instance of a `Dimension` object (`Real`, `Integer` or
               `Categorical`).
         """
-        self.dimensions = check_dimensions(dimensions)
+        self.dimensions = [check_dimension(dim) for dim in dimensions]
 
     def __eq__(self, other):
         return all([a == b for a, b in zip(self.dimensions, other.dimensions)])

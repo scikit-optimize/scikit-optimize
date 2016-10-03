@@ -230,35 +230,32 @@ def test_space_api():
 
 
 def test_real_hypercube():
-    a = Real(2.0, 30.0, transform="hypercube")
+    a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 2, 30)
 
     rng = np.random.RandomState(0)
     X = rng.randn(100)
-    X_scaled = 28 * (X - X.min()) / (X.max() - X.min()) + 2
-    X_scaled = np.clip(X_scaled, 2.01, 30.01)
+    X = 28 * (X - X.min()) / (X.max() - X.min()) + 2
 
-    # Check transform
-    assert_array_less(a.transform(X_scaled), np.ones_like(X))
-    assert_array_less(np.zeros_like(X), a.transform(X_scaled))
+    # Check transformed values are in [0, 1]
+    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
+    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
 
     # Check inverse transform
-    assert_array_almost_equal(
-        a.inverse_transform(a.transform(X_scaled)), X_scaled)
+    assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)
 
     # log-uniform prior
-    a = Real(10**2.0, 10**4.0, prior="log-uniform", transform="hypercube")
+    a = Real(10**2.0, 10**4.0, prior="log-uniform", transform="normalize")
     for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 10**2, 10**4)
 
     rng = np.random.RandomState(0)
-    X = np.clip(10**3 * rng.randn(100), 101, 999)
+    X = np.clip(10**3 * rng.randn(100), 10**2.0, 10**4.0)
 
     # Check transform
-    assert_array_less(a.transform(X), np.ones_like(X))
-    assert_array_less(np.zeros_like(X), a.transform(X))
+    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
+    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
 
     # Check inverse transform
-    assert_array_almost_equal(
-        a.inverse_transform(a.transform(X_scaled)), X_scaled)
+    assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)

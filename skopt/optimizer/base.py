@@ -168,8 +168,8 @@ def base_minimize(func, dimensions, base_estimator,
         raise ValueError(
             "%s has to be a regressor." % base_estimator)
 
-    space = Space(dimensions)
     # Check params
+    space = Space(dimensions)
     rng = check_random_state(random_state)
 
     # Initialize with provided points (x0 and y0) and/or random points
