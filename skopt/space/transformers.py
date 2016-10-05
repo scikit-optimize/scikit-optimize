@@ -92,7 +92,15 @@ class CategoricalEncoder(Transformer):
 
 class Normalize(Transformer):
     """
-    Transform each dimension into [0, 1]
+    Scales each dimension into the interval [0, 1].
+
+    Parameters
+    ----------
+    * `low` [float]:
+        Lower bound.
+
+    * `high` [float]:
+        Higher bound.
     """
     def __init__(self, low, high):
         self.low = low
@@ -117,7 +125,12 @@ class Normalize(Transformer):
 
 class Pipeline(Transformer):
     """
-    A lightweight pipeline
+    A lightweight pipeline to chain transformers.
+
+    Parameters
+    ----------
+    * 'transformers' [list]:
+        A list of Transformer instances.
     """
     def __init__(self, transformers):
         self.transformers = list(transformers)

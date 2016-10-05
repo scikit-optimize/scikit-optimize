@@ -37,8 +37,9 @@ def check_dimension(dimension, transform=None):
           `Categorical`).
 
     * `transform` ["normalize", optional] :
-        If transform is set to "normalize", the transformed space is
-        normalized such that the values returned are between 0 and 1.
+        If transform is set to "normalize", when `transform` is called
+        the returned Dimension instance the values are scaled
+        between 0 and 1.
 
     Returns
     -------
@@ -61,7 +62,8 @@ def check_dimension(dimension, transform=None):
 
     if isinstance(dimension[0], numbers.Real):
         return Real(*dimension, transform=transform)
-    raise ValueError("Invalid grid component (got %s)." % dim)
+    raise ValueError("Invalid dimension %s. Read the documentation for "
+                     "supported types." % dim)
 
 
 class Dimension(object):
@@ -130,9 +132,8 @@ class Real(Dimension):
               `log10(lower)` and `log10(upper)`.`
 
         * `transform` [None or "normalize", optional]:
-            If `transform=normalize`, the `transform` method returns points
-            sampled uniform / log-uniformly from the given bounds and then
-            scaled to [0, 1]
+            If `transform=normalize`, calling `transform` on X scales X to
+            [0, 1]
         """
         self.low = low
         self.high = high
@@ -141,10 +142,12 @@ class Real(Dimension):
 
         if self.transform_ and self.transform_ != "normalize":
             raise ValueError(
-                "transform should be hypercube, got %s" % self.transform_)
+                "transform should be normalize, got %s" % self.transform_)
 
         # Define _rvs and transformer spaces.
-        # The _rvs is for sampling in the transformed space.
+        # XXX: The _rvs is for sampling in the transformed space.
+        # The rvs on Dimension calls inverse_transform on the points sampled
+        # using _rvs
         if self.transform_ == "normalize":
             self._rvs = uniform(0, 1)
             if self.prior == "uniform":
