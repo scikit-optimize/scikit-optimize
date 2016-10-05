@@ -21,7 +21,7 @@ def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
 
 
 def test_gp_minimize():
-    for search, acq in product(["sampling", "lbfgs"], ["LCB", "PI", "EI"]):
+    for search, acq in product(["sampling", "lbfgs"], ["LCB", "EI"]):
         yield (check_minimize, bench1, 0., [(-2.0, 2.0)], search, acq, 0.05, 50)
         yield (check_minimize, bench2, -5, [(-6.0, 6.0)], search, acq, 0.05, 75)
         yield (check_minimize, bench3, -0.9, [(-2.0, 2.0)], search, acq, 0.05, 50)
