@@ -229,7 +229,7 @@ def test_space_api():
         assert_array_equal(b1, b2)
 
 
-def test_real_hypercube():
+def test_real_normalize():
     a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 2, 30)

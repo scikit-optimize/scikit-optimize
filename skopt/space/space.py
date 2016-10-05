@@ -22,6 +22,10 @@ class _Ellipsis:
 
 def check_dimension(dimension, transform=None):
     """
+    Checks that the provided dimension falls into one of the
+    supported types. For a list of supported types, look at
+    the documentation of `dimension` below.
+
     Parameters
     ----------
     * `dimension`:
