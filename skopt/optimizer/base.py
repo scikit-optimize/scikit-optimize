@@ -169,8 +169,8 @@ def base_minimize(func, dimensions, base_estimator,
             "%s has to be a regressor." % base_estimator)
 
     # Check params
-    space = Space(dimensions)
     rng = check_random_state(random_state)
+    space = Space(dimensions)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
@@ -261,6 +261,7 @@ def base_minimize(func, dimensions, base_estimator,
     # Bayesian optimization loop
     models = []
     n_model_iter = n_calls - n_total_init_calls
+    transformed_bounds = np.array(space.transformed_bounds)
     for i in range(n_model_iter):
         gp = clone(base_estimator)
 
@@ -296,6 +297,9 @@ def base_minimize(func, dimensions, base_estimator,
                 if a < best:
                     next_x, best = x, a
 
+        # lbfg should handle this but just in case there are precision errors.
+        next_x = np.clip(
+            next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
         yi.append(func(next_x))
         Xi.append(next_x)

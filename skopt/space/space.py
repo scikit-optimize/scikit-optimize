@@ -188,12 +188,12 @@ class Real(Dimension):
     @property
     def transformed_bounds(self):
         if self.transform_ == "normalize":
-            return (0.0, 1.0)
+            return 0.0, 1.0
         else:
             if self.prior == "uniform":
-                return (self.low, self.high)
-            else:  # self.prior == "log-uniform"
-                return (np.log10(self.low), np.log10(self.high))
+                return self.low, self.high
+            else:
+                return np.log10(self.low), np.log10(self.high)
 
 
 class Integer(Dimension):
