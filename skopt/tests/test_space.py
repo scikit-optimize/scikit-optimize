@@ -1,7 +1,9 @@
 import numbers
 import numpy as np
 
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_less_equal
@@ -225,3 +227,35 @@ def test_space_api():
                       [(0.0, 1.0), (-5, 5), (0.0, 1.0), (0.0, 1.0), (0.0, 1.0),
                        (np.log10(1.0), np.log10(5.0)), (0.0, 1.0)]):
         assert_array_equal(b1, b2)
+
+
+def test_real_normalize():
+    a = Real(2.0, 30.0, transform="normalize")
+    for i in range(50):
+        yield (check_limits, a.rvs(random_state=i), 2, 30)
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(100)
+    X = 28 * (X - X.min()) / (X.max() - X.min()) + 2
+
+    # Check transformed values are in [0, 1]
+    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
+    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
+
+    # Check inverse transform
+    assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)
+
+    # log-uniform prior
+    a = Real(10**2.0, 10**4.0, prior="log-uniform", transform="normalize")
+    for i in range(50):
+        yield (check_limits, a.rvs(random_state=i), 10**2, 10**4)
+
+    rng = np.random.RandomState(0)
+    X = np.clip(10**3 * rng.randn(100), 10**2.0, 10**4.0)
+
+    # Check transform
+    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
+    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
+
+    # Check inverse transform
+    assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)

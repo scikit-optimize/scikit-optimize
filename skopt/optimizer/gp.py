@@ -3,15 +3,15 @@
 import numpy as np
 
 from sklearn.base import clone
-from skopt.learning import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process.kernels import ConstantKernel
 from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
+from ..learning import GaussianProcessRegressor
+from ..space import check_dimension
 from ..space import Space
-
 
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
@@ -168,6 +168,10 @@ def gp_minimize(func, dimensions, base_estimator=None,
     """
     # Check params
     rng = check_random_state(random_state)
+
+    # To make sure that GP operates in the [0, 1] space
+    dimensions = [
+        check_dimension(dim, transform="normalize") for dim in dimensions]
     space = Space(dimensions)
 
     # Default GP
