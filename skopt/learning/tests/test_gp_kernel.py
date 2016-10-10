@@ -2,9 +2,13 @@ import numpy as np
 from scipy import optimize
 from sklearn.utils.testing import assert_array_almost_equal
 
+from skopt.learning.gp_kernels import Matern
 from skopt.learning.gp_kernels import RBF
 
-KERNELS = [RBF(length_scale=[1.0, 2.0, 2.0]),]
+KERNELS = [RBF(length_scale=[1.0, 2.0, 3.0]),
+           Matern(length_scale=[1.0, 2.0, 3.0], nu=0.5),
+           Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5),
+           Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5)]
 rng = np.random.RandomState(0)
 X = rng.randn(3)
 Y = rng.randn(10, 3)
@@ -17,7 +21,7 @@ def func(X, Y, kernel):
 def numerical_gradient(X, func, Y, kernel):
     grad = []
     for y in Y:
-        num_grad = optimize.approx_fprime(X, func, 1e-3, y, kernel)
+        num_grad = optimize.approx_fprime(X, func, 1e-4, y, kernel)
         grad.append(num_grad)
     return np.asarray(grad)
 
