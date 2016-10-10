@@ -57,6 +57,7 @@ from .optimizer import dummy_minimize
 from .optimizer import forest_minimize
 from .optimizer import gbrt_minimize
 from .optimizer import gp_minimize
+from .utils import load, dump
 
 
 __version__ = "0.1"
@@ -72,4 +73,7 @@ __all__ = ("acquisition",
            "gp_minimize",
            "dummy_minimize",
            "forest_minimize",
-           "gbrt_minimize")
+           "gbrt_minimize",
+           "dump",
+           "load",
+           )

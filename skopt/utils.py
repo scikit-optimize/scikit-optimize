@@ -1,5 +1,12 @@
+from copy import deepcopy
 import numpy as np
 from scipy.optimize import OptimizeResult
+from sklearn.externals.joblib import dump as dump_
+from sklearn.externals.joblib import load as load_
+
+__all__ = ("load",
+           "dump",
+           )
 
 
 def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
@@ -44,3 +51,70 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     res.random_state = rng
     res.specs = specs
     return res
+
+
+def dump(res, filename, store_objective=True, **kwargs):
+    """
+    Store an skopt optimization result into a file.
+
+    Parameters
+    ----------
+    * `res` [`OptimizeResult`, scipy object]:
+        Optimization result object to be stored.
+
+    * `filename` [string or `pathlib.Path`]:
+        The path of the file in which it is to be stored. The compression
+        method corresponding to one of the supported filename extensions ('.z',
+        '.gz', '.bz2', '.xz' or '.lzma') will be used automatically.
+
+    * `store_objective` [boolean, default=True]:
+        Whether the objective function should be stored. Set `store_objective`
+        to `False` if your objective function (`.specs['args']['func']`) is
+        unserializable (i.e. if an exception is raised when trying to serialize
+        the optimization result). Notice that in this case a deep copy of the
+        optimization result is created. This can potentially lead to performance
+        problems.
+
+    * `**kwargs` [other keyword arguments]:
+        All other keyword arguments will be passed to `joblib.dump`.
+    """
+
+    if store_objective:
+        dump_(res, filename, **kwargs)
+    elif 'func' in res.specs['args']:
+        # If the user does not want to store the objective and it is indeed
+        # present in the provided object, then create a deep copy of it and
+        # remove the objective function before dumping it with joblib.dump.
+        res_without_func = deepcopy(res)
+        del res_without_func.specs['args']['func']
+        dump_(res_without_func, filename, **kwargs)
+    else:
+        # If the user does not want to store the objective and it is already
+        # missing in the provided object, dump it without copying.
+        dump_(res, filename, **kwargs)
+
+
+def load(filename, **kwargs):
+    """
+    Reconstruct a skopt optimization result from a file
+    persisted with skopt.dump.
+
+    Notice that the loaded optimization result can be missing
+    the objective function (`.specs['args']['func']`) if `skopt.dump`
+    was called with `store_objective=False`.
+
+    Parameters
+    ----------
+    * `filename` [string or `pathlib.Path`]:
+        The path of the file from which to load the optimization result.
+
+    * `**kwargs` [other keyword arguments]:
+        All other keyword arguments will be passed to `joblib.load`.
+
+    Returns
+    -------
+    * `res` [`OptimizeResult`, scipy object]:
+        Reconstructed OptimizeResult instance.
+    """
+
+    return load_(filename, **kwargs)
