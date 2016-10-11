@@ -3,6 +3,7 @@ from scipy import optimize
 from sklearn.utils.testing import assert_array_almost_equal
 
 from skopt.learning.gp_kernels import ConstantKernel
+from skopt.learning.gp_kernels import DotProduct
 from skopt.learning.gp_kernels import Exponentiation
 from skopt.learning.gp_kernels import ExpSineSquared
 from skopt.learning.gp_kernels import Matern
@@ -25,7 +26,8 @@ KERNELS = [
     Sum(RBF(length_scale=[1.0, 2.0, 3.0]),
         Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5)),
     Product(RBF(length_scale=[1.0, 2.0, 3.0]),
-            Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5))
+            Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5)),
+    DotProduct(sigma_0=2.0)
 ]
 
 rng = np.random.RandomState(0)

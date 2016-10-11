@@ -2,6 +2,7 @@ from math import sqrt
 
 import numpy as np
 from sklearn.gaussian_process.kernels import ConstantKernel as sk_ConstantKernel
+from sklearn.gaussian_process.kernels import DotProduct as sk_DotProduct
 from sklearn.gaussian_process.kernels import Exponentiation as sk_Exponentiation
 from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
@@ -150,3 +151,9 @@ class Product(sk_Product):
             np.expand_dims(self.k1(x, Y)[0], axis=1) * self.k2.gradient_X(X, Y) +
             np.expand_dims(self.k2(x, Y)[0], axis=1) * self.k1.gradient_X(X, Y)
         )
+
+
+class DotProduct(sk_DotProduct):
+
+    def gradient_X(self, X, Y):
+        return Y
