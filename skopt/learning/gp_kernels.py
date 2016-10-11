@@ -2,6 +2,7 @@ from math import sqrt
 
 import numpy as np
 from sklearn.gaussian_process.kernels import ConstantKernel as sk_ConstantKernel
+from sklearn.gaussian_process.kernels import Exponentiation as sk_Exponentiation
 from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
 from sklearn.gaussian_process.kernels import RationalQuadratic as sk_RationalQuadratic
@@ -120,3 +121,13 @@ class WhiteKernel(sk_WhiteKernel):
 
     def gradient_X(self, X, Y):
         return np.zeros_like(Y)
+
+class Exponentiation(sk_Exponentiation):
+
+    def gradient_X(self, X, Y):
+        expo = self.exponent
+        kernel = self.kernel
+
+        kernel_value = np.expand_dims(
+            kernel(np.expand_dims(X, axis=0), Y)[0], axis=1)
+        return expo * kernel_value ** (expo - 1) * kernel.gradient_X(X, Y)

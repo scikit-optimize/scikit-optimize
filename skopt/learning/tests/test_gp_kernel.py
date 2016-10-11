@@ -3,6 +3,7 @@ from scipy import optimize
 from sklearn.utils.testing import assert_array_almost_equal
 
 from skopt.learning.gp_kernels import ConstantKernel
+from skopt.learning.gp_kernels import Exponentiation
 from skopt.learning.gp_kernels import ExpSineSquared
 from skopt.learning.gp_kernels import Matern
 from skopt.learning.gp_kernels import RationalQuadratic
@@ -16,7 +17,8 @@ KERNELS = [RBF(length_scale=[1.0, 2.0, 3.0]),
            RationalQuadratic(alpha=2.0, length_scale=2.0),
            ExpSineSquared(length_scale=2.0, periodicity=3.0),
            ConstantKernel(constant_value=1.0),
-           WhiteKernel(noise_level=2.0)]
+           WhiteKernel(noise_level=2.0),
+           Exponentiation(Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5), 3.0)]
 
 rng = np.random.RandomState(0)
 X = rng.randn(3)
