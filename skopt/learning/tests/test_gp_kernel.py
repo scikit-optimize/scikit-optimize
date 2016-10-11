@@ -3,12 +3,15 @@ from scipy import optimize
 from sklearn.utils.testing import assert_array_almost_equal
 
 from skopt.learning.gp_kernels import Matern
+from skopt.learning.gp_kernels import RationalQuadratic
 from skopt.learning.gp_kernels import RBF
 
 KERNELS = [RBF(length_scale=[1.0, 2.0, 3.0]),
            Matern(length_scale=[1.0, 2.0, 3.0], nu=0.5),
            Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5),
-           Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5)]
+           Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5),
+           RationalQuadratic(alpha=2.0, length_scale=2.0)]
+
 rng = np.random.RandomState(0)
 X = rng.randn(3)
 Y = rng.randn(10, 3)

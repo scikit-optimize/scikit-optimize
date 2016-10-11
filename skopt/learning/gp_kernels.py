@@ -2,7 +2,9 @@ from math import sqrt
 
 import numpy as np
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
+from sklearn.gaussian_process.kernels import RationalQuadratic as sk_RationalQuadratic
 from sklearn.gaussian_process.kernels import RBF as sk_RBF
+
 
 class RBF(sk_RBF):
     def gradient_X(self, X, Y):
@@ -16,6 +18,7 @@ class RBF(sk_RBF):
         squared = np.exp(-0.5 * np.sum(diff**2, axis=1))
         squared = np.expand_dims(squared, axis=1)
         return -squared * (diff / length_scale)
+
 
 class Matern(sk_Matern):
     def gradient_X(self, X, Y):
@@ -63,3 +66,22 @@ class Matern(sk_Matern):
             g = np.expand_dims(np.exp(-sqrt(5) * dist), axis=1)
             g_grad = -g * f1_grad
             return f * g_grad + g * f_grad
+
+
+class RationalQuadratic(sk_RationalQuadratic):
+
+    def gradient_X(self, X, Y):
+        alpha = self.alpha
+        length_scale = self.length_scale
+
+        diff = X - Y
+        diff /= length_scale
+        sq_dist = np.sum(diff**2, axis=1)
+        sq_dist /= (2 * self.alpha)
+        sq_dist += 1
+        sq_dist **= (-alpha - 1)
+        sq_dist *= -1
+
+        sq_dist = np.expand_dims(sq_dist, axis=1)
+        diff_by_ls = diff / length_scale
+        return sq_dist * diff_by_ls
