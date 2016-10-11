@@ -8,17 +8,21 @@ from skopt.learning.gp_kernels import ExpSineSquared
 from skopt.learning.gp_kernels import Matern
 from skopt.learning.gp_kernels import RationalQuadratic
 from skopt.learning.gp_kernels import RBF
+from skopt.learning.gp_kernels import Sum
 from skopt.learning.gp_kernels import WhiteKernel
 
-KERNELS = [RBF(length_scale=[1.0, 2.0, 3.0]),
-           Matern(length_scale=[1.0, 2.0, 3.0], nu=0.5),
-           Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5),
-           Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5),
-           RationalQuadratic(alpha=2.0, length_scale=2.0),
-           ExpSineSquared(length_scale=2.0, periodicity=3.0),
-           ConstantKernel(constant_value=1.0),
-           WhiteKernel(noise_level=2.0),
-           Exponentiation(Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5), 3.0)]
+KERNELS = [
+    RBF(length_scale=[1.0, 2.0, 3.0]),
+    Matern(length_scale=[1.0, 2.0, 3.0], nu=0.5),
+    Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5),
+    Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5),
+    RationalQuadratic(alpha=2.0, length_scale=2.0),
+    ExpSineSquared(length_scale=2.0, periodicity=3.0),
+    ConstantKernel(constant_value=1.0),
+    WhiteKernel(noise_level=2.0),
+    Exponentiation(Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5), 3.0),
+    Sum(RBF(length_scale=[1.0, 2.0, 3.0]),
+        Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5))]
 
 rng = np.random.RandomState(0)
 X = rng.randn(3)

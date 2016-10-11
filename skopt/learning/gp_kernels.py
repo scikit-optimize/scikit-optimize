@@ -7,6 +7,7 @@ from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
 from sklearn.gaussian_process.kernels import RationalQuadratic as sk_RationalQuadratic
 from sklearn.gaussian_process.kernels import RBF as sk_RBF
+from sklearn.gaussian_process.kernels import Sum as sk_Sum
 from sklearn.gaussian_process.kernels import WhiteKernel as sk_WhiteKernel
 
 class RBF(sk_RBF):
@@ -122,6 +123,7 @@ class WhiteKernel(sk_WhiteKernel):
     def gradient_X(self, X, Y):
         return np.zeros_like(Y)
 
+
 class Exponentiation(sk_Exponentiation):
 
     def gradient_X(self, X, Y):
@@ -131,3 +133,9 @@ class Exponentiation(sk_Exponentiation):
         kernel_value = np.expand_dims(
             kernel(np.expand_dims(X, axis=0), Y)[0], axis=1)
         return expo * kernel_value ** (expo - 1) * kernel.gradient_X(X, Y)
+
+
+class Sum(sk_Sum):
+
+    def gradient_X(self, X, Y):
+        return self.k1.gradient_X(X, Y) + self.k2.gradient_X(X, Y)
