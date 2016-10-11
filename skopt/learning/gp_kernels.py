@@ -40,7 +40,7 @@ class Kernel(sk_Kernel):
 
 
 class RBF(sk_RBF):
-    def gradient_X(self, x, Y):
+    def gradient_X(self, x, Y=None):
         """
         Computes gradient of K(X, Y) with respect to X
         """

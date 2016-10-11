@@ -10,6 +10,9 @@ from sklearn.utils import check_random_state
 
 from .base import base_minimize
 from ..learning import GaussianProcessRegressor
+from ..learning import ConstantKernel
+from ..learning import Matern
+from ..learning import WhiteKernel
 from ..space import check_dimension
 from ..space import Space
 

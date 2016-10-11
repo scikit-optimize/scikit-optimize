@@ -197,3 +197,15 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                     self.kernel_.set_params(
                         **{white_param: WhiteKernel(noise_level=0.0)})
         return self
+
+    def predict(self, X, return_std=False, return_cov=False,
+                return_mean_gradient=False):
+        if X.shape[0] != 1 and return_mean_gradient:
+            raise ValueError("Not implemented for n_samples > 1")
+        y_mean, y_std = super(GaussianProcessRegressor, self).predict(
+            X, return_std=return_std, return_cov=return_cov
+        )
+        if not return_mean_gradient:
+            return y_mean, y_std
+        # else:
+        #     return self.kernel_.

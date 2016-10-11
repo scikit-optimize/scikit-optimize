@@ -34,20 +34,20 @@ rng = np.random.RandomState(0)
 X = rng.randn(3)
 Y = rng.randn(10, 3)
 
-def func(X, Y, kernel):
-    x = np.expand_dims(X, axis=0)
-    y = np.expand_dims(Y, axis=0)
-    return kernel(x, y)[0][0]
+def kernel_X_Y(x, y, kernel):
+    X = np.expand_dims(x, axis=0)
+    Y = np.expand_dims(y, axis=0)
+    return kernel(X, Y)[0][0]
 
-def numerical_gradient(X, func, Y, kernel):
+def numerical_gradient(X, Y, kernel):
     grad = []
     for y in Y:
-        num_grad = optimize.approx_fprime(X, func, 1e-4, y, kernel)
+        num_grad = optimize.approx_fprime(X, kernel_X_Y, 1e-4, y, kernel)
         grad.append(num_grad)
     return np.asarray(grad)
 
 def test_gradient_correctness():
     for kernel in KERNELS:
         X_grad = kernel.gradient_X(X, Y)
-        num_grad = numerical_gradient(X, func, Y, kernel)
+        num_grad = numerical_gradient(X, Y, kernel)
         assert_array_almost_equal(X_grad, num_grad, decimal=3)
