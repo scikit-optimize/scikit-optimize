@@ -1,6 +1,7 @@
 from math import sqrt
 
 import numpy as np
+from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
 from sklearn.gaussian_process.kernels import RationalQuadratic as sk_RationalQuadratic
 from sklearn.gaussian_process.kernels import RBF as sk_RBF
@@ -85,3 +86,24 @@ class RationalQuadratic(sk_RationalQuadratic):
         sq_dist = np.expand_dims(sq_dist, axis=1)
         diff_by_ls = diff / length_scale
         return sq_dist * diff_by_ls
+
+
+class ExpSineSquared(sk_ExpSineSquared):
+
+    def gradient_X(self, X, Y):
+        length_scale = self.length_scale
+        periodicity = self.periodicity
+
+        diff = X - Y
+        sq_dist = np.sum(diff**2, axis=1)
+        dist = np.sqrt(sq_dist)
+
+        pi_by_period = dist * (np.pi / periodicity)
+        sine = np.sin(pi_by_period) / length_scale
+        sine_squared = -2 * sine**2
+        exp_sine_squared = np.exp(sine_squared)
+
+        grad_wrt_exp = -2 * np.sin(2 * pi_by_period) / length_scale**2
+        grad_wrt_theta = np.pi / (periodicity * dist)
+        return np.expand_dims(
+            grad_wrt_theta * exp_sine_squared * grad_wrt_exp, axis=1) * diff
