@@ -5,6 +5,7 @@ from sklearn.gaussian_process.kernels import ConstantKernel as sk_ConstantKernel
 from sklearn.gaussian_process.kernels import Exponentiation as sk_Exponentiation
 from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
+from sklearn.gaussian_process.kernels import Product as sk_Product
 from sklearn.gaussian_process.kernels import RationalQuadratic as sk_RationalQuadratic
 from sklearn.gaussian_process.kernels import RBF as sk_RBF
 from sklearn.gaussian_process.kernels import Sum as sk_Sum
@@ -139,3 +140,13 @@ class Sum(sk_Sum):
 
     def gradient_X(self, X, Y):
         return self.k1.gradient_X(X, Y) + self.k2.gradient_X(X, Y)
+
+
+class Product(sk_Product):
+
+    def gradient_X(self, X, Y):
+        x = np.expand_dims(X, axis=0)
+        return (
+            np.expand_dims(self.k1(x, Y)[0], axis=1) * self.k2.gradient_X(X, Y) +
+            np.expand_dims(self.k2(x, Y)[0], axis=1) * self.k1.gradient_X(X, Y)
+        )

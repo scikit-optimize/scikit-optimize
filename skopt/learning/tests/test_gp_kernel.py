@@ -6,6 +6,7 @@ from skopt.learning.gp_kernels import ConstantKernel
 from skopt.learning.gp_kernels import Exponentiation
 from skopt.learning.gp_kernels import ExpSineSquared
 from skopt.learning.gp_kernels import Matern
+from skopt.learning.gp_kernels import Product
 from skopt.learning.gp_kernels import RationalQuadratic
 from skopt.learning.gp_kernels import RBF
 from skopt.learning.gp_kernels import Sum
@@ -22,7 +23,10 @@ KERNELS = [
     WhiteKernel(noise_level=2.0),
     Exponentiation(Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5), 3.0),
     Sum(RBF(length_scale=[1.0, 2.0, 3.0]),
-        Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5))]
+        Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5)),
+    Product(RBF(length_scale=[1.0, 2.0, 3.0]),
+            Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5))
+]
 
 rng = np.random.RandomState(0)
 X = rng.randn(3)
