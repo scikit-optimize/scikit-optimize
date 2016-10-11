@@ -6,7 +6,7 @@ from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
 from sklearn.gaussian_process.kernels import RationalQuadratic as sk_RationalQuadratic
 from sklearn.gaussian_process.kernels import RBF as sk_RBF
-
+from sklearn.gaussian_process.kernels import WhiteKernel as sk_WhiteKernel
 
 class RBF(sk_RBF):
     def gradient_X(self, X, Y):
@@ -111,6 +111,12 @@ class ExpSineSquared(sk_ExpSineSquared):
 
 
 class ConstantKernel(sk_ConstantKernel):
+
+    def gradient_X(self, X, Y):
+        return np.zeros_like(Y)
+
+
+class WhiteKernel(sk_WhiteKernel):
 
     def gradient_X(self, X, Y):
         return np.zeros_like(Y)
