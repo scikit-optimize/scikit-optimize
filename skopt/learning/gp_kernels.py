@@ -1,6 +1,7 @@
 from math import sqrt
 
 import numpy as np
+from sklearn.gaussian_process.kernels import ConstantKernel as sk_ConstantKernel
 from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
 from sklearn.gaussian_process.kernels import RationalQuadratic as sk_RationalQuadratic
@@ -107,3 +108,9 @@ class ExpSineSquared(sk_ExpSineSquared):
         grad_wrt_theta = np.pi / (periodicity * dist)
         return np.expand_dims(
             grad_wrt_theta * exp_sine_squared * grad_wrt_exp, axis=1) * diff
+
+
+class ConstantKernel(sk_ConstantKernel):
+
+    def gradient_X(self, X, Y):
+        return np.zeros_like(Y)
