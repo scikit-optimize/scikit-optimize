@@ -83,8 +83,9 @@ def test_std_gradient():
     rbf = RBF(length_scale=[1.0, 2.0, 3.0], length_scale_bounds="fixed")
     gpr = GaussianProcessRegressor(rbf, random_state=0).fit(X, y)
 
-    std_grad = gpr.predict(
+    _, _, _, std_grad = gpr.predict(
         np.expand_dims(X_new, axis=0),
-        return_std=True, return_std_grad=True)
+        return_std=True, return_cov=False, return_mean_grad=True,
+        return_std_grad=True)
     num_grad = optimize.approx_fprime(
         X_new, lambda x: predict_wrapper(x, gpr)[1], 1e-4)
