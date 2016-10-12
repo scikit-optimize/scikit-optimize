@@ -22,11 +22,9 @@ KERNELS = [
     ExpSineSquared(length_scale=2.0, periodicity=3.0),
     ConstantKernel(constant_value=1.0),
     WhiteKernel(noise_level=2.0),
-    Exponentiation(Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5), 3.0),
-    Sum(RBF(length_scale=[1.0, 2.0, 3.0]),
-        Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5)),
-    Product(RBF(length_scale=[1.0, 2.0, 3.0]),
-            Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5)),
+    Matern(length_scale=[1.0, 2.0, 3.0], nu=2.5) ** 3.0,
+    RBF(length_scale=[1.0, 2.0, 3.0]) + Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5),
+    RBF(length_scale=[1.0, 2.0, 3.0]) * Matern(length_scale=[1.0, 2.0, 3.0], nu=1.5),
     DotProduct(sigma_0=2.0)
 ]
 

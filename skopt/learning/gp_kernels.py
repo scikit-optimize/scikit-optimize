@@ -19,6 +19,29 @@ class Kernel(sk_Kernel):
     Base class for skopt.gaussian_process kernels.
     Supports computation of the gradient of the kernel with respect to X
     """
+    def __add__(self, b):
+        if not isinstance(b, Kernel):
+            return Sum(self, ConstantKernel(b))
+        return Sum(self, b)
+
+    def __radd__(self, b):
+        if not isinstance(b, Kernel):
+            return Sum(ConstantKernel(b), self)
+        return Sum(b, self)
+
+    def __mul__(self, b):
+        if not isinstance(b, Kernel):
+            return Product(self, ConstantKernel(b))
+        return Product(self, b)
+
+    def __rmul__(self, b):
+        if not isinstance(b, Kernel):
+            return Product(ConstantKernel(b), self)
+        return Product(b, self)
+
+    def __pow__(self, b):
+        return Exponentiation(self, b)
+
     def gradient_X(self, x, Y):
         """
         Computes gradient of K(x, Y) with respect to X
@@ -39,7 +62,7 @@ class Kernel(sk_Kernel):
         raise NotImplementedError
 
 
-class RBF(sk_RBF):
+class RBF(Kernel, sk_RBF):
     def gradient_X(self, x, Y=None):
         """
         Computes gradient of K(X, Y) with respect to X
@@ -53,7 +76,7 @@ class RBF(sk_RBF):
         return -squared * (diff / length_scale)
 
 
-class Matern(sk_Matern):
+class Matern(Kernel, sk_Matern):
     def gradient_X(self, x, Y):
         length_scale = np.array(self.length_scale)
 
@@ -101,7 +124,7 @@ class Matern(sk_Matern):
             return f * g_grad + g * f_grad
 
 
-class RationalQuadratic(sk_RationalQuadratic):
+class RationalQuadratic(Kernel, sk_RationalQuadratic):
 
     def gradient_X(self, x, Y):
         alpha = self.alpha
@@ -120,7 +143,7 @@ class RationalQuadratic(sk_RationalQuadratic):
         return sq_dist * diff_by_ls
 
 
-class ExpSineSquared(sk_ExpSineSquared):
+class ExpSineSquared(Kernel, sk_ExpSineSquared):
 
     def gradient_X(self, x, Y):
         length_scale = self.length_scale
@@ -141,19 +164,19 @@ class ExpSineSquared(sk_ExpSineSquared):
             grad_wrt_theta * exp_sine_squared * grad_wrt_exp, axis=1) * diff
 
 
-class ConstantKernel(sk_ConstantKernel):
+class ConstantKernel(Kernel, sk_ConstantKernel):
 
     def gradient_X(self, x, Y):
         return np.zeros_like(Y)
 
 
-class WhiteKernel(sk_WhiteKernel):
+class WhiteKernel(Kernel, sk_WhiteKernel):
 
     def gradient_X(self, x, Y):
         return np.zeros_like(Y)
 
 
-class Exponentiation(sk_Exponentiation):
+class Exponentiation(Kernel, sk_Exponentiation):
 
     def gradient_X(self, x, Y):
         expo = self.exponent
@@ -164,13 +187,13 @@ class Exponentiation(sk_Exponentiation):
         return expo * kernel_value ** (expo - 1) * kernel.gradient_X(x, Y)
 
 
-class Sum(sk_Sum):
+class Sum(Kernel, sk_Sum):
 
     def gradient_X(self, x, Y):
         return self.k1.gradient_X(x, Y) + self.k2.gradient_X(x, Y)
 
 
-class Product(sk_Product):
+class Product(Kernel, sk_Product):
 
     def gradient_X(self, x, Y):
         X = np.expand_dims(x, axis=0)
@@ -180,7 +203,7 @@ class Product(sk_Product):
         )
 
 
-class DotProduct(sk_DotProduct):
+class DotProduct(Kernel, sk_DotProduct):
 
     def gradient_X(self, x, Y):
         return Y

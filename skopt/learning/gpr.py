@@ -1,6 +1,9 @@
+import numpy as np
+
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import WhiteKernel
-from sklearn.gaussian_process.kernels import Sum
+
+from .gp_kernels import WhiteKernel
+from .gp_kernels import Sum
 
 
 def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
@@ -199,13 +202,16 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         return self
 
     def predict(self, X, return_std=False, return_cov=False,
-                return_mean_gradient=False):
-        if X.shape[0] != 1 and return_mean_gradient:
+                return_mean_grad=False):
+        X = np.asarray(X)
+        if X.shape[0] != 1 and return_mean_grad:
             raise ValueError("Not implemented for n_samples > 1")
-        y_mean, y_std = super(GaussianProcessRegressor, self).predict(
+        y_stats = super(GaussianProcessRegressor, self).predict(
             X, return_std=return_std, return_cov=return_cov
         )
-        if not return_mean_gradient:
-            return y_mean, y_std
-        # else:
-        #     return self.kernel_.
+        if return_mean_grad:
+            grad_kernel = self.kernel_.gradient_X(X[0], self.X_train_).T
+            grad_wrt_mean = np.dot(grad_kernel, self.alpha_)
+            return tuple(list(y_stats) + [grad_wrt_mean])
+        else:
+            return y_stats

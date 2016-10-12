@@ -1,14 +1,16 @@
 import numpy as np
+from scipy import optimize
 
-from sklearn.gaussian_process.kernels import RBF
-from sklearn.gaussian_process.kernels import Matern
-from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 
 from skopt.learning import GaussianProcessRegressor
+from skopt.learning.gp_kernels import RBF
+from skopt.learning.gp_kernels import Matern
+from skopt.learning.gp_kernels import WhiteKernel
 from skopt.learning.gpr import _param_for_white_kernel_in_Sum
 
 rng = np.random.RandomState(0)
@@ -23,6 +25,12 @@ kernel2 = mat + rbf
 kernel3 = mat * rbf
 kernel4 = wk * rbf
 kernel5 = mat + rbf * wk
+
+
+def predict_wrapper(X, gpr):
+    """Predict that can handle 1-D input"""
+    X = np.expand_dims(X, axis=0)
+    return gpr.predict(X)
 
 
 def test_param_for_white_kernel_in_Sum():
@@ -49,3 +57,18 @@ def test_noise_equals_gaussian():
     mean2, std2 = gpr2.predict(X, return_std=True)
     assert_array_equal(mean1, mean2)
     assert_false(np.any(std1 == std2))
+
+
+def test_mean_gradient():
+    X = rng.randn(3, 3)
+    y = rng.randn(3)
+    X_new = rng.randn(3)
+
+    rbf = RBF(length_scale=[1.0, 2.0, 3.0], length_scale_bounds="fixed")
+    gpr = GaussianProcessRegressor(rbf, random_state=0).fit(X, y)
+
+    mean, std, mean_grad = gpr.predict(
+        np.expand_dims(X_new, axis=0),
+        return_std=True, return_cov=False, return_mean_grad=True)
+    num_grad = optimize.approx_fprime(X_new, predict_wrapper, 1e-4, gpr)
+    assert_array_almost_equal(mean_grad, num_grad, decimal=3)
