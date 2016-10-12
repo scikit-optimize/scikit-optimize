@@ -282,6 +282,10 @@ def base_minimize(func, dimensions, base_estimator,
         elif acq_optimizer == "lbfgs":
             best = np.inf
 
+            if acq_func == "LCB":
+                approx_grad = False
+            else:
+                approx_grad = True
             for j in range(n_restarts_optimizer):
                 x0 = space.transform(space.rvs(n_samples=1,
                                                random_state=rng))[0]
@@ -292,7 +296,7 @@ def base_minimize(func, dimensions, base_estimator,
                         _acquisition, x0,
                         args=(gp, np.min(yi), acq_func, xi, kappa),
                         bounds=space.transformed_bounds,
-                        approx_grad=True, maxiter=20)
+                        approx_grad=approx_grad, maxiter=20)
 
                 if a < best:
                     next_x, best = x, a

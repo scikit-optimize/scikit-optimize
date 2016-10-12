@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve_triangular
 
@@ -256,11 +258,11 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                 y_std = np.sqrt(y_var)
 
             if return_mean_grad:
-                grad = self.kernel_.gradient_X(X[0], self.X_train_).T
-                grad_wrt_mean = np.dot(grad, self.alpha_)
+                grad = self.kernel_.gradient_X(X[0], self.X_train_)
+                grad_wrt_mean = np.dot(grad.T   , self.alpha_)
 
                 if return_std_grad:
-                    # XXX: Cache np.dot(K_trans, K_inv from above)
+                    # XXX: Cache np.dot(K_trans, K_inv) from above
                     grad_wrt_std = -np.dot(K_trans, np.dot(K_inv, grad))[0] / y_std
                     return y_mean, y_std, grad_wrt_mean, grad_wrt_std
                 return y_mean, y_std, grad_wrt_mean

@@ -59,9 +59,14 @@ def gaussian_lcb(X, model, kappa=1.96):
     # Compute posterior.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        mu, std = model.predict(X, return_std=True)
-
-    return mu - kappa * std
+        if X.shape[0] == 1:
+            mu, std, mu_grad, std_grad = model.predict(
+                X, return_std=True, return_mean_grad=True,
+                return_std_grad=True)
+            return mu - kappa * std, mu_grad - kappa * std_grad
+        else:
+            mu, std = model.predict(X, return_std=True)
+            return mu - kappa * std
 
 
 def gaussian_pi(X, model, y_opt=0.0, xi=0.01):
