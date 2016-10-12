@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import cholesky, cho_solve, solve_triangular
 
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 
@@ -202,16 +203,23 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         return self
 
     def predict(self, X, return_std=False, return_cov=False,
-                return_mean_grad=False):
+                return_mean_grad=False, return_std_grad=False):
         X = np.asarray(X)
+        K_trans = self.kernel_(X, self.X_train_)
         if X.shape[0] != 1 and return_mean_grad:
             raise ValueError("Not implemented for n_samples > 1")
         y_stats = super(GaussianProcessRegressor, self).predict(
             X, return_std=return_std, return_cov=return_cov
         )
+        y_stats = list(y_stats)
         if return_mean_grad:
             grad_kernel = self.kernel_.gradient_X(X[0], self.X_train_).T
             grad_wrt_mean = np.dot(grad_kernel, self.alpha_)
-            return tuple(list(y_stats) + [grad_wrt_mean])
-        else:
-            return y_stats
+            y_stats = y_stats + [grad_wrt_mean]
+        elif return_std_grad:
+            std = y_stats[1]
+            L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
+            K_inv = L_inv.dot(L_inv.T)
+            grad = self.kernel_.gradient_X(X[0], self.X_train_)
+            return y_stats + [-np.dot(K_trans, np.dot(K_inv, grad))[0] / std]
+        return y_stats

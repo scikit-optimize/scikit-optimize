@@ -30,7 +30,7 @@ kernel5 = mat + rbf * wk
 def predict_wrapper(X, gpr):
     """Predict that can handle 1-D input"""
     X = np.expand_dims(X, axis=0)
-    return gpr.predict(X)
+    return gpr.predict(X, return_std=True)
 
 
 def test_param_for_white_kernel_in_Sum():
@@ -70,5 +70,21 @@ def test_mean_gradient():
     mean, std, mean_grad = gpr.predict(
         np.expand_dims(X_new, axis=0),
         return_std=True, return_cov=False, return_mean_grad=True)
-    num_grad = optimize.approx_fprime(X_new, predict_wrapper, 1e-4, gpr)
+    num_grad = optimize.approx_fprime(
+        X_new, lambda x: predict_wrapper(x, gpr)[0], 1e-4)
     assert_array_almost_equal(mean_grad, num_grad, decimal=3)
+
+
+def test_std_gradient():
+    X = rng.randn(3, 3)
+    y = rng.randn(3)
+    X_new = rng.randn(3)
+
+    rbf = RBF(length_scale=[1.0, 2.0, 3.0], length_scale_bounds="fixed")
+    gpr = GaussianProcessRegressor(rbf, random_state=0).fit(X, y)
+
+    std_grad = gpr.predict(
+        np.expand_dims(X_new, axis=0),
+        return_std=True, return_std_grad=True)
+    num_grad = optimize.approx_fprime(
+        X_new, lambda x: predict_wrapper(x, gpr)[1], 1e-4)
