@@ -2,16 +2,14 @@ import numpy as np
 from scipy import optimize
 from sklearn.utils.testing import assert_array_almost_equal
 
-from skopt.learning.gp_kernels import ConstantKernel
-from skopt.learning.gp_kernels import DotProduct
-from skopt.learning.gp_kernels import Exponentiation
-from skopt.learning.gp_kernels import ExpSineSquared
-from skopt.learning.gp_kernels import Matern
-from skopt.learning.gp_kernels import Product
-from skopt.learning.gp_kernels import RationalQuadratic
-from skopt.learning.gp_kernels import RBF
-from skopt.learning.gp_kernels import Sum
-from skopt.learning.gp_kernels import WhiteKernel
+from skopt.learning.gaussian_process.kernels import ConstantKernel
+from skopt.learning.gaussian_process.kernels import DotProduct
+from skopt.learning.gaussian_process.kernels import Exponentiation
+from skopt.learning.gaussian_process.kernels import ExpSineSquared
+from skopt.learning.gaussian_process.kernels import Matern
+from skopt.learning.gaussian_process.kernels import RationalQuadratic
+from skopt.learning.gaussian_process.kernels import RBF
+from skopt.learning.gaussian_process.kernels import WhiteKernel
 
 KERNELS = [
     RBF(length_scale=[1.0, 2.0, 3.0]),

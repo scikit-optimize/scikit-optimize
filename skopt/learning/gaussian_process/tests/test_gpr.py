@@ -8,10 +8,10 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 
 from skopt.learning import GaussianProcessRegressor
-from skopt.learning.gp_kernels import RBF
-from skopt.learning.gp_kernels import Matern
-from skopt.learning.gp_kernels import WhiteKernel
-from skopt.learning.gpr import _param_for_white_kernel_in_Sum
+from skopt.learning.gaussian_process.kernels import RBF
+from skopt.learning.gaussian_process.kernels import Matern
+from skopt.learning.gaussian_process.kernels import WhiteKernel
+from skopt.learning.gaussian_process.gpr import _param_for_white_kernel_in_Sum
 
 rng = np.random.RandomState(0)
 X = rng.randn(5, 5)
@@ -89,3 +89,4 @@ def test_std_gradient():
         return_std_grad=True)
     num_grad = optimize.approx_fprime(
         X_new, lambda x: predict_wrapper(x, gpr)[1], 1e-4)
+    assert_array_almost_equal(std_grad, num_grad, decimal=3)

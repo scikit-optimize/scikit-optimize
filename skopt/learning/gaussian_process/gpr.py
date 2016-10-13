@@ -6,8 +6,8 @@ from scipy.linalg import cholesky, cho_solve, solve_triangular
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 from sklearn.utils import check_array
 
-from .gp_kernels import WhiteKernel
-from .gp_kernels import Sum
+from .kernels import WhiteKernel
+from .kernels import Sum
 
 
 def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
