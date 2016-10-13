@@ -68,9 +68,16 @@ class RBF(Kernel, sk_RBF):
         length_scale = np.array(self.length_scale)
         diff = x - X_train
         diff /= length_scale
-        squared = np.exp(-0.5 * np.sum(diff**2, axis=1))
-        squared = np.expand_dims(squared, axis=1)
-        return -squared * (diff / length_scale)
+
+        exp_diff_squared = np.sum(diff**2, axis=1)
+        exp_diff_squared *= -0.5
+        exp_diff_squared = np.exp(exp_diff_squared, exp_diff_squared)
+        exp_diff_squared = np.expand_dims(exp_diff_squared, axis=1)
+        exp_diff_squared *= -1
+
+        gradient = exp_diff_squared * diff
+        gradient /= length_scale
+        return gradient
 
 
 class Matern(Kernel, sk_Matern):
@@ -80,43 +87,64 @@ class Matern(Kernel, sk_Matern):
         # euclidean distance
         diff = x - X_train
         diff /= length_scale
-        sq_dist = np.sum(diff**2, axis=1)
-        dist = np.sqrt(sq_dist)
+
+        dist_sq = np.sum(diff**2, axis=1)
+        dist = np.sqrt(dist_sq)
 
         if self.nu == 0.5:
-            e_dist = -np.exp(-dist) / dist
-            e_dist = np.expand_dims(e_dist, axis=1)
-            return e_dist * (diff / length_scale)
+            scaled_exp_dist = -dist
+            scaled_exp_dist = np.exp(scaled_exp_dist, scaled_exp_dist)
+            scaled_exp_dist *= -1
+            scaled_exp_dist /= dist
+            scaled_exp_dist = np.expand_dims(scaled_exp_dist, axis=1)
+
+            gradient = scaled_exp_dist * diff
+            gradient /= length_scale
+            return gradient
 
         elif self.nu == 1.5:
             # grad(fg) = f'g + fg'
             # where f = 1 + sqrt(3) * euclidean((X - Y) / length_scale)
             # where g = exp(-sqrt(3) * euclidean((X - Y) / length_scale))
-            f = np.expand_dims(1 + sqrt(3) * dist, axis=1)
+            sqrt_3_dist = sqrt(3) * dist
+            f = np.expand_dims(1 + sqrt_3_dist, axis=1)
 
             dist_expand = np.expand_dims(sqrt(3) / dist, axis=1)
-            f_grad = dist_expand * (diff / length_scale)
+            f_grad = diff / length_scale
+            f_grad *= dist_expand
 
-            g = np.expand_dims(np.exp(-sqrt(3) * dist), axis=1)
+            sqrt_3_dist *= -1
+            exp_sqrt_3_dist = np.exp(sqrt_3_dist, sqrt_3_dist)
+            g = np.expand_dims(exp_sqrt_3_dist, axis=1)
             g_grad = -g * f_grad
-            return f * g_grad + g * f_grad
+
+            # f * g_grad + g * f_grad (where g_grad = -g * f_grad)
+            f *= -1
+            f += 1
+            return g * f_grad * f
 
         elif self.nu == 2.5:
             # grad(fg) = f'g + fg'
             # where f = (1 + sqrt(5) * euclidean((X - Y) / length_scale) +
             #            5 / 3 * sqeuclidean((X - Y) / length_scale))
             # where g = exp(-sqrt(5) * euclidean((X - Y) / length_scale))
-            f1 = sqrt(5) * dist
-            f2 = (5.0 / 3.0) * sq_dist
-            f = np.expand_dims(1 + f1 + f2, axis=1)
+            sqrt_5_dist = sqrt(5) * dist
+            f2 = (5.0 / 3.0) * dist_sq
+            f2 += sqrt_5_dist
+            f2 += 1
+            f = np.expand_dims(f2, axis=1)
 
-            dist_expand = np.expand_dims(sqrt(5) / dist, axis=1)
-            diff_by_ls = diff / length_scale
-            f1_grad = dist_expand * diff_by_ls
-            f2_grad = (10.0 / 3.0) * diff_by_ls
+            dist = np.reciprocal(dist, dist)
+            dist *= sqrt(5)
+            dist = np.expand_dims(dist, axis=1)
+            diff /= length_scale
+            f1_grad = dist * diff
+            f2_grad = (10.0 / 3.0) * diff
             f_grad = f1_grad + f2_grad
 
-            g = np.expand_dims(np.exp(-sqrt(5) * dist), axis=1)
+            sqrt_5_dist *= -1
+            g = np.exp(sqrt_5_dist, sqrt_5_dist)
+            g = np.expand_dims(g, axis=1)
             g_grad = -g * f1_grad
             return f * g_grad + g * f_grad
 
