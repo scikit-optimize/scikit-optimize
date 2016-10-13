@@ -10,7 +10,6 @@ from sklearn.utils import check_random_state
 
 from .base import base_minimize
 from ..learning import GaussianProcessRegressor
-from ..space import check_dimension
 from ..space import Space
 
 def gp_minimize(func, dimensions, base_estimator=None,
@@ -166,6 +165,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
+    from ..space import check_dimension
     # Check params
     rng = check_random_state(random_state)
 
