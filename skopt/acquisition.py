@@ -5,7 +5,7 @@ from scipy.stats import norm
 
 
 def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
-                          xi=0.01, kappa=1.96):
+                          xi=0.01, kappa=1.96, return_grad=False):
     """
     Wrapper so that the output of this function can be
     directly passed to a minimizer.
@@ -17,7 +17,7 @@ def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
 
     # Evaluate acquisition function
     if method == "LCB":
-        return gaussian_lcb(X, model, kappa)
+        return gaussian_lcb(X, model, kappa, return_grad)
     elif method == "EI":
         return -gaussian_ei(X, model, y_opt, xi)
     elif method == "PI":
@@ -26,7 +26,7 @@ def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
         raise ValueError("Acquisition function not implemented.")
 
 
-def gaussian_lcb(X, model, kappa=1.96):
+def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
     """
     Use the lower confidence bound to estimate the acquisition
     values.
@@ -59,7 +59,7 @@ def gaussian_lcb(X, model, kappa=1.96):
     # Compute posterior.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        if X.shape[0] == 1:
+        if return_grad:
             mu, std, mu_grad, std_grad = model.predict(
                 X, return_std=True, return_mean_grad=True,
                 return_std_grad=True)
