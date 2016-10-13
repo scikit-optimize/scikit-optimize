@@ -207,6 +207,48 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
     def predict(self, X, return_std=False, return_cov=False,
                 return_mean_grad=False, return_std_grad=False):
+        """
+        In addition to the mean of the predictive distribution, also its
+        standard deviation (return_std=True) or covariance (return_cov=True),
+        the gradient of the mean and the gradient of the std can be optionally
+        provided.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Query points where the GP is evaluated
+
+        return_std : bool, default: False
+            If True, the standard-deviation of the predictive distribution at
+            the query points is returned along with the mean.
+
+        return_cov : bool, default: False
+            If True, the covariance of the joint predictive distribution at
+            the query points is returned along with the mean
+
+        return_mean_grad: bool, default: False
+            Whether or not to return the gradient of the mean.
+            Only valid when X is a single point.
+
+        return_std_grad: bool, default: False
+            Whether or not to return the gradient of the std.
+            Only valid when X is a single point.
+
+        Returns
+        -------
+        y_mean : array, shape = (n_samples, [n_output_dims])
+            Mean of predictive distribution a query points
+        y_std : array, shape = (n_samples,), optional
+            Standard deviation of predictive distribution at query points.
+            Only returned when return_std is True.
+        y_cov : array, shape = (n_samples, n_samples), optional
+            Covariance of joint predictive distribution a query points.
+            Only returned when return_cov is True.
+        y_mean_grad: shape = (n_samples, n_features)
+            The gradient of the predicted mean
+        y_std_grad: shape = (n_samples, n_features)
+            The gradient of the predicted std.
+        """
         if return_std and return_cov:
             raise RuntimeError(
                 "Not returning standard deviation of predictions when "
