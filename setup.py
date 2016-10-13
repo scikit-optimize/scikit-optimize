@@ -13,7 +13,7 @@ setup(name='scikit-optimize',
       url='https://scikit-optimize.github.io/',
       license='BSD',
       author='The scikit-optimize contributors',
-      packages=['skopt', 'skopt.learning', 'skopt.optimizer'],
+      packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space'],
       install_requires=["numpy", "scipy", "scikit-learn>=0.18",
                         "matplotlib"]
       )
