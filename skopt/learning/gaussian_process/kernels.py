@@ -42,34 +42,31 @@ class Kernel(sk_Kernel):
     def __pow__(self, b):
         return Exponentiation(self, b)
 
-    def gradient_X(self, x, Y):
+    def gradient_X(self, x, X_train):
         """
-        Computes gradient of K(x, Y) with respect to X
+        Computes gradient of K(x, X_train) with respect to x
 
         Parameters
         ----------
         x: array-like, shape=(n_features,)
-            Usually a test point.
+            A single test point.
 
         Y: array-like, shape=(n_samples, n_features)
-            Usually training data.
+            Training data used to fit the gaussian process.
 
         Returns
         -------
         gradient_X: array-like, shape=(n_samples, n_features)
-            Gradient of K(x, Y) with respect to X.
+            Gradient of K(x, X_train) with respect to x.
         """
         raise NotImplementedError
 
 
 class RBF(Kernel, sk_RBF):
-    def gradient_X(self, x, Y=None):
-        """
-        Computes gradient of K(X, Y) with respect to X
-        """
+    def gradient_X(self, x, X_train):
         # TODO: Do in-place operations
         length_scale = np.array(self.length_scale)
-        diff = x - Y
+        diff = x - X_train
         diff /= length_scale
         squared = np.exp(-0.5 * np.sum(diff**2, axis=1))
         squared = np.expand_dims(squared, axis=1)
@@ -77,11 +74,11 @@ class RBF(Kernel, sk_RBF):
 
 
 class Matern(Kernel, sk_Matern):
-    def gradient_X(self, x, Y):
+    def gradient_X(self, x, X_train):
         length_scale = np.array(self.length_scale)
 
         # euclidean distance
-        diff = x - Y
+        diff = x - X_train
         diff /= length_scale
         sq_dist = np.sum(diff**2, axis=1)
         dist = np.sqrt(sq_dist)
@@ -126,11 +123,11 @@ class Matern(Kernel, sk_Matern):
 
 class RationalQuadratic(Kernel, sk_RationalQuadratic):
 
-    def gradient_X(self, x, Y):
+    def gradient_X(self, x, X_train):
         alpha = self.alpha
         length_scale = self.length_scale
 
-        diff = x - Y
+        diff = x - X_train
         diff /= length_scale
         sq_dist = np.sum(diff**2, axis=1)
         sq_dist /= (2 * self.alpha)
@@ -145,11 +142,11 @@ class RationalQuadratic(Kernel, sk_RationalQuadratic):
 
 class ExpSineSquared(Kernel, sk_ExpSineSquared):
 
-    def gradient_X(self, x, Y):
+    def gradient_X(self, x, X_train):
         length_scale = self.length_scale
         periodicity = self.periodicity
 
-        diff = x - Y
+        diff = x - X_train
         sq_dist = np.sum(diff**2, axis=1)
         dist = np.sqrt(sq_dist)
 
@@ -166,44 +163,51 @@ class ExpSineSquared(Kernel, sk_ExpSineSquared):
 
 class ConstantKernel(Kernel, sk_ConstantKernel):
 
-    def gradient_X(self, x, Y):
-        return np.zeros_like(Y)
+    def gradient_X(self, x, X_train):
+        return np.zeros_like(X_train)
 
 
 class WhiteKernel(Kernel, sk_WhiteKernel):
 
-    def gradient_X(self, x, Y):
-        return np.zeros_like(Y)
+    def gradient_X(self, x, X_train):
+        return np.zeros_like(X_train)
 
 
 class Exponentiation(Kernel, sk_Exponentiation):
 
-    def gradient_X(self, x, Y):
+    def gradient_X(self, x, X_train):
         expo = self.exponent
         kernel = self.kernel
 
-        kernel_value = np.expand_dims(
-            kernel(np.expand_dims(x, axis=0), Y)[0], axis=1)
-        return expo * kernel_value ** (expo - 1) * kernel.gradient_X(x, Y)
+        K = np.expand_dims(
+            kernel(np.expand_dims(x, axis=0), X_train)[0], axis=1)
+        return expo * K ** (expo - 1) * kernel.gradient_X(x, X_train)
 
 
 class Sum(Kernel, sk_Sum):
 
-    def gradient_X(self, x, Y):
-        return self.k1.gradient_X(x, Y) + self.k2.gradient_X(x, Y)
-
+    def gradient_X(self, x, X_train):
+        return (
+            self.k1.gradient_X(x, X_train) +
+            self.k2.gradient_X(x, X_train)
+        )
 
 class Product(Kernel, sk_Product):
 
-    def gradient_X(self, x, Y):
+    def gradient_X(self, x, X_train):
         X = np.expand_dims(x, axis=0)
-        return (
-            np.expand_dims(self.k1(X, Y)[0], axis=1) * self.k2.gradient_X(x, Y) +
-            np.expand_dims(self.k2(X, Y)[0], axis=1) * self.k1.gradient_X(x, Y)
+        f_ggrad = (
+            np.expand_dims(self.k1(x, X_train)[0], axis=1) *
+            self.k2.gradient_X(x, X_train)
         )
+        fgrad_g = (
+            np.expand_dims(self.k2(x, X_train)[0], axis=1) *
+            self.k1.gradient_X(x, X_train)
+        )
+        return f_ggrad + fgrad_g
 
 
 class DotProduct(Kernel, sk_DotProduct):
 
-    def gradient_X(self, x, Y):
-        return Y
+    def gradient_X(self, x, X_train):
+        return X_train
