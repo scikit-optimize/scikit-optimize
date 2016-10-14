@@ -283,10 +283,7 @@ def base_minimize(func, dimensions, base_estimator,
         elif acq_optimizer == "lbfgs":
             best = np.inf
 
-            if acq_func == "LCB":
-                approx_grad = False
-            else:
-                approx_grad = True
+            approx_grad = acq_func != "LCB"
             for j in range(n_restarts_optimizer):
                 x0 = space.transform(space.rvs(n_samples=1,
                                                random_state=rng))[0]

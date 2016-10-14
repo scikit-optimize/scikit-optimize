@@ -256,7 +256,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         if return_std_grad and not return_std:
             raise ValueError(
                 "Not returning std_gradient without returning "
-                "the mean.")
+                "the std.")
         X = check_array(X)
         if X.shape[0] != 1 and (return_mean_grad or return_std_grad):
             raise ValueError("Not implemented for n_samples > 1")
@@ -307,7 +307,11 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                     # XXX: Cache np.dot(K_trans, K_inv) from above
                     grad_wrt_std = -np.dot(K_trans, np.dot(K_inv, grad))[0] / y_std
                     return y_mean, y_std, grad_wrt_mean, grad_wrt_std
-                return y_mean, y_std, grad_wrt_mean
+
+                if return_std:
+                    return y_mean, y_std, grad_wrt_mean
+                else:
+                    return y_mean, grad_wrt_mean
             else:
                 if return_std:
                     return y_mean, y_std

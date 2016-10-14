@@ -64,7 +64,6 @@ class Kernel(sk_Kernel):
 
 class RBF(Kernel, sk_RBF):
     def gradient_X(self, x, X_train):
-        # TODO: Do in-place operations
         length_scale = np.array(self.length_scale)
         diff = x - X_train
         diff /= length_scale

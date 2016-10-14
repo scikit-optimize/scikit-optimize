@@ -51,10 +51,17 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
         exploration over exploitation and vice versa.
         Useless if ``method`` is set to "LCB".
 
+    * `return_grad`: [boolean, optional]:
+        Whether or not to return the grad. Implemented only for the case where
+        ``X`` is a single sample.
+
     Returns
     -------
     * `values`: [array-like, shape=(X.shape[0],)]:
         Acquisition function values computed at X.
+
+    * `grad`: [array-like, shape=(n_samples, n_features)]:
+        Gradient at X.
     """
     # Compute posterior.
     with warnings.catch_warnings():
