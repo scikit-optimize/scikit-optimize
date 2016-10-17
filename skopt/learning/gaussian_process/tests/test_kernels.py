@@ -42,8 +42,11 @@ def numerical_gradient(X, Y, kernel):
         grad.append(num_grad)
     return np.asarray(grad)
 
+def check_gradient_correctness(kernel):
+    X_grad = kernel.gradient_X(X, Y)
+    num_grad = numerical_gradient(X, Y, kernel)
+    assert_array_almost_equal(X_grad, num_grad, decimal=3)
+
 def test_gradient_correctness():
     for kernel in KERNELS:
-        X_grad = kernel.gradient_X(X, Y)
-        num_grad = numerical_gradient(X, Y, kernel)
-        assert_array_almost_equal(X_grad, num_grad, decimal=3)
+        yield check_gradient_correctness, kernel

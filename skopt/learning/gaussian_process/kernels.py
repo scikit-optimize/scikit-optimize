@@ -64,16 +64,21 @@ class Kernel(sk_Kernel):
 
 class RBF(Kernel, sk_RBF):
     def gradient_X(self, x, X_train):
+        # diff = (x - X) / length_scale
+        # size = (n_train_samples, n_dimensions)
         length_scale = np.array(self.length_scale)
         diff = x - X_train
         diff /= length_scale
 
+        # e = -exp(0.5 * \sum_{i=1}^d (diff ** 2))
+        # size = (n_train_samples, 1)
         exp_diff_squared = np.sum(diff**2, axis=1)
         exp_diff_squared *= -0.5
         exp_diff_squared = np.exp(exp_diff_squared, exp_diff_squared)
         exp_diff_squared = np.expand_dims(exp_diff_squared, axis=1)
         exp_diff_squared *= -1
 
+        # gradient = (e * diff) / length_scale
         gradient = exp_diff_squared * diff
         gradient /= length_scale
         return gradient
@@ -83,20 +88,27 @@ class Matern(Kernel, sk_Matern):
     def gradient_X(self, x, X_train):
         length_scale = np.array(self.length_scale)
 
-        # euclidean distance
+        # diff = (x - X_train) / length_scale
+        # size = (n_train_samples, n_dimensions)
         diff = x - X_train
         diff /= length_scale
 
+        # dist_sq = \sum_{i=1}^d (diff ^ 2)
+        # dist = sqrt(dist_sq)
+        # size = (n_train_samples,)
         dist_sq = np.sum(diff**2, axis=1)
         dist = np.sqrt(dist_sq)
 
         if self.nu == 0.5:
+            # e = -np.exp(-dist) / dist
+            # size = (n_train_samples, 1)
             scaled_exp_dist = -dist
             scaled_exp_dist = np.exp(scaled_exp_dist, scaled_exp_dist)
             scaled_exp_dist *= -1
             scaled_exp_dist /= dist
             scaled_exp_dist = np.expand_dims(scaled_exp_dist, axis=1)
 
+            # grad = (e * diff) / length_scale
             gradient = scaled_exp_dist * diff
             gradient /= length_scale
             return gradient
@@ -154,17 +166,22 @@ class RationalQuadratic(Kernel, sk_RationalQuadratic):
         alpha = self.alpha
         length_scale = self.length_scale
 
+        # diff = (x - X_train) / length_scale
+        # size = (n_train_samples, n_dimensions)
         diff = x - X_train
         diff /= length_scale
-        sq_dist = np.sum(diff**2, axis=1)
-        sq_dist /= (2 * self.alpha)
-        sq_dist += 1
-        sq_dist **= (-alpha - 1)
-        sq_dist *= -1
 
-        sq_dist = np.expand_dims(sq_dist, axis=1)
+        # dist = -(1 + (\sum_{i=1}^d (diff^2) / (2 * alpha)))** (-alpha - 1)
+        # size = (n_train_samples,)
+        scaled_dist = np.sum(diff**2, axis=1)
+        scaled_dist /= (2 * self.alpha)
+        scaled_dist += 1
+        scaled_dist **= (-alpha - 1)
+        scaled_dist *= -1
+
+        scaled_dist = np.expand_dims(scaled_dist, axis=1)
         diff_by_ls = diff / length_scale
-        return sq_dist * diff_by_ls
+        return scaled_dist * diff_by_ls
 
 
 class ExpSineSquared(Kernel, sk_ExpSineSquared):
