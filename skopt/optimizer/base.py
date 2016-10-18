@@ -18,21 +18,12 @@ from sklearn.base import clone
 from sklearn.base import is_regressor
 from sklearn.utils import check_random_state
 
+from ..acquisition import acquisition_1D
 from ..acquisition import _gaussian_acquisition
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
 from ..space import Space
 from ..utils import create_result
-
-def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01,
-                 kappa=1.96, return_grad=False):
-    """
-    A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
-
-    This is because lbfgs allows only 1-D input.
-    """
-    X = np.expand_dims(X, axis=0)
-    return _gaussian_acquisition(X, model, y_opt, method, xi, kappa, return_grad)
 
 
 def base_minimize(func, dimensions, base_estimator,
@@ -276,14 +267,13 @@ def base_minimize(func, dimensions, base_estimator,
             X = space.transform(space.rvs(n_samples=n_points,
                                           random_state=rng))
             values = _gaussian_acquisition(
-                X=X, model=gp,  y_opt=np.min(yi), method=acq_func,
+                X=X, model=gp,  y_opt=np.min(yi), acq_func=acq_func,
                 xi=xi, kappa=kappa)
             next_x = X[np.argmin(values)]
 
         elif acq_optimizer == "lbfgs":
             best = np.inf
 
-            approx_grad = acq_func != "LCB"
             for j in range(n_restarts_optimizer):
                 x0 = space.transform(space.rvs(n_samples=1,
                                                random_state=rng))[0]
@@ -291,10 +281,11 @@ def base_minimize(func, dimensions, base_estimator,
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     x, a, _ = fmin_l_bfgs_b(
-                        _acquisition, x0,
-                        args=(gp, np.min(yi), acq_func, xi, kappa, not approx_grad),
+                        acquisition_1D, x0,
+                        args=(gp, np.min(yi), acq_func, xi, kappa),
                         bounds=space.transformed_bounds,
-                        approx_grad=approx_grad, maxiter=20)
+                        approx_grad=False,
+                        maxiter=20)
 
                 if a < best:
                     next_x, best = x, a
