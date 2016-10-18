@@ -1,6 +1,13 @@
+import warnings
+
+import numpy as np
+from scipy.linalg import cholesky, cho_solve, solve_triangular
+
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import WhiteKernel
-from sklearn.gaussian_process.kernels import Sum
+from sklearn.utils import check_array
+
+from .kernels import WhiteKernel
+from .kernels import Sum
 
 
 def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
@@ -197,3 +204,116 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                     self.kernel_.set_params(
                         **{white_param: WhiteKernel(noise_level=0.0)})
         return self
+
+    def predict(self, X, return_std=False, return_cov=False,
+                return_mean_grad=False, return_std_grad=False):
+        """
+        In addition to the mean of the predictive distribution, also its
+        standard deviation (return_std=True) or covariance (return_cov=True),
+        the gradient of the mean and the standard-deviation with respect to X
+        can be optionally provided.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Query points where the GP is evaluated
+
+        return_std : bool, default: False
+            If True, the standard-deviation of the predictive distribution at
+            the query points is returned along with the mean.
+
+        return_cov : bool, default: False
+            If True, the covariance of the joint predictive distribution at
+            the query points is returned along with the mean
+
+        return_mean_grad: bool, default: False
+            Whether or not to return the gradient of the mean.
+            Only valid when X is a single point.
+
+        return_std_grad: bool, default: False
+            Whether or not to return the gradient of the std.
+            Only valid when X is a single point.
+
+        Returns
+        -------
+        y_mean : array, shape = (n_samples, [n_output_dims])
+            Mean of predictive distribution a query points
+        y_std : array, shape = (n_samples,), optional
+            Standard deviation of predictive distribution at query points.
+            Only returned when return_std is True.
+        y_cov : array, shape = (n_samples, n_samples), optional
+            Covariance of joint predictive distribution a query points.
+            Only returned when return_cov is True.
+        y_mean_grad: shape = (n_samples, n_features)
+            The gradient of the predicted mean
+        y_std_grad: shape = (n_samples, n_features)
+            The gradient of the predicted std.
+        """
+        if return_std and return_cov:
+            raise RuntimeError(
+                "Not returning standard deviation of predictions when "
+                "returning full covariance.")
+        if return_std_grad and not return_std:
+            raise ValueError(
+                "Not returning std_gradient without returning "
+                "the std.")
+        X = check_array(X)
+        if X.shape[0] != 1 and (return_mean_grad or return_std_grad):
+            raise ValueError("Not implemented for n_samples > 1")
+
+        if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
+            y_mean = np.zeros(X.shape[0])
+            if return_cov:
+                y_cov = self.kernel(X)
+                return y_mean, y_cov
+            elif return_std:
+                y_var = self.kernel.diag(X)
+                return y_mean, np.sqrt(y_var)
+            else:
+                return y_mean
+        else:  # Predict based on GP posterior
+            K_trans = self.kernel_(X, self.X_train_)
+            y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
+            y_mean = self.y_train_mean + y_mean  # undo normal.
+
+            if return_cov:
+                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
+                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+                return y_mean, y_cov
+
+            elif return_std:
+                # compute inverse K_inv of K based on its Cholesky
+                # decomposition L and its inverse L_inv
+                L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
+                K_inv = L_inv.dot(L_inv.T)
+                # Compute variance of predictive distribution
+                y_var = self.kernel_.diag(X)
+                y_var -= np.einsum("ki,kj,ij->k", K_trans, K_trans, K_inv)
+
+                # Check if any of the variances is negative because of
+                # numerical issues. If yes: set the variance to 0.
+                y_var_negative = y_var < 0
+                if np.any(y_var_negative):
+                    warnings.warn("Predicted variances smaller than 0. "
+                                  "Setting those variances to 0.")
+                    y_var[y_var_negative] = 0.0
+                y_std = np.sqrt(y_var)
+
+            if return_mean_grad:
+                grad = self.kernel_.gradient_x(X[0], self.X_train_)
+                grad_mean = np.dot(grad.T, self.alpha_)
+
+                if return_std_grad:
+                    # XXX: Cache np.dot(K_trans, K_inv) from above
+                    grad_std = -np.dot(K_trans, np.dot(K_inv, grad))[0] / y_std
+                    return y_mean, y_std, grad_mean, grad_std
+
+                if return_std:
+                    return y_mean, y_std, grad_mean
+                else:
+                    return y_mean, grad_mean
+            else:
+                if return_std:
+                    return y_mean, y_std
+                else:
+                    return y_mean

@@ -24,14 +24,15 @@ from ..callbacks import VerboseCallback
 from ..space import Space
 from ..utils import create_result
 
-def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01, kappa=1.96):
+def _acquisition(X, model, y_opt=None, method="LCB", xi=0.01,
+                 kappa=1.96, return_grad=False):
     """
     A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
 
     This is because lbfgs allows only 1-D input.
     """
     X = np.expand_dims(X, axis=0)
-    return _gaussian_acquisition(X, model, y_opt, method, xi, kappa)
+    return _gaussian_acquisition(X, model, y_opt, method, xi, kappa, return_grad)
 
 
 def base_minimize(func, dimensions, base_estimator,
@@ -282,6 +283,7 @@ def base_minimize(func, dimensions, base_estimator,
         elif acq_optimizer == "lbfgs":
             best = np.inf
 
+            approx_grad = acq_func != "LCB"
             for j in range(n_restarts_optimizer):
                 x0 = space.transform(space.rvs(n_samples=1,
                                                random_state=rng))[0]
@@ -290,9 +292,9 @@ def base_minimize(func, dimensions, base_estimator,
                     warnings.simplefilter("ignore")
                     x, a, _ = fmin_l_bfgs_b(
                         _acquisition, x0,
-                        args=(gp, np.min(yi), acq_func, xi, kappa),
+                        args=(gp, np.min(yi), acq_func, xi, kappa, not approx_grad),
                         bounds=space.transformed_bounds,
-                        approx_grad=True, maxiter=20)
+                        approx_grad=approx_grad, maxiter=20)
 
                 if a < best:
                     next_x, best = x, a

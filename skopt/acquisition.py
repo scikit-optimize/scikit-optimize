@@ -5,7 +5,7 @@ from scipy.stats import norm
 
 
 def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
-                          xi=0.01, kappa=1.96):
+                          xi=0.01, kappa=1.96, return_grad=False):
     """
     Wrapper so that the output of this function can be
     directly passed to a minimizer.
@@ -17,7 +17,7 @@ def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
 
     # Evaluate acquisition function
     if method == "LCB":
-        return gaussian_lcb(X, model, kappa)
+        return gaussian_lcb(X, model, kappa, return_grad)
     elif method == "EI":
         return -gaussian_ei(X, model, y_opt, xi)
     elif method == "PI":
@@ -26,7 +26,7 @@ def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
         raise ValueError("Acquisition function not implemented.")
 
 
-def gaussian_lcb(X, model, kappa=1.96):
+def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
     """
     Use the lower confidence bound to estimate the acquisition
     values.
@@ -51,17 +51,29 @@ def gaussian_lcb(X, model, kappa=1.96):
         exploration over exploitation and vice versa.
         Useless if ``method`` is set to "LCB".
 
+    * `return_grad`: [boolean, optional]:
+        Whether or not to return the grad. Implemented only for the case where
+        ``X`` is a single sample.
+
     Returns
     -------
     * `values`: [array-like, shape=(X.shape[0],)]:
         Acquisition function values computed at X.
+
+    * `grad`: [array-like, shape=(n_samples, n_features)]:
+        Gradient at X.
     """
     # Compute posterior.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        mu, std = model.predict(X, return_std=True)
-
-    return mu - kappa * std
+        if return_grad:
+            mu, std, mu_grad, std_grad = model.predict(
+                X, return_std=True, return_mean_grad=True,
+                return_std_grad=True)
+            return mu - kappa * std, mu_grad - kappa * std_grad
+        else:
+            mu, std = model.predict(X, return_std=True)
+            return mu - kappa * std
 
 
 def gaussian_pi(X, model, y_opt=0.0, xi=0.01):
