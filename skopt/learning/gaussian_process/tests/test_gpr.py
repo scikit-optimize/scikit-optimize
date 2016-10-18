@@ -60,11 +60,12 @@ def test_noise_equals_gaussian():
 
 
 def test_mean_gradient():
-    X = rng.randn(3, 3)
-    y = rng.randn(3)
-    X_new = rng.randn(3)
+    length_scale = np.arange(1, 6)
+    X = rng.randn(10, 5)
+    y = rng.randn(10)
+    X_new = rng.randn(5)
 
-    rbf = RBF(length_scale=[1.0, 2.0, 3.0], length_scale_bounds="fixed")
+    rbf = RBF(length_scale=length_scale, length_scale_bounds="fixed")
     gpr = GaussianProcessRegressor(rbf, random_state=0).fit(X, y)
 
     mean, std, mean_grad = gpr.predict(
@@ -76,11 +77,12 @@ def test_mean_gradient():
 
 
 def test_std_gradient():
-    X = rng.randn(3, 3)
-    y = rng.randn(3)
-    X_new = rng.randn(3)
+    length_scale = np.arange(1, 6)
+    X = rng.randn(10, 5)
+    y = rng.randn(10)
+    X_new = rng.randn(5)
 
-    rbf = RBF(length_scale=[1.0, 2.0, 3.0], length_scale_bounds="fixed")
+    rbf = RBF(length_scale=length_scale, length_scale_bounds="fixed")
     gpr = GaussianProcessRegressor(rbf, random_state=0).fit(X, y)
 
     _, _, _, std_grad = gpr.predict(

@@ -42,7 +42,7 @@ class Kernel(sk_Kernel):
     def __pow__(self, b):
         return Exponentiation(self, b)
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         """
         Computes gradient of K(x, X_train) with respect to x
 
@@ -56,14 +56,14 @@ class Kernel(sk_Kernel):
 
         Returns
         -------
-        gradient_X: array-like, shape=(n_samples, n_features)
+        gradient_x: array-like, shape=(n_samples, n_features)
             Gradient of K(x, X_train) with respect to x.
         """
         raise NotImplementedError
 
 
 class RBF(Kernel, sk_RBF):
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         # diff = (x - X) / length_scale
         # size = (n_train_samples, n_dimensions)
         length_scale = np.array(self.length_scale)
@@ -85,7 +85,7 @@ class RBF(Kernel, sk_RBF):
 
 
 class Matern(Kernel, sk_Matern):
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         length_scale = np.array(self.length_scale)
 
         # diff = (x - X_train) / length_scale
@@ -162,7 +162,7 @@ class Matern(Kernel, sk_Matern):
 
 class RationalQuadratic(Kernel, sk_RationalQuadratic):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         alpha = self.alpha
         length_scale = self.length_scale
 
@@ -186,7 +186,7 @@ class RationalQuadratic(Kernel, sk_RationalQuadratic):
 
 class ExpSineSquared(Kernel, sk_ExpSineSquared):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         length_scale = self.length_scale
         periodicity = self.periodicity
 
@@ -207,51 +207,51 @@ class ExpSineSquared(Kernel, sk_ExpSineSquared):
 
 class ConstantKernel(Kernel, sk_ConstantKernel):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         return np.zeros_like(X_train)
 
 
 class WhiteKernel(Kernel, sk_WhiteKernel):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         return np.zeros_like(X_train)
 
 
 class Exponentiation(Kernel, sk_Exponentiation):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         expo = self.exponent
         kernel = self.kernel
 
         K = np.expand_dims(
             kernel(np.expand_dims(x, axis=0), X_train)[0], axis=1)
-        return expo * K ** (expo - 1) * kernel.gradient_X(x, X_train)
+        return expo * K ** (expo - 1) * kernel.gradient_x(x, X_train)
 
 
 class Sum(Kernel, sk_Sum):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         return (
-            self.k1.gradient_X(x, X_train) +
-            self.k2.gradient_X(x, X_train)
+            self.k1.gradient_x(x, X_train) +
+            self.k2.gradient_x(x, X_train)
         )
 
 class Product(Kernel, sk_Product):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         X = np.expand_dims(x, axis=0)
         f_ggrad = (
             np.expand_dims(self.k1(x, X_train)[0], axis=1) *
-            self.k2.gradient_X(x, X_train)
+            self.k2.gradient_x(x, X_train)
         )
         fgrad_g = (
             np.expand_dims(self.k2(x, X_train)[0], axis=1) *
-            self.k1.gradient_X(x, X_train)
+            self.k1.gradient_x(x, X_train)
         )
         return f_ggrad + fgrad_g
 
 
 class DotProduct(Kernel, sk_DotProduct):
 
-    def gradient_X(self, x, X_train):
+    def gradient_x(self, x, X_train):
         return X_train

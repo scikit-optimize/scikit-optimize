@@ -210,8 +210,8 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         """
         In addition to the mean of the predictive distribution, also its
         standard deviation (return_std=True) or covariance (return_cov=True),
-        the gradient of the mean and the gradient of the std can be optionally
-        provided.
+        the gradient of the mean and the standard-deviation with respect to X
+        can be optionally provided.
 
         Parameters
         ----------
@@ -300,18 +300,18 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                 y_std = np.sqrt(y_var)
 
             if return_mean_grad:
-                grad = self.kernel_.gradient_X(X[0], self.X_train_)
-                grad_wrt_mean = np.dot(grad.T   , self.alpha_)
+                grad = self.kernel_.gradient_x(X[0], self.X_train_)
+                grad_mean = np.dot(grad.T, self.alpha_)
 
                 if return_std_grad:
                     # XXX: Cache np.dot(K_trans, K_inv) from above
-                    grad_wrt_std = -np.dot(K_trans, np.dot(K_inv, grad))[0] / y_std
-                    return y_mean, y_std, grad_wrt_mean, grad_wrt_std
+                    grad_std = -np.dot(K_trans, np.dot(K_inv, grad))[0] / y_std
+                    return y_mean, y_std, grad_mean, grad_std
 
                 if return_std:
-                    return y_mean, y_std, grad_wrt_mean
+                    return y_mean, y_std, grad_mean
                 else:
-                    return y_mean, grad_wrt_mean
+                    return y_mean, grad_mean
             else:
                 if return_std:
                     return y_mean, y_std
