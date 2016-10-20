@@ -4,7 +4,19 @@ import warnings
 from scipy.stats import norm
 
 
-def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
+def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB", xi=0.01,
+                             kappa=1.96):
+    """
+    A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
+
+    This is because lbfgs allows only 1-D input.
+    """
+    X = np.expand_dims(X, axis=0)
+    return _gaussian_acquisition(
+        X, model, y_opt, acq_func, xi, kappa, return_grad=True)
+
+
+def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
                           xi=0.01, kappa=1.96, return_grad=False):
     """
     Wrapper so that the output of this function can be
@@ -16,12 +28,17 @@ def _gaussian_acquisition(X, model, y_opt=None, method="LCB",
         raise ValueError("X should be 2-dimensional.")
 
     # Evaluate acquisition function
-    if method == "LCB":
+    if acq_func == "LCB":
         return gaussian_lcb(X, model, kappa, return_grad)
-    elif method == "EI":
-        return -gaussian_ei(X, model, y_opt, xi)
-    elif method == "PI":
-        return -gaussian_pi(X, model, y_opt, xi)
+    elif acq_func in ["EI", "PI"]:
+        if acq_func == "EI":
+            func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
+        else:
+            func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
+        if return_grad:
+            return -func_and_grad[0], -func_and_grad[1]
+        else:
+            return -func_and_grad
     else:
         raise ValueError("Acquisition function not implemented.")
 
@@ -76,7 +93,7 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
             return mu - kappa * std
 
 
-def gaussian_pi(X, model, y_opt=0.0, xi=0.01):
+def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the probability of improvement to calculate the acquisition values.
 
@@ -119,16 +136,32 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        mu, std = model.predict(X, return_std=True)
+        if return_grad:
+            mu, std, mu_grad, std_grad = model.predict(
+                X, return_std=True, return_mean_grad=True,
+                return_std_grad=True)
+        else:
+            mu, std = model.predict(X, return_std=True)
 
     values = np.zeros_like(mu)
     mask = std > 0
-    improvement = y_opt - xi - mu[mask]
-    values[mask] = norm.cdf(improvement / std[mask])
-    return values
+    improve = y_opt - xi - mu[mask]
+    scaled = improve / std[mask]
+    values[mask] = norm.cdf(scaled)
+
+    if return_grad:
+        if not np.any(mask):
+            return values, np.zeros_like(std_grad)
+        # Substitute (y_opt - xi - mu) / sigma = t and apply chain rule.
+        # improve_grad is the gradient of t wrt x.
+        improve_grad = -mu_grad * std - std_grad * improve
+        improve_grad /= std**2
+        return values, improve_grad * norm.pdf(scaled)
+    else:
+        return values
 
 
-def gaussian_ei(X, model, y_opt=0.0, xi=0.01):
+def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
@@ -170,12 +203,37 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        mu, std = model.predict(X, return_std=True)
+        if return_grad:
+            mu, std, mu_grad, std_grad = model.predict(
+                X, return_std=True, return_mean_grad=True,
+                return_std_grad=True)
+        else:
+            mu, std = model.predict(X, return_std=True)
 
     values = np.zeros_like(mu)
     mask = std > 0
-    improvement = y_opt - xi - mu[mask]
-    exploit = improvement * norm.cdf(improvement / std[mask])
-    explore = std[mask] * norm.pdf(improvement / std[mask])
+    improve = y_opt - xi - mu[mask]
+    scaled = improve / std[mask]
+    cdf = norm.cdf(scaled)
+    pdf = norm.pdf(scaled)
+    exploit = improve * cdf
+    explore = std[mask] * pdf
     values[mask] = exploit + explore
+
+    if return_grad:
+        if not np.any(mask):
+            return values, np.zeros_like(std_grad)
+
+        # Substitute (y_opt - xi - mu) / sigma = t and apply chain rule.
+        # improve_grad is the gradient of t wrt x.
+        improve_grad = -mu_grad * std - std_grad * improve
+        improve_grad /= std**2
+        cdf_grad = improve_grad * pdf
+        pdf_grad = -improve * cdf_grad
+        exploit_grad = -mu_grad * cdf - pdf_grad
+        explore_grad = std_grad * pdf + pdf_grad
+
+        grad = exploit_grad + explore_grad
+        return values, grad
+
     return values
