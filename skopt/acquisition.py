@@ -4,8 +4,8 @@ import warnings
 from scipy.stats import norm
 
 
-def acquisition_1D(X, model, y_opt=None, acq_func="LCB", xi=0.01,
-                   kappa=1.96):
+def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB", xi=0.01,
+                             kappa=1.96):
     """
     A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
 

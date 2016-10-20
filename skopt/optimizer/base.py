@@ -18,7 +18,7 @@ from sklearn.base import clone
 from sklearn.base import is_regressor
 from sklearn.utils import check_random_state
 
-from ..acquisition import acquisition_1D
+from ..acquisition import gaussian_acquisition_1D
 from ..acquisition import _gaussian_acquisition
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
@@ -281,7 +281,7 @@ def base_minimize(func, dimensions, base_estimator,
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     x, a, _ = fmin_l_bfgs_b(
-                        acquisition_1D, x0,
+                        gaussian_acquisition_1D, x0,
                         args=(gp, np.min(yi), acq_func, xi, kappa),
                         bounds=space.transformed_bounds,
                         approx_grad=False,

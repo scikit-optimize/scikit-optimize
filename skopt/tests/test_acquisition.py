@@ -6,7 +6,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 
-from skopt.acquisition import acquisition_1D
+from skopt.acquisition import  gaussian_acquisition_1D
 from skopt.acquisition import gaussian_ei
 from skopt.acquisition import gaussian_lcb
 from skopt.acquisition import gaussian_pi
@@ -54,8 +54,9 @@ def test_acquisition_api():
 
 
 def check_gradient_correctness(X_new, model, acq_func, y_opt):
-    analytic_grad = acquisition_1D(X_new, model, y_opt, acq_func)[1]
-    num_grad_func = lambda x: acquisition_1D(
+    analytic_grad =  gaussian_acquisition_1D(
+        X_new, model, y_opt, acq_func)[1]
+    num_grad_func = lambda x:  gaussian_acquisition_1D(
         x, model, y_opt, acq_func=acq_func)[0]
     num_grad = optimize.approx_fprime(X_new, num_grad_func, 1e-5)
     assert_array_almost_equal(analytic_grad, num_grad, 4)
