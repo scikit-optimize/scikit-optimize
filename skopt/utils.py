@@ -71,9 +71,13 @@ def dump(res, filename, store_objective=True, **kwargs):
         Whether the objective function should be stored. Set `store_objective`
         to `False` if your objective function (`.specs['args']['func']`) is
         unserializable (i.e. if an exception is raised when trying to serialize
-        the optimization result). Notice that in this case a deep copy of the
-        optimization result is created. This can potentially lead to performance
-        problems.
+        the optimization result).
+
+        Notice that if `store_objective` is set to `False`, a deep copy of the
+        optimization result is created, potentially leading to performance
+        problems if `res` is very large. If the objective function is not
+        critical, one can delete it before calling `skopt.dump()` and thus avoid
+        deep copying of `res`.
 
     * `**kwargs` [other keyword arguments]:
         All other keyword arguments will be passed to `joblib.dump`.
