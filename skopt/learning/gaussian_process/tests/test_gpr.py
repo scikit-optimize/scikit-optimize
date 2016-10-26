@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import optimize
 
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -52,10 +53,10 @@ def test_noise_equals_gaussian():
     gpr2 = GaussianProcessRegressor(rbf, noise="gaussian").fit(X, y)
     assert_false(gpr1.noise_)
     assert_true(gpr2.noise_)
-    assert_equal(gpr1.kernel_.k2.noise_level, gpr2.noise_)
+    assert_almost_equal(gpr1.kernel_.k2.noise_level, gpr2.noise_, 4)
     mean1, std1 = gpr1.predict(X, return_std=True)
     mean2, std2 = gpr2.predict(X, return_std=True)
-    assert_array_equal(mean1, mean2)
+    assert_array_almost_equal(mean1, mean2, 4)
     assert_false(np.any(std1 == std2))
 
 

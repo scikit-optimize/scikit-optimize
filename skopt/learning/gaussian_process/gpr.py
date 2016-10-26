@@ -149,7 +149,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         "gaussian".
     """
     def __init__(self, kernel=None, alpha=0.0,
-                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
+                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5,
                  normalize_y=False, copy_X_train=True, random_state=None,
                  noise=None):
         self.noise = noise
@@ -174,12 +174,16 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         -------
         self : returns an instance of self.
         """
-        if self.noise and self.noise != "gaussian":
+        if isinstance(self.noise, str) and self.noise != "gaussian":
             raise ValueError("expected noise to be 'gaussian', got %s"
                              % self.noise)
 
-        if self.kernel is not None and self.noise:
+        if self.kernel is not None and self.noise == "gaussian":
             self.kernel = self.kernel + WhiteKernel()
+        elif self.noise:
+            self.kernel = self.kernel + WhiteKernel(
+                noise_level=self.noise, noise_level_bounds="fixed"
+            )
         super(GaussianProcessRegressor, self).fit(X, y)
 
         self.noise_ = None
