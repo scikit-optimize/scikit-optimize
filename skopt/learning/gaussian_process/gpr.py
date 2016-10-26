@@ -149,7 +149,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         "gaussian".
     """
     def __init__(self, kernel=None, alpha=0.0,
-                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5,
+                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None,
                  noise=None):
         self.noise = noise
