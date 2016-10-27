@@ -151,12 +151,13 @@ def gp_minimize(func, dimensions, base_estimator=None,
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
     * `noise` [float, default="gaussian"]:
-        - If `noise="gaussian"` the function is noisy and returns
-          being `f(x_i) + e(i)` where e(i) is zero centered and has a fixed
-          variance.
+        - Use noise="gaussian" if the objective returns noisy observations.
+          The noise of each observation is assumed to be iid with
+          mean zero and a fixed variance.
         - If the variance is known before-hand, this can be set directly
           to the variance of the noise.
-        - Set this to zero if the function is non-noisy.
+        - Set this to a value close to zero (1e-10) if the function is noise-free.
+          Setting to zero might cause stability issues.
 
     Returns
     -------

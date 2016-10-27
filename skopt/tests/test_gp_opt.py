@@ -17,7 +17,7 @@ def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
     r = gp_minimize(func, bounds, acq_optimizer=acq_optimizer,
                     acq_func=acq_func,
                     n_calls=n_calls, random_state=1,
-                    noise=0.0)
+                    noise=1e-10)
     assert_less(r.fun, y_opt + margin)
 
 
