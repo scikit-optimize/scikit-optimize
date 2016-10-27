@@ -20,7 +20,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
                 acq_func="EI", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
-                n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96):
+                n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
+                noise="gaussian"):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -149,6 +150,15 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Controls how much improvement one wants over the previous best
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
+    * `noise` [float, default="gaussian"]:
+        - Use noise="gaussian" if the objective returns noisy observations.
+          The noise of each observation is assumed to be iid with
+          mean zero and a fixed variance.
+        - If the variance is known before-hand, this can be set directly
+          to the variance of the noise.
+        - Set this to a value close to zero (1e-10) if the function is noise-free.
+          Setting to zero might cause stability issues.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -185,7 +195,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
                         nu=2.5)
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * matern,
-            normalize_y=True, random_state=random_state, alpha=0.0, noise="gaussian")
+            normalize_y=True, random_state=random_state, alpha=0.0, noise=noise)
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,
