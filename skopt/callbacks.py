@@ -102,7 +102,7 @@ class TimerCallback(object):
 
     Attributes
     ----------
-    `iter_time`: [list, shape=(n_iter,)]:
+    * `iter_time`: [list, shape=(n_iter,)]:
         `iter_time[i-1]` gives the time taken to complete iteration `i`
     """
     def __init__(self):

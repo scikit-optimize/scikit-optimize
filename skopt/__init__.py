@@ -60,7 +60,7 @@ from .optimizer import gp_minimize
 from .utils import load, dump
 
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 
 __all__ = ("acquisition",
