@@ -5,8 +5,8 @@ These are the results got by optimizing the particular set of benchmark function
 
 |Blackbox Function| Minimum | Best minimum |
 ------------------|------------|-----------|
-|Branin| 0.407 +/- 0.008 |0.398
-|Hart6| -3.052 +/- 0.110|-3.308
+|Branin| 0.401 +/- 0.003 |0.398
+|Hart6| -3.029 +/- 0.138|-3.299
 
 ## forest_minimize
 

@@ -15,7 +15,14 @@ for name, optimizer in optimizers:
     results = []
     for random_state in range(10):
         print(random_state)
-        res = optimizer(hart6, bounds, random_state=random_state, n_calls=n_calls)
+        if name == "gp_minimize":
+            res = optimizer(
+                hart6, bounds, random_state=random_state, n_calls=n_calls,
+                noise=1e-10)
+        else:
+            res = optimizer(
+                hart6, bounds, random_state=random_state, n_calls=n_calls)
+
         results.append(res)
 
     optimal_values = [result.fun for result in results]
