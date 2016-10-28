@@ -6,10 +6,12 @@ Scikit-Optimize is a community effort. Contributors include, in alphabetical ord
 * [Nuno Campos][nfcampos]
 * [Mehdi Cherti][mehdidc]
 * [Alexander Fabisch][AlexanderFabisch]
+* [Thomas Fan][thomasjpfan]
 * [Tim Head][betatim]
 * [Manoj Kumar][mechcoder]
 * [Gilles Louppe][glouppe]
-* [cmmalone][cmmalone]
+* [Katie Malone][cmmalone]
+* [Mikhail Pak][mp4096]
 * [nel215][nel215]
 * [Taylor Smith][jtsmith2]
 
@@ -27,3 +29,5 @@ The scikit-optimize logo was a contribution by
 [objectadjective]: https://github.com/objectadjective
 [jtsmith2]: https://github.com/jtsmith2
 [andreh7]: https://github.com/andreh7
+[mp4096]: https://github.com/mp4096
+[thomasjpfan]: https://github.com/thomasjpfan
