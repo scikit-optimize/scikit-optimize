@@ -31,8 +31,8 @@ def base_minimize(func, dimensions, base_estimator,
                   n_calls=100, n_random_starts=10,
                   acq_func="EI", acq_optimizer="auto",
                   x0=None, y0=None, random_state=None, verbose=False,
-                  callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1):
+                  callback=None, n_points=10000, n_restarts_optimizer=20,
+                  xi=0.01, kappa=1.96, n_spray_points=10, n_jobs=1):
     """
     Parameters
     ----------
@@ -257,7 +257,7 @@ def base_minimize(func, dimensions, base_estimator,
             acq_optimizer = "lbfgs"
         else:
             acq_optimizer = "sampling"
-    elif acq_optimizer not in ["lbfgs", "sampling"]:
+    elif acq_optimizer not in ["lbfgs", "sampling", "spearmint"]:
         raise ValueError(
             "Expected acq_optimizer to be 'lbfgs', 'sampling' or 'auto', "
             "got %s" % acq_optimizer)
@@ -277,7 +277,7 @@ def base_minimize(func, dimensions, base_estimator,
 
         models.append(gp)
 
-        if acq_optimizer == "sampling":
+        if acq_optimizer == "sampling" or acq_optimizer == "spearmint":
             X = space.transform(space.rvs(n_samples=n_points,
                                           random_state=rng))
             values = _gaussian_acquisition(
@@ -285,10 +285,31 @@ def base_minimize(func, dimensions, base_estimator,
                 xi=xi, kappa=kappa)
             next_x = X[np.argmin(values)]
 
-        elif acq_optimizer == "lbfgs":
+        if acq_optimizer == "lbfgs" or acq_optimizer == "spearmint":
             best = np.inf
-            x0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
-                                           random_state=rng))
+
+            if acq_optimizer == "lbfgs":
+                x0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
+                                               random_state=rng))
+            else:
+                std = 1e-3
+
+                best_X_trans = space.transform([Xi[np.argmin(yi)]])
+
+                # Sample points close to the current minimum.
+                X_spray = best_X_trans + std * rng.randn(
+                    n_spray_points, space.transformed_n_dims)
+                bounds = np.array(space.transformed_bounds)
+
+                # Clip X_spray to be in-between bounds.
+                X_spray = np.minimum(
+                    np.maximum(X_spray, bounds[:, 0]), bounds[:, 1])
+                spray_vals = _gaussian_acquisition(
+                    X=X_spray, model=gp,  y_opt=np.min(yi), acq_func=acq_func,
+                    xi=xi, kappa=kappa)
+                X = np.vstack((X, X_spray))
+                values = np.concatenate((values, spray_vals))
+                x0 = X[np.argsort(values)[:n_restarts_optimizer]]
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -308,7 +329,6 @@ def base_minimize(func, dimensions, base_estimator,
             if a < best:
                 next_x, best = cand_xs[best_ind], a
 
-        # lbfgs should handle this but just in case there are precision errors.
         next_x = np.clip(
             next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]

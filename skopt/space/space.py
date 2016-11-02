@@ -13,6 +13,7 @@ from .transformers import Normalize
 from .transformers import Identity
 from .transformers import Log10
 from .transformers import Pipeline
+from ..utils import pseudo_uniform
 
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
@@ -20,7 +21,7 @@ class _Ellipsis:
         return '...'
 
 
-def check_dimension(dimension, transform=None):
+def check_dimension(dimension, transform=None, rvs="uniform"):
     """
     Checks that the provided dimension falls into one of the
     supported types. For a list of supported types, look at
@@ -56,7 +57,7 @@ def check_dimension(dimension, transform=None):
     if (len(dimension) == 3 and
         isinstance(dimension[0], numbers.Real) and
         isinstance(dimension[2], str)):
-          return Real(*dimension, transform=transform)
+          return Real(*dimension, transform=transform, rvs=rvs)
 
     if len(dimension) > 2 or isinstance(dimension[0], str):
         return Categorical(dimension)
@@ -65,7 +66,7 @@ def check_dimension(dimension, transform=None):
         return Integer(*dimension, transform=transform)
 
     if isinstance(dimension[0], numbers.Real):
-        return Real(*dimension, transform=transform)
+        return Real(*dimension, transform=transform, rvs=rvs)
     raise ValueError("Invalid dimension %s. Read the documentation for "
                      "supported types." % dim)
 
@@ -117,7 +118,7 @@ class Dimension(object):
 
 
 class Real(Dimension):
-    def __init__(self, low, high, prior="uniform", transform=None):
+    def __init__(self, low, high, prior="uniform", transform=None, rvs="uniform"):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -143,6 +144,10 @@ class Real(Dimension):
         self.high = high
         self.prior = prior
         self.transform_ = transform
+        if rvs == "uniform":
+            _rvs = uniform
+        else:
+            _rvs = pseudo_uniform
 
         if self.transform_ and self.transform_ != "normalize":
             raise ValueError(
@@ -153,7 +158,7 @@ class Real(Dimension):
         # The rvs on Dimension calls inverse_transform on the points sampled
         # using _rvs
         if self.transform_ == "normalize":
-            self._rvs = uniform(0, 1)
+            self._rvs = _rvs(0, 1)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
                     [Identity(), Normalize(low, high)])
@@ -163,10 +168,10 @@ class Real(Dimension):
                 )
         else:
             if self.prior == "uniform":
-                self._rvs = uniform(self.low, self.high - self.low)
+                self._rvs = _rvs(self.low, self.high - self.low)
                 self.transformer = Identity()
             else:
-                self._rvs = uniform(
+                self._rvs = _rvs(
                     np.log10(self.low),
                     np.log10(self.high) - np.log10(self.low))
                 self.transformer = Log10()
