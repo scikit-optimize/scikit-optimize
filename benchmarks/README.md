@@ -1,5 +1,10 @@
-These are the results got by optimizing the particular set of benchmark functions provided in Table 2 of
-(http://www.automl.org/papers/13-BayesOpt_EmpiricalFoundation.pdf) with our defualt values. All optimizers are run 10 times with `n_calls=200`.
+# Benchmarks
+
+These results are obtained by running our optimizers on the set of benchmark
+functions provided in Table 2 of http://www.automl.org/papers/13-BayesOpt_EmpiricalFoundation.pdf
+
+All optimizers are run with default values and with `n_calls=200`. Runs are
+repeated 10 times.
 
 ## gp_minimize
 
