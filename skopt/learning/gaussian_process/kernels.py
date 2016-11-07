@@ -168,10 +168,21 @@ class Matern(Kernel, sk_Matern):
             f2 += 1
             f = np.expand_dims(f2, axis=1)
 
-            # Gradients when dist equal to zero is zero.
+            # For i in [0, D) if x_i equals y_i
+            # f = 1 and g = 1
+            # Grad = f'g + fg' = f' + g'
+            # f' = f_1' + f_2'
+            # Also g' = -g * f1'
+            # Grad = f'g - g * f1' * f
+            # Grad = g * (f' - f1' * f)
+            # Grad = f' - f1'
+            # Grad = f2' which equals zero when x = y
+            # Since for this corner case, diff equals zero,
+            # dist can be set to anything.
             nzd_mask = dist != 0.0
             nzd = dist[nzd_mask]
             dist[nzd_mask] = np.reciprocal(nzd, nzd)
+
             dist *= sqrt(5)
             dist = np.expand_dims(dist, axis=1)
             diff /= length_scale
