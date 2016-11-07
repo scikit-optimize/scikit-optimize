@@ -112,9 +112,11 @@ class Matern(Kernel, sk_Matern):
             scaled_exp_dist *= -1
 
             # grad = (e * diff) / length_scale
-            # Limit of (-e^(-d) * d_i) / (sqrt(\sum_{j=1}^D d_j**2))
-            # where (d_1, d_2 ... d_D) = (0.0, 0.0 ... 0.0)
-            # equals -1
+            # For all i in [0, D) if x_i equals y_i.
+            # 1. e -> -1
+            # 2. (x_i - y_i) / \sum_{j=1}^D (x_i - y_i)**2 approaches 1.
+            # Hence the gradient when for all i in [0, D),
+            # x_i equals y_i is zero.
             gradient = -np.ones((X_train.shape[0], x.shape[0]))
             mask = dist != 0.0
             scaled_exp_dist[mask] /= dist[mask]
@@ -130,11 +132,18 @@ class Matern(Kernel, sk_Matern):
             sqrt_3_dist = sqrt(3) * dist
             f = np.expand_dims(1 + sqrt_3_dist, axis=1)
 
-            # Gradients when dist equal to zero is zero.
+            # When all of x_i equals y_i, f equals 1.0, (1 - f) equals
+            # zero, hence from below
+            # f * g_grad + g * f_grad (where g_grad = -g * f_grad)
+            # -f * g * f_grad + g * f_grad
+            # g * f_grad * (1 - f) equals zero.
+            # sqrt_3_by_dist can be set to any value since diff equals
+            # zero for this corner case.
             sqrt_3_by_dist = np.zeros_like(dist)
             nzd = dist != 0.0
             sqrt_3_by_dist[nzd] = sqrt(3) / dist[nzd]
             dist_expand = np.expand_dims(sqrt_3_by_dist, axis=1)
+
             f_grad = diff / length_scale
             f_grad *= dist_expand
 
@@ -222,7 +231,11 @@ class ExpSineSquared(Kernel, sk_ExpSineSquared):
 
         grad_wrt_exp = -2 * np.sin(2 * pi_by_period) / length_scale**2
 
-        # Gradients when dist equal to zero are set to zero.
+        # When x_i -> y_i for all i in [0, D), the gradient becomes
+        # zero. See https://github.com/MechCoder/Notebooks/blob/master/ExpSineSquared%20Kernel%20gradient%20computation.ipynb
+        # for a detailed math explanation
+        # grad_wrt_theta can be anything since diff is zero
+        # for this corner case, hence we set to zero.
         grad_wrt_theta = np.zeros_like(dist)
         nzd = dist != 0.0
         grad_wrt_theta[nzd] = np.pi / (periodicity * dist[nzd])
