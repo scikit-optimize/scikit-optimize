@@ -116,7 +116,7 @@ class Matern(Kernel, sk_Matern):
             # 1. e -> -1
             # 2. (x_i - y_i) / \sum_{j=1}^D (x_i - y_i)**2 approaches 1.
             # Hence the gradient when for all i in [0, D),
-            # x_i equals y_i is zero.
+            # x_i equals y_i is -1 / length_scale[i].
             gradient = -np.ones((X_train.shape[0], x.shape[0]))
             mask = dist != 0.0
             scaled_exp_dist[mask] /= dist[mask]
