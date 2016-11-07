@@ -28,9 +28,6 @@ KERNELS = [
     DotProduct(sigma_0=2.0)
 ]
 
-rng = np.random.RandomState(0)
-X = rng.randn(5)
-Y = rng.randn(10, 5)
 
 def kernel_X_Y(x, y, kernel):
     X = np.expand_dims(x, axis=0)
@@ -44,11 +41,27 @@ def numerical_gradient(X, Y, kernel):
         grad.append(num_grad)
     return np.asarray(grad)
 
-def check_gradient_correctness(kernel):
+def check_gradient_correctness(kernel, X, Y):
     X_grad = kernel.gradient_x(X, Y)
     num_grad = numerical_gradient(X, Y, kernel)
     assert_array_almost_equal(X_grad, num_grad, decimal=3)
 
 def test_gradient_correctness():
+    rng = np.random.RandomState(0)
+    X = rng.randn(5)
+    Y = rng.randn(10, 5)
     for kernel in KERNELS:
-        yield check_gradient_correctness, kernel
+        yield check_gradient_correctness, kernel, X, Y
+
+def test_gradient_finiteness():
+    """
+    When x is the same as X_train, gradients might become undefined because
+    they are divided by d(x, X_train).
+    Check they are equal to numerical gradients at such points.
+    """
+    for random_state in [0, 1]:
+        rng = np.random.RandomState(random_state)
+        X = rng.randn(5).tolist()
+        Y = [X]
+        for kernel in KERNELS:
+            yield check_gradient_correctness, kernel, X, Y
