@@ -129,6 +129,10 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         Controls how much improvement one wants over the previous best
         values. Useful only when ``method`` is set to "EI"
 
+    * `return_grad`: [boolean, optional]:
+        Whether or not to return the grad. Implemented only for the case where
+        ``X`` is a single sample.
+
     Returns
     -------
     * `values`: [array-like, shape=(X.shape[0],)]:
@@ -195,6 +199,10 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     * `xi`: [float, default=0.01]:
         Controls how much improvement one wants over the previous best
         values. Useful only when ``method`` is set to "EI"
+
+    * `return_grad`: [boolean, optional]:
+        Whether or not to return the grad. Implemented only for the case where
+        ``X`` is a single sample.
 
     Returns
     -------
