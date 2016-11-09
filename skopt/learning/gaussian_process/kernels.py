@@ -66,7 +66,10 @@ class RBF(Kernel, sk_RBF):
     def gradient_x(self, x, X_train):
         # diff = (x - X) / length_scale
         # size = (n_train_samples, n_dimensions)
-        length_scale = np.array(self.length_scale)
+        x = np.asarray(x)
+        X_train = np.asarray(X_train)
+
+        length_scale = np.asarray(self.length_scale)
         diff = x - X_train
         diff /= length_scale
 
@@ -86,7 +89,9 @@ class RBF(Kernel, sk_RBF):
 
 class Matern(Kernel, sk_Matern):
     def gradient_x(self, x, X_train):
-        length_scale = np.array(self.length_scale)
+        x = np.asarray(x)
+        X_train = np.asarray(X_train)
+        length_scale = np.asarray(self.length_scale)
 
         # diff = (x - X_train) / length_scale
         # size = (n_train_samples, n_dimensions)
@@ -105,11 +110,18 @@ class Matern(Kernel, sk_Matern):
             scaled_exp_dist = -dist
             scaled_exp_dist = np.exp(scaled_exp_dist, scaled_exp_dist)
             scaled_exp_dist *= -1
-            scaled_exp_dist /= dist
-            scaled_exp_dist = np.expand_dims(scaled_exp_dist, axis=1)
 
             # grad = (e * diff) / length_scale
-            gradient = scaled_exp_dist * diff
+            # For all i in [0, D) if x_i equals y_i.
+            # 1. e -> -1
+            # 2. (x_i - y_i) / \sum_{j=1}^D (x_i - y_i)**2 approaches 1.
+            # Hence the gradient when for all i in [0, D),
+            # x_i equals y_i is -1 / length_scale[i].
+            gradient = -np.ones((X_train.shape[0], x.shape[0]))
+            mask = dist != 0.0
+            scaled_exp_dist[mask] /= dist[mask]
+            scaled_exp_dist = np.expand_dims(scaled_exp_dist, axis=1)
+            gradient[mask] = scaled_exp_dist[mask] * diff[mask]
             gradient /= length_scale
             return gradient
 
@@ -120,7 +132,18 @@ class Matern(Kernel, sk_Matern):
             sqrt_3_dist = sqrt(3) * dist
             f = np.expand_dims(1 + sqrt_3_dist, axis=1)
 
-            dist_expand = np.expand_dims(sqrt(3) / dist, axis=1)
+            # When all of x_i equals y_i, f equals 1.0, (1 - f) equals
+            # zero, hence from below
+            # f * g_grad + g * f_grad (where g_grad = -g * f_grad)
+            # -f * g * f_grad + g * f_grad
+            # g * f_grad * (1 - f) equals zero.
+            # sqrt_3_by_dist can be set to any value since diff equals
+            # zero for this corner case.
+            sqrt_3_by_dist = np.zeros_like(dist)
+            nzd = dist != 0.0
+            sqrt_3_by_dist[nzd] = sqrt(3) / dist[nzd]
+            dist_expand = np.expand_dims(sqrt_3_by_dist, axis=1)
+
             f_grad = diff / length_scale
             f_grad *= dist_expand
 
@@ -145,7 +168,21 @@ class Matern(Kernel, sk_Matern):
             f2 += 1
             f = np.expand_dims(f2, axis=1)
 
-            dist = np.reciprocal(dist, dist)
+            # For i in [0, D) if x_i equals y_i
+            # f = 1 and g = 1
+            # Grad = f'g + fg' = f' + g'
+            # f' = f_1' + f_2'
+            # Also g' = -g * f1'
+            # Grad = f'g - g * f1' * f
+            # Grad = g * (f' - f1' * f)
+            # Grad = f' - f1'
+            # Grad = f2' which equals zero when x = y
+            # Since for this corner case, diff equals zero,
+            # dist can be set to anything.
+            nzd_mask = dist != 0.0
+            nzd = dist[nzd_mask]
+            dist[nzd_mask] = np.reciprocal(nzd, nzd)
+
             dist *= sqrt(5)
             dist = np.expand_dims(dist, axis=1)
             diff /= length_scale
@@ -163,6 +200,8 @@ class Matern(Kernel, sk_Matern):
 class RationalQuadratic(Kernel, sk_RationalQuadratic):
 
     def gradient_x(self, x, X_train):
+        x = np.asarray(x)
+        X_train = np.asarray(X_train)
         alpha = self.alpha
         length_scale = self.length_scale
 
@@ -187,6 +226,8 @@ class RationalQuadratic(Kernel, sk_RationalQuadratic):
 class ExpSineSquared(Kernel, sk_ExpSineSquared):
 
     def gradient_x(self, x, X_train):
+        x = np.asarray(x)
+        X_train = np.asarray(X_train)
         length_scale = self.length_scale
         periodicity = self.periodicity
 
@@ -200,7 +241,15 @@ class ExpSineSquared(Kernel, sk_ExpSineSquared):
         exp_sine_squared = np.exp(sine_squared)
 
         grad_wrt_exp = -2 * np.sin(2 * pi_by_period) / length_scale**2
-        grad_wrt_theta = np.pi / (periodicity * dist)
+
+        # When x_i -> y_i for all i in [0, D), the gradient becomes
+        # zero. See https://github.com/MechCoder/Notebooks/blob/master/ExpSineSquared%20Kernel%20gradient%20computation.ipynb
+        # for a detailed math explanation
+        # grad_wrt_theta can be anything since diff is zero
+        # for this corner case, hence we set to zero.
+        grad_wrt_theta = np.zeros_like(dist)
+        nzd = dist != 0.0
+        grad_wrt_theta[nzd] = np.pi / (periodicity * dist[nzd])
         return np.expand_dims(
             grad_wrt_theta * exp_sine_squared * grad_wrt_exp, axis=1) * diff
 
@@ -220,6 +269,8 @@ class WhiteKernel(Kernel, sk_WhiteKernel):
 class Exponentiation(Kernel, sk_Exponentiation):
 
     def gradient_x(self, x, X_train):
+        x = np.asarray(x)
+        X_train = np.asarray(X_train)
         expo = self.exponent
         kernel = self.kernel
 
@@ -239,6 +290,8 @@ class Sum(Kernel, sk_Sum):
 class Product(Kernel, sk_Product):
 
     def gradient_x(self, x, X_train):
+        x = np.asarray(x)
+        X_train = np.asarray(X_train)
         X = np.expand_dims(x, axis=0)
         f_ggrad = (
             np.expand_dims(self.k1(x, X_train)[0], axis=1) *
@@ -254,4 +307,4 @@ class Product(Kernel, sk_Product):
 class DotProduct(Kernel, sk_DotProduct):
 
     def gradient_x(self, x, X_train):
-        return X_train
+        return np.asarray(X_train)

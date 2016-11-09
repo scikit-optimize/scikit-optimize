@@ -309,7 +309,9 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
                 if return_std_grad:
                     # XXX: Cache np.dot(K_trans, K_inv) from above
-                    grad_std = -np.dot(K_trans, np.dot(K_inv, grad))[0] / y_std
+                    grad_std = np.zeros(X.shape[1])
+                    if not np.allclose(y_std, grad_std):
+                        grad_std = -np.dot(K_trans, np.dot(K_inv, grad))[0] / y_std
                     return y_mean, y_std, grad_mean, grad_std
 
                 if return_std:
