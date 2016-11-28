@@ -16,6 +16,7 @@ from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import clone
 from sklearn.base import is_regressor
+from sklearn.externals.joblib import Parallel, delayed
 from sklearn.utils import check_random_state
 
 from ..acquisition import gaussian_acquisition_1D
@@ -31,7 +32,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="auto",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96):
+                  xi=0.01, kappa=1.96, n_jobs=1):
     """
     Parameters
     ----------
@@ -132,6 +133,13 @@ def base_minimize(func, dimensions, base_estimator,
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
+
+    * `n_jobs` [int, default=1]
+        Number of cores to run in parallel while running the lbfgs optimizations
+        over the acquisition function. Valid only when `acq_optimizer` is
+        set to "lbfgs."
+        Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
+        to number of cores.
 
     Returns
     -------
@@ -254,6 +262,8 @@ def base_minimize(func, dimensions, base_estimator,
     models = []
     n_model_iter = n_calls - n_total_init_calls
     transformed_bounds = np.array(space.transformed_bounds)
+    parallel = Parallel(n_jobs=n_jobs)
+
     for i in range(n_model_iter):
         gp = clone(base_estimator)
 
@@ -274,21 +284,25 @@ def base_minimize(func, dimensions, base_estimator,
         elif acq_optimizer == "lbfgs":
             best = np.inf
 
-            for j in range(n_restarts_optimizer):
-                x0 = space.transform(space.rvs(n_samples=1,
-                                               random_state=rng))[0]
+            x0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
+                                           random_state=rng))
 
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    x, a, _ = fmin_l_bfgs_b(
-                        gaussian_acquisition_1D, x0,
-                        args=(gp, np.min(yi), acq_func, xi, kappa),
-                        bounds=space.transformed_bounds,
-                        approx_grad=False,
-                        maxiter=20)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                jobs = (delayed(fmin_l_bfgs_b)(
+                    gaussian_acquisition_1D, x,
+                    args=(gp, np.min(yi), acq_func, xi, kappa),
+                    bounds=space.transformed_bounds,
+                    approx_grad=False,
+                    maxiter=20) for x in x0)
+                results = parallel(jobs)
 
-                if a < best:
-                    next_x, best = x, a
+            cand_xs = np.array([r[0] for r in results])
+            cand_acqs = np.array([r[1] for r in results])
+            best_ind = np.argmin(cand_acqs)
+            a = cand_acqs[best_ind]
+            if a < best:
+                next_x, best = cand_xs[best_ind], a
 
         # lbfg should handle this but just in case there are precision errors.
         next_x = np.clip(

@@ -21,7 +21,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
                 acq_func="EI", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
                 n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
-                noise="gaussian"):
+                noise="gaussian", n_jobs=1):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -159,6 +159,13 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - Set this to a value close to zero (1e-10) if the function is noise-free.
           Setting to zero might cause stability issues.
 
+    * `n_jobs` [int, default=1]
+        Number of cores to run in parallel while running the lbfgs optimizations
+        over the acquisition function. Valid only when `acq_optimizer` is
+        set to "lbfgs."
+        Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
+        to number of cores.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -204,4 +211,4 @@ def gp_minimize(func, dimensions, base_estimator=None,
         n_points=n_points, n_random_starts=n_random_starts,
         n_restarts_optimizer=n_restarts_optimizer,
         x0=x0, y0=y0, random_state=random_state, verbose=verbose,
-        callback=callback)
+        callback=callback, n_jobs=n_jobs)
