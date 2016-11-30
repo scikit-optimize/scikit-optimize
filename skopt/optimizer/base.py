@@ -151,7 +151,7 @@ def base_minimize(func, dimensions, base_estimator,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    optimizer = Optimizer(func, dimensions, base_estimator,
+    optimizer = Optimizer(dimensions, base_estimator,
                           n_random_starts,
                           acq_func, acq_optimizer,
                           random_state, verbose,

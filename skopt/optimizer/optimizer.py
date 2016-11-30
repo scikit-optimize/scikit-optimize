@@ -19,40 +19,42 @@ from ..utils import create_result
 
 class Optimizer(object):
     """docstring for Optimizer."""
-    def __init__(self, func, dimensions, base_estimator,
+    def __init__(self, dimensions, base_estimator,
                  n_random_starts=10,
                  acq_func="EI", acq_optimizer="auto",
                  random_state=None, verbose=False,
                  n_points=10000, n_restarts_optimizer=5,
                  xi=0.01, kappa=1.96, n_jobs=1):
         super(Optimizer, self).__init__()
-        self._check_arguments(func, dimensions, base_estimator,
-                              n_random_starts,
-                              acq_func, acq_optimizer,
-                              verbose,
-                              n_restarts_optimizer,
-                              n_jobs)
+
         self.specs = {"args": copy.copy(inspect.currentframe().f_locals),
                       "function": inspect.currentframe().f_code.co_name}
-        # Check params
+
+        # Arguments that are just stored not checked
+        self.acq_func = acq_func
         self.rng = check_random_state(random_state)
-        self.space = Space(dimensions)
-        self.Xi = []
-        self.yi = []
+        self.kappa = kappa
         self.models = []
         self.n_points = n_points
-        self.kappa = kappa
+        self.n_restarts_optimizer = n_restarts_optimizer
+        self.space = Space(dimensions)
+        self.Xi = []
         # XXX change to a name that is less similar to Xi
         self.xi = xi
-        self.parallel = Parallel(n_jobs=n_jobs)
-        self.acq_func = acq_func
+        self.yi = []
 
-    def _check_arguments(self, func, dimensions, base_estimator,
+        self._check_arguments(dimensions, base_estimator,
+                              n_random_starts,
+                              acq_func, acq_optimizer,
+                              n_jobs)
+
+        self.parallel = Parallel(n_jobs=n_jobs)
+
+    def _check_arguments(self, dimensions, base_estimator,
                          n_random_starts,
                          acq_func, acq_optimizer,
-                         verbose,
-                         n_restarts_optimizer,
                          n_jobs):
+        """Check arguments for sanity or transform arguments"""
         if not is_regressor(base_estimator):
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
@@ -79,6 +81,16 @@ class Optimizer(object):
             return self.space.rvs(random_state=self.rng)[0]
 
         else:
+            # return point computed from last call to tell()
+            return self._next_x
+
+    def tell(self, x, y):
+        """Record an observation of the objective function."""
+        self.Xi.append(x)
+        self.yi.append(y)
+
+        # only start fitting a model once we are done suggesting random points
+        if len(self.Xi) >= self.n_random_starts:
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator)
 
@@ -88,6 +100,7 @@ class Optimizer(object):
 
             self.models.append(est)
 
+            # Find the minimum of the acquisition function by random search
             if self.acq_optimizer == "sampling":
                 X = self.space.transform(self.space.rvs(
                     n_samples=self.n_points, random_state=self.rng))
@@ -96,6 +109,9 @@ class Optimizer(object):
                     acq_func=self.acq_func, xi=self.xi, kappa=self.kappa)
                 next_x = X[np.argmin(values)]
 
+            # Use BFGS to find the mimimum of the acquisition function, the
+            # minimization starts from `n_restarts_optimizer` different points
+            # and the best minimum is used
             elif self.acq_optimizer == "lbfgs":
                 best = np.inf
                 x0 = self.space.transform(
@@ -125,16 +141,15 @@ class Optimizer(object):
             # precision errors.
             next_x = np.clip(
                 next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
-            next_x = self.space.inverse_transform(next_x.reshape((1, -1)))[0]
-            return next_x
+            # XXX why the need for [0] at the end?
+            self._next_x = self.space.inverse_transform(
+                next_x.reshape((1, -1)))[0]
 
-    def tell(self, x, y):
-        """Record an observation of the objective function."""
-        self.Xi.append(x)
-        self.yi.append(y)
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              self.specs)
 
-    def run(self):
+    def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
-        pass
+        for _ in range(n_iter):
+            x = self.ask()
+            self.tell(x, func(x))
