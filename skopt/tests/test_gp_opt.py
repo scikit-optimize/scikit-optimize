@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import product
 
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_less
 
 from skopt import gp_minimize
@@ -32,3 +33,13 @@ def test_gp_minimize():
                search, acq, 0.15, 100)
         yield (check_minimize, hart6, -3.32, np.tile((0., 1.), (6, 1)),
                search, acq, 1.0, 100)
+
+
+def test_n_jobs():
+    r_single = gp_minimize(bench3, [(-2.0, 2.0)], acq_optimizer="lbfgs",
+                           acq_func="EI", n_calls=2, n_random_starts=1,
+                           random_state=1, noise=1e-10)
+    r_double = gp_minimize(bench3, [(-2.0, 2.0)], acq_optimizer="lbfgs",
+                           acq_func="EI", n_calls=2, n_random_starts=1,
+                           random_state=1, noise=1e-10, n_jobs=2)
+    assert_array_equal(r_single.x_iters, r_double.x_iters)
