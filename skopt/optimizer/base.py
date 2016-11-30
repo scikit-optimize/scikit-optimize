@@ -122,7 +122,8 @@ def base_minimize(func, dimensions, base_estimator,
         Useless if acq_optimizer is set to `"lbfgs"`.
 
     * `n_restarts_optimizer` [int, default=5]:
-        The number of restarts of the optimizer when `acq_optimizer` is `"lbfgs"`.
+        The number of restarts of the optimizer when `acq_optimizer`
+        is `"lbfgs"`.
 
     * `xi` [float, default=0.01]:
         Controls how much improvement one wants over the previous best
@@ -135,9 +136,9 @@ def base_minimize(func, dimensions, base_estimator,
         Used when the acquisition is `"LCB"`.
 
     * `n_jobs` [int, default=1]
-        Number of cores to run in parallel while running the lbfgs optimizations
-        over the acquisition function. Valid only when `acq_optimizer` is
-        set to "lbfgs."
+        Number of cores to run in parallel while running the lbfgs
+        optimizations over the acquisition function. Valid only when
+        `acq_optimizer` is set to "lbfgs."
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
@@ -283,7 +284,6 @@ def base_minimize(func, dimensions, base_estimator,
 
         elif acq_optimizer == "lbfgs":
             best = np.inf
-
             x0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
                                            random_state=rng))
 
@@ -301,10 +301,11 @@ def base_minimize(func, dimensions, base_estimator,
             cand_acqs = np.array([r[1] for r in results])
             best_ind = np.argmin(cand_acqs)
             a = cand_acqs[best_ind]
+            
             if a < best:
                 next_x, best = cand_xs[best_ind], a
 
-        # lbfg should handle this but just in case there are precision errors.
+        # lbfgs should handle this but just in case there are precision errors.
         next_x = np.clip(
             next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]

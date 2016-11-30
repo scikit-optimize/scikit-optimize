@@ -63,17 +63,18 @@ from .utils import load, dump
 __version__ = "0.2"
 
 
-__all__ = ("acquisition",
-           "benchmarks",
-           "callbacks",
-           "learning",
-           "optimizer",
-           "plots",
-           "space",
-           "gp_minimize",
-           "dummy_minimize",
-           "forest_minimize",
-           "gbrt_minimize",
-           "dump",
-           "load",
-           )
+__all__ = (
+    "acquisition",
+    "benchmarks",
+    "callbacks",
+    "learning",
+    "optimizer",
+    "plots",
+    "space",
+    "gp_minimize",
+    "dummy_minimize",
+    "forest_minimize",
+    "gbrt_minimize",
+    "dump",
+    "load",
+)

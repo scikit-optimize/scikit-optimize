@@ -134,7 +134,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
 
     # Default estimator
     if base_estimator is None:
-        gbrt = GradientBoostingRegressor(n_estimators=30, loss='quantile')
+        gbrt = GradientBoostingRegressor(n_estimators=30, loss="quantile")
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
                                                            n_jobs=n_jobs,
                                                            random_state=rng)

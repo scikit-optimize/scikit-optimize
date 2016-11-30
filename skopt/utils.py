@@ -4,15 +4,15 @@ from scipy.optimize import OptimizeResult
 from sklearn.externals.joblib import dump as dump_
 from sklearn.externals.joblib import load as load_
 
-__all__ = ("load",
-           "dump",
-           )
+__all__ = (
+    "load",
+    "dump",
+)
 
 
 def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     """
-    Return an instance of OptimizeResult() with the required
-    information.
+    Initialize an `OptimizeResult` object.
 
     Parameters
     ----------
@@ -82,9 +82,9 @@ def dump(res, filename, store_objective=True, **kwargs):
     * `**kwargs` [other keyword arguments]:
         All other keyword arguments will be passed to `joblib.dump`.
     """
-
     if store_objective:
         dump_(res, filename, **kwargs)
+
     elif 'func' in res.specs['args']:
         # If the user does not want to store the objective and it is indeed
         # present in the provided object, then create a deep copy of it and
@@ -92,6 +92,7 @@ def dump(res, filename, store_objective=True, **kwargs):
         res_without_func = deepcopy(res)
         del res_without_func.specs['args']['func']
         dump_(res_without_func, filename, **kwargs)
+
     else:
         # If the user does not want to store the objective and it is already
         # missing in the provided object, dump it without copying.
@@ -120,5 +121,4 @@ def load(filename, **kwargs):
     * `res` [`OptimizeResult`, scipy object]:
         Reconstructed OptimizeResult instance.
     """
-
     return load_(filename, **kwargs)
