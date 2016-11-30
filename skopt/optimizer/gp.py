@@ -1,20 +1,15 @@
 """Gaussian process-based minimization algorithms."""
 
 import numpy as np
-
-from sklearn.base import clone
-from sklearn.gaussian_process.kernels import Matern
-from sklearn.gaussian_process.kernels import ConstantKernel
-from sklearn.gaussian_process.kernels import WhiteKernel
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
 from ..learning import GaussianProcessRegressor
 from ..learning.gaussian_process.kernels import ConstantKernel
 from ..learning.gaussian_process.kernels import Matern
-from ..learning.gaussian_process.kernels import WhiteKernel
 from ..space import check_dimension
 from ..space import Space
+
 
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
@@ -138,7 +133,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Useless if acq_optimizer is set to `"lbfgs"`.
 
     * `n_restarts_optimizer` [int, default=5]:
-        The number of restarts of the optimizer when `acq_optimizer` is `"lbfgs"`.
+        The number of restarts of the optimizer when `acq_optimizer`
+        is `"lbfgs"`.
 
     * `kappa` [float, default=1.96]:
         Controls how much of the variance in the predicted values should be
@@ -156,13 +152,13 @@ def gp_minimize(func, dimensions, base_estimator=None,
           mean zero and a fixed variance.
         - If the variance is known before-hand, this can be set directly
           to the variance of the noise.
-        - Set this to a value close to zero (1e-10) if the function is noise-free.
-          Setting to zero might cause stability issues.
+        - Set this to a value close to zero (1e-10) if the function is
+          noise-free. Setting to zero might cause stability issues.
 
     * `n_jobs` [int, default=1]
-        Number of cores to run in parallel while running the lbfgs optimizations
-        over the acquisition function. Valid only when `acq_optimizer` is
-        set to "lbfgs."
+        Number of cores to run in parallel while running the lbfgs
+        optimizations over the acquisition function. Valid only
+        when `acq_optimizer` is set to "lbfgs."
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
@@ -190,19 +186,21 @@ def gp_minimize(func, dimensions, base_estimator=None,
     rng = check_random_state(random_state)
 
     # To make sure that GP operates in the [0, 1] space
-    dimensions = [
-        check_dimension(dim, transform="normalize") for dim in dimensions]
+    dimensions = [check_dimension(d,
+                                  transform="normalize") for d in dimensions]
     space = Space(dimensions)
 
     # Default GP
     if base_estimator is None:
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
-        matern = Matern(length_scale=np.ones(space.transformed_n_dims),
-                        length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
-                        nu=2.5)
+        matern = Matern(
+            length_scale=np.ones(space.transformed_n_dims),
+            length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
+            nu=2.5)
+
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * matern,
-            normalize_y=True, random_state=random_state, alpha=0.0, noise=noise)
+            normalize_y=True, random_state=rng, alpha=0.0, noise=noise)
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,

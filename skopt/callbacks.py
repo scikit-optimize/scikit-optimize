@@ -1,8 +1,6 @@
 from collections import Callable
 from time import time
 
-import numpy as np
-
 
 def check_callback(callback):
     """
@@ -11,9 +9,11 @@ def check_callback(callback):
     if callback is not None:
         if isinstance(callback, Callable):
             return [callback]
+
         elif (isinstance(callback, list) and
               all([isinstance(c, Callable) for c in callback])):
             return callback
+
         else:
             raise ValueError("callback should be either a callable or "
                              "a list of callables.")
@@ -48,6 +48,7 @@ class VerboseCallback(object):
         self.n_random = n_random
         self.n_total = n_total
         self.iter_no = 1
+
         self._start_time = time()
         self._print_info(start=True)
 
@@ -57,6 +58,7 @@ class VerboseCallback(object):
             status = "started"
             eval_status = "Evaluating function"
             search_status = "Searching for the next optimal point."
+
         else:
             status = "ended"
             eval_status = "Evaluation done"
@@ -65,9 +67,11 @@ class VerboseCallback(object):
         if iter_no <= self.n_init:
             print("Iteration No: %d %s. %s at provided point."
                   % (iter_no, status, eval_status))
+
         elif self.n_init < iter_no <= (self.n_random + self.n_init):
             print("Iteration No: %d %s. %s at random point."
                   % (iter_no, status, eval_status))
+
         else:
             print("Iteration No: %d %s. %s"
                   % (iter_no, status, search_status))
@@ -84,9 +88,11 @@ class VerboseCallback(object):
 
         curr_y = res.func_vals[-1]
         curr_min = res.fun
+
         print("Time taken: %0.4f" % time_taken)
         print("Function value obtained: %0.4f" % curr_y)
         print("Current minimum: %0.4f" % curr_min)
+
         self.iter_no += 1
         if self.iter_no <= self.n_total:
             self._print_info(start=True)

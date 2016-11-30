@@ -103,8 +103,8 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                              for i in range(space.n_dims)]))
 
     # Deal with formatting of the axes
-    for i in range(space.n_dims): # rows
-        for j in range(space.n_dims): # columns
+    for i in range(space.n_dims):  # rows
+        for j in range(space.n_dims):  # columns
             ax_ = ax[i, j]
 
             if j > i:
@@ -317,13 +317,12 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
                 xi, yi, zi = partial_dependence(space, result.models[-1],
                                                 i, j,
                                                 rvs_transformed, n_points)
-
-                cs = ax[i, j].contour(xi, yi, zi, levels, locator=locator,
-                                      linewidths=0.5, colors='k')
                 ax[i, j].contourf(xi, yi, zi, levels,
                                   locator=locator, cmap='viridis_r')
-                ax[i, j].scatter(samples[:, j], samples[:, i], c='k', s=10, lw=0.)
-                ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
+                ax[i, j].scatter(samples[:, j], samples[:, i],
+                                 c='k', s=10, lw=0.)
+                ax[i, j].scatter(result.x[j], result.x[i],
+                                 c=['r'], s=20, lw=0.)
 
     return _format_scatter_plot_axes(ax, space, "Partial dependence")
 
