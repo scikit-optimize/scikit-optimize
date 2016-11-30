@@ -4,27 +4,15 @@ Abstraction for optimizers.
 It is sufficient that one re-implements the base estimator.
 """
 
-import copy
-import inspect
 import numbers
-import warnings
 from collections import Iterable
 
 import numpy as np
 
-from scipy.optimize import fmin_l_bfgs_b
-
-from sklearn.base import clone
-from sklearn.base import is_regressor
-from sklearn.externals.joblib import Parallel, delayed
-from sklearn.utils import check_random_state
-
-from ..acquisition import gaussian_acquisition_1D
-from ..acquisition import _gaussian_acquisition
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
-from ..space import Space
 from ..utils import create_result
+from .optimizer import Optimizer
 
 
 def base_minimize(func, dimensions, base_estimator,
@@ -163,16 +151,12 @@ def base_minimize(func, dimensions, base_estimator,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    specs = {"args": copy.copy(inspect.currentframe().f_locals),
-             "function": inspect.currentframe().f_code.co_name}
-
-    if not is_regressor(base_estimator):
-        raise ValueError(
-            "%s has to be a regressor." % base_estimator)
-
-    # Check params
-    rng = check_random_state(random_state)
-    space = Space(dimensions)
+    optimizer = Optimizer(func, dimensions, base_estimator,
+                          n_random_starts,
+                          acq_func, acq_optimizer,
+                          random_state, verbose,
+                          n_points, n_restarts_optimizer,
+                          xi, kappa, n_jobs)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
@@ -186,19 +170,14 @@ def base_minimize(func, dimensions, base_estimator,
     n_init_func_calls = len(x0) if y0 is None else 0
     n_total_init_calls = n_random_starts + n_init_func_calls
 
-    if n_calls <= 0:
-        raise ValueError("Expected `n_calls` > 0, got %d" % n_calls)
-
-    if n_random_starts < 0:
-        raise ValueError(
-            "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
-
-    if n_random_starts == 0 and not x0:
-        raise ValueError("Either set `n_random_starts` > 0, or provide `x0`")
-
     if n_calls < n_total_init_calls:
         raise ValueError(
-            "Expected `n_calls` >= %d, got %d" % (n_total_init_calls, n_calls))
+            "Expected `n_calls` >= %d, got %d" % (n_total_init_calls,
+                                                  n_calls))
+
+    if n_random_starts == 0 and not x0:
+        raise ValueError("Either set `n_random_starts` > 0,"
+                         " or provide `x0`")
 
     callbacks = check_callback(callback)
     if verbose:
@@ -206,109 +185,61 @@ def base_minimize(func, dimensions, base_estimator,
             n_init=n_init_func_calls, n_random=n_random_starts,
             n_total=n_calls))
 
-    if y0 is None and x0:
-        y0 = []
-        for i, x in enumerate(x0):
-            y0.append(func(x))
-            curr_res = create_result(x0[:i + 1], y0, space, rng, specs)
+    # User suggested points at which to evaluate the objective
+    if x0 and y0 is None:
+        for x in x0:
+            y = func(x)
+            curr_res = optimizer.tell(x, y)
 
             if callbacks:
                 for c in callbacks:
                     c(curr_res)
 
-    elif x0:
+    # User is god and knows the value of the objective at these points
+    elif x0 and y0 is not None:
+        if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
+            raise ValueError(
+                "`y0` should be an iterable or a scalar, got %s" % type(y0))
+
+        if len(x0) != len(y0):
+            raise ValueError("`x0` and `y0` should have the same length")
+
+        if not all(map(np.isscalar, y0)):
+            raise ValueError(
+                "`y0` elements should be scalars")
+
         if isinstance(y0, Iterable):
             y0 = list(y0)
         elif isinstance(y0, numbers.Number):
             y0 = [y0]
-        else:
-            raise ValueError(
-                "`y0` should be an iterable or a scalar, got %s" % type(y0))
-        if len(x0) != len(y0):
-            raise ValueError("`x0` and `y0` should have the same length")
-        if not all(map(np.isscalar, y0)):
-            raise ValueError(
-                "`y0` elements should be scalars")
-    else:
-        y0 = []
 
-    # Random function evaluations.
-    X_rand = space.rvs(n_samples=n_random_starts, random_state=rng)
-    Xi = x0 + X_rand
-    yi = y0
+        for x, y in zip(x0, y0):
+            curr_res = optimizer.tell(x, y)
 
-    for i, x in enumerate(X_rand):
-        yi.append(func(x))
-
-        if callbacks is not None:
-            curr_res = create_result(
-                x0 + X_rand[:i + 1], yi, space, rng, specs)
             if callbacks:
                 for c in callbacks:
                     c(curr_res)
 
-    if np.ndim(yi) != 1:
-        raise ValueError("`func` should return a scalar")
+    # Random function evaluations
+    for n in range(n_random_starts):
+        next_x = optimizer.ask()
+        curr_res = optimizer.tell(next_x, func(next_x))
 
-    if acq_optimizer == "auto":
-        warnings.warn("The 'auto' option for the acq_optimizer will be "
-                      "removed in 0.4.")
-        acq_optimizer = "lbfgs"
-    elif acq_optimizer not in ["lbfgs", "sampling"]:
-        raise ValueError(
-            "Expected acq_optimizer to be 'lbfgs', 'sampling' or 'auto', "
-            "got %s" % acq_optimizer)
+        if callbacks:
+            for c in callbacks:
+                c(curr_res)
 
     # Bayesian optimization loop
-    models = []
     n_model_iter = n_calls - n_total_init_calls
-    transformed_bounds = np.array(space.transformed_bounds)
-    parallel = Parallel(n_jobs=n_jobs)
 
     for i in range(n_model_iter):
-        gp = clone(base_estimator)
+        next_x = optimizer.ask()
+        curr_res = optimizer.tell(next_x, func(next_x))
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            gp.fit(space.transform(Xi), yi)
-
-        models.append(gp)
-
-        X = space.transform(space.rvs(n_samples=n_points, random_state=rng))
-        values = _gaussian_acquisition(
-            X=X, model=gp,  y_opt=np.min(yi), acq_func=acq_func,
-            xi=xi, kappa=kappa)
-
-        if acq_optimizer == "sampling":
-            next_x = X[np.argmin(values)]
-
-        elif acq_optimizer == "lbfgs":
-            x0 = X[np.argsort(values)[:n_restarts_optimizer]]
-
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                jobs = (delayed(fmin_l_bfgs_b)(
-                    gaussian_acquisition_1D, x,
-                    args=(gp, np.min(yi), acq_func, xi, kappa),
-                    bounds=space.transformed_bounds,
-                    approx_grad=False,
-                    maxiter=20) for x in x0)
-                results = parallel(jobs)
-
-            cand_xs = np.array([r[0] for r in results])
-            cand_acqs = np.array([r[1] for r in results])
-            next_x = cand_xs[np.argmin(cand_acqs)]
-
-        # lbfgs should handle this but just in case there are precision errors.
-        next_x = np.clip(
-            next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
-        next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
-        yi.append(func(next_x))
-        Xi.append(next_x)
-        curr_res = create_result(Xi, yi, space, rng, specs, models)
-        for c in callbacks:
-            if callbacks:
+        if callbacks:
+            for c in callbacks:
                 c(curr_res)
 
     # Pack results
-    return create_result(Xi, yi, space, rng, specs, models)
+    return create_result(optimizer.Xi, optimizer.yi, optimizer.space,
+                         optimizer.rng, optimizer.specs, optimizer.models)
