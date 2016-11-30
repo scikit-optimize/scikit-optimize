@@ -1,4 +1,3 @@
-import numpy as np
 import tempfile
 
 from sklearn.utils.testing import assert_array_equal
@@ -35,19 +34,19 @@ def test_dump_and_load():
         dump(res, f)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true('func' in res_loaded.specs['args'])
+    assert_true("func" in res_loaded.specs["args"])
 
     # Test dumping without objective function
     with tempfile.TemporaryFile() as f:
         dump(res, f, store_objective=False)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true(not ('func' in res_loaded.specs['args']))
+    assert_true(not ("func" in res_loaded.specs["args"]))
 
     # Delete the objective function and dump the modified object
-    del res.specs['args']['func']
+    del res.specs["args"]["func"]
     with tempfile.TemporaryFile() as f:
         dump(res, f, store_objective=False)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true(not ('func' in res_loaded.specs['args']))
+    assert_true(not ("func" in res_loaded.specs["args"]))
