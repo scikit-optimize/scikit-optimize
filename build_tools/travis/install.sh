@@ -26,7 +26,7 @@ popd
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-   numpy scipy scikit-learn matplotlib pyqt==4.11.4
+   numpy scipy scikit-learn matplotlib 
 source activate testenv
 
 if [[ "$COVERAGE" == "true" ]]; then
