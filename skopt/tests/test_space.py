@@ -3,7 +3,6 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_less_equal
@@ -27,7 +26,7 @@ def check_dimension(Dimension, vals, random_val):
 def check_categorical(vals, random_val):
     x = Categorical(vals)
     assert_equal(x, Categorical(vals))
-    assert_not_equal(x, Categorical(vals[:-1] + ('zzz',)))
+    assert_not_equal(x, Categorical(vals[:-1] + ("zzz",)))
     assert_equal(x.rvs(random_state=1), random_val)
 
 
@@ -36,7 +35,7 @@ def test_dimensions():
     yield (check_dimension, Real, (1, 4), 2.251066014107722)
     yield (check_dimension, Integer, (1, 4), 2)
     yield (check_dimension, Integer, (1., 4.), 2)
-    yield (check_categorical, ('a', 'b', 'c', 'd'), 'b')
+    yield (check_categorical, ("a", "b", "c", "d"), "b")
     yield (check_categorical, (1., 2., 3., 4.), 2.)
 
 

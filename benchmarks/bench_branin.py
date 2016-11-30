@@ -1,4 +1,3 @@
-from functools import partial
 import numpy as np
 
 from skopt.benchmarks import branin
@@ -6,7 +5,8 @@ from skopt import gp_minimize, forest_minimize, gbrt_minimize
 
 bounds = [(-5.0, 10.0), (0.0, 15.0)]
 n_calls = 200
-optimizers = [("gp_minimize", gp_minimize), ("forest_minimize", forest_minimize),
+optimizers = [("gp_minimize", gp_minimize),
+              ("forest_minimize", forest_minimize),
               ("gbrt_minimize", gbrt_minimize)]
 
 for name, optimizer in optimizers:
