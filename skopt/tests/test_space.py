@@ -270,4 +270,6 @@ def test_normalize():
     assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
 
     # Check inverse transform
-    assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)
+    X_orig = a.inverse_transform(a.transform(X))
+    assert_equal(X_orig.dtype, "int64")
+    assert_array_equal(X_orig, X)
