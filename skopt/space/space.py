@@ -62,7 +62,7 @@ def check_dimension(dimension, transform=None):
         return Categorical(dimension)
 
     if isinstance(dimension[0], numbers.Integral):
-        return Integer(*dimension)
+        return Integer(*dimension, transform=transform)
 
     if isinstance(dimension[0], numbers.Real):
         return Real(*dimension, transform=transform)
@@ -204,7 +204,7 @@ class Real(Dimension):
 
 
 class Integer(Dimension):
-    def __init__(self, low, high):
+    def __init__(self, low, high, transform=None):
         """Search space dimension that can take on integer values.
 
         Parameters
@@ -217,8 +217,17 @@ class Integer(Dimension):
         """
         self.low = low
         self.high = high
-        self._rvs = randint(self.low, self.high + 1)
-        self.transformer = Identity()
+        self.transform_ = transform
+
+        if transform and transform != "normalize":
+            raise ValueError("Expected transform to be 'normalize', got "
+                             "%s" % transform)
+        if transform == "normalize":
+            self._rvs = uniform(0, 1)
+            self.transformer = Normalize(low, high, is_int=True)
+        else:
+            self._rvs = randint(self.low, self.high + 1)
+            self.transformer = Identity()
 
     def __eq__(self, other):
         return (type(self) is type(other)
@@ -242,7 +251,10 @@ class Integer(Dimension):
 
     @property
     def transformed_bounds(self):
-        return (self.low, self.high)
+        if self.transform_ == "normalize":
+            return 0, 1
+        else:
+            return (self.low, self.high)
 
 
 class Categorical(Dimension):
@@ -334,6 +346,9 @@ class Space:
             - as a list of categories (for `Categorical` dimensions), or
             - an instance of a `Dimension` object (`Real`, `Integer` or
               `Categorical`).
+
+            NOTE: The upper and lower bounds are inclusive for `Integer`
+            dimensions.
         """
         self.dimensions = [check_dimension(dim) for dim in dimensions]
 

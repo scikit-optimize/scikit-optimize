@@ -52,6 +52,9 @@ def base_minimize(func, dimensions, base_estimator,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
+         NOTE: The upper and lower bounds are inclusive for `Integer`
+         dimensions.
+
     * `base_estimator` [sklearn regressor]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition, should have an optional `return_std` argument,
@@ -301,7 +304,7 @@ def base_minimize(func, dimensions, base_estimator,
             cand_acqs = np.array([r[1] for r in results])
             best_ind = np.argmin(cand_acqs)
             a = cand_acqs[best_ind]
-            
+
             if a < best:
                 next_x, best = cand_xs[best_ind], a
 

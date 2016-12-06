@@ -102,9 +102,10 @@ class Normalize(Transformer):
     * `high` [float]:
         Higher bound.
     """
-    def __init__(self, low, high):
+    def __init__(self, low, high, is_int=False):
         self.low = low
         self.high = high
+        self.is_int = is_int
 
     def transform(self, X):
         X = np.asarray(X)
@@ -120,7 +121,10 @@ class Normalize(Transformer):
             raise ValueError("All values should be less than 1.0")
         if np.any(X < 0.0):
             raise ValueError("All values should be greater than 0.0")
-        return X * (self.high - self.low) + self.low
+        X_orig = X * (self.high - self.low) + self.low
+        if self.is_int:
+            return np.round(X_orig).astype(np.int)
+        return X_orig
 
 
 class Pipeline(Transformer):

@@ -47,6 +47,9 @@ def forest_minimize(func, dimensions, base_estimator="ET",
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
+         NOTE: The upper and lower bounds are inclusive for `Integer`
+         dimensions.
+
     * `base_estimator` [string or `Regressor`, default=`"ET"`]:
         The regressor to use as surrogate model. Can be either
 

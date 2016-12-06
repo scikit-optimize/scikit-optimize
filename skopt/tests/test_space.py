@@ -6,7 +6,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_true
 
 from skopt.space import Space
@@ -41,7 +41,7 @@ def test_dimensions():
 
 def check_limits(value, lower_bound, upper_bound):
     assert_less_equal(lower_bound, value)
-    assert_greater(upper_bound, value)
+    assert_greater_equal(upper_bound, value)
 
 
 def test_real():
@@ -228,7 +228,7 @@ def test_space_api():
         assert_array_equal(b1, b2)
 
 
-def test_real_normalize():
+def test_normalize():
     a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 2, 30)
@@ -258,3 +258,18 @@ def test_real_normalize():
 
     # Check inverse transform
     assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)
+
+    a = Integer(2, 30, transform="normalize")
+    for i in range(50):
+        yield (check_limits, a.rvs(random_state=i), 2, 30)
+    assert_array_equal(a.transformed_bounds, (0, 1))
+
+    X = rng.randint(2, 31)
+    # Check transformed values are in [0, 1]
+    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
+    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
+
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert_equal(X_orig.dtype, "int64")
+    assert_array_equal(X_orig, X)
