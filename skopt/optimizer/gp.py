@@ -59,6 +59,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
+         NOTE: The upper and lower bounds are inclusive for `Integer`
+         dimensions.
+
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
         By default, a Matern kernel is used with the following
