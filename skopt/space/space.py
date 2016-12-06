@@ -251,7 +251,10 @@ class Integer(Dimension):
 
     @property
     def transformed_bounds(self):
-        return (self.low, self.high)
+        if self.transform_ == "normalize":
+            return 0, 1
+        else:
+            return (self.low, self.high)
 
 
 class Categorical(Dimension):

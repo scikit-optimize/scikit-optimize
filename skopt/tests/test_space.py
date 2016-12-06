@@ -262,6 +262,7 @@ def test_normalize():
     a = Integer(2, 30, transform="normalize")
     for i in range(50):
         yield (check_limits, a.rvs(random_state=i), 2, 30)
+    assert_array_equal(a.transformed_bounds, (0, 1))
 
     X = rng.randint(2, 31)
     # Check transformed values are in [0, 1]
