@@ -314,7 +314,7 @@ def base_minimize(func, dimensions, base_estimator,
         next_x = space.inverse_transform(next_x.reshape((1, -1)))[0]
         yi.append(func(next_x))
         Xi.append(next_x)
-        curr_res = create_result(Xi, yi, space, rng, specs)
+        curr_res = create_result(Xi, yi, space, rng, specs, models)
         for c in callbacks:
             if callbacks:
                 c(curr_res)
