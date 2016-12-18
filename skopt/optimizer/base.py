@@ -192,11 +192,14 @@ def base_minimize(func, dimensions, base_estimator,
         for i, x in enumerate(x0):
             fit_model = i == len(x0) - 1
             y = func(x)
-            curr_res = optimizer.tell(x, y, fit_model=fit_model)
+            optimizer.tell(x, y, fit_model=fit_model)
 
             if callbacks:
+                result = create_result(optimizer.Xi, optimizer.yi,
+                                       optimizer.space, optimizer.rng,
+                                       specs, optimizer.models)
                 for c in callbacks:
-                    c(curr_res)
+                    c(result)
 
     # User is god and knows the value of the objective at these points
     elif x0 and y0 is not None:
