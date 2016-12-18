@@ -127,6 +127,15 @@ def test_init_vals():
         for optimizer in optimizers:
             yield (check_init_vals, optimizer, branin, space, x0, n_calls)
 
+
+def test_categorical_init_vals():
+    n_random_starts = 5
+    optimizers = [
+        dummy_minimize,
+        partial(gp_minimize, n_random_starts=n_random_starts),
+        partial(forest_minimize, n_random_starts=n_random_starts),
+        partial(gbrt_minimize, n_random_starts=n_random_starts)
+    ]
     space = [("-2", "-1", "0", "1", "2")]
     x0 = [["0"], ["1"], ["2"]]
     n_calls = 10

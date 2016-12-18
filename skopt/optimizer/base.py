@@ -201,17 +201,17 @@ def base_minimize(func, dimensions, base_estimator,
             raise ValueError(
                 "`y0` should be an iterable or a scalar, got %s" % type(y0))
 
+        if isinstance(y0, Iterable):
+            y0 = list(y0)
+        elif isinstance(y0, numbers.Number):
+            y0 = [y0]
+
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
 
         if not all(map(np.isscalar, y0)):
             raise ValueError(
                 "`y0` elements should be scalars")
-
-        if isinstance(y0, Iterable):
-            y0 = list(y0)
-        elif isinstance(y0, numbers.Number):
-            y0 = [y0]
 
         for x, y in zip(x0, y0):
             curr_res = optimizer.tell(x, y)
