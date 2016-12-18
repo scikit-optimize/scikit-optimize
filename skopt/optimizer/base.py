@@ -189,9 +189,10 @@ def base_minimize(func, dimensions, base_estimator,
 
     # User suggested points at which to evaluate the objective first
     if x0 and y0 is None:
-        for x in x0:
+        for i, x in enumerate(x0):
+            fit_model = i == len(x0) - 1
             y = func(x)
-            curr_res = optimizer.tell(x, y)
+            curr_res = optimizer.tell(x, y, fit_model=fit_model)
 
             if callbacks:
                 for c in callbacks:
@@ -215,24 +216,30 @@ def base_minimize(func, dimensions, base_estimator,
             raise ValueError(
                 "`y0` elements should be scalars")
 
-        for x, y in zip(x0, y0):
-            curr_res = optimizer.tell(x, y)
+        for i, (x, y) in enumerate(zip(x0, y0)):
+            fit_model = i == len(x0) - 1
+            optimizer.tell(x, y, fit_model=fit_model)
 
             if callbacks:
+                result = create_result(optimizer.Xi, optimizer.yi,
+                                       optimizer.space, optimizer.rng,
+                                       specs, optimizer.models)
                 for c in callbacks:
-                    c(curr_res)
+                    c(result)
 
     # Bayesian optimization loop
     for n in range(n_calls - n_init_func_calls):
         # fit model after last random iteration
         fit_model = n >= n_random_starts - 1
         next_x = optimizer.ask()
-        curr_res = optimizer.tell(next_x, func(next_x),
-                                  fit_model=fit_model)
+        optimizer.tell(next_x, func(next_x), fit_model=fit_model)
 
         if callbacks:
+            result = create_result(optimizer.Xi, optimizer.yi,
+                                   optimizer.space, optimizer.rng,
+                                   specs, optimizer.models)
             for c in callbacks:
-                c(curr_res)
+                c(result)
 
     # Pack results
     return create_result(optimizer.Xi, optimizer.yi, optimizer.space,

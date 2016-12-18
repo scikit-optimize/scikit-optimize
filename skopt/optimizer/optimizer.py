@@ -240,9 +240,6 @@ class Optimizer(object):
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]
 
-        #return create_result(self.Xi, self.yi, self.space, self.rng,
-        #                     self.specs)
-
     def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
         for _ in range(n_iter):
