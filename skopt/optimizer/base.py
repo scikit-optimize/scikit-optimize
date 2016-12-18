@@ -4,6 +4,8 @@ Abstraction for optimizers.
 It is sufficient that one re-implements the base estimator.
 """
 
+import copy
+import inspect
 import numbers
 from collections import Iterable
 
@@ -46,7 +48,7 @@ def base_minimize(func, dimensions, base_estimator,
     * `base_estimator` [sklearn regressor]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition, should have an optional `return_std` argument,
-        which returns `std(Y | x)`` along with `E[Y | x]`
+        which returns `std(Y | x)`` along with `E[Y | x]`.
 
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
@@ -151,12 +153,12 @@ def base_minimize(func, dimensions, base_estimator,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    optimizer = Optimizer(dimensions, base_estimator,
-                          n_random_starts,
-                          acq_func, acq_optimizer,
-                          random_state, verbose,
-                          n_points, n_restarts_optimizer,
-                          xi, kappa, n_jobs)
+    specs = {"args": copy.copy(inspect.currentframe().f_locals),
+             "function": inspect.currentframe().f_code.co_name}
+
+    optimizer = Optimizer(dimensions, base_estimator, n_random_starts,
+                          acq_func, acq_optimizer, random_state, n_points,
+                          n_restarts_optimizer, xi, kappa, n_jobs)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
@@ -221,7 +223,7 @@ def base_minimize(func, dimensions, base_estimator,
                     c(curr_res)
 
     # Bayesian optimization loop
-    for n in range(n_calls):
+    for n in range(n_calls - n_init_func_calls):
         # fit model after last random iteration
         fit_model = n >= n_random_starts - 1
         next_x = optimizer.ask()
@@ -234,4 +236,4 @@ def base_minimize(func, dimensions, base_estimator,
 
     # Pack results
     return create_result(optimizer.Xi, optimizer.yi, optimizer.space,
-                         optimizer.rng, optimizer.specs, optimizer.models)
+                         optimizer.rng, specs, optimizer.models)
