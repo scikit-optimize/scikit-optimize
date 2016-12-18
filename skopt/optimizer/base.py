@@ -185,7 +185,7 @@ def base_minimize(func, dimensions, base_estimator,
             n_init=n_init_func_calls, n_random=n_random_starts,
             n_total=n_calls))
 
-    # User suggested points at which to evaluate the objective
+    # User suggested points at which to evaluate the objective first
     if x0 and y0 is None:
         for x in x0:
             y = func(x)
@@ -220,6 +220,7 @@ def base_minimize(func, dimensions, base_estimator,
                 for c in callbacks:
                     c(curr_res)
 
+    # XXX can we combine these two loops into one?
     # Random function evaluations
     for n in range(n_random_starts):
         next_x = optimizer.ask()
