@@ -33,24 +33,26 @@ for acq in ACQUISITION:
     MINIMIZERS.append(partial(gbrt_minimize, acq_func=acq))
 
 
-def check_minimizer_api(result, n_models=None):
+def check_minimizer_api(result, n_calls, n_models=None):
+    # assumes the result was produced on branin
     assert(isinstance(result.space, Space))
 
     if n_models is not None:
         assert_equal(len(result.models), n_models)
 
-    assert_equal(len(result.x_iters), 7)
-    assert_array_equal(result.func_vals.shape, (7,))
+    assert_equal(len(result.x_iters), n_calls)
+    assert_array_equal(result.func_vals.shape, (n_calls,))
 
     assert(isinstance(result.x, list))
     assert_equal(len(result.x), 2)
 
     assert(isinstance(result.x_iters, list))
-    for n in range(7):
+    for n in range(n_calls):
         assert(isinstance(result.x_iters[n], list))
         assert_equal(len(result.x_iters[n]), 2)
 
         assert(isinstance(result.func_vals[n], float))
+        assert_almost_equal(result.func_vals[n], branin(result.x_iters[n]))
 
     assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
     assert_almost_equal(result.fun, branin(result.x))
@@ -60,11 +62,11 @@ def check_minimizer_api(result, n_models=None):
     assert("function" in result.specs)
 
 
-def check_minimizer_bounds(result):
+def check_minimizer_bounds(result, n_calls):
     # no values should be below or above the bounds
     eps = 10e-9  # check for assert_array_less OR equal
-    assert_array_less(result.x_iters, np.tile([10+eps, 15+eps], (7, 1)))
-    assert_array_less(np.tile([-5-eps, 0-eps], (7, 1)), result.x_iters)
+    assert_array_less(result.x_iters, np.tile([10+eps, 15+eps], (n_calls, 1)))
+    assert_array_less(np.tile([-5-eps, 0-eps], (n_calls, 1)), result.x_iters)
 
 
 def check_result_callable(res):
@@ -81,22 +83,23 @@ def test_minimizer_api():
     # and does not fit any models
     call_single = lambda res: res.x
     call_list = [call_single, check_result_callable]
+    n_calls = 7
 
     for verbose, call in product([True, False], [call_single, call_list]):
         result = dummy_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                                n_calls=7, random_state=1,
+                                n_calls=n_calls, random_state=1,
                                 verbose=verbose, callback=call)
 
         assert(result.models is None)
-        yield (check_minimizer_api, result)
-        yield (check_minimizer_bounds, result)
+        yield (check_minimizer_api, result, n_calls)
+        yield (check_minimizer_bounds, result, n_calls)
         assert_raise_message(ValueError,
                              "return a scalar",
                              dummy_minimize, lambda x: x, [[-5, 10]])
 
         n_calls = 7
         n_random_starts = 3
-        n_models = n_calls - n_random_starts
+        n_models = n_calls - n_random_starts + 1
 
         for minimizer in MINIMIZERS:
             result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
@@ -105,11 +108,26 @@ def test_minimizer_api():
                                random_state=1,
                                verbose=verbose, callback=call)
 
-            yield (check_minimizer_api, result, n_models)
-            yield (check_minimizer_bounds, result)
+            yield (check_minimizer_api, result, n_calls, n_models)
+            yield (check_minimizer_bounds, result, n_calls)
             assert_raise_message(ValueError,
                                  "return a scalar",
                                  minimizer, lambda x: x, [[-5, 10]])
+
+
+def test_minimizer_api_random_only():
+    n_calls = 5
+    n_random_starts = 5
+    n_models = 1
+
+    for minimizer in MINIMIZERS:
+        result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                           n_random_starts=n_random_starts,
+                           n_calls=n_calls,
+                           random_state=1)
+
+        yield (check_minimizer_api, result, n_calls, n_models)
+        yield (check_minimizer_bounds, result, n_calls)
 
 
 def test_init_vals():
@@ -193,9 +211,10 @@ def check_init_vals(optimizer, func, space, x0, n_calls):
 def test_invalid_n_calls_arguments():
     for minimizer in MINIMIZERS:
         assert_raise_message(ValueError,
-                             "Expected `n_calls` > 0",
+                             "Expected `n_calls` >= 10, got 0",
                              minimizer,
-                             branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=0,
+                             branin, [(-5.0, 10.0), (0.0, 15.0)],
+                             n_calls=0,
                              random_state=1)
 
         assert_raise_message(ValueError,
