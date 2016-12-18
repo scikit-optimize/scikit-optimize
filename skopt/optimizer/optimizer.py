@@ -54,7 +54,7 @@ class Optimizer(object):
                          n_random_starts,
                          acq_func, acq_optimizer,
                          n_jobs):
-        """Check arguments for sanity or transform arguments"""
+        """Check arguments for sanity."""
         if not is_regressor(base_estimator):
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
@@ -81,16 +81,35 @@ class Optimizer(object):
             return self.space.rvs(random_state=self.rng)[0]
 
         else:
+            if not self.models:
+                raise ValueError("Random evaluations exhausted and no "
+                                 "model has been fit.")
             # return point computed from last call to tell()
             return self._next_x
 
-    def tell(self, x, y):
-        """Record an observation of the objective function."""
+    def tell(self, x, y, fit_model=True):
+        """Record an observation of the objective function.
+
+        Provide values of the objective function at points suggested by `ask()`
+        or other points. By default a new model will be fit to all
+        observations. The new model is used to suggest the next point at
+        which to evluate the objective. This point can be retrieved by calling
+        `ask()`.
+
+        To add several observations as a batch without fitting a new model
+        set `fit_model` to False.
+
+        * `x` [list]:
+            Point at which objective was evaluated.
+        * `y` [scalar]:
+            Value of objective at `x`.
+        * `fit_model` [bool, default=True]
+            Fit a model to observed evaluations of the objective.
+        """
         self.Xi.append(x)
         self.yi.append(y)
 
-        # only start fitting a model once we are done suggesting random points
-        if len(self.Xi) >= self.n_random_starts:
+        if fit_model:
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator)
 
@@ -100,7 +119,8 @@ class Optimizer(object):
 
             self.models.append(est)
 
-            # Find the minimum of the acquisition function by random search
+            # Find the minimum of the acquisition function by randomly sampling
+            # points from the space
             if self.acq_optimizer == "sampling":
                 X = self.space.transform(self.space.rvs(
                     n_samples=self.n_points, random_state=self.rng))

@@ -220,22 +220,13 @@ def base_minimize(func, dimensions, base_estimator,
                 for c in callbacks:
                     c(curr_res)
 
-    # XXX can we combine these two loops into one?
-    # Random function evaluations
-    for n in range(n_random_starts):
-        next_x = optimizer.ask()
-        curr_res = optimizer.tell(next_x, func(next_x))
-
-        if callbacks:
-            for c in callbacks:
-                c(curr_res)
-
     # Bayesian optimization loop
-    n_model_iter = n_calls - n_total_init_calls
-
-    for i in range(n_model_iter):
+    for n in range(n_calls):
+        # fit model after last random iteration
+        fit_model = n >= n_random_starts - 1
         next_x = optimizer.ask()
-        curr_res = optimizer.tell(next_x, func(next_x))
+        curr_res = optimizer.tell(next_x, func(next_x),
+                                  fit_model=fit_model)
 
         if callbacks:
             for c in callbacks:
