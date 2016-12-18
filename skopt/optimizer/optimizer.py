@@ -1,5 +1,3 @@
-import copy
-import inspect
 import warnings
 
 import numpy as np
@@ -18,18 +16,96 @@ from ..utils import create_result
 
 
 class Optimizer(object):
-    """docstring for Optimizer."""
+    """Run bayesian optimisation loop.
+
+    An `Optimizer` represents the steps of a bayesian optimisation loop. To
+    use it you need to provide your own loop mechanism. The various
+    optimisers provided by `skopt` use this class under the hood.
+
+    Use this class directly if you want to control the iterations of your
+    bayesian optimisation loop.
+
+    Parameters
+    ----------
+    * `dimensions` [list, shape=(n_dims,)]:
+        List of search space dimensions.
+        Each search dimension can be defined either as
+
+        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+          dimensions),
+        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+          dimensions),
+        - as a list of categories (for `Categorical` dimensions), or
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
+
+    * `base_estimator` [sklearn regressor]:
+        Should inherit from `sklearn.base.RegressorMixin`.
+        In addition, should have an optional `return_std` argument,
+        which returns `std(Y | x)`` along with `E[Y | x]`.
+
+    * `n_random_starts` [int, default=10]:
+        Number of evaluations of `func` with random initialization points
+        before approximating the `func` with `base_estimator`.
+
+    * `acq_func` [string, default=`"EI"`]:
+        Function to minimize over the posterior distribution. Can be either
+
+        - `"LCB"` for lower confidence bound,
+        - `"EI"` for negative expected improvement,
+        - `"PI"` for negative probability of improvement.
+
+    * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`,
+       default=`"auto"`]:
+        Method to minimize the acquistion function. The fit model
+        is updated with the optimal value obtained by optimizing `acq_func`
+        with `acq_optimizer`.
+
+        - If set to `"sampling"`, then `acq_func` is optimized by computing
+          `acq_func` at `n_points` sampled randomly.
+        - If set to `"lbfgs"`, then `acq_func` is optimized by
+              - Sampling `n_restarts_optimizer` points randomly.
+              - `"lbfgs"` is run for 20 iterations with these points as initial
+                points to find local minima.
+              - The optimal of these local minima is used to update the prior.
+        - If set to `"auto"`, then it is set to `"lbfgs"`` if
+          all the search dimensions are Real (continuous). It defaults to
+          `"sampling"` for all other cases.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
+    * `n_points` [int, default=500]:
+        Number of points to sample to determine the next "best" point.
+        Useless if acq_optimizer is set to `"lbfgs"`.
+
+    * `n_restarts_optimizer` [int, default=5]:
+        The number of restarts of the optimizer when `acq_optimizer`
+        is `"lbfgs"`.
+
+    * `xi` [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Used when the acquisition is either `"EI"` or `"PI"`.
+
+    * `kappa` [float, default=1.96]:
+        Controls how much of the variance in the predicted values should be
+        taken into account. If set to be very high, then we are favouring
+        exploration over exploitation and vice versa.
+        Used when the acquisition is `"LCB"`.
+
+    * `n_jobs` [int, default=1]
+        Number of cores to run in parallel while running the lbfgs
+        optimizations over the acquisition function. Valid only when
+        `acq_optimizer` is set to "lbfgs."
+        Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
+        to number of cores.
+    """
     def __init__(self, dimensions, base_estimator,
-                 n_random_starts=10,
-                 acq_func="EI", acq_optimizer="auto",
-                 random_state=None, verbose=False,
-                 n_points=10000, n_restarts_optimizer=5,
+                 n_random_starts=10, acq_func="EI", acq_optimizer="auto",
+                 random_state=None, n_points=10000, n_restarts_optimizer=5,
                  xi=0.01, kappa=1.96, n_jobs=1):
         super(Optimizer, self).__init__()
-
-        self.specs = {"args": copy.copy(inspect.currentframe().f_locals),
-                      "function": inspect.currentframe().f_code.co_name}
-
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
@@ -39,7 +115,6 @@ class Optimizer(object):
         self.n_restarts_optimizer = n_restarts_optimizer
         self.space = Space(dimensions)
         self.Xi = []
-        # XXX change to a name that is less similar to Xi
         self.xi = xi
         self.yi = []
 
@@ -165,8 +240,8 @@ class Optimizer(object):
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]
 
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             self.specs)
+        #return create_result(self.Xi, self.yi, self.space, self.rng,
+        #                     self.specs)
 
     def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
