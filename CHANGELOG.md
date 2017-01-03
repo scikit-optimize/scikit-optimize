@@ -7,7 +7,7 @@
 
 * Accuracy improvements of the optimization of the acquisition function
 by pre-selecting good candidates as starting points when
-using `acq_optimizer='lbfgs'.
+using `acq_optimizer='lbfgs'`.
 
 
 ## Version 0.2
