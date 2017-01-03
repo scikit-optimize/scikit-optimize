@@ -1,16 +1,14 @@
 # Release history
 
-## Version 0.1
 
-First light!
+## Version 0.3
 
 ### New features
 
-* Bayesian optimization via `gp_minimize`.
-* Tree-based sequential model-based optimization via `forest_minimize` and `gbrt_minimize`, with support for multi-threading.
-* Support of LCB, EI and PI as acquisition functions.
-* Plotting functions for inspecting convergence, evaluations and the objective function.
-* API for specifying and sampling from a parameter space.
+* Accuracy improvements of the optimization of the acquisition function
+by pre-selecting good candidates as starting points when
+using `acq_optimizer='lbfgs'.
+
 
 ## Version 0.2
 
@@ -24,6 +22,20 @@ First light!
 * Support for tuning noise in `gp_minimize` using the `noise` argument.
 * `TimerCallback` in `skopt.callbacks` to log the time between iterations of
 the minimization loop.
+
+
+## Version 0.1
+
+First light!
+
+### New features
+
+* Bayesian optimization via `gp_minimize`.
+* Tree-based sequential model-based optimization via `forest_minimize` and `gbrt_minimize`, with support for multi-threading.
+* Support of LCB, EI and PI as acquisition functions.
+* Plotting functions for inspecting convergence, evaluations and the objective function.
+* API for specifying and sampling from a parameter space.
+
 
 # Contributors
 
