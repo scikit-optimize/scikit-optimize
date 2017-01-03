@@ -203,7 +203,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
 
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * matern,
-            normalize_y=True, random_state=rng, alpha=0.0, noise=noise)
+            normalize_y=True, random_state=rng, alpha=0.0, noise=noise,
+            n_restarts_optimizer=2)
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,
