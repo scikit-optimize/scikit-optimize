@@ -277,18 +277,16 @@ def base_minimize(func, dimensions, base_estimator,
 
         models.append(gp)
 
+        X = space.transform(space.rvs(n_samples=n_points, random_state=rng))
+        values = _gaussian_acquisition(
+            X=X, model=gp,  y_opt=np.min(yi), acq_func=acq_func,
+            xi=xi, kappa=kappa)
+
         if acq_optimizer == "sampling":
-            X = space.transform(space.rvs(n_samples=n_points,
-                                          random_state=rng))
-            values = _gaussian_acquisition(
-                X=X, model=gp,  y_opt=np.min(yi), acq_func=acq_func,
-                xi=xi, kappa=kappa)
             next_x = X[np.argmin(values)]
 
         elif acq_optimizer == "lbfgs":
-            best = np.inf
-            x0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
-                                           random_state=rng))
+            x0 = X[np.argsort(values)[:n_restarts_optimizer]]
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -302,11 +300,7 @@ def base_minimize(func, dimensions, base_estimator,
 
             cand_xs = np.array([r[0] for r in results])
             cand_acqs = np.array([r[1] for r in results])
-            best_ind = np.argmin(cand_acqs)
-            a = cand_acqs[best_ind]
-
-            if a < best:
-                next_x, best = cand_xs[best_ind], a
+            next_x = cand_xs[np.argmin(cand_acqs)]
 
         # lbfgs should handle this but just in case there are precision errors.
         next_x = np.clip(

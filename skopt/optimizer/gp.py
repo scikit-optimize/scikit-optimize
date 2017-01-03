@@ -131,7 +131,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
-    * `n_points` [int, default=500]:
+    * `n_points` [int, default=10000]:
         Number of points to sample to determine the next "best" point.
         Useless if acq_optimizer is set to `"lbfgs"`.
 
