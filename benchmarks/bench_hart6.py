@@ -1,4 +1,5 @@
 import numpy as np
+from time import time
 
 from skopt.benchmarks import hart6
 from skopt import gp_minimize, forest_minimize, gbrt_minimize
@@ -9,23 +10,27 @@ optimizers = [("gp_minimize", gp_minimize),
               ("forest_minimize", forest_minimize),
               ("gbrt_minimize", gbrt_minimize)]
 
+time_ = 0.0
 for name, optimizer in optimizers:
     print(name)
     results = []
     min_func_calls = []
 
+    t = time()
     for random_state in range(10):
         print(random_state)
         if name == "gp_minimize":
             res = optimizer(
                 hart6, bounds, random_state=random_state, n_calls=n_calls,
-                noise=1e-10)
+                noise=1e-10, rvs="pseudo_uniform", acq_optimizer="spearmint")
         else:
             res = optimizer(
                 hart6, bounds, random_state=random_state, n_calls=n_calls)
         results.append(res)
         min_func_calls.append(np.argmin(res.func_vals) + 1)
+    time_ += time() - t
 
+    print(time_)
     optimal_values = [result.fun for result in results]
     mean_optimum = np.mean(optimal_values)
     std = np.std(optimal_values)

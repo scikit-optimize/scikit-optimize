@@ -15,8 +15,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
                 acq_func="EI", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
-                n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
-                noise="gaussian", n_jobs=1):
+                n_points=10000, n_restarts_optimizer=20, xi=0.0, kappa=1.96,
+                noise="gaussian", rvs="uniform", n_spray_points=10, n_jobs=1):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -189,8 +189,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
     rng = check_random_state(random_state)
 
     # To make sure that GP operates in the [0, 1] space
-    dimensions = [check_dimension(d,
-                                  transform="normalize") for d in dimensions]
+    dimensions = [
+        check_dimension(dim, transform="normalize", rvs=rvs) for dim in dimensions]
     space = Space(dimensions)
 
     # Default GP
@@ -213,4 +213,4 @@ def gp_minimize(func, dimensions, base_estimator=None,
         n_points=n_points, n_random_starts=n_random_starts,
         n_restarts_optimizer=n_restarts_optimizer,
         x0=x0, y0=y0, random_state=random_state, verbose=verbose,
-        callback=callback, n_jobs=n_jobs)
+        callback=callback, n_spray_points=n_spray_points, n_jobs=n_jobs)

@@ -31,8 +31,8 @@ def check_categorical(vals, random_val):
 
 
 def test_dimensions():
-    yield (check_dimension, Real, (1., 4.), 2.251066014107722)
-    yield (check_dimension, Real, (1, 4), 2.251066014107722)
+    yield (check_dimension, Real, (1., 4.), 3.765625)
+    yield (check_dimension, Real, (1, 4), 3.765625)
     yield (check_dimension, Integer, (1, 4), 2)
     yield (check_dimension, Integer, (1., 4.), 2)
     yield (check_categorical, ("a", "b", "c", "d"), "b")

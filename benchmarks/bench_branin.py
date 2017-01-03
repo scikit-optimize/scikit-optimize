@@ -1,3 +1,6 @@
+from time import time
+from functools import partial
+
 import numpy as np
 
 from skopt.benchmarks import branin
@@ -17,16 +20,19 @@ for name, optimizer in optimizers:
 
     for random_state in range(10):
         print(random_state)
+        t = time()
         if name == "gp_minimize":
             res = optimizer(
                 branin, bounds, random_state=random_state, n_calls=n_calls,
-                noise=1e-10)
+                noise=1e-10, rvs="pseudo_uniform", acq_optimizer="spearmint")
         else:
             res = optimizer(
                 branin, bounds, random_state=random_state, n_calls=n_calls)
+        time_ += time() - t
         results.append(res)
         min_func_calls.append(np.argmin(res.func_vals) + 1)
 
+    print(time_ / 10)
     optimal_values = [result.fun for result in results]
     mean_optimum = np.mean(optimal_values)
     std = np.std(optimal_values)
