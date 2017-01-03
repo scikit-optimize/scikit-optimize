@@ -257,7 +257,7 @@ def base_minimize(func, dimensions, base_estimator,
             acq_optimizer = "lbfgs"
         else:
             acq_optimizer = "sampling"
-    elif acq_optimizer not in ["lbfgs", "sampling"]:
+    elif acq_optimizer not in ["lbfgs", "sampling", "lbfgs_optim"]:
         raise ValueError(
             "Expected acq_optimizer to be 'lbfgs', 'sampling' or 'auto', "
             "got %s" % acq_optimizer)
@@ -267,6 +267,7 @@ def base_minimize(func, dimensions, base_estimator,
     n_model_iter = n_calls - n_total_init_calls
     transformed_bounds = np.array(space.transformed_bounds)
     parallel = Parallel(n_jobs=n_jobs)
+    acq_vals = []
 
     for i in range(n_model_iter):
         gp = clone(base_estimator)
@@ -277,18 +278,25 @@ def base_minimize(func, dimensions, base_estimator,
 
         models.append(gp)
 
-        if acq_optimizer == "sampling":
+        if acq_optimizer == "sampling" or acq_optimizer == "lbfgs_optim":
             X = space.transform(space.rvs(n_samples=n_points,
                                           random_state=rng))
             values = _gaussian_acquisition(
                 X=X, model=gp,  y_opt=np.min(yi), acq_func=acq_func,
                 xi=xi, kappa=kappa)
-            next_x = X[np.argmin(values)]
 
-        elif acq_optimizer == "lbfgs":
-            best = np.inf
-            x0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
-                                           random_state=rng))
+            if acq_optimizer == "sampling":
+                val_argmin = np.argmin(values)
+                acq_vals.append(values[val_argmin])
+                next_x = X[val_argmin]
+
+        if acq_optimizer == "lbfgs" or acq_optimizer == "lbfgs_optim":
+
+            if acq_optimizer == "lbfgs":
+                x0 = space.transform(space.rvs(n_samples=n_restarts_optimizer,
+                                               random_state=rng))
+            else:
+                x0 = X[np.argsort(values)[:n_restarts_optimizer]]
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -302,11 +310,9 @@ def base_minimize(func, dimensions, base_estimator,
 
             cand_xs = np.array([r[0] for r in results])
             cand_acqs = np.array([r[1] for r in results])
-            best_ind = np.argmin(cand_acqs)
-            a = cand_acqs[best_ind]
-
-            if a < best:
-                next_x, best = cand_xs[best_ind], a
+            val_argmin = np.argmin(cand_acqs)
+            acq_vals.append(cand_acqs[val_argmin])
+            next_x = cand_xs[val_argmin]
 
         # lbfgs should handle this but just in case there are precision errors.
         next_x = np.clip(
@@ -320,4 +326,4 @@ def base_minimize(func, dimensions, base_estimator,
                 c(curr_res)
 
     # Pack results
-    return create_result(Xi, yi, space, rng, specs, models)
+    return create_result(Xi, yi, space, rng, specs, models, acq_vals)
