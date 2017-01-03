@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 
 from skopt.benchmarks import hart6
@@ -5,9 +6,9 @@ from skopt import gp_minimize, forest_minimize, gbrt_minimize
 
 def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
     bounds = np.tile((0., 1.), (6, 1))
-    optimizers = [("gp_minimize", gp_minimize),]
-                #   ("forest_minimize", forest_minimize),
-                #   ("gbrt_minimize", gbrt_minimize)]
+    optimizers = [("gp_minimize", gp_minimize),
+                  ("forest_minimize", forest_minimize),
+                  ("gbrt_minimize", gbrt_minimize)]
 
     for name, optimizer in optimizers:
         print(name)
@@ -19,7 +20,7 @@ def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
             if name == "gp_minimize":
                 res = optimizer(
                     hart6, bounds, random_state=random_state, n_calls=n_calls,
-                    noise=1e-10, n_jobs=-1, acq_optimizer=acq_optimizer)
+                    noise=1e-10, n_jobs=-1, acq_optimizer=acq_optimizer, verbose=1)
             else:
                 res = optimizer(
                     hart6, bounds, random_state=random_state, n_calls=n_calls)

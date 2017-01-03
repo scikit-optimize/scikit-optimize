@@ -7,9 +7,9 @@ from skopt.utils import dump
 
 def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
     bounds = [(-5.0, 10.0), (0.0, 15.0)]
-    optimizers = [("gp_minimize", gp_minimize),]
-                #   ("forest_minimize", forest_minimize),
-                #   ("gbrt_minimize", gbrt_minimize)]
+    optimizers = [("gp_minimize", gp_minimize),
+                  ("forest_minimize", forest_minimize),
+                  ("gbrt_minimize", gbrt_minimize)]
 
     for name, optimizer in optimizers:
         print(name)
@@ -18,7 +18,6 @@ def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
         time_ = 0.0
 
         for random_state in range(n_runs):
-            print(random_state)
             if name == "gp_minimize":
                 res = optimizer(
                     branin, bounds, random_state=random_state, n_calls=n_calls,

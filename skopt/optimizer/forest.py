@@ -11,7 +11,7 @@ def forest_minimize(func, dimensions, base_estimator="ET",
                     n_calls=100, n_random_starts=10,
                     acq_func="EI", acq_optimizer="auto",
                     x0=None, y0=None, random_state=None, verbose=False,
-                    callback=None, n_points=1000, xi=0.01, kappa=1.96,
+                    callback=None, n_points=10000, xi=0.01, kappa=1.96,
                     n_jobs=1):
     """Sequential optimisation using decision trees.
 
@@ -106,7 +106,7 @@ def forest_minimize(func, dimensions, base_estimator="ET",
     * `callback` [callable, optional]
         If provided, then `callback(res)` is called after call to func.
 
-    * `n_points` [int, default=1000]:
+    * `n_points` [int, default=10000]:
         Number of points to sample when minimizing the acquisition function.
 
     * `xi` [float, default=0.01]:

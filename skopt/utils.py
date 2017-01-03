@@ -10,7 +10,7 @@ __all__ = (
 )
 
 
-def create_result(Xi, yi, space=None, rng=None, specs=None, models=None, acq_vals=None):
+def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     """
     Initialize an `OptimizeResult` object.
 
@@ -50,7 +50,6 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None, acq_val
     res.space = space
     res.random_state = rng
     res.specs = specs
-    res.acq_vals = acq_vals
     return res
 
 
