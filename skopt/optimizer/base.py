@@ -29,7 +29,7 @@ from ..utils import create_result
 
 def base_minimize(func, dimensions, base_estimator,
                   n_calls=100, n_random_starts=10,
-                  acq_func="EI", acq_optimizer="auto",
+                  acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
                   xi=0.01, kappa=1.96, n_jobs=1):
@@ -74,21 +74,19 @@ def base_minimize(func, dimensions, base_estimator,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
 
-    * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
-        - If set to `"sampling"`, then `acq_func` is optimized by computing
-          `acq_func` at `n_points` sampled randomly.
-        - If set to `"lbfgs"`, then `acq_func` is optimized by
-              - Sampling `n_restarts_optimizer` points randomly.
+        - If set to `"sampling"`, then the point among these `n_points`
+          where the `acq_func` is minimum is the next candidate minimum.
+        - If set to `"lbfgs"`, then
+              - The `n_restarts_optimizer` no. of points which the acquisition
+                function is least are taken as start points.
               - `"lbfgs"` is run for 20 iterations with these points as initial
                 points to find local minima.
               - The optimal of these local minima is used to update the prior.
-        - If set to `"auto"`, then it is set to `"lbfgs"`` if
-          all the search dimensions are Real (continuous). It defaults to
-          `"sampling"` for all other cases.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
@@ -253,10 +251,9 @@ def base_minimize(func, dimensions, base_estimator,
         raise ValueError("`func` should return a scalar")
 
     if acq_optimizer == "auto":
-        if space.is_real:
-            acq_optimizer = "lbfgs"
-        else:
-            acq_optimizer = "sampling"
+        warnings.warn("The 'auto' option for the acq_optimizer will be removed "
+                      "in 0.4")
+        acq_optimizer = "lbfgs"
     elif acq_optimizer not in ["lbfgs", "sampling"]:
         raise ValueError(
             "Expected acq_optimizer to be 'lbfgs', 'sampling' or 'auto', "
