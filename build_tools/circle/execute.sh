@@ -4,7 +4,7 @@ export SKOPT_HOME=$(pwd)
 
 # Generating documentation
 for nb in examples/*ipynb; do
-    jupyter nbconvert --ExecutePreprocessor.timeout=1024 --execute "$nb" --to markdown |& tee nb_to_md.txt
+    jupyter nbconvert --ExecutePreprocessor.timeout=3600 --execute "$nb" --to markdown |& tee nb_to_md.txt
     traceback=$(grep "Traceback (most recent call last):" nb_to_md.txt)
     if [[ $traceback ]]; then
         exit 1
