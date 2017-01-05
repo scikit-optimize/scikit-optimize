@@ -54,7 +54,7 @@ def test_tree_based_minimize():
         # max(sampled_points) would give a constant value.
         X0 = [[-5.6], [-5.8], [5.8], [5.6]]
         yield (check_minimize, minimizer, bench2, -5,
-               [(-6.0, 6.0)], 0.2, 100, 10, X0)
+               [(-6.0, 6.0)], 0.4, 100, 10, X0)
         yield (check_minimize, minimizer, bench3, -0.9,
                [(-2.0, 2.0)], 0.05, 25)
         yield (check_minimize, minimizer, bench4, 0.0,
