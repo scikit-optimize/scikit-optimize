@@ -147,7 +147,7 @@ class Optimizer(object):
             self.acq_optimizer = "lbfgs"
         elif self.acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError(
-                "Expected acq_optimizer to be 'lbfgs', 'sampling' or 'auto', "
+                "Expected acq_optimizer to be 'lbfgs' or 'sampling', "
                 "got %s" % acq_optimizer)
 
     def ask(self):
@@ -194,24 +194,22 @@ class Optimizer(object):
 
             self.models.append(est)
 
+            X = self.space.transform(self.space.rvs(
+                n_samples=self.n_points, random_state=self.rng))
+            values = _gaussian_acquisition(
+                X=X, model=est,  y_opt=np.min(self.yi),
+                acq_func=self.acq_func, xi=self.xi, kappa=self.kappa)
+
             # Find the minimum of the acquisition function by randomly sampling
             # points from the space
             if self.acq_optimizer == "sampling":
-                X = self.space.transform(self.space.rvs(
-                    n_samples=self.n_points, random_state=self.rng))
-                values = _gaussian_acquisition(
-                    X=X, model=est,  y_opt=np.min(self.yi),
-                    acq_func=self.acq_func, xi=self.xi, kappa=self.kappa)
                 next_x = X[np.argmin(values)]
 
             # Use BFGS to find the mimimum of the acquisition function, the
             # minimization starts from `n_restarts_optimizer` different points
             # and the best minimum is used
             elif self.acq_optimizer == "lbfgs":
-                best = np.inf
-                x0 = self.space.transform(
-                    self.space.rvs(n_samples=self.n_restarts_optimizer,
-                                   random_state=self.rng))
+                x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
 
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
@@ -226,17 +224,14 @@ class Optimizer(object):
 
                 cand_xs = np.array([r[0] for r in results])
                 cand_acqs = np.array([r[1] for r in results])
-                best_ind = np.argmin(cand_acqs)
-                a = cand_acqs[best_ind]
 
-                if a < best:
-                    next_x, best = cand_xs[best_ind], a
+                next_x = cand_xs[np.argmin(cand_acqs)]
 
             # lbfgs should handle this but just in case there are
             # precision errors.
             next_x = np.clip(
                 next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
-            # XXX why the need for [0] at the end?
+            # note the need for [0] at the end
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]
 
