@@ -167,7 +167,7 @@ class Optimizer(object):
             # return point computed from last call to tell()
             return self._next_x
 
-    def tell(self, x, y, fit_model=True):
+    def tell(self, x, y, fit=True):
         """Record an observation of the objective function.
 
         Provide values of the objective function at points suggested by `ask()`
@@ -177,19 +177,19 @@ class Optimizer(object):
         `ask()`.
 
         To add several observations as a batch without fitting a new model
-        set `fit_model` to False.
+        set `fit` to False.
 
         * `x` [list]:
             Point at which objective was evaluated.
         * `y` [scalar]:
             Value of objective at `x`.
-        * `fit_model` [bool, default=True]
+        * `fit` [bool, default=True]
             Fit a model to observed evaluations of the objective.
         """
         self.Xi.append(x)
         self.yi.append(y)
 
-        if fit_model:
+        if fit:
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator)
 
