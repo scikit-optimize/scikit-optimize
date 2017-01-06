@@ -220,7 +220,9 @@ def base_minimize(func, dimensions, base_estimator,
                 "`y0` elements should be scalars")
 
         for i, (x, y) in enumerate(zip(x0, y0)):
-            fit_model = i == len(x0) - 1
+            # on the last iteration fit a model so we can start predicting
+            # unless there are random points to be evaluated next
+            fit_model = i == len(x0) - 1 and n_random_starts == 0
             optimizer.tell(x, y, fit=fit_model)
 
             if callbacks:
