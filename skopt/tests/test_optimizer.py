@@ -16,6 +16,8 @@ def test_multiple_asks():
     # tell() computes the next point ready for the next call to ask()
     # hence there are three after three iterations
     assert_equal(len(opt.models), 3)
+    assert_equal(len(opt.Xi), 3)
     opt.ask()
     assert_equal(len(opt.models), 3)
+    assert_equal(len(opt.Xi), 3)
     assert_equal(opt.ask(), opt.ask())
