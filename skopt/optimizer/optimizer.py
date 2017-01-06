@@ -12,7 +12,6 @@ from sklearn.utils import check_random_state
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..space import Space
-from ..utils import create_result
 
 
 class Optimizer(object):
@@ -55,8 +54,7 @@ class Optimizer(object):
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
 
-    * `acq_optimizer` [string, `"auto"`, `"sampling"` or `"lbfgs"`,
-       default=`"auto"`]:
+    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
@@ -68,9 +66,6 @@ class Optimizer(object):
               - `"lbfgs"` is run for 20 iterations with these points as initial
                 points to find local minima.
               - The optimal of these local minima is used to update the prior.
-        - If set to `"auto"`, then it is set to `"lbfgs"`` if
-          all the search dimensions are Real (continuous). It defaults to
-          `"sampling"` for all other cases.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -102,7 +97,7 @@ class Optimizer(object):
         to number of cores.
     """
     def __init__(self, dimensions, base_estimator,
-                 n_random_starts=10, acq_func="EI", acq_optimizer="auto",
+                 n_random_starts=10, acq_func="EI", acq_optimizer="lbfgs",
                  random_state=None, n_points=10000, n_restarts_optimizer=5,
                  xi=0.01, kappa=1.96, n_jobs=1):
         super(Optimizer, self).__init__()
