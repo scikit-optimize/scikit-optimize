@@ -192,7 +192,7 @@ def base_minimize(func, dimensions, base_estimator,
         for i, x in enumerate(x0):
             fit_model = i == len(x0) - 1
             y = func(x)
-            optimizer.tell(x, y, fit_model=fit_model)
+            optimizer.tell(x, y, fit=fit_model)
 
             if callbacks:
                 result = create_result(optimizer.Xi, optimizer.yi,
@@ -221,7 +221,7 @@ def base_minimize(func, dimensions, base_estimator,
 
         for i, (x, y) in enumerate(zip(x0, y0)):
             fit_model = i == len(x0) - 1
-            optimizer.tell(x, y, fit_model=fit_model)
+            optimizer.tell(x, y, fit=fit_model)
 
             if callbacks:
                 result = create_result(optimizer.Xi, optimizer.yi,
@@ -235,7 +235,7 @@ def base_minimize(func, dimensions, base_estimator,
         # fit model after last random iteration
         fit_model = n >= n_random_starts - 1
         next_x = optimizer.ask()
-        optimizer.tell(next_x, func(next_x), fit_model=fit_model)
+        optimizer.tell(next_x, func(next_x), fit=fit_model)
 
         if callbacks:
             result = create_result(optimizer.Xi, optimizer.yi,
