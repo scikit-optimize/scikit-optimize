@@ -251,8 +251,8 @@ def base_minimize(func, dimensions, base_estimator,
         raise ValueError("`func` should return a scalar")
 
     if acq_optimizer == "auto":
-        warnings.warn("The 'auto' option for the acq_optimizer will be removed "
-                      "in 0.4")
+        warnings.warn("The 'auto' option for the acq_optimizer will be "
+                      "removed in 0.4.")
         acq_optimizer = "lbfgs"
     elif acq_optimizer not in ["lbfgs", "sampling"]:
         raise ValueError(

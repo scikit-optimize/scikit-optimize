@@ -76,8 +76,8 @@ def dump(res, filename, store_objective=True, **kwargs):
         Notice that if `store_objective` is set to `False`, a deep copy of the
         optimization result is created, potentially leading to performance
         problems if `res` is very large. If the objective function is not
-        critical, one can delete it before calling `skopt.dump()` and thus avoid
-        deep copying of `res`.
+        critical, one can delete it before calling `skopt.dump()` and thus
+        avoid deep copying of `res`.
 
     * `**kwargs` [other keyword arguments]:
         All other keyword arguments will be passed to `joblib.dump`.
