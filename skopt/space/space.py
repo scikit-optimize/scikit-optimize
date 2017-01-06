@@ -14,6 +14,7 @@ from .transformers import Identity
 from .transformers import Log10
 from .transformers import Pipeline
 
+
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
     def __repr__(self):
@@ -53,21 +54,24 @@ def check_dimension(dimension, transform=None):
     if isinstance(dimension, Dimension):
         return dimension
 
+    if not isinstance(dimension, (list, tuple)):
+        raise ValueError("Dimension has to be a list or tuple.")
+
     if (len(dimension) == 3 and
-        isinstance(dimension[0], numbers.Real) and
-        isinstance(dimension[2], str)):
-          return Real(*dimension, transform=transform)
+            isinstance(dimension[0], numbers.Real) and
+            isinstance(dimension[2], str)):
+        return Real(*dimension, transform=transform)
 
     if len(dimension) > 2 or isinstance(dimension[0], str):
         return Categorical(dimension)
 
-    if isinstance(dimension[0], numbers.Integral):
+    if len(dimension) == 2 and isinstance(dimension[0], numbers.Integral):
         return Integer(*dimension, transform=transform)
 
-    if isinstance(dimension[0], numbers.Real):
+    if len(dimension) == 2 and isinstance(dimension[0], numbers.Real):
         return Real(*dimension, transform=transform)
     raise ValueError("Invalid dimension %s. Read the documentation for "
-                     "supported types." % dim)
+                     "supported types." % dimension)
 
 
 class Dimension(object):
@@ -172,11 +176,11 @@ class Real(Dimension):
                 self.transformer = Log10()
 
     def __eq__(self, other):
-        return (type(self) is type(other)
-                and np.allclose([self.low], [other.low])
-                and np.allclose([self.high], [other.high])
-                and self.prior == other.prior
-                and self.transform_ == other.transform_)
+        return (type(self) is type(other) and
+                np.allclose([self.low], [other.low]) and
+                np.allclose([self.high], [other.high]) and
+                self.prior == other.prior and
+                self.transform_ == other.transform_)
 
     def __repr__(self):
         return "Real(low={}, high={}, prior={}, transform={})".format(
@@ -230,9 +234,9 @@ class Integer(Dimension):
             self.transformer = Identity()
 
     def __eq__(self, other):
-        return (type(self) is type(other)
-                and np.allclose([self.low], [other.low])
-                and np.allclose([self.high], [other.high]))
+        return (type(self) is type(other) and
+                np.allclose([self.low], [other.low]) and
+                np.allclose([self.high], [other.high]))
 
     def __repr__(self):
         return "Integer(low={}, high={})".format(self.low, self.high)
@@ -276,17 +280,20 @@ class Categorical(Dimension):
         self.prior = prior
 
         if prior is None:
-            self.prior_ = np.tile(1. / len(self.categories), len(self.categories))
+            self.prior_ = np.tile(1. / len(self.categories),
+                                  len(self.categories))
         else:
             self.prior_ = prior
 
         # XXX check that sum(prior) == 1
-        self._rvs = rv_discrete(values=(range(len(self.categories)), self.prior_))
+        self._rvs = rv_discrete(
+            values=(range(len(self.categories)), self.prior_)
+            )
 
     def __eq__(self, other):
-        return (type(self) is type(other)
-                and self.categories == other.categories
-                and np.allclose(self.prior_, other.prior_))
+        return (type(self) is type(other) and
+                self.categories == other.categories and
+                np.allclose(self.prior_, other.prior_))
 
     def __repr__(self):
         if len(self.categories) > 7:
@@ -326,6 +333,7 @@ class Categorical(Dimension):
             return (0.0, 1.0)
         else:
             return [(0.0, 1.0) for i in range(self.transformed_size)]
+
 
 class Space:
     """Search space."""
