@@ -147,7 +147,7 @@ class Optimizer(object):
         if n_random_starts < 0:
             raise ValueError(
                 "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
-        self.n_random_starts = n_random_starts
+        self._n_random_starts = n_random_starts
 
         self.acq_optimizer = acq_optimizer
         if self.acq_optimizer not in ["lbfgs", "sampling"]:
@@ -157,7 +157,8 @@ class Optimizer(object):
 
     def ask(self):
         """Suggest next point at which to evaluate the objective."""
-        if len(self.Xi) < self.n_random_starts:
+        if self._n_random_starts > 0:
+            self._n_random_starts -= 1
             return self.space.rvs(random_state=self.rng)[0]
 
         else:

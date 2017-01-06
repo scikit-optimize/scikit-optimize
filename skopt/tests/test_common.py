@@ -130,6 +130,26 @@ def test_minimizer_api_random_only():
         yield (check_minimizer_bounds, result, n_calls)
 
 
+def test_init_vals_and_models():
+    # test how many models are fitted when using initial points and random
+    # starts
+    space = [(-5.0, 10.0), (0.0, 15.0)]
+    x0 = [[1, 2], [3, 4], [5, 6]]
+    y0 = list(map(branin, x0))
+    n_calls = 7
+
+    for n_random_starts in [0, 5]:
+        optimizers = [
+            partial(gp_minimize, n_random_starts=n_random_starts),
+            partial(forest_minimize, n_random_starts=n_random_starts),
+            partial(gbrt_minimize, n_random_starts=n_random_starts)
+        ]
+        for optimizer in optimizers:
+            res = optimizer(branin, space, x0=x0, y0=y0, random_state=0,
+                            n_calls=n_calls)
+            assert_equal(len(res.models), n_calls + 1 - n_random_starts)
+
+
 def test_init_vals():
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
