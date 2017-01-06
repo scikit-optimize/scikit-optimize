@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
 
+
 # Base class for all 1-D transformers.
 class Transformer(object):
     def fit(self, X):

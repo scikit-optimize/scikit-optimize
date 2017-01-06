@@ -287,12 +287,13 @@ class Sum(Kernel, sk_Sum):
             self.k2.gradient_x(x, X_train)
         )
 
+
 class Product(Kernel, sk_Product):
 
     def gradient_x(self, x, X_train):
         x = np.asarray(x)
+        x = np.expand_dims(x, axis=0)
         X_train = np.asarray(X_train)
-        X = np.expand_dims(x, axis=0)
         f_ggrad = (
             np.expand_dims(self.k1(x, X_train)[0], axis=1) *
             self.k2.gradient_x(x, X_train)

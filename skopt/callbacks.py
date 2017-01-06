@@ -103,8 +103,8 @@ class TimerCallback(object):
     """
     Log the elapsed time between each iteration of the minimization loop.
 
-    The time for each iteration is stored in the `iter_time` attribute which you
-    can inspect after the minimization has completed.
+    The time for each iteration is stored in the `iter_time` attribute which
+    you can inspect after the minimization has completed.
 
     Attributes
     ----------
