@@ -8,11 +8,13 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises_regex
 
 from skopt.space import Space
 from skopt.space import Real
 from skopt.space import Integer
 from skopt.space import Categorical
+from skopt.space import check_dimension as space_check_dimension
 
 
 def check_dimension(Dimension, vals, random_val):
@@ -90,8 +92,10 @@ def test_categorical_transform():
 
     assert_equal(cat.transformed_size, 7)
     assert_equal(cat.transformed_size, cat.transform(["apple"]).size)
-    assert_array_equal(cat.transform(categories),
-        [apple, orange, banana, none, true, false, three])
+    assert_array_equal(
+        cat.transform(categories),
+        [apple, orange, banana, none, true, false, three]
+        )
     assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
     assert_array_equal(cat.transform(["apple", "banana"]), [apple, banana])
     assert_array_equal(cat.inverse_transform([apple, orange]),
@@ -273,3 +277,10 @@ def test_normalize():
     X_orig = a.inverse_transform(a.transform(X))
     assert_equal(X_orig.dtype, "int64")
     assert_array_equal(X_orig, X)
+
+
+def test_invalid_dimension():
+    assert_raises_regex(ValueError, "has to be a list or tuple",
+                        space_check_dimension, "23")
+    assert_raises_regex(ValueError, "Invalid dimension",
+                        space_check_dimension, (23,))
