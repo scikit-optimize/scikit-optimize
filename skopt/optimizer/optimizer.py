@@ -40,8 +40,8 @@ class Optimizer(object):
 
     * `base_estimator` [sklearn regressor]:
         Should inherit from `sklearn.base.RegressorMixin`.
-        In addition, should have an optional `return_std` argument,
-        which returns `std(Y | x)`` along with `E[Y | x]`.
+        In addition the `predict` method, should have an optional `return_std`
+        argument, which returns `std(Y | x)`` along with `E[Y | x]`.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
@@ -95,6 +95,20 @@ class Optimizer(object):
         `acq_optimizer` is set to "lbfgs."
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
+
+    Attributes
+    ----------
+    * `Xi` [list]:
+        Points at which objective has been evaluated.
+    * `yi` [scalar]:
+        Values of objective at corresponding points in `Xi`.
+    * `models` [list]:
+        Regression models used to fit observations and compute acquisition
+        function.
+    * `space`
+        An instance of `skopt.space.Space`. Stores parameter search space used
+        to sample points, bounds, and type of parameters.
+
     """
     def __init__(self, dimensions, base_estimator,
                  n_random_starts=10, acq_func="EI", acq_optimizer="lbfgs",
@@ -105,12 +119,12 @@ class Optimizer(object):
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
         self.kappa = kappa
-        self.models = []
         self.n_points = n_points
         self.n_restarts_optimizer = n_restarts_optimizer
-        self.space = Space(dimensions)
-        self.Xi = []
         self.xi = xi
+        self.space = Space(dimensions)
+        self.models = []
+        self.Xi = []
         self.yi = []
 
         self._check_arguments(dimensions, base_estimator,
@@ -136,17 +150,13 @@ class Optimizer(object):
         self.n_random_starts = n_random_starts
 
         self.acq_optimizer = acq_optimizer
-        if acq_optimizer == "auto":
-            warnings.warn("The 'auto' option for the acq_optimizer will be "
-                          "removed in 0.4.")
-            self.acq_optimizer = "lbfgs"
-        elif self.acq_optimizer not in ["lbfgs", "sampling"]:
+        if self.acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError(
                 "Expected acq_optimizer to be 'lbfgs' or 'sampling', "
                 "got %s" % acq_optimizer)
 
     def ask(self):
-        """Suggest next point."""
+        """Suggest next point at which to evaluate the objective."""
         if len(self.Xi) < self.n_random_starts:
             return self.space.rvs(random_state=self.rng)[0]
 
