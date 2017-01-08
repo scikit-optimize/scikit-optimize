@@ -114,7 +114,6 @@ class Optimizer(object):
                  n_random_starts=10, acq_func="EI", acq_optimizer="lbfgs",
                  random_state=None, n_points=10000, n_restarts_optimizer=5,
                  xi=0.01, kappa=1.96, n_jobs=1):
-        super(Optimizer, self).__init__()
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)

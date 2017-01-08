@@ -190,7 +190,9 @@ def base_minimize(func, dimensions, base_estimator,
     # User suggested points at which to evaluate the objective first
     if x0 and y0 is None:
         for i, x in enumerate(x0):
-            fit_model = i == len(x0) - 1
+            # on the last iteration fit a model so we can start predicting
+            # unless there are random points to be evaluated next
+            fit_model = i == len(x0) - 1 and n_random_starts == 0
             y = func(x)
             optimizer.tell(x, y, fit=fit_model)
 
