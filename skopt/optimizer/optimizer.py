@@ -45,7 +45,8 @@ class Optimizer(object):
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`.
+        before approximating the `func` with `base_estimator`. While random
+        points are being suggested no model will be fit to the observations.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either
@@ -188,12 +189,19 @@ class Optimizer(object):
         * `y` [scalar]:
             Value of objective at `x`.
         * `fit` [bool, default=True]
-            Fit a model to observed evaluations of the objective.
+            Fit a model to observed evaluations of the objective. A model will
+            only be fitted after `n_random_starts` points have been queried.
         """
-        self.Xi.append(x)
-        self.yi.append(y)
+        if (isinstance(y, (list, tuple)) and
+                all(isinstance(point, (list, tuple)) for point in x)):
+            self.Xi.extend(x)
+            self.yi.extend(y)
 
-        if fit:
+        else:
+            self.Xi.append(x)
+            self.yi.append(y)
+
+        if fit and self._n_random_starts == 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator)
 

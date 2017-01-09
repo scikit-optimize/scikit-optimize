@@ -189,19 +189,18 @@ def base_minimize(func, dimensions, base_estimator,
 
     # User suggested points at which to evaluate the objective first
     if x0 and y0 is None:
-        for i, x in enumerate(x0):
-            # on the last iteration fit a model so we can start predicting
-            # unless there are random points to be evaluated next
-            fit_model = i == len(x0) - 1 and n_random_starts == 0
-            y = func(x)
-            optimizer.tell(x, y, fit=fit_model)
+        y0 = list(map(func, x0))
+        if not all(map(np.isscalar, y0)):
+            raise ValueError(
+                "`y0` elements should be scalars")
+        optimizer.tell(x0, y0)
 
-            if callbacks:
-                result = create_result(optimizer.Xi, optimizer.yi,
-                                       optimizer.space, optimizer.rng,
-                                       specs, optimizer.models)
-                for c in callbacks:
-                    c(result)
+        if callbacks:
+            result = create_result(optimizer.Xi, optimizer.yi,
+                                   optimizer.space, optimizer.rng,
+                                   specs, optimizer.models)
+            for c in callbacks:
+                c(result)
 
     # User is god and knows the value of the objective at these points
     elif x0 and y0 is not None:
@@ -221,25 +220,19 @@ def base_minimize(func, dimensions, base_estimator,
             raise ValueError(
                 "`y0` elements should be scalars")
 
-        for i, (x, y) in enumerate(zip(x0, y0)):
-            # on the last iteration fit a model so we can start predicting
-            # unless there are random points to be evaluated next
-            fit_model = i == len(x0) - 1 and n_random_starts == 0
-            optimizer.tell(x, y, fit=fit_model)
+        optimizer.tell(x0, y0)
 
-            if callbacks:
-                result = create_result(optimizer.Xi, optimizer.yi,
-                                       optimizer.space, optimizer.rng,
-                                       specs, optimizer.models)
-                for c in callbacks:
-                    c(result)
+        if callbacks:
+            result = create_result(optimizer.Xi, optimizer.yi,
+                                   optimizer.space, optimizer.rng,
+                                   specs, optimizer.models)
+            for c in callbacks:
+                c(result)
 
     # Bayesian optimization loop
     for n in range(n_calls - n_init_func_calls):
-        # fit model after last random iteration
-        fit_model = n >= n_random_starts - 1
         next_x = optimizer.ask()
-        optimizer.tell(next_x, func(next_x), fit=fit_model)
+        optimizer.tell(next_x, func(next_x))
 
         if np.ndim(optimizer.yi) != 1:
             raise ValueError("`func` should return a scalar")
