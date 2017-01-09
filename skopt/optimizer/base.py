@@ -17,6 +17,15 @@ from ..utils import create_result
 from .optimizer import Optimizer
 
 
+def _eval_callbacks(callbacks, optimizer, specs):
+    if callbacks:
+        result = create_result(optimizer.Xi, optimizer.yi,
+                               optimizer.space, optimizer.rng,
+                               specs, optimizer.models)
+        for c in callbacks:
+            c(result)
+
+
 def base_minimize(func, dimensions, base_estimator,
                   n_calls=100, n_random_starts=10,
                   acq_func="EI", acq_optimizer="lbfgs",
@@ -189,21 +198,10 @@ def base_minimize(func, dimensions, base_estimator,
 
     # User suggested points at which to evaluate the objective first
     if x0 and y0 is None:
-        y0 = list(map(func, x0))
-        if not all(map(np.isscalar, y0)):
-            raise ValueError(
-                "`y0` elements should be scalars")
-        optimizer.tell(x0, y0)
-
-        if callbacks:
-            result = create_result(optimizer.Xi, optimizer.yi,
-                                   optimizer.space, optimizer.rng,
-                                   specs, optimizer.models)
-            for c in callbacks:
-                c(result)
+        y0 = map(func, x0)
 
     # User is god and knows the value of the objective at these points
-    elif x0 and y0 is not None:
+    if x0 and y0 is not None:
         if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
             raise ValueError(
                 "`y0` should be an iterable or a scalar, got %s" % type(y0))
@@ -222,12 +220,7 @@ def base_minimize(func, dimensions, base_estimator,
 
         optimizer.tell(x0, y0)
 
-        if callbacks:
-            result = create_result(optimizer.Xi, optimizer.yi,
-                                   optimizer.space, optimizer.rng,
-                                   specs, optimizer.models)
-            for c in callbacks:
-                c(result)
+        _eval_callbacks(callbacks, optimizer, specs)
 
     # Bayesian optimization loop
     for n in range(n_calls - n_init_func_calls):
@@ -237,12 +230,7 @@ def base_minimize(func, dimensions, base_estimator,
         if np.ndim(optimizer.yi) != 1:
             raise ValueError("`func` should return a scalar")
 
-        if callbacks:
-            result = create_result(optimizer.Xi, optimizer.yi,
-                                   optimizer.space, optimizer.rng,
-                                   specs, optimizer.models)
-            for c in callbacks:
-                c(result)
+        _eval_callbacks(callbacks, optimizer, specs)
 
     # Pack results
     return create_result(optimizer.Xi, optimizer.yi, optimizer.space,
