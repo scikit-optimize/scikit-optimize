@@ -148,6 +148,10 @@ class Optimizer(object):
                 "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
         self._n_random_starts = n_random_starts
 
+        if acq_optimizer == "auto":
+            warnings.warn("The 'auto' option for the acq_optimizer will be "
+                          "removed in 0.4.")
+            acq_optimizer = "lbfgs"
         self.acq_optimizer = acq_optimizer
         if self.acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError(

@@ -241,6 +241,9 @@ def base_minimize(func, dimensions, base_estimator,
         next_x = optimizer.ask()
         optimizer.tell(next_x, func(next_x), fit=fit_model)
 
+        if np.ndim(optimizer.yi) != 1:
+            raise ValueError("`func` should return a scalar")
+
         if callbacks:
             result = create_result(optimizer.Xi, optimizer.yi,
                                    optimizer.space, optimizer.rng,
