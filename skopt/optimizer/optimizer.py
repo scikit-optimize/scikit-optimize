@@ -1,4 +1,5 @@
 import warnings
+from collections import Iterable
 
 import numpy as np
 
@@ -181,19 +182,22 @@ class Optimizer(object):
         which to evluate the objective. This point can be retrieved by calling
         `ask()`.
 
-        To add several observations as a batch without fitting a new model
-        set `fit` to False.
+        To add observations without fitting a new model set `fit` to False.
 
-        * `x` [list]:
+        To add observations in a batch pass a list-of-lists for `x` and a list
+        of scalars for `y`.
+
+        * `x` [list or list-of-lists]:
             Point at which objective was evaluated.
-        * `y` [scalar]:
+        * `y` [scalar or list]:
             Value of objective at `x`.
         * `fit` [bool, default=True]
             Fit a model to observed evaluations of the objective. A model will
             only be fitted after `n_random_starts` points have been queried.
         """
-        if (isinstance(y, (list, tuple)) and
-                all(isinstance(point, (list, tuple)) for point in x)):
+        # if y isn't a scalar it means we have been handed a batch of points
+        if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
+                                            for point in x)):
             self.Xi.extend(x)
             self.yi.extend(y)
 
