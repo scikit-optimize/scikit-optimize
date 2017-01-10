@@ -8,6 +8,8 @@
 * Accuracy improvements of the optimization of the acquisition function
 by pre-selecting good candidates as starting points when
 using `acq_optimizer='lbfgs'`.
+* Support a ask-and-tell interface. Check out the `Optimizer` class if you need
+fine grained control over the iterations.
 
 
 ## Version 0.2
