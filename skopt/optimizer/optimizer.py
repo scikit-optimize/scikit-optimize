@@ -13,6 +13,7 @@ from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
+from ..space import Categorical
 from ..space import Space
 
 
@@ -129,6 +130,13 @@ class Optimizer(object):
         self.Xi = []
         self.yi = []
 
+        self._cat_inds = []
+        self._non_cat_inds = []
+        for ind, dim in enumerate(self.space.dimensions):
+            if isinstance(dim, Categorical):
+                self._cat_inds.append(ind)
+            else:
+                self._non_cat_inds.append(ind)
         self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
 
         self.parallel = Parallel(n_jobs=n_jobs)
@@ -259,6 +267,24 @@ class Optimizer(object):
             # note the need for [0] at the end
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]
+
+            cat_inds = self._cat_inds
+            non_cat_inds = self._non_cat_inds
+            if len(cat_inds) == 0:
+                if np.any(np.apply_along_axis(lambda x: np.allclose(x, next_x), 1, self.Xi)):
+                    warnings.warn("candidate point already chosen")
+            else:
+                next_x_arr = np.array(self._next_x)
+                next_x_non_cat = np.array(
+                    next_x_arr[non_cat_inds], dtype=np.float32)
+                for x in self.Xi:
+                    x_arr = np.array(x)
+                    cat_eq = np.all(x_arr[cat_inds] == next_x_arr[cat_inds])
+                    non_cat_eq = np.allclose(
+                        np.array(x_arr[non_cat_inds], dtype=np.float32),
+                        next_x_non_cat)
+                    if cat_eq and non_cat_eq:
+                        warnings.warn("candidate point already chosen")
 
     def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
