@@ -165,9 +165,15 @@ def base_minimize(func, dimensions, base_estimator,
     specs = {"args": copy.copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
 
+    acq_optimizer_kwargs = {
+        "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
+        "n_jobs": n_jobs}
+    acq_func_kwargs = {"xi": xi, "kappa": kappa}
+
     optimizer = Optimizer(dimensions, base_estimator, n_random_starts,
-                          acq_func, acq_optimizer, random_state, n_points,
-                          n_restarts_optimizer, xi, kappa, n_jobs)
+                          acq_func, acq_optimizer, random_state,
+                          acq_optimizer_kwargs=acq_optimizer_kwargs,
+                          acq_func_kwargs=acq_func_kwargs)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
