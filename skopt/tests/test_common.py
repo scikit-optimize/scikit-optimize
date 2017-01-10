@@ -99,7 +99,7 @@ def test_minimizer_api():
 
         n_calls = 7
         n_random_starts = 3
-        n_models = n_calls - n_random_starts + 1
+        n_models = n_calls - n_random_starts
 
         for minimizer in MINIMIZERS:
             result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
@@ -116,9 +116,9 @@ def test_minimizer_api():
 
 
 def test_minimizer_api_random_only():
+    # no models should be fit as we only evaluate at random points
     n_calls = 5
     n_random_starts = 5
-    n_models = 1
 
     for minimizer in MINIMIZERS:
         result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
@@ -126,7 +126,7 @@ def test_minimizer_api_random_only():
                            n_calls=n_calls,
                            random_state=1)
 
-        yield (check_minimizer_api, result, n_calls, n_models)
+        yield (check_minimizer_api, result, n_calls)
         yield (check_minimizer_bounds, result, n_calls)
 
 
@@ -147,7 +147,7 @@ def test_init_vals_and_models():
         for optimizer in optimizers:
             res = optimizer(branin, space, x0=x0, y0=y0, random_state=0,
                             n_calls=n_calls)
-            assert_equal(len(res.models), n_calls + 1 - n_random_starts)
+            assert_equal(len(res.models), n_calls - n_random_starts)
 
 
 def test_init_points_and_models():
@@ -167,7 +167,7 @@ def test_init_points_and_models():
             res = optimizer(branin, space, x0=x0, random_state=0,
                             n_calls=n_calls)
             assert_equal(len(res.models),
-                         n_calls + 1 - n_random_starts - len(x0))
+                         n_calls - n_random_starts - len(x0))
 
 
 def test_init_vals():

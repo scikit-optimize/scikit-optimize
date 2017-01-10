@@ -1,5 +1,6 @@
 import warnings
 from collections import Iterable
+from numbers import Number
 
 import numpy as np
 
@@ -128,17 +129,11 @@ class Optimizer(object):
         self.Xi = []
         self.yi = []
 
-        self._check_arguments(dimensions, base_estimator,
-                              n_random_starts,
-                              acq_func, acq_optimizer,
-                              n_jobs)
+        self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
 
         self.parallel = Parallel(n_jobs=n_jobs)
 
-    def _check_arguments(self, dimensions, base_estimator,
-                         n_random_starts,
-                         acq_func, acq_optimizer,
-                         n_jobs):
+    def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
         """Check arguments for sanity."""
         if not is_regressor(base_estimator):
             raise ValueError(
@@ -161,7 +156,11 @@ class Optimizer(object):
                 "got %s" % acq_optimizer)
 
     def ask(self):
-        """Suggest next point at which to evaluate the objective."""
+        """Suggest next point at which to evaluate the objective.
+
+        Returns a random point for the first `n_random_starts` calls, after
+        that `base_estimator` is used to determine the next point.
+        """
         if self._n_random_starts > 0:
             self._n_random_starts -= 1
             return self.space.rvs(random_state=self.rng)[0]
@@ -174,7 +173,7 @@ class Optimizer(object):
             return self._next_x
 
     def tell(self, x, y, fit=True):
-        """Record an observation of the objective function.
+        """Record an observation (or several) of the objective function.
 
         Provide values of the objective function at points suggested by `ask()`
         or other points. By default a new model will be fit to all
@@ -184,8 +183,8 @@ class Optimizer(object):
 
         To add observations without fitting a new model set `fit` to False.
 
-        To add observations in a batch pass a list-of-lists for `x` and a list
-        of scalars for `y`.
+        To add multiple observations in a batch pass a list-of-lists for `x`
+        and a list of scalars for `y`.
 
         * `x` [list or list-of-lists]:
             Point at which objective was evaluated.
@@ -193,7 +192,8 @@ class Optimizer(object):
             Value of objective at `x`.
         * `fit` [bool, default=True]
             Fit a model to observed evaluations of the objective. A model will
-            only be fitted after `n_random_starts` points have been queried.
+            only be fitted after `n_random_starts` points have been queried
+            irrespective of the value of `fit`.
         """
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
@@ -201,9 +201,13 @@ class Optimizer(object):
             self.Xi.extend(x)
             self.yi.extend(y)
 
-        else:
+        elif isinstance(x, Iterable) and isinstance(y, Number):
             self.Xi.append(x)
             self.yi.append(y)
+
+        else:
+            raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
+                             "not compatible." % (type(x), type(y)))
 
         if fit and self._n_random_starts == 0:
             transformed_bounds = np.array(self.space.transformed_bounds)

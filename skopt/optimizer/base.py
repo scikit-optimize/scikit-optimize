@@ -223,12 +223,16 @@ def base_minimize(func, dimensions, base_estimator,
         _eval_callbacks(callbacks, optimizer, specs)
 
     # Bayesian optimization loop
-    for n in range(n_calls - n_init_func_calls):
+    n_iterations = n_calls - n_init_func_calls
+    for n in range(n_iterations):
         next_x = optimizer.ask()
-        optimizer.tell(next_x, func(next_x))
-
-        if np.ndim(optimizer.yi) != 1:
+        # no need to fit a model on the last iteration
+        fit_model = n < n_iterations - 1
+        next_y = func(next_x)
+        if not np.isscalar(next_y):
             raise ValueError("`func` should return a scalar")
+
+        optimizer.tell(next_x, next_y, fit=fit_model)
 
         _eval_callbacks(callbacks, optimizer, specs)
 
