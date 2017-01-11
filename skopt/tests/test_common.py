@@ -289,9 +289,9 @@ def test_invalid_n_calls_arguments():
 def test_repeated_x():
     for minimizer in MINIMIZERS:
         assert_warns_message(
-            UserWarning, "already chosen", minimizer, lambda x: x[0],
+            UserWarning, "previously been evaluated", minimizer, lambda x: x[0],
             dimensions=[[0, 1]], x0=[[0], [1]], n_random_starts=0, n_calls=3)
         assert_warns_message(
-            UserWarning, "already chosen", minimizer, bench4,
+            UserWarning, "previously been evaluated", minimizer, bench4,
             dimensions=[("0", "1")], x0=["0", "1"], n_calls=3,
             n_random_starts=0)
