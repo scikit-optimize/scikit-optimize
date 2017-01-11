@@ -6,7 +6,7 @@ from sklearn.gaussian_process.kernels import ConstantKernel as sk_ConstantKernel
 from sklearn.gaussian_process.kernels import DotProduct as sk_DotProduct
 from sklearn.gaussian_process.kernels import Exponentiation as sk_Exponentiation
 from sklearn.gaussian_process.kernels import ExpSineSquared as sk_ExpSineSquared
-from sklearn.gaussian_process.kernels import Hyperparameter as sk_Hyperparameter
+from sklearn.gaussian_process.kernels import Hyperparameter
 from sklearn.gaussian_process.kernels import Matern as sk_Matern
 from sklearn.gaussian_process.kernels import NormalizedKernelMixin as sk_NormalizedKernelMixin
 from sklearn.gaussian_process.kernels import Product as sk_Product
@@ -318,10 +318,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
     """
     The HammingKernel is used to handle categorical inputs.
 
-    ``K(x_1, x_2)`` is given by \sum_{j=1}^{d}exp(-ls_j * (I(x_1j != x_2j)))
-    If all the categorical features of two samples are the same then
-    ``K(x_1, x_2)`` reduces to 1 and if they are completely different,
-    it reduces to ``exp(-d)``
+    ``K(x_1, x_2) = \sum_{j=1}^{d}exp(-ls_j * (I(x_1j != x_2j)))``
 
     Parameters
     -----------
@@ -334,27 +331,20 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
         The lower and upper bound on length_scale
     """
 
-    def __init__(self, length_scale=1.0,
-                 length_scale_bounds=(1e-5, 1e5)):
-        if np.iterable(length_scale):
-            if len(length_scale) > 1:
-                self.anisotropic = True
-                self.length_scale = np.asarray(length_scale, dtype=np.float)
-            else:
-                self.anisotropic = False
-                self.length_scale = float(length_scale[0])
-        else:
-            self.anisotropic = False
-            self.length_scale = float(length_scale)
+    def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
+        self.length_scale = length_scale
         self.length_scale_bounds = length_scale_bounds
 
-        if self.anisotropic:  # anisotropic length_scale
-            self.hyperparameter_length_scale = \
-                sk_Hyperparameter("length_scale", "numeric", length_scale_bounds,
+    @property
+    def hyperparameter_length_scale(self):
+        length_scale = self.length_scale
+        anisotropic = np.iterable(length_scale) and len(length_scale) > 1
+        if anisotropic:
+            return Hyperparameter("length_scale", "numeric",
+                                  self.length_scale_bounds,
                                   len(length_scale))
-        else:
-            self.hyperparameter_length_scale = \
-                sk_Hyperparameter("length_scale", "numeric", length_scale_bounds)
+        return Hyperparameter(
+            "length_scale", "numeric", self.length_scale_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -382,10 +372,19 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-
         length_scale = self.length_scale
+        anisotropic = np.iterable(length_scale) and len(length_scale) > 1
+
+        if np.iterable(length_scale):
+            if len(length_scale) > 1:
+                length_scale = np.asarray(length_scale, dtype=np.float)
+            else:
+                length_scale = float(length_scale[0])
+        else:
+            length_scale = float(length_scale)
+
         X = np.atleast_2d(X)
-        if self.anisotropic and X.shape[1] != len(length_scale):
+        if anisotropic and X.shape[1] != len(length_scale):
             raise ValueError(
                 "Expected X to have %d features, got %d" %
                 (X.shape, len(length_scale)))
@@ -393,7 +392,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
         n_samples, n_dim = X.shape
 
         if eval_gradient:
-            if self.anisotropic:
+            if anisotropic:
                 grad = np.zeros((n_samples, n_samples, n_dim))
             else:
                 grad = np.zeros((n_samples, n_samples, 1))
@@ -423,7 +422,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
             for j in range(start_ind, end_ind):
 
                 mask = X[i] != Y[j]
-                if self.anisotropic:
+                if anisotropic:
                     hamming_dist = np.exp(-np.sum(length_scale[mask]))
                 else:
                     hamming_dist = np.exp(-length_scale * np.sum(mask))
@@ -434,7 +433,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
                     whd[i, j] = hamming_dist
 
                 if eval_gradient:
-                    if self.anisotropic:
+                    if anisotropic:
                         grad[i, j][mask] = grad[j, i][mask] = -hamming_dist
                     else:
                         ind_sum = np.sum(mask)
