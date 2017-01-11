@@ -318,7 +318,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
     """
     The HammingKernel is used to handle categorical inputs.
 
-    ``K(x_1, x_2) = \sum_{j=1}^{d}exp(-ls_j * (I(x_1j != x_2j)))``
+    ``K(x_1, x_2) = exp(\sum_{j=1}^{d} -ls_j * (I(x_1j != x_2j)))``
 
     Parameters
     -----------
@@ -405,11 +405,6 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
         else:
             Y = np.atleast_2d(Y)
 
-        if Y_is_None:
-            whd = np.ones((n_samples, n_samples))
-        else:
-            whd = np.ones((n_samples, Y.shape[0]))
-
         for i in range(n_samples):
 
             if Y_is_None:
@@ -427,11 +422,6 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
                 else:
                     hamming_dist = np.exp(-length_scale * np.sum(mask))
 
-                if Y_is_None:
-                    whd[i, j] = whd[j, i] = hamming_dist
-                else:
-                    whd[i, j] = hamming_dist
-
                 if eval_gradient:
                     if anisotropic:
                         grad[i, j][mask] = grad[j, i][mask] = -hamming_dist
@@ -439,6 +429,8 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
                         ind_sum = np.sum(mask)
                         grad[i, j][0] = grad[j, i][0] = -ind_sum * hamming_dist
 
+        X_expand = np.expand_dims(X, axis=1)
+        kernel_prod = np.exp(-np.sum(length_scale * (X_expand != Y), axis=2))
         if eval_gradient:
-            return whd, grad
-        return whd
+            return kernel_prod, grad
+        return kernel_prod
