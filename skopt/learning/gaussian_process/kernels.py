@@ -391,12 +391,6 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
 
         n_samples, n_dim = X.shape
 
-        if eval_gradient:
-            if anisotropic:
-                grad = np.zeros((n_samples, n_samples, n_dim))
-            else:
-                grad = np.zeros((n_samples, n_samples, 1))
-
         Y_is_None = Y is None
         if Y_is_None:
             Y = X
@@ -405,32 +399,14 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kerne
         else:
             Y = np.atleast_2d(Y)
 
-        for i in range(n_samples):
+        indicator = np.expand_dims(X, axis=1) != Y
+        kernel_prod = np.exp(-np.sum(length_scale * indicator, axis=2))
 
-            if Y_is_None:
-                start_ind = i + 1
-                end_ind = n_samples
-            else:
-                start_ind = 0
-                end_ind = Y.shape[0]
+        if anisotropic:
+            grad = -np.expand_dims(kernel_prod, axis=-1) * np.array(indicator, dtype=np.float32)
+        else:
+            grad = -np.expand_dims(kernel_prod * length_scale * np.sum(indicator, axis=2), axis=-1)
 
-            for j in range(start_ind, end_ind):
-
-                mask = X[i] != Y[j]
-                if anisotropic:
-                    hamming_dist = np.exp(-np.sum(length_scale[mask]))
-                else:
-                    hamming_dist = np.exp(-length_scale * np.sum(mask))
-
-                if eval_gradient:
-                    if anisotropic:
-                        grad[i, j][mask] = grad[j, i][mask] = -hamming_dist
-                    else:
-                        ind_sum = np.sum(mask)
-                        grad[i, j][0] = grad[j, i][0] = -ind_sum * hamming_dist
-
-        X_expand = np.expand_dims(X, axis=1)
-        kernel_prod = np.exp(-np.sum(length_scale * (X_expand != Y), axis=2))
         if eval_gradient:
             return kernel_prod, grad
         return kernel_prod
