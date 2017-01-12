@@ -578,3 +578,7 @@ class Space:
                 b.extend(dim.transformed_bounds)
 
         return b
+
+    @property
+    def is_categorical(self):
+        return all([isinstance(dim, Categorical) for dim in self.dimensions])
