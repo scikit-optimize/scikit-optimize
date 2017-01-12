@@ -265,7 +265,7 @@ class Integer(Dimension):
 
 
 class Categorical(Dimension):
-    def __init__(self, categories, prior=None, transform="onehot"):
+    def __init__(self, categories, prior=None, transform=None):
         """Search space dimension that can take on categorical values.
 
         Parameters
@@ -277,13 +277,19 @@ class Categorical(Dimension):
             Prior probabilities for each category. By default all categories
             are equally likely.
 
-        * `transform` [string, "onehot" or "identity"]:
+        * `transform` [string, "identity", optional]:
             When `transform` is set to "identity", the transformed space
             is the same as the original space.
+            By default the transformed space is a one-hot encoded transformation
+            of the original space.
         """
         self.categories = categories
         self.transform_ = transform
-        if self.transform_ == "onehot":
+
+        if self.transform_ and transform != "identity":
+            raise ValueError("Expected transform to be 'identity', got "
+                             "%s" % transform)
+        if transform is None:
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
         else:
@@ -330,12 +336,11 @@ class Categorical(Dimension):
 
     @property
     def transformed_size(self):
-        if self.transform_ == "onehot":
+        if self.transform_ is None:
             size = len(self.categories)
             # when len(categories) == 2, CategoricalEncoder outputs a single value
             return size if size != 2 else 1
-        else:
-            return 1
+        return 1
 
     @property
     def bounds(self):
