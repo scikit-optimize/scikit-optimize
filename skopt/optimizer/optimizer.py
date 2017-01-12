@@ -184,7 +184,7 @@ class Optimizer(object):
 
             if len(cat_inds) == 0:
                 if np.any(np.apply_along_axis(lambda x: np.allclose(x, next_x), 1, self.Xi)):
-                    warnings.warn("Objective has previously been evaluated at this point.")
+                    warnings.warn("The suggested new point has already been 'told' to the optimizer.")
             else:
                 next_x_arr = np.array(next_x)
                 next_x_non_cat = np.array(
@@ -196,7 +196,7 @@ class Optimizer(object):
                         np.array(x_arr[non_cat_inds], dtype=np.float32),
                         next_x_non_cat)
                     if cat_eq and non_cat_eq:
-                        warnings.warn("Objective has previously been evaluated at this point.")
+                        warnings.warn("The suggested new point has already been 'told' to the optimizer.")
 
             # return point computed from last call to tell()
             return next_x
