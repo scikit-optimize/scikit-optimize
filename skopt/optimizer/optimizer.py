@@ -74,30 +74,11 @@ class Optimizer(object):
         Set random state to something other than None for reproducible
         results.
 
-    * `n_points` [int, default=500]:
-        Number of points to sample to determine the next "best" point.
-        Useless if acq_optimizer is set to `"lbfgs"`.
+    * `acq_func_kwargs` [dict]:
+        Additional arguments to be passed to the acquistion function.
 
-    * `n_restarts_optimizer` [int, default=5]:
-        The number of restarts of the optimizer when `acq_optimizer`
-        is `"lbfgs"`.
-
-    * `xi` [float, default=0.01]:
-        Controls how much improvement one wants over the previous best
-        values. Used when the acquisition is either `"EI"` or `"PI"`.
-
-    * `kappa` [float, default=1.96]:
-        Controls how much of the variance in the predicted values should be
-        taken into account. If set to be very high, then we are favouring
-        exploration over exploitation and vice versa.
-        Used when the acquisition is `"LCB"`.
-
-    * `n_jobs` [int, default=1]
-        Number of cores to run in parallel while running the lbfgs
-        optimizations over the acquisition function. Valid only when
-        `acq_optimizer` is set to "lbfgs."
-        Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
-        to number of cores.
+    * `acq_optimizer_kwargs` [dict]:
+        Additional arguments to be passed to the acquistion optimizer.
 
     Attributes
     ----------
@@ -115,15 +96,21 @@ class Optimizer(object):
     """
     def __init__(self, dimensions, base_estimator,
                  n_random_starts=10, acq_func="EI", acq_optimizer="lbfgs",
-                 random_state=None, n_points=10000, n_restarts_optimizer=5,
-                 xi=0.01, kappa=1.96, n_jobs=1):
+                 random_state=None, acq_func_kwargs=None,
+                 acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
-        self.kappa = kappa
-        self.n_points = n_points
-        self.n_restarts_optimizer = n_restarts_optimizer
-        self.xi = xi
+        self.acq_func_kwargs = acq_func_kwargs
+
+        if acq_optimizer_kwargs is None:
+            acq_optimizer_kwargs = dict()
+
+        self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
+        self.n_restarts_optimizer = acq_optimizer_kwargs.get(
+            "n_restarts_optimizer", 5)
+        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
+
         self.space = Space(dimensions)
         self.models = []
         self.Xi = []
@@ -222,8 +209,8 @@ class Optimizer(object):
             X = self.space.transform(self.space.rvs(
                 n_samples=self.n_points, random_state=self.rng))
             values = _gaussian_acquisition(
-                X=X, model=est,  y_opt=np.min(self.yi),
-                acq_func=self.acq_func, xi=self.xi, kappa=self.kappa)
+                X=X, model=est, y_opt=np.min(self.yi),
+                acq_func=self.acq_func, acq_func_kwargs=self.acq_func_kwargs)
 
             # Find the minimum of the acquisition function by randomly sampling
             # points from the space
@@ -241,7 +228,7 @@ class Optimizer(object):
                     jobs = (delayed(fmin_l_bfgs_b)(
                         gaussian_acquisition_1D, x,
                         args=(est, np.min(self.yi), self.acq_func,
-                              self.xi, self.kappa),
+                              self.acq_func_kwargs),
                         bounds=self.space.transformed_bounds,
                         approx_grad=False,
                         maxiter=20) for x in x0)

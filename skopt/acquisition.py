@@ -4,20 +4,20 @@ import warnings
 from scipy.stats import norm
 
 
-def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB", xi=0.01,
-                            kappa=1.96):
+def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB",
+                            acq_func_kwargs=None):
     """
     A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
 
     This is because lbfgs allows only 1-D input.
     """
     return _gaussian_acquisition(np.expand_dims(X, axis=0),
-                                 model, y_opt, acq_func, xi, kappa,
+                                 model, y_opt, acq_func_kwargs=acq_func_kwargs,
                                  return_grad=True)
 
 
 def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
-                          xi=0.01, kappa=1.96, return_grad=False):
+                          return_grad=False, acq_func_kwargs=None):
     """
     Wrapper so that the output of this function can be
     directly passed to a minimizer.
@@ -26,6 +26,11 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
     X = np.asarray(X)
     if X.ndim != 2:
         raise ValueError("X should be 2-dimensional.")
+
+    if acq_func_kwargs is None:
+        acq_func_kwargs = dict()
+    xi = acq_func_kwargs.get("xi", 0.01)
+    kappa = acq_func_kwargs.get("kappa", 1.96)
 
     # Evaluate acquisition function
     if acq_func == "LCB":
