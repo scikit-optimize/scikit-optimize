@@ -41,13 +41,19 @@ def check_dimension(dimension, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `transform` ["normalize", optional] :
-        If transform is set to "normalize", when `transform` is called
-        the returned Dimension instance the values are scaled
-        between 0 and 1.
+    * `transform` ["identity", "normalize", "onehot" optional]:
+        - For `Categorical` dimensions, the following transformations are
+          supported.
 
-        If transform is set to "Identity", when `transform` is called
-        the transformed space is the same as the original space.
+          - "onehot" (default) one-hot transformation of the original space.
+          - "identity" same as the original space.
+
+        - For `Real` and `Integer` dimensions, the following transformations are
+          supported.
+
+          - "identity", (default) the transformed space is the same as the original
+            space.
+          - "normalize", the transformed space is scaled in between 0 and 1.
 
     Returns
     -------
@@ -142,18 +148,26 @@ class Real(Dimension):
             - If `"log-uniform"`, points are sampled uniformly between
               `log10(lower)` and `log10(upper)`.`
 
-        * `transform` [None or "normalize", optional]:
-            If `transform=normalize`, calling `transform` on X scales X to
-            [0, 1]
+        * `transform` ["identity", "normalize", optional]:
+            The following transformations are supported.
+
+            - "identity", (default) the transformed space is the same as the original
+              space.
+            - "normalize", the transformed space is scaled in between 0 and 1.
         """
         self.low = low
         self.high = high
         self.prior = prior
+
+        if transform is None:
+            transform = "identity"
+
         self.transform_ = transform
 
-        if self.transform_ and self.transform_ != "normalize":
+        if self.transform_ not in ["normalize", "identity"]:
             raise ValueError(
-                "transform should be normalize, got %s" % self.transform_)
+                "transform should be 'normalize' or 'identity' got %s" %
+                self.transform_)
 
         # Define _rvs and transformer spaces.
         # XXX: The _rvs is for sampling in the transformed space.
@@ -221,14 +235,26 @@ class Integer(Dimension):
 
         * `high` [float]:
             Upper bound (inclusive).
+
+        * `transform` ["identity", "normalize", optional]:
+            The following transformations are supported.
+
+            - "identity", (default) the transformed space is the same as the original
+              space.
+            - "normalize", the transformed space is scaled in between 0 and 1.
         """
         self.low = low
         self.high = high
+
+        if transform is None:
+            transform = "identity"
+
         self.transform_ = transform
 
-        if transform and transform != "normalize":
-            raise ValueError("Expected transform to be 'normalize', got "
-                             "%s" % transform)
+        if transform not in ["normalize", "identity"]:
+            raise ValueError(
+                "transform should be 'normalize' or 'identity' got %s" %
+                transform_)
         if transform == "normalize":
             self._rvs = uniform(0, 1)
             self.transformer = Normalize(low, high, is_int=True)
@@ -277,19 +303,20 @@ class Categorical(Dimension):
             Prior probabilities for each category. By default all categories
             are equally likely.
 
-        * `transform` [string, "identity", optional]:
-            When `transform` is set to "identity", the transformed space
-            is the same as the original space.
-            By default the transformed space is a one-hot encoded transformation
-            of the original space.
+        * `transform` ["onehot", "identity", default="onehot"] :
+            - "identity", the transformed space is the same as the original space.
+            - "onehot", the transformed space is a one-hot encoded representation
+              of the original space.
         """
         self.categories = categories
         self.transform_ = transform
 
-        if self.transform_ and transform != "identity":
-            raise ValueError("Expected transform to be 'identity', got "
-                             "%s" % transform)
         if transform is None:
+            transform = "onehot"
+        if transform not in ["identity", "onehot"]:
+            raise ValueError("Expected transform to be 'identity' or 'onehot' "
+                             "got %s" % transform)
+        if transform == "onehot":
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
         else:
