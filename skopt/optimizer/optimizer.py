@@ -13,6 +13,7 @@ from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
+from ..space import Categorical
 from ..space import Space
 
 
@@ -195,6 +196,7 @@ class Optimizer(object):
             only be fitted after `n_random_starts` points have been queried
             irrespective of the value of `fit`.
         """
+        is_categorical = all([isinstance(dim, Categorical) for dim in self.space.dimensions])
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
                                             for point in x)):
@@ -254,8 +256,9 @@ class Optimizer(object):
 
             # lbfgs should handle this but just in case there are
             # precision errors.
-            next_x = np.clip(
-                next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
+            if not is_categorical:
+                next_x = np.clip(
+                    next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
             # note the need for [0] at the end
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]

@@ -46,6 +46,9 @@ def check_dimension(dimension, transform=None):
         the returned Dimension instance the values are scaled
         between 0 and 1.
 
+        If transform is set to "Identity", when `transform` is called
+        the transformed space is the same as the original space.
+
     Returns
     -------
     * `dimension`:
@@ -63,7 +66,7 @@ def check_dimension(dimension, transform=None):
         return Real(*dimension, transform=transform)
 
     if len(dimension) > 2 or isinstance(dimension[0], str):
-        return Categorical(dimension)
+        return Categorical(dimension, transform=transform)
 
     if len(dimension) == 2 and isinstance(dimension[0], numbers.Integral):
         return Integer(*dimension, transform=transform)
@@ -262,7 +265,7 @@ class Integer(Dimension):
 
 
 class Categorical(Dimension):
-    def __init__(self, categories, prior=None):
+    def __init__(self, categories, prior=None, transform="onehot"):
         """Search space dimension that can take on categorical values.
 
         Parameters
@@ -273,10 +276,18 @@ class Categorical(Dimension):
         * `prior` [list, shape=(categories,), default=None]:
             Prior probabilities for each category. By default all categories
             are equally likely.
+
+        * `transform` [string, "onehot" or "identity"]:
+            When `transform` is set to "identity", the transformed space
+            is the same as the original space.
         """
         self.categories = categories
-        self.transformer = CategoricalEncoder()
-        self.transformer.fit(self.categories)
+        self.transform_ = transform
+        if self.transform_ == "onehot":
+            self.transformer = CategoricalEncoder()
+            self.transformer.fit(self.categories)
+        else:
+            self.transformer = Identity()
         self.prior = prior
 
         if prior is None:
@@ -319,9 +330,12 @@ class Categorical(Dimension):
 
     @property
     def transformed_size(self):
-        size = len(self.categories)
-        # when len(categories) == 2, CategoricalEncoder outputs a single value
-        return size if size != 2 else 1
+        if self.transform_ == "onehot":
+            size = len(self.categories)
+            # when len(categories) == 2, CategoricalEncoder outputs a single value
+            return size if size != 2 else 1
+        else:
+            return 1
 
     @property
     def bounds(self):
@@ -452,7 +466,6 @@ class Space:
 
         # Repack as an array
         Xt = np.hstack([np.asarray(c).reshape((len(X), -1)) for c in columns])
-        Xt = Xt.astype(np.float)
 
         return Xt
 

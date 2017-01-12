@@ -314,7 +314,7 @@ class DotProduct(Kernel, sk_DotProduct):
         return np.asarray(X_train)
 
 
-class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, sk_Kernel):
+class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, Kernel):
     """
     The HammingKernel is used to handle categorical inputs.
 

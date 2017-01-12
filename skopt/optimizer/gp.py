@@ -6,8 +6,10 @@ from sklearn.utils import check_random_state
 from .base import base_minimize
 from ..learning import GaussianProcessRegressor
 from ..learning.gaussian_process.kernels import ConstantKernel
+from ..learning.gaussian_process.kernels import HammingKernel
 from ..learning.gaussian_process.kernels import Matern
 from ..space import check_dimension
+from ..space import Categorical
 from ..space import Space
 
 
@@ -188,22 +190,33 @@ def gp_minimize(func, dimensions, base_estimator=None,
     rng = check_random_state(random_state)
 
     # To make sure that GP operates in the [0, 1] space
-    dimensions = [check_dimension(d,
-                                  transform="normalize") for d in dimensions]
-    space = Space(dimensions)
+    is_categorical = all([isinstance(check_dimension(d), Categorical) for d in dimensions])
+    if is_categorical:
+        dimensions = [check_dimension(d,
+                                      transform="identity") for d in dimensions]
+    else:
+        dimensions = [check_dimension(d,
+                                      transform="normalize") for d in dimensions]
 
+    space = Space(dimensions)
     # Default GP
     if base_estimator is None:
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
-        matern = Matern(
-            length_scale=np.ones(space.transformed_n_dims),
-            length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
-            nu=2.5)
 
-        base_estimator = GaussianProcessRegressor(
-            kernel=cov_amplitude * matern,
-            normalize_y=True, random_state=rng, alpha=0.0, noise=noise,
-            n_restarts_optimizer=2)
+        if is_categorical:
+            other_kernel = HammingKernel(
+                length_scale=np.ones(space.transformed_n_dims))
+            acq_optimizer = "sampling"
+        else:
+            other_kernel = Matern(
+                length_scale=np.ones(space.transformed_n_dims),
+                length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
+                nu=2.5)
+
+    base_estimator = GaussianProcessRegressor(
+        kernel=cov_amplitude * other_kernel,
+        normalize_y=True, random_state=rng, alpha=0.0, noise=noise,
+        n_restarts_optimizer=2)
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,
