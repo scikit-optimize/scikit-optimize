@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns_message
 
 from skopt import dummy_minimize
 from skopt import gp_minimize
@@ -284,3 +285,13 @@ def test_invalid_n_calls_arguments():
                              n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
                              y0=[2.0, 3.0, 5.0],
                              random_state=1, n_random_starts=7)
+
+def test_repeated_x():
+    for minimizer in MINIMIZERS:
+        assert_warns_message(
+            UserWarning, "has been evaluated at", minimizer, lambda x: x[0],
+            dimensions=[[0, 1]], x0=[[0], [1]], n_random_starts=0, n_calls=3)
+        assert_warns_message(
+            UserWarning, "has been evaluated at", minimizer, bench4,
+            dimensions=[("0", "1")], x0=["0", "1"], n_calls=3,
+            n_random_starts=0)
