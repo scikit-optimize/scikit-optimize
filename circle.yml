@@ -4,7 +4,7 @@ dependencies:
         timeout: 1024
 
 test:
-  # Run and convert examplesto markdown, then grep for errors
+  # Run and convert examples to markdown, then grep for errors
   override:
     - bash ./build_tools/circle/execute.sh:
         timeout: 3600
