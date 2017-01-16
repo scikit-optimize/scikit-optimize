@@ -270,8 +270,9 @@ class Optimizer(object):
 
             # lbfgs should handle this but just in case there are
             # precision errors.
-            next_x = np.clip(
-                next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
+            if not self.space.is_categorical:
+                next_x = np.clip(
+                    next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
             # note the need for [0] at the end
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]

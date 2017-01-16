@@ -284,3 +284,13 @@ def test_invalid_dimension():
                         space_check_dimension, "23")
     assert_raises_regex(ValueError, "Invalid dimension",
                         space_check_dimension, (23,))
+
+
+def test_categorical_identity():
+    categories = ["cat", "dog", "rat"]
+    cat = Categorical(categories, transform="identity")
+    samples = cat.rvs(100)
+    assert_true(all([t in categories for t in cat.rvs(100)]))
+    transformed = cat.transform(samples)
+    assert_array_equal(transformed, samples)
+    assert_array_equal(samples, cat.inverse_transform(transformed))
