@@ -1,6 +1,7 @@
 import numpy as np
 import warnings
 
+from scipy.stats import entropy
 from scipy.stats import norm
 
 
@@ -48,6 +49,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             return -func_and_grad
 
+    elif acq_func == "entropy_search":
+        return gaussian_entropy_search(X, model, **acq_func_kwargs)
     else:
         raise ValueError("Acquisition function not implemented.")
 
@@ -157,7 +160,6 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
             mu, std, mu_grad, std_grad = model.predict(
                 X, return_std=True, return_mean_grad=True,
                 return_std_grad=True)
-
         else:
             mu, std = model.predict(X, return_std=True)
 
@@ -264,3 +266,109 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         return values, grad
 
     return values
+
+
+def gaussian_entropy_search(X, model, n_rep_points=50,
+                            n_trial_points=200, measure="EI", n_samples=500,
+                            random_state=None, rep_cands=None, **kwargs):
+    """
+    Use entropy search to optimize the acquisition function.
+
+    1. It approximates the search space by a set of representer points sampled from
+       a suitable measure such as the "probability of improvement" or
+       "expected improvement".
+
+    2. p_min at a representer point X_i is calculated by the Integral
+       p(f(x)) \prod_{j=1}^N_rep \Theta(f(X_j) - f(X_i)) \\
+       Where P(f(x)) is the GP posterior and \Theta is the heaviside step function.
+       This can be used to calculate the base entropy.
+
+    3. Then for each candidate point, the change in the mean and the covariance
+       of each of these representer points can be computed. This in turn
+       can be used to compute the change in p_min for each of these representer
+       points.
+
+    Parameters
+    ----------
+    * `X` [array-like, shape=(n_samples, n_features)]:
+        Values where the acquisition function should be computed.
+
+    * `model` [sklearn estimator that implements predict with ``return_std``]:
+        The fit estimator that approximates the function through the
+        method ``predict``.
+        It should have a ``return_std`` parameter that returns the standard
+        deviation.
+
+    * `space` [Space instance]:
+        This is required to sample representer points.
+
+    * `n_rep_points` [int, default 50]:
+        Number of representer points.
+
+    * `n_trial_points` [int, default 200]:
+        Number of trial points sampled uniformly for each representer point
+        candidate.
+
+    * `n_samples` [int, default 500]:
+        Number of functions to sample from the GP posterior at the
+        representer points to approximate p_min at each of the representer
+        points.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        For reproducible results.
+    """
+    rng = np.random.RandomState(random_state)
+    n_features = X.shape[1]
+
+    # Step 1: Sample `n_representer_points` from the given measure.
+    # XXX: Use MCMC sampling to sample from the quadrature measure.
+    if measure == "LCB":
+        quad_measure = gaussian_lcb
+
+    elif measure in ["EI", "PI"]:
+        if measure == "EI":
+            quad_measure = lambda X : -gaussian_ei(X, model)
+        else:
+            quad_measure = lambda X : -gaussian_pi(X, model)
+
+    n_total = n_rep_points * n_trial_points
+    all_values = np.reshape(quad_measure(rep_cands), (n_rep_points, n_trial_points))
+    rep_inds = np.arange(0, n_total, n_trial_points) + np.argmin(all_values, axis=1)
+    rep_points = rep_cands[rep_inds]
+    X_all = np.vstack((rep_points, X))
+    X_all_mean, X_all_cov = model.predict(X_all, return_cov=True)
+
+    # Store mu(X_i) and Sigma(X_i, X_j) of all the representer points based on
+    # previous evaluations.
+    init_cov = X_all_cov[:n_rep_points, :n_rep_points]
+    init_mean = X_all_mean[:n_rep_points]
+
+    # For each candidate point calculate change in p_min of all the represnter
+    # points and hence change in entropy (information gain)
+    inf_gain = np.zeros(X.shape[0])
+    for cand_ind in range(n_rep_points, n_rep_points + X.shape[0]):
+
+        # delta(cov(X_rep)) = \Sigma(X_rep, X_cand) \Sigma^-1(X_cand, X_cand) \Sigma(X_cand, X_rep)
+        # Note that \Sigma(X_cand, X_cand) is a scalar since we only require the next
+        # best evaluation.
+        cov_rep_X = X_all_cov[cand_ind][: n_rep_points]
+        cov_rep_X_row = np.reshape(cov_rep_X, (-1, 1))
+        cov_rep_X_col = np.reshape(cov_rep_X, (1, -1))
+        cov_cand_inv = 1.0 / X_all_cov[cand_ind, cand_ind]
+        cov_delta = cov_cand_inv * np.dot(cov_rep_X_row, cov_rep_X_col)
+
+        # delta(cov(X_rep)) = \Sigma(X_rep, X_cand) \Sigma^-1(X_cand, X_cand) \Sigma(X_cand, X_rep) \Omega
+        # where \Omega is a distributed normally.
+        mean_delta = cov_cand_inv * rng.randn() * (X_all_cov[cand_ind, cand_ind] + model.noise_) * cov_rep_X
+
+        # New simulated mean and simulated covariance.
+        new_mean = init_mean + mean_delta
+        new_cov = init_cov - cov_delta
+
+        # p_min(Xrep_{i}) = E(\prod_{j=1}^N_rep \theta(f(Xrep{j}) - f(Xrep{i})))
+        # where \theta(f(Xrep{j}) - f(Xrep{i})) is zero if Xrep(j) < Xrep(i)
+        sampled_f = rng.multivariate_normal(new_mean, new_cov, n_samples)
+        p_min = (np.bincount(np.argmin(sampled_f, axis=0)) + 1) / (n_rep_points + float(n_samples))
+        inf_gain[cand_ind - n_rep_points] = entropy(p_min)
+
+    return inf_gain
