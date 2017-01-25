@@ -12,7 +12,8 @@ def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB",
     This is because lbfgs allows only 1-D input.
     """
     return _gaussian_acquisition(np.expand_dims(X, axis=0),
-                                 model, y_opt, acq_func_kwargs=acq_func_kwargs,
+                                 model, y_opt, acq_func=acq_func,
+                                 acq_func_kwargs=acq_func_kwargs,
                                  return_grad=True)
 
 
