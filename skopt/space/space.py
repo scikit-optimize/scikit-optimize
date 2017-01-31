@@ -63,7 +63,7 @@ def check_dimension(dimension, transform=None):
     if isinstance(dimension, Dimension):
         return dimension
 
-    if not isinstance(dimension, (list, tuple)):
+    if not isinstance(dimension, (list, tuple, np.ndarray)):
         raise ValueError("Dimension has to be a list or tuple.")
 
     if (len(dimension) == 3 and
