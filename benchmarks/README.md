@@ -10,8 +10,8 @@ repeated 10 times.
 
 |Blackbox Function| Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
 ------------------|------------|-----------|---------------------|--------------------|-----------------------
-|Branin| 0.398 +/- 0.000 |0.398 | 57.4 | 9.254 | 44
-|Hart6| -3.281 +/- 0.055|-3.321 | 65.1 | 37.522 | 30
+|Branin| 0.398 +/- 0.000 |0.398 | 33.1 | 5.7 | 27
+|Hart6| -3.299 +/- 0.048|-3.322 | 57.3 | 5.658 | 47
 
 ## forest_minimize
 
