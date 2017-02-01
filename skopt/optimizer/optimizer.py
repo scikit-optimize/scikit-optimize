@@ -126,7 +126,7 @@ class Optimizer(object):
                 self._non_cat_inds.append(ind)
         self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
 
-        self.parallel = Parallel(n_jobs=n_jobs)
+        self.n_jobs = n_jobs
 
     def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
         """Check arguments for sanity."""
@@ -170,8 +170,10 @@ class Optimizer(object):
             next_x = self._next_x
 
             if len(cat_inds) == 0:
-                if np.any(np.apply_along_axis(lambda x: np.allclose(x, next_x), 1, self.Xi)):
-                    warnings.warn("The objective has been evaluated at this point before.")
+                close_to_next_x = lambda x: np.allclose(x, next_x)
+                if np.any(np.apply_along_axis(close_to_next_x, 1, self.Xi)):
+                    warnings.warn("The objective has been evaluated "
+                                  "at this point before.")
             else:
                 next_x_arr = np.array(next_x)
                 next_x_non_cat = np.array(
@@ -183,7 +185,8 @@ class Optimizer(object):
                         np.array(x_arr[non_cat_inds], dtype=np.float32),
                         next_x_non_cat)
                     if cat_eq and non_cat_eq:
-                        warnings.warn("The objective has been evaluated at this point before.")
+                        warnings.warn("The objective has been evaluated "
+                                      "at this point before.")
 
             # return point computed from last call to tell()
             return next_x
@@ -254,14 +257,14 @@ class Optimizer(object):
 
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    jobs = (delayed(fmin_l_bfgs_b)(
-                        gaussian_acquisition_1D, x,
-                        args=(est, np.min(self.yi), self.acq_func,
-                              self.acq_func_kwargs),
-                        bounds=self.space.transformed_bounds,
-                        approx_grad=False,
-                        maxiter=20) for x in x0)
-                    results = self.parallel(jobs)
+                    results = Parallel(n_jobs=self.n_jobs)(
+                        delayed(fmin_l_bfgs_b)(
+                            gaussian_acquisition_1D, x,
+                            args=(est, np.min(self.yi), self.acq_func,
+                                  self.acq_func_kwargs),
+                            bounds=self.space.transformed_bounds,
+                            approx_grad=False,
+                            maxiter=20) for x in x0)
 
                 cand_xs = np.array([r[0] for r in results])
                 cand_acqs = np.array([r[1] for r in results])
