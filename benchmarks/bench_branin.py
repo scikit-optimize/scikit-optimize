@@ -2,10 +2,11 @@ import numpy as np
 import argparse
 
 from skopt.benchmarks import branin
-from skopt import gp_minimize, forest_minimize, gbrt_minimize
-from skopt.utils import dump
+from skopt import gp_minimize
+from skopt import forest_minimize
+from skopt import gbrt_minimize
 
-def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
+def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
     bounds = [(-5.0, 10.0), (0.0, 15.0)]
     optimizers = [("gp_minimize", gp_minimize),
                   ("forest_minimize", forest_minimize),
@@ -28,9 +29,8 @@ def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
                     branin, bounds, random_state=random_state, n_calls=n_calls,
                     acq_optimizer=acq_optimizer)
             results.append(res)
-            print("Dumping results of run %d" % random_state)
-            dump(res, "%d_run" % random_state)
-            min_func_calls.append(np.argmin(res.func_vals) + 1)
+            func_vals = np.round(res.func_vals, 3)
+            min_func_calls.append(np.argmin(func_vals) + 1)
 
         optimal_values = [result.fun for result in results]
         mean_optimum = np.mean(optimal_values)

@@ -2,9 +2,12 @@ import argparse
 import numpy as np
 
 from skopt.benchmarks import hart6
-from skopt import gp_minimize, forest_minimize, gbrt_minimize
+from skopt import gp_minimize
+from skopt import forest_minimize
+from skopt import gbrt_minimize
 
-def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
+
+def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
     bounds = np.tile((0., 1.), (6, 1))
     optimizers = [("gp_minimize", gp_minimize),
                   ("forest_minimize", forest_minimize),
@@ -20,12 +23,14 @@ def run(n_calls=50, n_runs=5, acq_optimizer="lbfgs"):
             if name == "gp_minimize":
                 res = optimizer(
                     hart6, bounds, random_state=random_state, n_calls=n_calls,
-                    noise=1e-10, n_jobs=-1, acq_optimizer=acq_optimizer, verbose=1)
+                    noise=1e-10, n_jobs=-1, acq_optimizer=acq_optimizer,
+                    verbose=1)
             else:
                 res = optimizer(
                     hart6, bounds, random_state=random_state, n_calls=n_calls)
             results.append(res)
-            min_func_calls.append(np.argmin(res.func_vals) + 1)
+            func_vals = np.round(res.func_vals, 3)
+            min_func_calls.append(np.argmin(func_vals) + 1)
 
         optimal_values = [result.fun for result in results]
         mean_optimum = np.mean(optimal_values)
@@ -46,9 +51,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--n_calls', nargs="?", default=50, type=int, help="Number of function calls.")
+        '--n_calls', nargs="?", default=200, type=int, help="Number of function calls.")
     parser.add_argument(
-        '--n_runs', nargs="?", default=5, type=int, help="Number of runs.")
+        '--n_runs', nargs="?", default=10, type=int, help="Number of runs.")
     parser.add_argument(
         '--acq_optimizer', nargs="?", default="lbfgs", type=str,
         help="Acquistion optimizer.")
