@@ -51,12 +51,14 @@ from . import acquisition
 from . import benchmarks
 from . import callbacks
 from . import learning
+from . import optimizer
 from . import plots
 from . import space
 from .optimizer import dummy_minimize
 from .optimizer import forest_minimize
 from .optimizer import gbrt_minimize
 from .optimizer import gp_minimize
+from .optimizer import Optimizer
 from .utils import load, dump
 
 
@@ -75,6 +77,7 @@ __all__ = (
     "dummy_minimize",
     "forest_minimize",
     "gbrt_minimize",
+    "Optimizer",
     "dump",
     "load",
 )
