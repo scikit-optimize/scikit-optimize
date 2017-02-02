@@ -3,6 +3,8 @@
 
 ## Version 0.3
 
+Third time's a charm.
+
 ### New features
 
 * Accuracy improvements of the optimization of the acquisition function
@@ -10,6 +12,8 @@ by pre-selecting good candidates as starting points when
 using `acq_optimizer='lbfgs'`.
 * Support a ask-and-tell interface. Check out the `Optimizer` class if you need
 fine grained control over the iterations.
+* Parallelize L-BFGS minimization runs over the acquisition function.
+* Implement weighted hamming distance kernel for problems with only categorical dimensions.
 
 
 ## Version 0.2
