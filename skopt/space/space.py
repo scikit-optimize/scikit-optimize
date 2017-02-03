@@ -309,10 +309,10 @@ class Categorical(Dimension):
               of the original space.
         """
         self.categories = categories
-        self.transform_ = transform
 
         if transform is None:
             transform = "onehot"
+        self.transform_ = transform
         if transform not in ["identity", "onehot"]:
             raise ValueError("Expected transform to be 'identity' or 'onehot' "
                              "got %s" % transform)
@@ -363,7 +363,7 @@ class Categorical(Dimension):
 
     @property
     def transformed_size(self):
-        if self.transform_ is None:
+        if self.transform_ == "onehot":
             size = len(self.categories)
             # when len(categories) == 2, CategoricalEncoder outputs a single value
             return size if size != 2 else 1
