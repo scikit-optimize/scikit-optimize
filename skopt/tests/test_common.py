@@ -18,6 +18,7 @@ from skopt import forest_minimize
 from skopt import gbrt_minimize
 from skopt.benchmarks import branin
 from skopt.benchmarks import bench4
+from skopt.benchmarks import bench5
 from skopt.space import Space
 
 
@@ -188,18 +189,31 @@ def test_init_vals():
 
 
 def test_categorical_init_vals():
-    n_random_starts = 5
     optimizers = [
         dummy_minimize,
-        partial(gp_minimize, n_random_starts=n_random_starts),
-        partial(forest_minimize, n_random_starts=n_random_starts),
-        partial(gbrt_minimize, n_random_starts=n_random_starts)
+        partial(gp_minimize, n_random_starts=0),
+        partial(forest_minimize, n_random_starts=0),
+        partial(gbrt_minimize, n_random_starts=0)
     ]
     space = [("-2", "-1", "0", "1", "2")]
     x0 = [["0"], ["1"], ["2"]]
-    n_calls = 10
+    n_calls = 5
     for optimizer in optimizers:
         yield (check_init_vals, optimizer, bench4, space, x0, n_calls)
+
+
+def test_mixed_spaces():
+    optimizers = [
+        dummy_minimize,
+        partial(gp_minimize, n_random_starts=0),
+        partial(forest_minimize, n_random_starts=0),
+        partial(gbrt_minimize, n_random_starts=0)
+    ]
+    space = [("-2", "-1", "0", "1", "2"), (-2.0, 2.0)]
+    x0 = [["0", 2.0], ["1", 1.0], ["2", 1.0]]
+    n_calls = 10
+    for optimizer in optimizers:
+        yield (check_init_vals, optimizer, bench5, space, x0, n_calls)
 
 
 def check_init_vals(optimizer, func, space, x0, n_calls):

@@ -189,21 +189,26 @@ def gp_minimize(func, dimensions, base_estimator=None,
     # Check params
     rng = check_random_state(random_state)
 
-    # To make sure that GP operates in the [0, 1] space
-    is_categorical = all([isinstance(check_dimension(d), Categorical) for d in dimensions])
-    if is_categorical:
-        dimensions = [check_dimension(d,
+    dim_types = [check_dimension(d) for d in dimensions]
+    is_cat = all([isinstance(check_dimension(d), Categorical) for d in dim_types])
+    if is_cat:
+        transformed_dims = [check_dimension(d,
                                       transform="identity") for d in dimensions]
     else:
-        dimensions = [check_dimension(d,
-                                      transform="normalize") for d in dimensions]
+        transformed_dims = []
+        for dim_type, dim in zip(dim_types, dimensions):
+            if isinstance(dim_type, Categorical):
+                transformed_dims.append(check_dimension(dim, transform="onehot"))
+            # To make sure that GP operates in the [0, 1] space
+            else:
+                transformed_dims.append(check_dimension(dim, transform="normalize"))
 
-    space = Space(dimensions)
+    space = Space(transformed_dims)
     # Default GP
     if base_estimator is None:
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
 
-        if is_categorical:
+        if is_cat:
             other_kernel = HammingKernel(
                 length_scale=np.ones(space.transformed_n_dims))
             acq_optimizer = "sampling"

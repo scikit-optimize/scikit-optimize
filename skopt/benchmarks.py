@@ -49,6 +49,18 @@ def bench4(x):
     return float(x[0]) ** 2
 
 
+def bench5(x):
+    """A benchmark function for test purposes.
+
+        f(x) = float(x[0]) ** 2 + x[1] ** 2
+
+    where x is a string. It has a single minima with f(x) = 0 at x[0] = "0"
+    and x[1] = "0"
+    This benchmark is used for checking support of mixed spaces.
+    """
+    return float(x[0]) ** 2 + x[1] ** 2
+
+
 def branin(x, a=1, b=5.1 / (4 * np.pi**2), c=5. / np.pi,
            r=6, s=10, t=1. / (8 * np.pi)):
     """Branin-Hoo function is defined on the square x1 ∈ [-5, 10], x2 ∈ [0, 15].
