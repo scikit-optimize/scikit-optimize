@@ -87,7 +87,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
         - `"gp_hedge"` Probabilistically choose one of the above three
-          acquisition functions at every iteration.
+          acquisition functions at every iteration. The weightage
+          given to these gains can be set by `\eta` through `acq_func_kwargs`.
             - The gains `g_i` are initialized to zero.
             - At every iteration,
                 - Each acquisition function is optimised independently to propose an
@@ -96,6 +97,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
+          Reference: https://dslpitt.org/uai/papers/11/p327-hoffman.pdf
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
