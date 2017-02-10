@@ -54,9 +54,19 @@ class Optimizer(object):
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either
 
-        - `"LCB"` for lower confidence bound,
-        - `"EI"` for negative expected improvement,
+        - `"LCB"` for lower confidence bound.
+        - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
+        - `"gp_hedge"` Probabilistically choose one of the above three
+          acquisition functions at every iteration.
+            - The gains `g_i` are initialized to zero.
+            - At every iteration,
+                - Each acquisition function is optimised independently to propose an
+                  candidate point `X_i`.
+                - Out of all these candidate points, the next point `X_best` is
+                  chosen by $softmax(\eta g_i)$
+                - After fitting the surrogate model with `(X_best, y_best)`,
+                  the gains are updated such that $g_i -= \mu(X_i)$
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -96,13 +106,23 @@ class Optimizer(object):
 
     """
     def __init__(self, dimensions, base_estimator,
-                 n_random_starts=10, acq_func="EI", acq_optimizer="lbfgs",
+                 n_random_starts=10, acq_func="gp_hedge", acq_optimizer="lbfgs",
                  random_state=None, acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
+
+        if self.acq_func == "gp_hedge":
+            self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
+            self.gains_ = np.zeros(3)
+        else:
+            self.cand_acq_funcs_ = [self.acq_func]
+
+        if acq_func_kwargs is None:
+            acq_func_kwargs = dict()
+        self.eta = acq_func_kwargs.get("eta", 1.0)
 
         if acq_optimizer_kwargs is None:
             acq_optimizer_kwargs = dict()
@@ -236,46 +256,59 @@ class Optimizer(object):
                 warnings.simplefilter("ignore")
                 est.fit(self.space.transform(self.Xi), self.yi)
 
+            if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
+                self.gains_ -= est.predict(np.vstack(self.next_xs_))
             self.models.append(est)
 
             X = self.space.transform(self.space.rvs(
                 n_samples=self.n_points, random_state=self.rng))
-            values = _gaussian_acquisition(
-                X=X, model=est, y_opt=np.min(self.yi),
-                acq_func=self.acq_func, acq_func_kwargs=self.acq_func_kwargs)
+            self.next_xs_ = []
+            for cand_acq_func in self.cand_acq_funcs_:
+                values = _gaussian_acquisition(
+                    X=X, model=est, y_opt=np.min(self.yi),
+                    acq_func=cand_acq_func, acq_func_kwargs=self.acq_func_kwargs)
+                # Find the minimum of the acquisition function by randomly sampling
+                # points from the space
+                if self.acq_optimizer == "sampling":
+                    next_x = X[np.argmin(values)]
 
-            # Find the minimum of the acquisition function by randomly sampling
-            # points from the space
-            if self.acq_optimizer == "sampling":
-                next_x = X[np.argmin(values)]
+                # Use BFGS to find the mimimum of the acquisition function, the
+                # minimization starts from `n_restarts_optimizer` different points
+                # and the best minimum is used
+                elif self.acq_optimizer == "lbfgs":
+                    x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
 
-            # Use BFGS to find the mimimum of the acquisition function, the
-            # minimization starts from `n_restarts_optimizer` different points
-            # and the best minimum is used
-            elif self.acq_optimizer == "lbfgs":
-                x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
-
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    results = Parallel(n_jobs=self.n_jobs)(
-                        delayed(fmin_l_bfgs_b)(
-                            gaussian_acquisition_1D, x,
-                            args=(est, np.min(self.yi), self.acq_func,
-                                  self.acq_func_kwargs),
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        results = Parallel(n_jobs=self.n_jobs)(
+                            delayed(fmin_l_bfgs_b)(
+                                gaussian_acquisition_1D, x,
+                                args=(est, np.min(self.yi), cand_acq_func,
+                                      self.acq_func_kwargs),
                             bounds=self.space.transformed_bounds,
                             approx_grad=False,
                             maxiter=20) for x in x0)
 
-                cand_xs = np.array([r[0] for r in results])
-                cand_acqs = np.array([r[1] for r in results])
+                    cand_xs = np.array([r[0] for r in results])
+                    cand_acqs = np.array([r[1] for r in results])
+                    next_x = cand_xs[np.argmin(cand_acqs)]
 
-                next_x = cand_xs[np.argmin(cand_acqs)]
+                # lbfgs should handle this but just in case there are
+                # precision errors.
+                if not self.space.is_categorical:
+                    next_x = np.clip(
+                        next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
+                self.next_xs_.append(next_x)
 
-            # lbfgs should handle this but just in case there are
-            # precision errors.
-            if not self.space.is_categorical:
-                next_x = np.clip(
-                    next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
+            if self.acq_func == "gp_hedge":
+                logits = np.array(self.gains_)
+                logits -= np.max(logits)
+                exp_logits = np.exp(self.eta * logits)
+                probs = exp_logits / np.sum(exp_logits)
+                next_x = self.next_xs_[np.argmax(np.random.multinomial(1, probs))]
+            else:
+                next_x = self.next_xs_[0]
+
             # note the need for [0] at the end
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]

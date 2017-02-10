@@ -15,7 +15,7 @@ from ..space import Space
 
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
-                acq_func="EI", acq_optimizer="lbfgs", x0=None, y0=None,
+                acq_func="gp_hedge", acq_optimizer="lbfgs", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
                 n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
                 noise="gaussian", n_jobs=1):
@@ -86,6 +86,18 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
+        - `"gp_hedge"` Probabilistically choose one of the above three
+          acquisition functions at every iteration. The weightage
+          given to these gains can be set by `\eta` through `acq_func_kwargs`.
+            - The gains `g_i` are initialized to zero.
+            - At every iteration,
+                - Each acquisition function is optimised independently to propose an
+                  candidate point `X_i`.
+                - Out of all these candidate points, the next point `X_best` is
+                  chosen by $softmax(\eta g_i)$
+                - After fitting the surrogate model with `(X_best, y_best)`,
+                  the gains are updated such that $g_i -= \mu(X_i)$
+          Reference: https://dslpitt.org/uai/papers/11/p327-hoffman.pdf
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
