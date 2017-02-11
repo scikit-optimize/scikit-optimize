@@ -14,6 +14,19 @@ using `acq_optimizer='lbfgs'`.
 fine grained control over the iterations.
 * Parallelize L-BFGS minimization runs over the acquisition function.
 * Implement weighted hamming distance kernel for problems with only categorical dimensions.
+* New acquisition function `gp_hedge` that probabilistically one of `EI`, `PI`
+  or `LCB` at every iteration depending upon the cumulative gain.
+
+### Bug fixes
+* Warnings are now raised if a point is chosen as the candidate optimum multiple
+  times.
+* Infinite gradients that were raised in the kernel gradient computation are
+  now fixed.
+* Integer dimensions are now normalized to [0, 1] internally in `gp_minimize`.
+
+### API Changes.
+* The default `acq_optimizer` function has changed from `"auto"` to `"lbfgs"`
+  in `gp_minimize`.
 
 
 ## Version 0.2
