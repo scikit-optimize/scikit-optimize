@@ -26,3 +26,16 @@ after_success:
     pip install codecov;
     codecov;
     fi
+
+deploy:
+  provider: pypi
+  user: betatim
+  # this line together with `setup.cfg` creates universal wheels as long as
+  # skopt is a python only module (no compiled code)
+  distributions: sdist bdist_wheel
+  on:
+    tags: true
+    repo: scikit-optimize/scikit-optimize
+    condition: "$PYTHON_VERSION = 3.5"
+  password:
+    secure: ONhRRNXtH2+Upv2hMpZkfQyNgYxBZYEn/DVpw6OKvZXMyHrtADnWZyN40D0PFHZk6G5iJHft4A+JYAEdzBwfAgbpAde7nJu2gu50vAMyxoNlBGAqMTy4ZcVnr3dNaYN/G2HZUSryqXCKWM7HaV/nkC8XQtjKX/IKqbQ0zQZPhhLVLh09KUmlp08LAOSHiPpkC1O16JQBmkcEHL+GmNapZrjHxpIbvWdSUJJxJ9GhFOkiFDqs158pB/MJSBSmGaxAjKpx87ikzLTuRA2h0Pc8/wXqT75JifaOyXs4aGQuVXYMEUiH60eJ6dUgpZOsf3kMHpRYc6KIlwDERRDP9+FHKiwVg567HqP54CFKK3od/4oeByy2VO/FaQCF5+IH0m33DltkKKJ7q9iwWKQZboYSMY137HXLadZVw8XBKI6d1W0nwcAaKnu3p/TYMbMnUPZN3ptB1KAnR2/Y0EvgWan5XbVrGpIUjOYXUtdPeen2zzhWpMZk/79LbQ5WOtyzPjxld+nWJMYq6GAjKkc5BJkFkBiro8KUDIPC7eMiOa9FbtKHupDvFiLDCByzS2d01+gQ7BVSSkavEBqIQtrfZWjHryfgwfZjh7pubKw+UV7qmDUKNPVfZ29pA1DIvrNwDasRIM0aacyndh1XtFT7kxXNbqDzchWgU70BmvjMO18IaSQ=

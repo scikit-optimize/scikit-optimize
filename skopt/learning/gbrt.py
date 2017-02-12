@@ -50,7 +50,7 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples, n_features):
+        * `X` [array-like, shape=(n_samples, n_features)]:
             Training vectors, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -98,7 +98,7 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples, n_features):
+        * `X` [array-like, shape=(n_samples, n_features)]:
             where `n_samples` is the number of samples
             and `n_features` is the number of features.
         """
