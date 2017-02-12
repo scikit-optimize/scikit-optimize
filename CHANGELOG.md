@@ -14,7 +14,7 @@ using `acq_optimizer='lbfgs'`.
 fine grained control over the iterations.
 * Parallelize L-BFGS minimization runs over the acquisition function.
 * Implement weighted hamming distance kernel for problems with only categorical dimensions.
-* New acquisition function `gp_hedge` that probabilistically one of `EI`, `PI`
+* New acquisition function `gp_hedge` that probabilistically chooses one of `EI`, `PI`
   or `LCB` at every iteration depending upon the cumulative gain.
 
 ### Bug fixes
