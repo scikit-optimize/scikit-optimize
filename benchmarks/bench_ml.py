@@ -9,6 +9,8 @@ from datetime import datetime
 
 
 if __name__ == "__main__":
+
+    # parameters that will be turned in command line args
     max_iter = 32
     repetitions = 3
     save_traces = False
@@ -21,7 +23,7 @@ if __name__ == "__main__":
 
     pool = Pool()
 
-    # all the parameter values and objectives collected during execution are stored in list below
+    # all the parameter values and objectives collected during execution are stored in dict below
     all_data = {}
 
     for Model in selected_models:
@@ -34,13 +36,13 @@ if __name__ == "__main__":
                 continue
 
             all_data[Model][Dataset] = {}
-            # let the battle begin!
+            # enumerate all combinations of algos, models, datasets
             for Algorithm in selected_algorithms:
                 print(Algorithm.__name__, Model, Dataset)
 
                 params = [(Algorithm, Model, Dataset, max_iter, np.random.randint(2**30)) for rep in range(repetitions)]
 
-                # test the algorithm's might
+                # run experiment 
                 if run_parallel:
                     raw_trace = pool.map(evaluate_optimizer, params)
                 else:
