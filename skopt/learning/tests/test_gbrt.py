@@ -17,20 +17,6 @@ def truth(X):
     return 0.5 * np.sin(1.75*X[:, 0])
 
 
-def constant_noise(X):
-    return np.ones_like(X)
-
-
-def sample_noise(X, std=0.2, noise=constant_noise,
-                 random_state=None):
-    """Uncertainty inherent to the process
-
-    The regressor should try and model this.
-    """
-    rng = check_random_state(random_state)
-    return np.array([rng.normal(0, std*noise(x)) for x in X])
-
-
 def test_gbrt_gaussian():
     # estimate quantiles of the normal distribution
     rng = np.random.RandomState(1)
@@ -78,8 +64,7 @@ def test_gbrt_with_std():
     X = rng.uniform(0, 5, 500)[:, np.newaxis]
 
     noise_level = 0.5
-    y = truth(X) + sample_noise(X, noise_level, random_state=rng)
-
+    y = truth(X) + rng.normal(0, noise_level, len(X))
     X_ = np.linspace(0, 5, 1000)[:, np.newaxis]
 
     model = GradientBoostingQuantileRegressor()
