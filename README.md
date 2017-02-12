@@ -3,13 +3,16 @@
 
 # Scikit-Optimize
 
-Scikit-Optimize, or `skopt`, is a simple and efficient library
-for sequential model-based optimization, accessible to everybody and reusable in various
-contexts.
+Scikit-Optimize, or `skopt`, is a simple and efficient library to
+minimize (very) expensive and noisy black-box functions. It implements
+several methods for sequential model-based optimization. `skopt` is reusable
+in many contexts and accessible.
 
 The library is built on top of NumPy, SciPy and Scikit-Learn.
 
-We do not do gradient-based optimization. For gradient-based optimization you should be looking at [`scipy.optimize`](http://docs.scipy.org/doc/scipy/reference/optimize.html)
+We do not perform gradient-based optimization. For gradient-based optimization
+algorithms look at
+[`scipy.optimize`](http://docs.scipy.org/doc/scipy/reference/optimize.html)
 
 ![Approximated objective](https://github.com/scikit-optimize/scikit-optimize/blob/master/media/bo-objective.png)
 
@@ -53,8 +56,8 @@ and the other [examples](https://github.com/scikit-optimize/scikit-optimize/tree
 ## Development
 
 The library is still experimental and under heavy development. Checkout the
-[ROADMAP](https://github.com/scikit-optimize/scikit-optimize/issues/202) for
-the next release or look at some [easy issues](https://github.com/scikit-optimize/scikit-optimize/issues?q=is%3Aissue+is%3Aopen+label%3AEasy)
+[next milestone](https://github.com/scikit-optimize/scikit-optimize/milestone/4) for
+the plans for the next release or look at some [easy issues](https://github.com/scikit-optimize/scikit-optimize/issues?q=is%3Aissue+is%3Aopen+label%3AEasy)
 to get started contributing.
 
 The development version can be installed through:
@@ -67,4 +70,4 @@ python setup.py develop
 
 Run the tests by executing `nosetests` in the top level directory.
 
-Contributors are welcome!
+All contributors are welcome!
