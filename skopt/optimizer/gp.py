@@ -94,9 +94,10 @@ def gp_minimize(func, dimensions, base_estimator=None,
                 - Each acquisition function is optimised independently to propose an
                   candidate point `X_i`.
                 - Out of all these candidate points, the next point `X_best` is
-                  chosen by $softmax(\eta g_i)$
+                  chosen by `softmax(\eta g_i)`
                 - After fitting the surrogate model with `(X_best, y_best)`,
-                  the gains are updated such that $g_i -= \mu(X_i)$
+                  the gains are updated such that `g_i -= \mu(X_i)`
+
           Reference: https://dslpitt.org/uai/papers/11/p327-hoffman.pdf
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
@@ -105,6 +106,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         with `acq_optimizer`.
 
         The `acq_func` is computed at `n_points` sampled randomly.
+
         - If set to `"sampling"`, then the point among these `n_points`
           where the `acq_func` is minimum is the next candidate minimum.
         - If set to `"lbfgs"`, then

@@ -31,7 +31,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
 
         - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+        - a `(upper_bound, lower_bound, prior)` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
@@ -47,7 +47,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         - If it is a list, use it as a single initial input point.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list, scalar or `None`]
+    * `y0` [list, scalar or `None`]:
         Evaluation of initial input points.
 
         - If it is a list, then it corresponds to evaluations of the function

@@ -41,7 +41,7 @@ def forest_minimize(func, dimensions, base_estimator="ET",
 
         - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+        - a `(upper_bound, lower_bound, prior)` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
