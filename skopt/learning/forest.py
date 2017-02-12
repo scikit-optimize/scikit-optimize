@@ -15,11 +15,11 @@ def _return_std(X, trees, predictions, min_variance):
     * `X` [array-like, shape=(n_samples, n_features)]:
         Input data.
 
-    * `trees` [list, shape=(n_estimators,)]
+    * `trees` [list, shape=(n_estimators,)]:
         List of fit sklearn trees as obtained from the ``estimators_``
         attribute of a fit RandomForestRegressor or ExtraTreesRegressor.
 
-    * `predictions` [array-like, shape=(n_samples,)]
+    * `predictions` [array-like, shape=(n_samples,)]:
         Prediction of each data point as returned by RandomForestRegressor
         or ExtraTreesRegressor.
 
@@ -138,7 +138,7 @@ class ExtraTreesRegressor(sk_ExtraTreesRegressor):
         * `X` [array-like, shape=(n_samples, n_features)]:
             Input data.
 
-        * `return_std` [bool, default False]:
+        * `return_std` [bool, default: False]:
             Whether or not to return the standard deviation.
 
         Returns
