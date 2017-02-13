@@ -4,12 +4,12 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='scikit-optimize',
-      version='0.2',
+      version='0.3',
       description='Sequential model-based optimization toolbox.',
-      long_description=('Scikit-Optimize, or skopt, is a simple and efficient'
-                        ' library for sequential model-based optimization,'
-                        ' accessible to everybody and reusable in various'
-                        ' contexts.'),
+      long_description=('Scikit-Optimize, or `skopt`, is a simple and efficient'
+                        ' library to minimize (very) expensive and noisy'
+                        ' black-box functions. It implements several methods'
+                        ' for sequential model-based optimization.'),
       url='https://scikit-optimize.github.io/',
       license='BSD',
       author='The scikit-optimize contributors',
