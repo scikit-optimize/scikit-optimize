@@ -48,12 +48,12 @@ def check_dimension(dimension, transform=None):
           - "onehot" (default) one-hot transformation of the original space.
           - "identity" same as the original space.
 
-        - For `Real` and `Integer` dimensions, the following transformations are
-          supported.
+        - For `Real` and `Integer` dimensions, the following transformations
+          are supported.
 
-          - "identity", (default) the transformed space is the same as the original
-            space.
-          - "normalize", the transformed space is scaled in between 0 and 1.
+          - "identity", (default) the transformed space is the same as the
+            original space.
+          - "normalize", the transformed space is scaled to be between 0 and 1.
 
     Returns
     -------
@@ -151,9 +151,10 @@ class Real(Dimension):
         * `transform` ["identity", "normalize", optional]:
             The following transformations are supported.
 
-            - "identity", (default) the transformed space is the same as the original
-              space.
-            - "normalize", the transformed space is scaled in between 0 and 1.
+            - "identity", (default) the transformed space is the same as the
+              original space.
+            - "normalize", the transformed space is scaled to be between
+              0 and 1.
         """
         self.low = low
         self.high = high
@@ -239,9 +240,10 @@ class Integer(Dimension):
         * `transform` ["identity", "normalize", optional]:
             The following transformations are supported.
 
-            - "identity", (default) the transformed space is the same as the original
-              space.
-            - "normalize", the transformed space is scaled in between 0 and 1.
+            - "identity", (default) the transformed space is the same as the
+              original space.
+            - "normalize", the transformed space is scaled to be between
+              0 and 1.
         """
         self.low = low
         self.high = high
@@ -254,7 +256,7 @@ class Integer(Dimension):
         if transform not in ["normalize", "identity"]:
             raise ValueError(
                 "transform should be 'normalize' or 'identity' got %s" %
-                transform_)
+                self.transform_)
         if transform == "normalize":
             self._rvs = uniform(0, 1)
             self.transformer = Normalize(low, high, is_int=True)
@@ -305,8 +307,8 @@ class Categorical(Dimension):
 
         * `transform` ["onehot", "identity", default="onehot"] :
             - "identity", the transformed space is the same as the original space.
-            - "onehot", the transformed space is a one-hot encoded representation
-              of the original space.
+            - "onehot", the transformed space is a one-hot encoded
+              representation of the original space.
         """
         self.categories = categories
 
@@ -365,7 +367,8 @@ class Categorical(Dimension):
     def transformed_size(self):
         if self.transform_ == "onehot":
             size = len(self.categories)
-            # when len(categories) == 2, CategoricalEncoder outputs a single value
+            # when len(categories) == 2, CategoricalEncoder outputs a
+            # single value
             return size if size != 2 else 1
         return 1
 
