@@ -214,6 +214,9 @@ class Real(Dimension):
     def bounds(self):
         return (self.low, self.high)
 
+    def contains(self, point):
+        return self.low <= point <= self.high
+
     @property
     def transformed_bounds(self):
         if self.transform_ == "normalize":
@@ -283,6 +286,9 @@ class Integer(Dimension):
     @property
     def bounds(self):
         return (self.low, self.high)
+
+    def contains(self, point):
+        return self.low <= point <= self.high
 
     @property
     def transformed_bounds(self):
@@ -375,6 +381,9 @@ class Categorical(Dimension):
     @property
     def bounds(self):
         return self.categories
+
+    def contains(self, point):
+        return point in self.categories
 
     @property
     def transformed_bounds(self):
@@ -568,6 +577,13 @@ class Space:
                 b.extend(dim.bounds)
 
         return b
+
+    def contains(self, point):
+        """Check that `point` is within the bounds of the space."""
+        for component, dim in zip(point, self.dimensions):
+            if not dim.contains(component):
+                return False
+        return True
 
     @property
     def transformed_bounds(self):

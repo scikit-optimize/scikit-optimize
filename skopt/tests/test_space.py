@@ -49,7 +49,10 @@ def check_limits(value, lower_bound, upper_bound):
 def test_real():
     a = Real(1, 25)
     for i in range(50):
-        yield (check_limits, a.rvs(random_state=i), 1, 25)
+        r = a.rvs(random_state=i)
+        yield (check_limits, r, 1, 25)
+        a.contains(r)
+
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
     assert_array_equal(a.transform(random_values), random_values)
@@ -71,7 +74,10 @@ def test_real():
 def test_integer():
     a = Integer(1, 10)
     for i in range(50):
-        yield (check_limits, a.rvs(random_state=i), 1, 11)
+        r = a.rvs(random_state=i)
+        yield (check_limits, r, 1, 11)
+        a.contains(r)
+
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
     assert_array_equal(a.transform(random_values), random_values)
