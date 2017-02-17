@@ -300,6 +300,7 @@ def test_invalid_n_calls_arguments():
                              y0=[2.0, 3.0, 5.0],
                              random_state=1, n_random_starts=7)
 
+
 def test_repeated_x():
     for minimizer in MINIMIZERS:
         assert_warns_message(

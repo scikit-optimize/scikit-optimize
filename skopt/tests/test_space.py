@@ -279,6 +279,18 @@ def test_normalize():
     assert_array_equal(X_orig, X)
 
 
+def check_valid_transformation(klass):
+    assert klass(2, 30, transform="normalize")
+    assert klass(2, 30, transform="identity")
+    assert_raises_regex(ValueError, "should be 'normalize' or 'identity'",
+                        klass, 2, 30, transform='not a valid transform name')
+
+
+def test_valid_transformation():
+    yield (check_valid_transformation, Integer)
+    yield (check_valid_transformation, Real)
+
+
 def test_invalid_dimension():
     assert_raises_regex(ValueError, "has to be a list or tuple",
                         space_check_dimension, "23")
