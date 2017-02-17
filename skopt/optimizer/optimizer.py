@@ -239,10 +239,16 @@ class Optimizer(object):
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
                                             for point in x)):
+            if not np.all(self.space.contains(p) for p in x):
+                raise ValueError("Not all points are within the bounds of"
+                                 " the space.")
             self.Xi.extend(x)
             self.yi.extend(y)
 
         elif isinstance(x, Iterable) and isinstance(y, Number):
+            if not self.space.contains(x):
+                raise ValueError("Point is not within the bounds of"
+                                 " the space.")
             self.Xi.append(x)
             self.yi.append(y)
 
@@ -328,3 +334,6 @@ class Optimizer(object):
         for _ in range(n_iter):
             x = self.ask()
             self.tell(x, func(x))
+
+        return create_result(self.Xi, self.yi, self.space, self.rng,
+                             models=self.models)
