@@ -206,6 +206,9 @@ def base_minimize(func, dimensions, base_estimator,
     if x0 and y0 is None:
         y0 = map(func, x0)
 
+    # setting the scope for the result object we will return
+    res = None
+
     # User is god and knows the value of the objective at these points
     if x0 and y0 is not None:
         if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
@@ -224,7 +227,8 @@ def base_minimize(func, dimensions, base_estimator,
             raise ValueError(
                 "`y0` elements should be scalars")
 
-        optimizer.tell(x0, y0)
+        res = optimizer.tell(x0, y0)
+        res.specs = specs
 
         _eval_callbacks(callbacks, optimizer, specs)
 
@@ -238,10 +242,9 @@ def base_minimize(func, dimensions, base_estimator,
         if not np.isscalar(next_y):
             raise ValueError("`func` should return a scalar")
 
-        optimizer.tell(next_x, next_y, fit=fit_model)
+        res = optimizer.tell(next_x, next_y, fit=fit_model)
+        res.specs = specs
 
         _eval_callbacks(callbacks, optimizer, specs)
 
-    # Pack results
-    return create_result(optimizer.Xi, optimizer.yi, optimizer.space,
-                         optimizer.rng, specs, optimizer.models)
+    return res

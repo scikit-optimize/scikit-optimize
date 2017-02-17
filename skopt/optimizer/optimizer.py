@@ -15,6 +15,7 @@ from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..space import Categorical
 from ..space import Space
+from ..utils import create_result
 
 
 class Optimizer(object):
@@ -317,6 +318,10 @@ class Optimizer(object):
             # note the need for [0] at the end
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]
+
+        # Pack results
+        return create_result(self.Xi, self.yi, self.space, self.rng,
+                             models=self.models)
 
     def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
