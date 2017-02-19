@@ -219,53 +219,48 @@ class TesterClass():
 
         return r
 
+# this is necessary to generate table for README in the end
+table_template = """|Blackbox Function| Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
+------------------|------------|-----------|---------------------|--------------------|-----------------------
+|ML_hypp_tune|"""
 
-
-def visualize_traces(all_data):
-    import matplotlib.pyplot as plt
-    plt.close('all')
-
+def calculate_performance(all_data):
     average_for_algo = {}
 
     for Model in all_data:
         for Dataset in all_data[Model]:
             for Algorithm in all_data[Model][Dataset]:
-
                 data = all_data[Model][Dataset][Algorithm]
-
 
                 if not Algorithm in average_for_algo:
                     average_for_algo[Algorithm] = []
 
-                # leave only objective values
-                data = [[v[1] for v in d] for d in data]
-                average_for_algo[Algorithm].extend(data)
+                objs = [[v[1] for v in d] for d in data] # leave only objective values
+                average_for_algo[Algorithm].append(objs)
 
     # calculate averages
     for Algorithm in average_for_algo:
-        average_for_algo[Algorithm] = np.mean(average_for_algo[Algorithm], axis=0)
+        mean_obj_vals = np.mean(average_for_algo[Algorithm], axis=0)
+        minimums = np.min(mean_obj_vals, axis=1)
+        f_calls = np.argmin(mean_obj_vals, axis=1)
 
-    to_render = {'Average objective': average_for_algo}
+        min_mean = np.mean(minimums)
+        min_stdd = np.std(minimums)
+        min_best = np.min(minimums)
 
-    def render_data(all_traces, name):
-        plt.figure()
-        idx = 0
-        colors = ['r','g','b','v','o']
+        f_mean = np.mean(f_calls)
+        f_stdd = np.std(f_calls)
+        f_best = np.min(f_calls)
 
-        for k, v in all_traces.iteritems():
-            T = np.array(v)
-            plt.scatter(range(len(T)), T, label=k, c=colors[idx])
-            idx += 1
+        def fmt(float_value):
+            return ("%.3f" % float_value)
 
-        plt.xlabel("Iteration")
-        plt.grid()
-        plt.title(name)
-        plt.legend()
+        output = "|".join([fmt(min_mean) + " +/- " + fmt(min_stdd)] + [fmt(v) for v in [ min_best, f_mean, f_stdd, f_best]])
+        result = table_template + output
+        print("")
+        print(Algorithm)
+        print(result)
 
-    for k, p in to_render.iteritems():
-        render_data(p, k)
-
-    plt.show()
 
 def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
     # below seed is necessary for processes which fork at the same time
@@ -319,16 +314,12 @@ def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
 
     return trace
 
-if __name__ == "__main__":
+def run(n_calls = 32,
+        n_runs = 1,
+        save_traces = True,
+        run_parallel = False):
 
-    max_iter = 32
-    repetitions = 1
-    save_traces = True
-    run_parallel = False
-
-    selected_algorithms = [ GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor]
-
-    # For the full list of models see: Test_Model_On_Dataset.models
+    selected_regressors = [GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor]
     selected_models = ['DecisionTreeClassifier', 'DecisionTreeRegressor'] #TesterClass.models.keys()
     selected_datasets = TesterClass.datasets.keys()
 
@@ -348,22 +339,42 @@ if __name__ == "__main__":
 
             all_data[Model][Dataset] = {}
 
-            for Algorithm in selected_algorithms:
-                print(Algorithm.__name__, Model, Dataset)
+            for Regressor in selected_regressors:
+                print(Regressor.__name__, Model, Dataset)
 
-                params = [(Algorithm, Model, Dataset, max_iter, np.random.randint(2**30)) for rep in range(repetitions)]
+                params = [(Regressor, Model, Dataset, n_calls, np.random.randint(2 ** 30)) for rep in range(n_runs)]
 
                 if run_parallel:
                     raw_trace = pool.map(evaluate_optimizer, params)
                 else:
-                    raw_trace = [evaluate_optimizer(p) for p in params] # used for debugging
+                    raw_trace = [evaluate_optimizer(p) for p in params]
 
-                all_data[Model][Dataset][Algorithm.__name__] = deepcopy(raw_trace)
+                all_data[Model][Dataset][Regressor.__name__] = raw_trace
 
     # dump the recorded objective values as json
     if save_traces:
-        with open(datetime.now().strftime("%M_%Y_%d_%h_%m_%s")+'.json', 'w') as f:
+        with open(datetime.now().strftime("%m_%Y_%d_%H_%m_%s")+'.json', 'w') as f:
             json.dump(all_data, f)
 
-    visualize_traces(all_data)
+    calculate_performance(all_data)
 
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--n_calls', nargs="?", default=50, type=int,
+        help="Maximum number of allowed function calls.")
+    parser.add_argument(
+        '--n_runs', nargs="?", default=5, type=int,
+        help="Number of re-runs of single algorithm on single instance of a problem.")
+    parser.add_argument(
+        '--save_traces', nargs="?", default=False, type=bool,
+        help="Whether to save pairs (point, objective) obtained during experiments in a json file.")
+    parser.add_argument(
+        '--run_parallel', nargs="?", default=True, type=bool,
+        help="Whether to run in parallel or sequential mode.")
+
+    args = parser.parse_args()
+    run(args.n_calls, args.n_runs, args.save_traces, args.run_parallel)
