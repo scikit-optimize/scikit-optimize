@@ -44,6 +44,9 @@ def test_bounds_checking_1D():
 
     assert_raises(ValueError, opt.tell, [high + 0.5], 2.)
     assert_raises(ValueError, opt.tell, [low - 0.5], 2.)
+    # feed two points to tell() at once
+    assert_raises(ValueError, opt.tell, [high + 0.5, high], (2., 3.))
+    assert_raises(ValueError, opt.tell, [low - 0.5, high], (2., 3.))
 
 
 def test_bounds_checking_2D():

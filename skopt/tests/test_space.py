@@ -51,7 +51,7 @@ def test_real():
     for i in range(50):
         r = a.rvs(random_state=i)
         yield (check_limits, r, 1, 25)
-        a.contains(r)
+        assert_true(r in a)
 
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
@@ -76,7 +76,7 @@ def test_integer():
     for i in range(50):
         r = a.rvs(random_state=i)
         yield (check_limits, r, 1, 11)
-        a.contains(r)
+        assert_true(r in a)
 
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
