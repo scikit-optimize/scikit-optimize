@@ -214,7 +214,7 @@ class Real(Dimension):
     def bounds(self):
         return (self.low, self.high)
 
-    def contains(self, point):
+    def __contains__(self, point):
         return self.low <= point <= self.high
 
     @property
@@ -287,7 +287,7 @@ class Integer(Dimension):
     def bounds(self):
         return (self.low, self.high)
 
-    def contains(self, point):
+    def __contains__(self, point):
         return self.low <= point <= self.high
 
     @property
@@ -382,7 +382,7 @@ class Categorical(Dimension):
     def bounds(self):
         return self.categories
 
-    def contains(self, point):
+    def __contains__(self, point):
         return point in self.categories
 
     @property
@@ -578,10 +578,10 @@ class Space:
 
         return b
 
-    def contains(self, point):
+    def __contains__(self, point):
         """Check that `point` is within the bounds of the space."""
         for component, dim in zip(point, self.dimensions):
-            if not dim.contains(component):
+            if component not in dim:
                 return False
         return True
 
