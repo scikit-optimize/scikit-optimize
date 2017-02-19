@@ -31,24 +31,32 @@ VARIABLE_RANGE = "range"
 
 DATASET_LOADER = "Dataset loader"
 
-### bunch of dataset preprocessing functions ###
+# bunch of dataset preprocessing functions below
 
-def split_normalize(X, Y):
-    # only use training and validation - test is assumed to be evaluated after optimization
-    tr_fold = int(len(X) * 0.7)
+def split_normalize(X, y):
+    """
+    Splits data into training and validation parts.
+    Test data is assumed to be used after optimization.
 
+    :param X: matrix where every row is a training input
+    :param y: vector where every entry is correpsonding output
+    :return: split of data into training and validation sets.
+            70% of data is used for training, rest for validation.
+    """
+
+    tr_fold = int(len(X) * 0.7) # split data
     X, Xv = X[:tr_fold], X[tr_fold:]
-    Y, Yv = Y[:tr_fold], Y[tr_fold:]
+    y, yv = y[:tr_fold], y[tr_fold:]
 
-    # normalize
+    sc = StandardScaler() # normalize data
+    sc.fit(X, y)
 
-    sc = StandardScaler()
-    sc.fit(X, Y)
+    X, Xv = sc.transform(X), sc.transform(Xv)
 
-    X = sc.transform(X)
-    Xv = sc.transform(Xv)
+    return X, y, Xv, yv
 
-    return X, Y, Xv, Yv
+# functions below are used to apply non - linear maps to parameter values, eg
+# -3.0 -> 0.001
 
 def pow10map(x):
     return 10.0 ** x
@@ -59,13 +67,19 @@ def pow2intmap(x):
 def nop(x):
     return x
 
+# this is used to process the output of fetch_mldata
 def load_data_target(data):
     X = data['data']
     Y = data['target']
     return X, Y
 
 class TesterClass():
-
+    """
+    A class which is used to perform benchmarking of black box optimization algorithms on various
+    machine learning problems.
+    On __init__, the dataset is loaded that is used for experimentation, and it is kept in memory
+    in order to avoid reloading data.
+    """
     nnparams = {
         # up to 1024 neurons
         'hidden_layer_sizes': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [1.0, 10.0], PARAM_MAP: pow2intmap},
@@ -83,6 +97,11 @@ class TesterClass():
         'beta_2': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [0.1, 0.9999999], PARAM_MAP: nop},
     }
 
+    # every model should have fields:
+    # OUTPUT_TYPE:  FMT_NUMBER / FMT_CATEGORY
+    # MODEL_PARAMETERS: dictionary whose keys correspond to parameters that are passed to __init__ of python class
+    #                   that implements model
+    # MODEL_BACKEND: python class that implements model
     models = {
         #
         #   regressors go here
@@ -135,6 +154,9 @@ class TesterClass():
         },
     }
 
+    # every dataset should have fields:
+    # OUTPUT_TYPE:  FMT_NUMBER / FMT_CATEGORY
+    # DATASET_LOADER: callable that loads data into matrix X of inputs and vector y of outputs
     datasets={
         "Boston":{
             OUTPUT_TYPE: FMT_NUMBER,
@@ -159,6 +181,13 @@ class TesterClass():
 
     @staticmethod
     def supports(model, dataset):
+        """
+        Used to determine if model can be trained on particular dataset.
+        :param model: string, name of model class
+        :param dataset: string, name of dataset
+        :return: bool
+        """
+
         if not dataset in TesterClass.datasets:
             return False, "unknown dataset"
 
@@ -175,29 +204,24 @@ class TesterClass():
         return True, None
 
     def __init__(self, model, dataset):
-        # generate them data
+        supports, reason_if_not = TesterClass.supports(model, dataset)
 
-        supp, reason = TesterClass.supports(model, dataset)
-
-        if not supp:
-            raise BaseException(reason)
+        if not supports:
+            raise BaseException(reason_if_not)
 
         X, Y = self.datasets[dataset][DATASET_LOADER]()
 
         self.dataset = split_normalize(X, Y)
         self.model_class = TesterClass.models[model]
 
-    def get_space(self):
-        return self.model_class[MODEL_PARAMETERS]
-
     def evaluate(self, point):
         """
-        :param point: configuration for some model
+        Evaluates model on loaded dataset for particular setting of hyperparameters.
+        :param point: dict, pairs of parameter names and corresponding values
         :return: score (more is better!) for some specific point
         """
 
         X, Y, Xv, Yv = self.dataset
-
         cls = self.model_class[MODEL_BACKEND]
 
         # apply transformation to model parameters, for example exp transformation
@@ -213,8 +237,10 @@ class TesterClass():
             model.fit(X, Y)
             r = model.score(Xv, Yv)
         except BaseException as ex:
-            r = 0.0 # todo: maybe use here negative value
+            r = 0.0 # on error: return assumed smallest value of objective function
 
+        # while negative values could be informative, they could be very large also,
+        # which could mess up the optimization procedure. Suggestions are welcome.
         r = max(r, 0.0)
 
         return r
@@ -225,6 +251,15 @@ table_template = """|Blackbox Function| Minimum | Best minimum | Mean f_calls to
 |ML_hypp_tune|"""
 
 def calculate_performance(all_data):
+    """
+    Calculates the performance metrics as found in "benchmarks" folder of scikit-optimize,
+    and prints them in console.
+
+    :param all_data: dict, traces data collected during run of algorithms. For more details, see
+                    'evaluate_optimizer' function.
+    :return: nothing
+    """
+
     average_for_algo = {}
 
     for Model in all_data:
@@ -236,6 +271,9 @@ def calculate_performance(all_data):
                     average_for_algo[Algorithm] = []
 
                 objs = [[v[1] for v in d] for d in data] # leave only objective values
+                # here objs is a 2d list, where first dimension corresponds to
+                # particular repeat of experiment, and second dimension corresponds to index
+                # of optimization step during optimization
                 average_for_algo[Algorithm].append(objs)
 
     # calculate averages
@@ -263,12 +301,28 @@ def calculate_performance(all_data):
 
 
 def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
+    """
+    Evaluates some estimator for the task of optimization of parameters of some
+    model, given limited number of model evaluations.
+    Parentheses on parameters are used to be able to run function with pool.map method.
+
+    :param base_estimator: Estimator to use for optimization.
+    :param model: str, name of the ML model class to be used for parameter tuning
+    :param dataset: str, name of dataset to train ML model on
+    :param max_iter: a budget of evaluations
+    :param seed_value: random seed, used to set the random number generator in numpy
+    :return: a list of paris (p, f(p)), where p is a dictionary of the form "param name":value,
+            and f(p) is performance measure value achieved by the model for configuration p.
+            Such list contains history of execution of optimization.
+    """
+
+
     # below seed is necessary for processes which fork at the same time
     # so that random numbers generated in processes are different
     np.random.seed(seed_value)
 
     problem = TesterClass(model, dataset)
-    space = problem.get_space()
+    space = problem.model_class[MODEL_PARAMETERS]
 
     dimensions = []
 
@@ -289,6 +343,7 @@ def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
 
         dimensions.append((dim, k)) # need to remember names of dimensions for evaluation code
 
+    # initialization
     estimator = base_estimator(random_state=seed_value)
     solver = Optimizer([d[0] for d in dimensions], estimator, acq_optimizer="sampling", random_state=seed_value)
 
@@ -296,12 +351,13 @@ def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
     best_y = np.inf
     best_x = None
 
+    # optimization loop
     for i in range(max_iter):
         p = solver.ask()
 
-        point = {d[1]:v for d,v in zip(dimensions, p)}
+        point = {d[1]:v for d,v in zip(dimensions, p)} # convert list of dimension values to dictionary
 
-        v = -problem.evaluate(point)
+        v = -problem.evaluate(point) # the result of "evaluate" is accuracy / r^2, which is the more the better
 
         solver.tell(p, v)
 
@@ -309,7 +365,7 @@ def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
             best_y = v
             best_x = point
 
-        trace.append((best_x, best_y))
+        trace.append((best_x, best_y)) # remember the point, objective pair
         print("Eval. #"+str(i))
 
     return trace
@@ -318,9 +374,18 @@ def run(n_calls = 32,
         n_runs = 1,
         save_traces = True,
         run_parallel = False):
+    """
+    Main function used to run the experiments.
+
+    :param n_calls: evaluation budget
+    :param n_runs: how many times to repeat the optimization in order to average out noise
+    :param save_traces: whether to save data collected during optimization
+    :param run_parallel: whether to run different repeats of optimization in parallel
+    :return: None
+    """
 
     selected_regressors = [GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor]
-    selected_models = ['DecisionTreeClassifier', 'DecisionTreeRegressor'] #TesterClass.models.keys()
+    selected_models = TesterClass.models.keys()
     selected_datasets = TesterClass.datasets.keys()
 
     pool = Pool()
@@ -330,8 +395,8 @@ def run(n_calls = 32,
 
     for Model in selected_models:
         all_data[Model] = {}
-        for Dataset in selected_datasets:
 
+        for Dataset in selected_datasets:
             Supports, Message = TesterClass.supports(Model, Dataset)
 
             if not Supports:
