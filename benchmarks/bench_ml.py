@@ -227,7 +227,8 @@ class TesterClass():
         # apply transformation to model parameters, for example exp transformation
         point_mapped = {}
 
-        for param, v in point.iteritems():
+        for param in point.keys():
+            v = point[param]
             v = self.model_class[MODEL_PARAMETERS][param][PARAM_MAP](v)
             point_mapped[param] = v
 
@@ -300,7 +301,7 @@ def calculate_performance(all_data):
         print(result)
 
 
-def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
+def evaluate_optimizer(base_estimator, model, dataset, max_iter, seed_value):
     """
     Evaluates some estimator for the task of optimization of parameters of some
     model, given limited number of model evaluations.
@@ -327,7 +328,8 @@ def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
     dimensions = []
 
     # convert space dictionary to dimensions
-    for k,v in space.iteritems():
+    for k in space.keys():
+        v = space[k]
 
         if v[VARIABLE_TYPE] == REAL_VARIABLE: # if real variable ...
             dim_range = v[VARIABLE_RANGE]
@@ -370,6 +372,10 @@ def evaluate_optimizer((base_estimator, model, dataset, max_iter, seed_value)):
 
     return trace
 
+# the function below is necessary as a workaround for the pool.map method requiring map function to take only a single argument
+def _evaluate_optimizer(params):
+    return evaluate_optimizer(*params)
+
 def run(n_calls = 32,
         n_runs = 1,
         save_traces = True,
@@ -410,9 +416,9 @@ def run(n_calls = 32,
                 params = [(Regressor, Model, Dataset, n_calls, np.random.randint(2 ** 30)) for rep in range(n_runs)]
 
                 if run_parallel:
-                    raw_trace = pool.map(evaluate_optimizer, params)
+                    raw_trace = pool.map(_evaluate_optimizer, params)
                 else:
-                    raw_trace = [evaluate_optimizer(p) for p in params]
+                    raw_trace = [_evaluate_optimizer(p) for p in params]
 
                 all_data[Model][Dataset][Regressor.__name__] = raw_trace
 
