@@ -215,7 +215,7 @@ class Real(Dimension):
         return (self.low, self.high)
 
     def __contains__(self, point):
-        return self.low <= point <= self.high
+        return self.low <= point < self.high
 
     @property
     def transformed_bounds(self):
