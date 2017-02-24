@@ -180,6 +180,8 @@ class Optimizer(object):
         """
         if self._n_random_starts > 0:
             self._n_random_starts -= 1
+            # this will not make a copy of `self.rng` and hence keep advancing
+            # our random state.
             return self.space.rvs(random_state=self.rng)[0]
 
         else:
@@ -247,8 +249,9 @@ class Optimizer(object):
 
         elif isinstance(x, Iterable) and isinstance(y, Number):
             if x not in self.space:
-                raise ValueError("Point is not within the bounds of"
-                                 " the space.")
+                raise ValueError("Point (%s) is not within the bounds of"
+                                 " the space (%s)."
+                                 % (x, self.space.bounds))
             self.Xi.append(x)
             self.yi.append(y)
 
