@@ -219,13 +219,14 @@ class Real(Dimension):
 
     @property
     def transformed_bounds(self):
+        eps = np.finfo(float).eps
         if self.transform_ == "normalize":
-            return 0.0, 1.0
+            return 0.0, 1.0 - eps
         else:
             if self.prior == "uniform":
-                return self.low, self.high
+                return self.low, self.high - eps
             else:
-                return np.log10(self.low), np.log10(self.high)
+                return np.log10(self.low), np.log10(self.high - eps)
 
 
 class Integer(Dimension):
