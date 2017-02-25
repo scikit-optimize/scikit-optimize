@@ -64,6 +64,22 @@ def test_bounds_checking_2D():
     assert_raises(ValueError, opt.tell, [low - 0.5, high + 0.5], 2.)
 
 
+def test_bounds_checking_2D_multiple_points():
+    low = -2.
+    high = 2.
+    base_estimator = ExtraTreesRegressor(random_state=2)
+    opt = Optimizer([(low, high), (low+4, high+4)], base_estimator,
+                    n_random_starts=1, acq_optimizer="sampling")
+
+    # first component out, second in
+    assert_raises(ValueError, opt.tell,
+                  [(high + 0.5, high + 0.5), (high + 0.5, high + 0.5)],
+                  [2., 3.])
+    assert_raises(ValueError, opt.tell,
+                  [(low - 0.5, high + 0.5), (low - 0.5, high + 0.5)],
+                  [2., 3.])
+
+
 def test_returns_result_object():
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
