@@ -241,7 +241,7 @@ class Optimizer(object):
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
                                             for point in x)):
-            if not np.all(p in self.space for p in x):
+            if not np.all([p in self.space for p in x]):
                 raise ValueError("Not all points are within the bounds of"
                                  " the space.")
             self.Xi.extend(x)
