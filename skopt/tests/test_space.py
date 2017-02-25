@@ -6,7 +6,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_true
@@ -34,14 +33,8 @@ def check_categorical(vals, random_val):
     assert_equal(x.rvs(random_state=1), random_val)
 
 
-def check_limits_real(value, low, high):
-    # check if low <= value < high, appropriate for Real dimensions
-    assert_less(low, value)
-    assert_greater_equal(high, value)
-
-
-def check_limits_int(value, low, high):
-    # check if low <= value <= high, appropriate for Integer dimensions
+def check_limits(value, low, high):
+    # check if low <= value <= high
     assert_less_equal(low, value)
     assert_greater_equal(high, value)
 
@@ -59,7 +52,7 @@ def test_real():
     a = Real(1, 25)
     for i in range(50):
         r = a.rvs(random_state=i)
-        check_limits_real(r, 1, 25)
+        check_limits(r, 1, 25)
         assert_true(r in a)
 
     random_values = a.rvs(random_state=0, n_samples=10)
@@ -71,7 +64,7 @@ def test_real():
     assert_not_equal(log_uniform, Real(10**-5, 10**5))
     for i in range(50):
         random_val = log_uniform.rvs(random_state=i)
-        yield (check_limits_real, random_val, 10**-5, 10**5)
+        yield (check_limits, random_val, 10**-5, 10**5)
     random_values = log_uniform.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
     transformed_vals = log_uniform.transform(random_values)
@@ -81,13 +74,14 @@ def test_real():
 
 
 def test_real_bounds():
-    # should give same answer as using check_limits_real() but this is easier
+    # should give same answer as using check_limits() but this is easier
     # to read
     a = Real(1., 2.1)
     assert_false(0.99 in a)
     assert_true(1. in a)
     assert_true(2.09 in a)
-    assert_false(2.1 in a)
+    assert_true(2.1 in a)
+    assert_false(np.nextafter(2.1, 3.) in a)
 
 
 def test_integer():
@@ -261,7 +255,7 @@ def test_space_api():
 def test_normalize():
     a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):
-        yield (check_limits_real, a.rvs(random_state=i), 2, 30)
+        yield (check_limits, a.rvs(random_state=i), 2, 30)
 
     rng = np.random.RandomState(0)
     X = rng.randn(100)
@@ -277,7 +271,7 @@ def test_normalize():
     # log-uniform prior
     a = Real(10**2.0, 10**4.0, prior="log-uniform", transform="normalize")
     for i in range(50):
-        yield (check_limits_real, a.rvs(random_state=i), 10**2, 10**4)
+        yield (check_limits, a.rvs(random_state=i), 10**2, 10**4)
 
     rng = np.random.RandomState(0)
     X = np.clip(10**3 * rng.randn(100), 10**2.0, 10**4.0)
@@ -291,7 +285,7 @@ def test_normalize():
 
     a = Integer(2, 30, transform="normalize")
     for i in range(50):
-        yield (check_limits_int, a.rvs(random_state=i), 2, 30)
+        yield (check_limits, a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
     X = rng.randint(2, 31)
