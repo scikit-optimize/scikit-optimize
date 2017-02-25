@@ -129,6 +129,13 @@ class Dimension(object):
         raise NotImplementedError
 
 
+def _uniform_inclusive(loc=0.0, scale=1.0):
+    # like scipy.stats.distributions but inclusive of `high`
+    # XXX scale + 1. might not actually be a float after scale if
+    # XXX scale is very large.
+    return uniform(loc=loc, scale=np.nextafter(scale, scale + 1.))
+
+
 class Real(Dimension):
     def __init__(self, low, high, prior="uniform", transform=None):
         """Search space dimension that can take on any real value.
@@ -139,7 +146,7 @@ class Real(Dimension):
             Lower bound (inclusive).
 
         * `high` [float]:
-            Upper bound (exclusive).
+            Upper bound (inclusive).
 
         * `prior` ["uniform" or "log-uniform", default="uniform"]:
             Distribution to use when sampling random points for this dimension.
@@ -175,7 +182,9 @@ class Real(Dimension):
         # The rvs on Dimension calls inverse_transform on the points sampled
         # using _rvs
         if self.transform_ == "normalize":
-            self._rvs = uniform(0, 1)
+            # set upper bound to next float after 1. to make the numbers
+            # inclusive of upper edge
+            self._rvs = _uniform_inclusive(0., 1.)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
                     [Identity(), Normalize(low, high)])
@@ -185,10 +194,10 @@ class Real(Dimension):
                 )
         else:
             if self.prior == "uniform":
-                self._rvs = uniform(self.low, self.high - self.low)
+                self._rvs = _uniform_inclusive(self.low, self.high - self.low)
                 self.transformer = Identity()
             else:
-                self._rvs = uniform(
+                self._rvs = _uniform_inclusive(
                     np.log10(self.low),
                     np.log10(self.high) - np.log10(self.low))
                 self.transformer = Log10()
@@ -215,18 +224,17 @@ class Real(Dimension):
         return (self.low, self.high)
 
     def __contains__(self, point):
-        return self.low <= point < self.high
+        return self.low <= point <= self.high
 
     @property
     def transformed_bounds(self):
-        eps = np.finfo(float).eps
         if self.transform_ == "normalize":
-            return 0.0, 1.0 - eps
+            return 0.0, 1.0
         else:
             if self.prior == "uniform":
-                return self.low, self.high - eps
+                return self.low, self.high
             else:
-                return np.log10(self.low), np.log10(self.high - eps)
+                return np.log10(self.low), np.log10(self.high)
 
 
 class Integer(Dimension):

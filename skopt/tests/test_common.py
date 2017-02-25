@@ -210,7 +210,7 @@ def test_mixed_spaces():
         partial(gbrt_minimize, n_random_starts=0)
     ]
     space = [("-2", "-1", "0", "1", "2"), (-2.0, 2.0)]
-    x0 = [["0", 1.99], ["1", 1.0], ["2", 1.0]]
+    x0 = [["0", 2.0], ["1", 1.0], ["2", 1.0]]
     n_calls = 10
     for optimizer in optimizers:
         yield (check_init_vals, optimizer, bench5, space, x0, n_calls)
