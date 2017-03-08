@@ -402,11 +402,17 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, Kernel):
         indicator = np.expand_dims(X, axis=1) != Y
         kernel_prod = np.exp(-np.sum(length_scale * indicator, axis=2))
 
-        if anisotropic:
-            grad = -np.expand_dims(kernel_prod, axis=-1) * np.array(indicator, dtype=np.float32) * length_scale
-        else:
-            grad = -np.expand_dims(kernel_prod * length_scale * np.sum(indicator, axis=2), axis=-1)
+        # dK / d theta = (dK / dl) * (dl / d theta)
+        # theta = log(l) => dl / d (theta) = e^theta = l
+        # dK / d theta = l * dK / dl
 
+        # dK / dL computation
+        if anisotropic:
+            grad = -np.expand_dims(kernel_prod, axis=-1) * np.array(indicator, dtype=np.float32)
+        else:
+            grad = -np.expand_dims(kernel_prod * np.sum(indicator, axis=2), axis=-1)
+
+        grad *= length_scale
         if eval_gradient:
             return kernel_prod, grad
         return kernel_prod
