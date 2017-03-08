@@ -136,23 +136,23 @@ def test_anisotropic_kernel():
 
 def test_kernel_gradient():
     rng = np.random.RandomState(0)
-    hm = HammingKernel()
+    hm = HammingKernel(length_scale=2.0)
     X = rng.randint(0, 4, (5, 3))
     K, K_gradient = hm(X, eval_gradient=True)
     assert_array_equal(K_gradient.shape, (5, 5, 1))
 
-    def eval_kernel_for_exp_theta(exp_theta, kernel):
-        kernel_clone = kernel.clone_with_theta(np.log(exp_theta))
+    def eval_kernel_for_theta(theta, kernel):
+        kernel_clone = kernel.clone_with_theta(theta)
         K = kernel_clone(X, eval_gradient=False)
         return K
 
     K_gradient_approx = _approx_fprime(
-        np.exp(hm.theta), eval_kernel_for_exp_theta, 1e-10, (hm,))
+        hm.theta, eval_kernel_for_theta, 1e-10, (hm,))
     assert_array_almost_equal(K_gradient_approx, K_gradient, 4)
 
     hm = HammingKernel(length_scale=[1.0, 1.0, 1.0])
     K_gradient_approx = _approx_fprime(
-        np.exp(hm.theta), eval_kernel_for_exp_theta, 1e-10, (hm,))
+        hm.theta, eval_kernel_for_theta, 1e-10, (hm,))
     K, K_gradient = hm(X, eval_gradient=True)
     assert_array_equal(K_gradient.shape, (5, 5, 3))
     assert_array_almost_equal(K_gradient_approx, K_gradient, 4)
@@ -160,7 +160,7 @@ def test_kernel_gradient():
     X = rng.randint(0, 4, (3, 2))
     hm = HammingKernel(length_scale=[0.1, 2.0])
     K_gradient_approx = _approx_fprime(
-        np.exp(hm.theta), eval_kernel_for_exp_theta, 1e-10, (hm,))
+        hm.theta, eval_kernel_for_theta, 1e-10, (hm,))
     K, K_gradient = hm(X, eval_gradient=True)
     assert_array_equal(K_gradient.shape, (3, 3, 2))
     assert_array_almost_equal(K_gradient_approx, K_gradient, 4)

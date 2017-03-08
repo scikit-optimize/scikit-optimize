@@ -403,7 +403,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, Kernel):
         kernel_prod = np.exp(-np.sum(length_scale * indicator, axis=2))
 
         if anisotropic:
-            grad = -np.expand_dims(kernel_prod, axis=-1) * np.array(indicator, dtype=np.float32)
+            grad = -np.expand_dims(kernel_prod, axis=-1) * np.array(indicator, dtype=np.float32) * length_scale
         else:
             grad = -np.expand_dims(kernel_prod * length_scale * np.sum(indicator, axis=2), axis=-1)
 
