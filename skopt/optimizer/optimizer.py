@@ -15,7 +15,9 @@ from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..space import Categorical
 from ..space import Space
+from ..utils import create_result
 
+import copy
 
 class Optimizer(object):
     """Run bayesian optimisation loop.
@@ -61,8 +63,8 @@ class Optimizer(object):
           acquisition functions at every iteration.
             - The gains `g_i` are initialized to zero.
             - At every iteration,
-                - Each acquisition function is optimised independently to propose an
-                  candidate point `X_i`.
+                - Each acquisition function is optimised independently to
+                  propose an candidate point `X_i`.
                 - Out of all these candidate points, the next point `X_best` is
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
@@ -106,9 +108,11 @@ class Optimizer(object):
 
     """
     def __init__(self, dimensions, base_estimator,
-                 n_random_starts=10, acq_func="gp_hedge", acq_optimizer="lbfgs",
+                 n_random_starts=10, acq_func="gp_hedge",
+                 acq_optimizer="lbfgs",
                  random_state=None, acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None):
+                 acq_optimizer_kwargs=None,
+                 context_dimensions=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
@@ -132,7 +136,7 @@ class Optimizer(object):
             "n_restarts_optimizer", 5)
         n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
 
-        self.space = Space(dimensions)
+        self.space = Space(dimensions, context_dimensions)
         self.models = []
         self.Xi = []
         self.yi = []
@@ -178,7 +182,17 @@ class Optimizer(object):
         """
         if self._n_random_starts > 0:
             self._n_random_starts -= 1
-            return self.space.rvs(random_state=self.rng)[0]
+            # this will not make a copy of `self.rng` and hence keep advancing
+            # our random state.
+            result = self.space.rvs(random_state=self.rng)[0]
+
+            context_len = len(self.space.context)
+
+            # remove context
+            result = result[context_len:]
+
+            return result
+
 
         else:
             if not self.models:
@@ -208,10 +222,14 @@ class Optimizer(object):
                         warnings.warn("The objective has been evaluated "
                                       "at this point before.")
 
+            context_len = len(self.space.context)
+            # remove context
+            next_x = next_x[context_len:]
+
             # return point computed from last call to tell()
             return next_x
 
-    def tell(self, x, y, fit=True):
+    def tell(self, x, y, fit=True, ctx=None, next_ctx=None):
         """Record an observation (or several) of the objective function.
 
         Provide values of the objective function at points suggested by `ask()`
@@ -237,10 +255,31 @@ class Optimizer(object):
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
                                             for point in x)):
+
+            if ctx is not None:
+                # it should be an array of arrays
+                if not all(isinstance(point, Iterable)
+                                            for point in ctx):
+                    raise ValueError("The array of input points was "
+                                     "provided, but context entries are "
+                                     "not array of points.")
+
+                x = [c + xv for xv, c in zip(x, ctx)]
+
+            if not np.all([p in self.space for p in x]):
+                raise ValueError("Not all points are within the bounds of"
+                                 " the space.")
             self.Xi.extend(x)
             self.yi.extend(y)
 
         elif isinstance(x, Iterable) and isinstance(y, Number):
+            if not ctx is None:
+                x = ctx + x
+
+            if x not in self.space:
+                raise ValueError("Point (%s) is not within the bounds of"
+                                 " the space (%s)."
+                                 % (x, self.space.bounds))
             self.Xi.append(x)
             self.yi.append(y)
 
@@ -260,23 +299,37 @@ class Optimizer(object):
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
             self.models.append(est)
 
-            X = self.space.transform(self.space.rvs(
-                n_samples=self.n_points, random_state=self.rng))
+            X = self.space.rvs(
+                n_samples=self.n_points, random_state=self.rng)
+
+            # replace values of X with values for the context
+            if next_ctx is not None:
+                for x in X:
+                    for i in range(len(self.space.context)):
+                        x[i] = next_ctx[i]
+
+            X = self.space.transform(X)
             self.next_xs_ = []
             for cand_acq_func in self.cand_acq_funcs_:
                 values = _gaussian_acquisition(
                     X=X, model=est, y_opt=np.min(self.yi),
-                    acq_func=cand_acq_func, acq_func_kwargs=self.acq_func_kwargs)
-                # Find the minimum of the acquisition function by randomly sampling
-                # points from the space
+                    acq_func=cand_acq_func,
+                    acq_func_kwargs=self.acq_func_kwargs)
+                # Find the minimum of the acquisition function by randomly
+                # sampling points from the space
                 if self.acq_optimizer == "sampling":
                     next_x = X[np.argmin(values)]
 
                 # Use BFGS to find the mimimum of the acquisition function, the
-                # minimization starts from `n_restarts_optimizer` different points
-                # and the best minimum is used
+                # minimization starts from `n_restarts_optimizer` different
+                # points and the best minimum is used
                 elif self.acq_optimizer == "lbfgs":
                     x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
+                    tm = self.space.transformed_context_len()
+                    bounds = copy.deepcopy(self.space.transformed_bounds)
+
+                    for i in range(tm):
+                        bounds[i] = (x0[0][i],x0[0][i])
 
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
@@ -285,9 +338,10 @@ class Optimizer(object):
                                 gaussian_acquisition_1D, x,
                                 args=(est, np.min(self.yi), cand_acq_func,
                                       self.acq_func_kwargs),
-                            bounds=self.space.transformed_bounds,
-                            approx_grad=False,
-                            maxiter=20) for x in x0)
+                                bounds=bounds,
+                                approx_grad=False,
+                                maxiter=20)
+                            for x in x0)
 
                     cand_xs = np.array([r[0] for r in results])
                     cand_acqs = np.array([r[1] for r in results])
@@ -297,7 +351,8 @@ class Optimizer(object):
                 # precision errors.
                 if not self.space.is_categorical:
                     next_x = np.clip(
-                        next_x, transformed_bounds[:, 0], transformed_bounds[:, 1])
+                        next_x, transformed_bounds[:, 0],
+                        transformed_bounds[:, 1])
                 self.next_xs_.append(next_x)
 
             if self.acq_func == "gp_hedge":
@@ -305,7 +360,8 @@ class Optimizer(object):
                 logits -= np.max(logits)
                 exp_logits = np.exp(self.eta * logits)
                 probs = exp_logits / np.sum(exp_logits)
-                next_x = self.next_xs_[np.argmax(np.random.multinomial(1, probs))]
+                next_x = self.next_xs_[np.argmax(np.random.multinomial(1,
+                                                                       probs))]
             else:
                 next_x = self.next_xs_[0]
 
@@ -313,8 +369,15 @@ class Optimizer(object):
             self._next_x = self.space.inverse_transform(
                 next_x.reshape((1, -1)))[0]
 
+        # Pack results
+        return create_result(self.Xi, self.yi, self.space, self.rng,
+                             models=self.models)
+
     def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
         for _ in range(n_iter):
             x = self.ask()
             self.tell(x, func(x))
+
+        return create_result(self.Xi, self.yi, self.space, self.rng,
+                             models=self.models)

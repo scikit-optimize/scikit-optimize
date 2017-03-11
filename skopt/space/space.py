@@ -48,12 +48,12 @@ def check_dimension(dimension, transform=None):
           - "onehot" (default) one-hot transformation of the original space.
           - "identity" same as the original space.
 
-        - For `Real` and `Integer` dimensions, the following transformations are
-          supported.
+        - For `Real` and `Integer` dimensions, the following transformations
+          are supported.
 
-          - "identity", (default) the transformed space is the same as the original
-            space.
-          - "normalize", the transformed space is scaled in between 0 and 1.
+          - "identity", (default) the transformed space is the same as the
+            original space.
+          - "normalize", the transformed space is scaled to be between 0 and 1.
 
     Returns
     -------
@@ -129,6 +129,13 @@ class Dimension(object):
         raise NotImplementedError
 
 
+def _uniform_inclusive(loc=0.0, scale=1.0):
+    # like scipy.stats.distributions but inclusive of `high`
+    # XXX scale + 1. might not actually be a float after scale if
+    # XXX scale is very large.
+    return uniform(loc=loc, scale=np.nextafter(scale, scale + 1.))
+
+
 class Real(Dimension):
     def __init__(self, low, high, prior="uniform", transform=None):
         """Search space dimension that can take on any real value.
@@ -139,7 +146,7 @@ class Real(Dimension):
             Lower bound (inclusive).
 
         * `high` [float]:
-            Upper bound (exclusive).
+            Upper bound (inclusive).
 
         * `prior` ["uniform" or "log-uniform", default="uniform"]:
             Distribution to use when sampling random points for this dimension.
@@ -151,9 +158,10 @@ class Real(Dimension):
         * `transform` ["identity", "normalize", optional]:
             The following transformations are supported.
 
-            - "identity", (default) the transformed space is the same as the original
-              space.
-            - "normalize", the transformed space is scaled in between 0 and 1.
+            - "identity", (default) the transformed space is the same as the
+              original space.
+            - "normalize", the transformed space is scaled to be between
+              0 and 1.
         """
         self.low = low
         self.high = high
@@ -174,7 +182,9 @@ class Real(Dimension):
         # The rvs on Dimension calls inverse_transform on the points sampled
         # using _rvs
         if self.transform_ == "normalize":
-            self._rvs = uniform(0, 1)
+            # set upper bound to next float after 1. to make the numbers
+            # inclusive of upper edge
+            self._rvs = _uniform_inclusive(0., 1.)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
                     [Identity(), Normalize(low, high)])
@@ -184,10 +194,10 @@ class Real(Dimension):
                 )
         else:
             if self.prior == "uniform":
-                self._rvs = uniform(self.low, self.high - self.low)
+                self._rvs = _uniform_inclusive(self.low, self.high - self.low)
                 self.transformer = Identity()
             else:
-                self._rvs = uniform(
+                self._rvs = _uniform_inclusive(
                     np.log10(self.low),
                     np.log10(self.high) - np.log10(self.low))
                 self.transformer = Log10()
@@ -212,6 +222,9 @@ class Real(Dimension):
     @property
     def bounds(self):
         return (self.low, self.high)
+
+    def __contains__(self, point):
+        return self.low <= point <= self.high
 
     @property
     def transformed_bounds(self):
@@ -239,9 +252,10 @@ class Integer(Dimension):
         * `transform` ["identity", "normalize", optional]:
             The following transformations are supported.
 
-            - "identity", (default) the transformed space is the same as the original
-              space.
-            - "normalize", the transformed space is scaled in between 0 and 1.
+            - "identity", (default) the transformed space is the same as the
+              original space.
+            - "normalize", the transformed space is scaled to be between
+              0 and 1.
         """
         self.low = low
         self.high = high
@@ -254,7 +268,7 @@ class Integer(Dimension):
         if transform not in ["normalize", "identity"]:
             raise ValueError(
                 "transform should be 'normalize' or 'identity' got %s" %
-                transform_)
+                self.transform_)
         if transform == "normalize":
             self._rvs = uniform(0, 1)
             self.transformer = Normalize(low, high, is_int=True)
@@ -282,6 +296,9 @@ class Integer(Dimension):
     def bounds(self):
         return (self.low, self.high)
 
+    def __contains__(self, point):
+        return self.low <= point <= self.high
+
     @property
     def transformed_bounds(self):
         if self.transform_ == "normalize":
@@ -305,8 +322,8 @@ class Categorical(Dimension):
 
         * `transform` ["onehot", "identity", default="onehot"] :
             - "identity", the transformed space is the same as the original space.
-            - "onehot", the transformed space is a one-hot encoded representation
-              of the original space.
+            - "onehot", the transformed space is a one-hot encoded
+              representation of the original space.
         """
         self.categories = categories
 
@@ -365,13 +382,17 @@ class Categorical(Dimension):
     def transformed_size(self):
         if self.transform_ == "onehot":
             size = len(self.categories)
-            # when len(categories) == 2, CategoricalEncoder outputs a single value
+            # when len(categories) == 2, CategoricalEncoder outputs a
+            # single value
             return size if size != 2 else 1
         return 1
 
     @property
     def bounds(self):
         return self.categories
+
+    def __contains__(self, point):
+        return point in self.categories
 
     @property
     def transformed_bounds(self):
@@ -384,7 +405,7 @@ class Categorical(Dimension):
 class Space:
     """Search space."""
 
-    def __init__(self, dimensions):
+    def __init__(self, dimensions, context=None):
         """Initialize a search space from given specifications.
 
         Parameters
@@ -404,7 +425,15 @@ class Space:
             NOTE: The upper and lower bounds are inclusive for `Integer`
             dimensions.
         """
+
         self.dimensions = [check_dimension(dim) for dim in dimensions]
+
+        if context is not None:
+            self.context = [check_dimension(dim) for dim in context]
+        else:
+            self.context = []
+
+        self.dimensions = self.context + self.dimensions
 
     def __eq__(self, other):
         return all([a == b for a, b in zip(self.dimensions, other.dimensions)])
@@ -466,6 +495,21 @@ class Space:
             rows.append(r)
 
         return rows
+
+    def transformed_context_len(self):
+        result = 0
+        for dim in self.context:
+            example = dim.rvs(n_samples=1)
+            example = dim.transform(example)[0]
+            if isinstance(example, list):
+                result += len(example)
+            else:
+                result += 1
+
+        return result
+
+
+
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
@@ -565,6 +609,13 @@ class Space:
                 b.extend(dim.bounds)
 
         return b
+
+    def __contains__(self, point):
+        """Check that `point` is within the bounds of the space."""
+        for component, dim in zip(point, self.dimensions):
+            if component not in dim:
+                return False
+        return True
 
     @property
     def transformed_bounds(self):
