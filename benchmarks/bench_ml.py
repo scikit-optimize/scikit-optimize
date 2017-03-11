@@ -15,19 +15,12 @@ from skopt import Optimizer
 from skopt.space import Real, Categorical, Integer
 
 OUTPUT_TYPE = "Output type"
-FMT_NUMBER = "Number"
-FMT_CATEGORY = "Category"
+OUTPUT_CONTINUOUS = "Number"
+OUTPUT_CATEGORY = "Category"
 
 MODEL_PARAMETERS = "model parameters"
 MODEL_BACKEND = "model backend"
 PARAM_MAP = "parameter map"
-
-CATEGORY_VARIABLE = "Categorical"
-REAL_VARIABLE = "Real"
-INTEGER_VARIABLE = "Integer"
-
-VARIABLE_TYPE = "type"
-VARIABLE_RANGE = "range"
 
 DATASET_LOADER = "Dataset loader"
 
@@ -82,23 +75,23 @@ class TesterClass():
     """
     nnparams = {
         # up to 1024 neurons
-        'hidden_layer_sizes': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [1.0, 10.0], PARAM_MAP: pow2intmap},
-        'activation': {VARIABLE_TYPE: CATEGORY_VARIABLE, VARIABLE_RANGE: ['identity', 'logistic', 'tanh', 'relu'], PARAM_MAP: nop},
-        'solver': {VARIABLE_TYPE: CATEGORY_VARIABLE, VARIABLE_RANGE: ['lbfgs', 'sgd', 'adam'], PARAM_MAP: nop},
-        'alpha': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [-5.0, -1], PARAM_MAP: pow10map},
-        'batch_size': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [5.0, 10.0], PARAM_MAP: pow2intmap},
-        'learning_rate': {VARIABLE_TYPE: CATEGORY_VARIABLE, VARIABLE_RANGE: ['constant', 'invscaling', 'adaptive'], PARAM_MAP: nop},
-        'max_iter': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [5.0, 8.0], PARAM_MAP: pow2intmap},
-        'learning_rate_init': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [-5.0, -1], PARAM_MAP: pow10map},
-        'power_t': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [0.01, 0.99], PARAM_MAP: nop},
-        'momentum': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [0.1, 0.98], PARAM_MAP: nop},
-        'nesterovs_momentum': {VARIABLE_TYPE: CATEGORY_VARIABLE, VARIABLE_RANGE: [True, False], PARAM_MAP: nop},
-        'beta_1': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [0.1, 0.98], PARAM_MAP: nop},
-        'beta_2': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [0.1, 0.9999999], PARAM_MAP: nop},
+        'hidden_layer_sizes': (Real(1.0, 10.0), pow2intmap),
+        'activation': (Categorical(['identity', 'logistic', 'tanh', 'relu']), nop),
+        'solver': (Categorical(['lbfgs', 'sgd', 'adam']), nop),
+        'alpha': (Real(-5.0, -1), pow10map),
+        'batch_size': (Real(5.0, 10.0), pow2intmap),
+        'learning_rate': (Categorical(['constant', 'invscaling', 'adaptive']), nop),
+        'max_iter': (Real(5.0, 8.0), pow2intmap),
+        'learning_rate_init': (Real(-5.0, -1), pow10map),
+        'power_t': (Real(0.01, 0.99), nop),
+        'momentum': (Real(0.1, 0.98), nop),
+        'nesterovs_momentum': (Categorical([True, False]), nop),
+        'beta_1': (Real(0.1, 0.98), nop),
+        'beta_2': (Real(0.1, 0.9999999), nop),
     }
 
     # every model should have fields:
-    # OUTPUT_TYPE:  FMT_NUMBER / FMT_CATEGORY
+    # OUTPUT_TYPE:  OUTPUT_CONTINUOUS / OUTPUT_CATEGORY
     # MODEL_PARAMETERS: dictionary whose keys correspond to parameters that are passed to __init__ of python class
     #                   that implements model
     # MODEL_BACKEND: python class that implements model
@@ -107,24 +100,24 @@ class TesterClass():
         #   regressors go here
         #
         MLPRegressor.__name__:{
-            OUTPUT_TYPE: FMT_NUMBER,
+            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             MODEL_PARAMETERS: nnparams,
             MODEL_BACKEND: MLPRegressor,
         },
         SVR.__name__:{
-            OUTPUT_TYPE: FMT_NUMBER,
+            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             MODEL_PARAMETERS: {
-                'C': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [-4.0, 4.0], PARAM_MAP: pow10map},
-                'epsilon': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [-4.0, 1.0], PARAM_MAP: pow10map},
-                'gamma': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [-4.0, 1.0], PARAM_MAP: pow10map},
+                'C': (Real(-4.0, 4.0), pow10map),
+                'epsilon': (Real(-4.0, 1.0), pow10map),
+                'gamma': (Real(-4.0, 1.0), pow10map),
             },
             MODEL_BACKEND: SVR,
         },
         DecisionTreeRegressor.__name__:{
-            OUTPUT_TYPE: FMT_NUMBER,
+            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             MODEL_PARAMETERS: {
-                'max_depth': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [1.0, 4.0], PARAM_MAP: pow2intmap},
-                'min_samples_split': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [1.0, 8.0], PARAM_MAP: pow2intmap},
+                'max_depth': (Real(1.0, 4.0), pow2intmap),
+                'min_samples_split': (Real(1.0, 8.0), pow2intmap),
             },
             MODEL_BACKEND: DecisionTreeRegressor,
         },
@@ -132,49 +125,49 @@ class TesterClass():
         #   classifiers go here
         #
         MLPClassifier.__name__:{
-            OUTPUT_TYPE: FMT_CATEGORY,
+            OUTPUT_TYPE: OUTPUT_CATEGORY,
             MODEL_PARAMETERS: nnparams,
             MODEL_BACKEND: MLPClassifier,
         },
         SVC.__name__:{
-            OUTPUT_TYPE: FMT_CATEGORY,
+            OUTPUT_TYPE: OUTPUT_CATEGORY,
             MODEL_PARAMETERS: {
-                'C': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [-4.0, 4.0], PARAM_MAP: pow10map},
-                'gamma': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [-4.0, 1.0], PARAM_MAP: pow10map},
+                'C': (Real(-4.0, 4.0), pow10map),
+                'gamma': (Real(-4.0, 1.0), pow10map),
             },
             MODEL_BACKEND: SVC,
         },
         DecisionTreeClassifier.__name__: {
-            OUTPUT_TYPE: FMT_CATEGORY,
+            OUTPUT_TYPE: OUTPUT_CATEGORY,
             MODEL_PARAMETERS: {
-                'max_depth': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [1.0, 4.0], PARAM_MAP: pow2intmap},
-                'min_samples_split': {VARIABLE_TYPE: REAL_VARIABLE, VARIABLE_RANGE: [1.0, 8.0], PARAM_MAP: pow2intmap},
+                'max_depth': (Real(1.0, 4.0), pow2intmap),
+                'min_samples_split': (Real(1.0, 8.0), pow2intmap),
             },
             MODEL_BACKEND: DecisionTreeClassifier,
         },
     }
 
     # every dataset should have fields:
-    # OUTPUT_TYPE:  FMT_NUMBER / FMT_CATEGORY
+    # OUTPUT_TYPE:  OUTPUT_CONTINUOUS / OUTPUT_CATEGORY
     # DATASET_LOADER: callable that loads data into matrix X of inputs and vector y of outputs
     datasets={
         "Boston":{
-            OUTPUT_TYPE: FMT_NUMBER,
+            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             DATASET_LOADER: lambda : load_data_target(skd.load_boston())
         },
         "Housing":{
-            OUTPUT_TYPE: FMT_NUMBER,
+            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             DATASET_LOADER: lambda : load_data_target(skd.fetch_california_housing())
         },
         #
         #   classification datasets go here
         #
         "Leukemia":{
-            OUTPUT_TYPE: FMT_CATEGORY,
+            OUTPUT_TYPE: OUTPUT_CATEGORY,
             DATASET_LOADER: lambda : load_data_target(skd.fetch_mldata('leukemia'))
         },
         "Climate Model Crashes":{
-            OUTPUT_TYPE: FMT_CATEGORY,
+            OUTPUT_TYPE: OUTPUT_CATEGORY,
             DATASET_LOADER: lambda : load_data_target(skd.fetch_mldata('climate-model-simulation-crashes', target_name=-1))
         },
     }
@@ -191,21 +184,19 @@ class TesterClass():
         if not dataset in TesterClass.datasets:
             return False, "unknown dataset"
 
-        dst = TesterClass.datasets[dataset]
-
+        selected_dataset = TesterClass.datasets[dataset]
         if not model in TesterClass.models:
             return False, "unknown model"
 
-        mod = TesterClass.models[model]
-
-        if not dst[OUTPUT_TYPE] == mod[OUTPUT_TYPE]:
+        selected_model = TesterClass.models[model]
+        if not selected_dataset[OUTPUT_TYPE] == selected_model[OUTPUT_TYPE]:
             return False, "model cannot be applied to the dataset"
 
         return True, None
 
     def __init__(self, model, dataset):
-        supports, reason_if_not = TesterClass.supports(model, dataset)
 
+        supports, reason_if_not = TesterClass.supports(model, dataset)
         if not supports:
             raise BaseException(reason_if_not)
 
@@ -229,7 +220,7 @@ class TesterClass():
 
         for param in point.keys():
             v = point[param]
-            v = self.model_class[MODEL_PARAMETERS][param][PARAM_MAP](v)
+            v = self.model_class[MODEL_PARAMETERS][param][1](v)
             point_mapped[param] = v
 
         model = cls(**point_mapped)
@@ -301,7 +292,7 @@ def calculate_performance(all_data):
         print(result)
 
 
-def evaluate_optimizer(base_estimator, model, dataset, max_iter, seed_value):
+def evaluate_optimizer(base_estimator, model, dataset, n_calls, seed_value):
     """
     Evaluates some estimator for the task of optimization of parameters of some
     model, given limited number of model evaluations.
@@ -310,7 +301,7 @@ def evaluate_optimizer(base_estimator, model, dataset, max_iter, seed_value):
     :param base_estimator: Estimator to use for optimization.
     :param model: str, name of the ML model class to be used for parameter tuning
     :param dataset: str, name of dataset to train ML model on
-    :param max_iter: a budget of evaluations
+    :param n_calls: a budget of evaluations
     :param seed_value: random seed, used to set the random number generator in numpy
     :return: a list of paris (p, f(p)), where p is a dictionary of the form "param name":value,
             and f(p) is performance measure value achieved by the model for configuration p.
@@ -325,50 +316,30 @@ def evaluate_optimizer(base_estimator, model, dataset, max_iter, seed_value):
     problem = TesterClass(model, dataset)
     space = problem.model_class[MODEL_PARAMETERS]
 
-    dimensions = []
-
-    # convert space dictionary to dimensions
-    for k in space.keys():
-        v = space[k]
-
-        if v[VARIABLE_TYPE] == REAL_VARIABLE: # if real variable ...
-            dim_range = v[VARIABLE_RANGE]
-            dim = Real(dim_range[0], dim_range[1])
-        elif v[VARIABLE_TYPE] == INTEGER_VARIABLE: # if integer ...
-            dim_range = v[VARIABLE_RANGE]
-            dim = Integer(dim_range[0], dim_range[1])
-        elif v[VARIABLE_TYPE] == CATEGORY_VARIABLE: # if category ...
-            dim_range = v[VARIABLE_RANGE]
-            dim = Categorical(dim_range)
-        else:
-            raise BaseException("Unknown type of variable!")
-
-        dimensions.append((dim, k)) # need to remember names of dimensions for evaluation code
-
     # initialization
     estimator = base_estimator(random_state=seed_value)
-    solver = Optimizer([d[0] for d in dimensions], estimator, acq_optimizer="sampling", random_state=seed_value)
+    dimensions = [v[0] for k, v in space.items()]
+    solver = Optimizer(dimensions, estimator, random_state=seed_value, acq_optimizer='sampling')
 
     trace = []
     best_y = np.inf
     best_x = None
 
     # optimization loop
-    for i in range(max_iter):
-        p = solver.ask()
+    for i in range(n_calls):
+        point_list = solver.ask()
 
-        point = {d[1]:v for d,v in zip(dimensions, p)} # convert list of dimension values to dictionary
+        point_dct = {k: v for k, v in zip(space.keys(), point_list)}  # convert list of dimension values to dictionary
+        objective_at_point = -problem.evaluate(point_dct) # the result of "evaluate" is accuracy / r^2, which is the more the better
 
-        v = -problem.evaluate(point) # the result of "evaluate" is accuracy / r^2, which is the more the better
-
-        solver.tell(p, v)
-
-        if best_y > v:
-            best_y = v
-            best_x = point
+        if best_y > objective_at_point:
+            best_y = objective_at_point
+            best_x = point_dct
 
         trace.append((best_x, best_y)) # remember the point, objective pair
         print("Eval. #"+str(i))
+
+        solver.tell(point_list, objective_at_point)
 
     return trace
 
@@ -390,7 +361,7 @@ def run(n_calls = 32,
     :return: None
     """
 
-    selected_regressors = [GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor]
+    surrogates = [GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor]
     selected_models = TesterClass.models.keys()
     selected_datasets = TesterClass.datasets.keys()
 
@@ -399,28 +370,28 @@ def run(n_calls = 32,
     # all the parameter values and objectives collected during execution are stored in list below
     all_data = {}
 
-    for Model in selected_models:
-        all_data[Model] = {}
+    for model in selected_models:
+        all_data[model] = {}
 
-        for Dataset in selected_datasets:
-            Supports, Message = TesterClass.supports(Model, Dataset)
+        for dataset in selected_datasets:
+            supports, _ = TesterClass.supports(model, dataset)
 
-            if not Supports:
+            if not supports:
                 continue
 
-            all_data[Model][Dataset] = {}
+            all_data[model][dataset] = {}
 
-            for Regressor in selected_regressors:
-                print(Regressor.__name__, Model, Dataset)
+            for surrogate in surrogates:
+                print(surrogate.__name__, model, dataset)
 
-                params = [(Regressor, Model, Dataset, n_calls, np.random.randint(2 ** 30)) for rep in range(n_runs)]
+                params = [(surrogate, model, dataset, n_calls, np.random.randint(2 ** 30)) for _ in range(n_runs)]
 
                 if run_parallel:
                     raw_trace = pool.map(_evaluate_optimizer, params)
                 else:
                     raw_trace = [_evaluate_optimizer(p) for p in params]
 
-                all_data[Model][Dataset][Regressor.__name__] = raw_trace
+                all_data[model][dataset][surrogate.__name__] = raw_trace
 
     # dump the recorded objective values as json
     if save_traces:
@@ -435,7 +406,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--n_calls', nargs="?", default=50, type=int,
+        '--n_calls', nargs="?", default=64, type=int,
         help="Maximum number of allowed function calls.")
     parser.add_argument(
         '--n_runs', nargs="?", default=5, type=int,
