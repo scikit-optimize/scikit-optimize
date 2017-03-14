@@ -8,6 +8,8 @@ from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import bench4
+from skopt.benchmarks import branin
+from skopt.learning import GaussianProcessRegressor
 
 
 def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
@@ -39,3 +41,10 @@ def test_n_jobs():
                            acq_func="EI", n_calls=2, n_random_starts=1,
                            random_state=1, noise=1e-10, n_jobs=2)
     assert_array_equal(r_single.x_iters, r_double.x_iters)
+
+
+def test_gpr_default():
+    """Smoke test that gp_minimize does not fail for default values."""
+    gpr = GaussianProcessRegressor()
+    res = gp_minimize(
+        branin, ((-5.0, 10.0), (0.0, 15.0)), n_random_starts=1, n_calls=2)

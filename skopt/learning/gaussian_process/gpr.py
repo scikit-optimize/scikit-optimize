@@ -7,8 +7,10 @@ from scipy.linalg import solve_triangular
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 from sklearn.utils import check_array
 
-from .kernels import WhiteKernel
+from .kernels import ConstantKernel
 from .kernels import Sum
+from .kernels import RBF
+from .kernels import WhiteKernel
 
 
 def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
@@ -180,9 +182,11 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
             raise ValueError("expected noise to be 'gaussian', got %s"
                              % self.noise)
 
-        if self.kernel is not None and self.noise == "gaussian":
+        if self.kernel is None:
+            self.kernel = ConstantKernel(1.0, constant_value_bounds="fixed") \
+                          * RBF(1.0, length_scale_bounds="fixed")
+        elif self.noise == "gaussian":
             self.kernel = self.kernel + WhiteKernel()
-
         elif self.noise:
             self.kernel = self.kernel + WhiteKernel(
                 noise_level=self.noise, noise_level_bounds="fixed"
