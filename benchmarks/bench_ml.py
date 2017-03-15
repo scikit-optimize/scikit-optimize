@@ -1,7 +1,7 @@
 import numpy as np
 from copy import deepcopy
-from multiprocessing import Pool
 from skopt.learning import GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor
+from skopt.learning.gaussian_process.kernels import Matern
 import json
 from datetime import datetime
 
@@ -10,6 +10,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn import datasets as skd
+from sklearn.model_selection import train_test_split
+from joblib import Parallel, delayed
 
 from skopt import Optimizer
 from skopt.space import Real, Categorical, Integer
@@ -37,9 +39,7 @@ def split_normalize(X, y):
             70% of data is used for training, rest for validation.
     """
 
-    tr_fold = int(len(X) * 0.7) # split data
-    X, Xv = X[:tr_fold], X[tr_fold:]
-    y, yv = y[:tr_fold], y[tr_fold:]
+    X, Xv, y, yv = train_test_split(X, y, train_size=0.7)
 
     sc = StandardScaler() # normalize data
     sc.fit(X, y)
@@ -319,7 +319,7 @@ def evaluate_optimizer(base_estimator, model, dataset, n_calls, seed_value):
     # initialization
     estimator = base_estimator(random_state=seed_value)
     dimensions = [v[0] for k, v in space.items()]
-    solver = Optimizer(dimensions, estimator, random_state=seed_value, acq_optimizer='sampling')
+    solver = Optimizer(dimensions, estimator, random_state=seed_value)
 
     trace = []
     best_y = np.inf
@@ -347,25 +347,26 @@ def evaluate_optimizer(base_estimator, model, dataset, n_calls, seed_value):
 def _evaluate_optimizer(params):
     return evaluate_optimizer(*params)
 
+def get_gaussian_surrogate(random_state):
+    return GaussianProcessRegressor(kernel=Matern(), random_state=random_state)
+
 def run(n_calls = 32,
         n_runs = 1,
         save_traces = True,
-        run_parallel = False):
+        parallel_jobs = False):
     """
     Main function used to run the experiments.
 
     :param n_calls: evaluation budget
     :param n_runs: how many times to repeat the optimization in order to average out noise
     :param save_traces: whether to save data collected during optimization
-    :param run_parallel: whether to run different repeats of optimization in parallel
+    :param parallel_jobs: whether to run different repeats of optimization in parallel
     :return: None
     """
 
-    surrogates = [GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor]
+    surrogates = [get_gaussian_surrogate]
     selected_models = TesterClass.models.keys()
     selected_datasets = TesterClass.datasets.keys()
-
-    pool = Pool()
 
     # all the parameter values and objectives collected during execution are stored in list below
     all_data = {}
@@ -384,12 +385,11 @@ def run(n_calls = 32,
             for surrogate in surrogates:
                 print(surrogate.__name__, model, dataset)
 
-                params = [(surrogate, model, dataset, n_calls, np.random.randint(2 ** 30)) for _ in range(n_runs)]
-
-                if run_parallel:
-                    raw_trace = pool.map(_evaluate_optimizer, params)
-                else:
-                    raw_trace = [_evaluate_optimizer(p) for p in params]
+                raw_trace = Parallel(n_jobs=1)(
+                    delayed(evaluate_optimizer)(
+                        surrogate, model, dataset, n_calls, np.random.randint(2 ** 30)
+                    ) for _ in range(n_runs)
+                )
 
                 all_data[model][dataset][surrogate.__name__] = raw_trace
 
@@ -415,8 +415,8 @@ if __name__ == "__main__":
         '--save_traces', nargs="?", default=False, type=bool,
         help="Whether to save pairs (point, objective) obtained during experiments in a json file.")
     parser.add_argument(
-        '--run_parallel', nargs="?", default=True, type=bool,
+        '--parallel_processes', nargs="?", default=-1, type=bool,
         help="Whether to run in parallel or sequential mode.")
 
     args = parser.parse_args()
-    run(args.n_calls, args.n_runs, args.save_traces, args.run_parallel)
+    run(args.n_calls, args.n_runs, args.save_traces, args.parallel_processes)
