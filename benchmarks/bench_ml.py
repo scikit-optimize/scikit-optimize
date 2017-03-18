@@ -1,20 +1,36 @@
-import numpy as np
-from copy import deepcopy
-from skopt.learning import GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor
-from skopt.learning.gaussian_process.kernels import Matern
-import json
-from datetime import datetime
+"""
+This code implements benchmark for the black box optimization algorithms,
+applied to a task of optimizing parameters of ML algorithms for the task
+of supervised learning.
 
+The code implements benchmark on 4 datasets where parameters for 6 classes
+of supervised models are tuned to optimize performance on datasets. Supervised
+learning models implementations are taken from sklearn.
+
+Regression learning task is solved on 2 datasets, and classification on the
+rest of datasets. 3 model classes are regression models, and rest are
+classification models.
+"""
+
+# models used
 from sklearn.svm import SVR, SVC
-from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier, MLPRegressor
+
+from sklearn.preprocessing import StandardScaler
 from sklearn import datasets as skd
 from sklearn.model_selection import train_test_split
-from joblib import Parallel, delayed
+from sklearn.base import ClassifierMixin, RegressorMixin
 
+from skopt.learning import GaussianProcessRegressor, RandomForestRegressor, ExtraTreesRegressor
+from skopt.learning.gaussian_process.kernels import Matern
 from skopt import Optimizer
 from skopt.space import Real, Categorical, Integer
+
+import numpy as np
+import json
+from datetime import datetime
+from joblib import Parallel, delayed
 
 OUTPUT_TYPE = "Output type"
 OUTPUT_CONTINUOUS = "Number"
@@ -28,7 +44,7 @@ DATASET_LOADER = "Dataset loader"
 
 # bunch of dataset preprocessing functions below
 
-def split_normalize(X, y):
+def split_normalize(X, y, random_state):
     """
     Splits data into training and validation parts.
     Test data is assumed to be used after optimization.
@@ -39,7 +55,7 @@ def split_normalize(X, y):
             70% of data is used for training, rest for validation.
     """
 
-    X, Xv, y, yv = train_test_split(X, y, train_size=0.7)
+    X, Xv, y, yv = train_test_split(X, y, train_size=0.7, random_state=random_state)
 
     sc = StandardScaler() # normalize data
     sc.fit(X, y)
@@ -66,7 +82,7 @@ def load_data_target(data):
     Y = data['target']
     return X, Y
 
-class TesterClass():
+class MLBench():
     """
     A class which is used to perform benchmarking of black box optimization algorithms on various
     machine learning problems.
@@ -91,21 +107,24 @@ class TesterClass():
     }
 
     # every model should have fields:
-    # OUTPUT_TYPE:  OUTPUT_CONTINUOUS / OUTPUT_CATEGORY
     # MODEL_PARAMETERS: dictionary whose keys correspond to parameters that are passed to __init__ of python class
     #                   that implements model
-    # MODEL_BACKEND: python class that implements model
+    # MODEL_BACKEND:    python class that implements model. Should be a subclass of RegressorMixin or ClassifierMixin,
+    #                   so that the type of output of the model could be determined easily.
+    class_to_outp = {
+        RegressorMixin: OUTPUT_CONTINUOUS,
+        ClassifierMixin: OUTPUT_CATEGORY
+    }
+
     models = {
         #
         #   regressors go here
         #
         MLPRegressor.__name__:{
-            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             MODEL_PARAMETERS: nnparams,
             MODEL_BACKEND: MLPRegressor,
         },
         SVR.__name__:{
-            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             MODEL_PARAMETERS: {
                 'C': (Real(-4.0, 4.0), pow10map),
                 'epsilon': (Real(-4.0, 1.0), pow10map),
@@ -114,7 +133,6 @@ class TesterClass():
             MODEL_BACKEND: SVR,
         },
         DecisionTreeRegressor.__name__:{
-            OUTPUT_TYPE: OUTPUT_CONTINUOUS,
             MODEL_PARAMETERS: {
                 'max_depth': (Real(1.0, 4.0), pow2intmap),
                 'min_samples_split': (Real(1.0, 8.0), pow2intmap),
@@ -125,12 +143,10 @@ class TesterClass():
         #   classifiers go here
         #
         MLPClassifier.__name__:{
-            OUTPUT_TYPE: OUTPUT_CATEGORY,
             MODEL_PARAMETERS: nnparams,
             MODEL_BACKEND: MLPClassifier,
         },
         SVC.__name__:{
-            OUTPUT_TYPE: OUTPUT_CATEGORY,
             MODEL_PARAMETERS: {
                 'C': (Real(-4.0, 4.0), pow10map),
                 'gamma': (Real(-4.0, 1.0), pow10map),
@@ -138,7 +154,6 @@ class TesterClass():
             MODEL_BACKEND: SVC,
         },
         DecisionTreeClassifier.__name__: {
-            OUTPUT_TYPE: OUTPUT_CATEGORY,
             MODEL_PARAMETERS: {
                 'max_depth': (Real(1.0, 4.0), pow2intmap),
                 'min_samples_split': (Real(1.0, 8.0), pow2intmap),
@@ -181,29 +196,41 @@ class TesterClass():
         :return: bool
         """
 
-        if not dataset in TesterClass.datasets:
+        if not dataset in MLBench.datasets:
             return False, "unknown dataset"
 
-        selected_dataset = TesterClass.datasets[dataset]
-        if not model in TesterClass.models:
+        selected_dataset = MLBench.datasets[dataset]
+        if not model in MLBench.models:
             return False, "unknown model"
 
-        selected_model = TesterClass.models[model]
-        if not selected_dataset[OUTPUT_TYPE] == selected_model[OUTPUT_TYPE]:
+        selection = MLBench.models[model]
+        model_backend = selection[MODEL_BACKEND]
+
+        # check the model output
+        if not any([issubclass(model_backend, k) for k in MLBench.class_to_outp.keys()]):
+            raise TypeError("The model is not a subclass of any supported estimator."
+                             "Supported estimators are: " + str(MLBench.class_to_outp.keys()))
+
+        for k in MLBench.class_to_outp.keys():
+            if issubclass(model_backend,k):
+                model_output = MLBench.class_to_outp[k]
+
+        if not selected_dataset[OUTPUT_TYPE] == model_output:
             return False, "model cannot be applied to the dataset"
 
         return True, None
 
-    def __init__(self, model, dataset):
+    def __init__(self, model, dataset, random_state):
 
-        supports, reason_if_not = TesterClass.supports(model, dataset)
+        supports, reason_if_not = MLBench.supports(model, dataset)
+
         if not supports:
             raise BaseException(reason_if_not)
 
         X, Y = self.datasets[dataset][DATASET_LOADER]()
 
-        self.dataset = split_normalize(X, Y)
-        self.model_class = TesterClass.models[model]
+        self.dataset = split_normalize(X, Y, random_state)
+        self.model_description = MLBench.models[model]
 
     def evaluate(self, point):
         """
@@ -213,17 +240,16 @@ class TesterClass():
         """
 
         X, Y, Xv, Yv = self.dataset
-        cls = self.model_class[MODEL_BACKEND]
 
         # apply transformation to model parameters, for example exp transformation
         point_mapped = {}
 
         for param in point.keys():
             v = point[param]
-            v = self.model_class[MODEL_PARAMETERS][param][1](v)
+            v = self.model_description[MODEL_PARAMETERS][param][1](v)
             point_mapped[param] = v
 
-        model = cls(**point_mapped)
+        model = self.model_description[MODEL_BACKEND](**point_mapped)
 
         try:
             model.fit(X, Y)
@@ -262,7 +288,7 @@ def calculate_performance(all_data):
                 if not Algorithm in average_for_algo:
                     average_for_algo[Algorithm] = []
 
-                objs = [[v[1] for v in d] for d in data] # leave only objective values
+                objs = [[v[-1] for v in d] for d in data] # leave only best objective values at particular iteration
                 # here objs is a 2d list, where first dimension corresponds to
                 # particular repeat of experiment, and second dimension corresponds to index
                 # of optimization step during optimization
@@ -292,17 +318,17 @@ def calculate_performance(all_data):
         print(result)
 
 
-def evaluate_optimizer(base_estimator, model, dataset, n_calls, seed_value):
+def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
     """
     Evaluates some estimator for the task of optimization of parameters of some
     model, given limited number of model evaluations.
     Parentheses on parameters are used to be able to run function with pool.map method.
 
-    :param base_estimator: Estimator to use for optimization.
+    :param surrogate: Estimator to use for optimization.
     :param model: str, name of the ML model class to be used for parameter tuning
     :param dataset: str, name of dataset to train ML model on
     :param n_calls: a budget of evaluations
-    :param seed_value: random seed, used to set the random number generator in numpy
+    :param random_state: random seed, used to set the random number generator in numpy
     :return: a list of paris (p, f(p)), where p is a dictionary of the form "param name":value,
             and f(p) is performance measure value achieved by the model for configuration p.
             Such list contains history of execution of optimization.
@@ -311,15 +337,17 @@ def evaluate_optimizer(base_estimator, model, dataset, n_calls, seed_value):
 
     # below seed is necessary for processes which fork at the same time
     # so that random numbers generated in processes are different
-    np.random.seed(seed_value)
+    np.random.seed(random_state)
 
-    problem = TesterClass(model, dataset)
-    space = problem.model_class[MODEL_PARAMETERS]
+    problem = MLBench(model, dataset, random_state=random_state)
+    space = problem.model_description[MODEL_PARAMETERS]
 
     # initialization
-    estimator = base_estimator(random_state=seed_value)
-    dimensions = [v[0] for k, v in space.items()]
-    solver = Optimizer(dimensions, estimator, random_state=seed_value)
+    estimator = surrogate(random_state=random_state)
+    dimensions_names = space.keys()
+
+    dimensions = [space[k][0] for k in dimensions_names]
+    solver = Optimizer(dimensions, estimator, random_state=random_state)
 
     trace = []
     best_y = np.inf
@@ -329,14 +357,13 @@ def evaluate_optimizer(base_estimator, model, dataset, n_calls, seed_value):
     for i in range(n_calls):
         point_list = solver.ask()
 
-        point_dct = {k: v for k, v in zip(space.keys(), point_list)}  # convert list of dimension values to dictionary
+        point_dct = {k: v for k, v in zip(dimensions_names, point_list)}  # convert list of dimension values to dictionary
         objective_at_point = -problem.evaluate(point_dct) # the result of "evaluate" is accuracy / r^2, which is the more the better
 
         if best_y > objective_at_point:
             best_y = objective_at_point
-            best_x = point_dct
 
-        trace.append((best_x, best_y)) # remember the point, objective pair
+        trace.append((point_dct, objective_at_point, best_y)) # remember the point, objective pair
         print("Eval. #"+str(i))
 
         solver.tell(point_list, objective_at_point)
@@ -347,26 +374,23 @@ def evaluate_optimizer(base_estimator, model, dataset, n_calls, seed_value):
 def _evaluate_optimizer(params):
     return evaluate_optimizer(*params)
 
-def get_gaussian_surrogate(random_state):
-    return GaussianProcessRegressor(kernel=Matern(), random_state=random_state)
-
 def run(n_calls = 32,
         n_runs = 1,
         save_traces = True,
-        parallel_jobs = False):
+        n_jobs = -1):
     """
     Main function used to run the experiments.
 
     :param n_calls: evaluation budget
     :param n_runs: how many times to repeat the optimization in order to average out noise
     :param save_traces: whether to save data collected during optimization
-    :param parallel_jobs: whether to run different repeats of optimization in parallel
+    :param n_jobs: number of different repeats of optimization to run in parallel
     :return: None
     """
 
-    surrogates = [get_gaussian_surrogate]
-    selected_models = TesterClass.models.keys()
-    selected_datasets = TesterClass.datasets.keys()
+    surrogates = [GaussianProcessRegressor]
+    selected_models = MLBench.models.keys()
+    selected_datasets = MLBench.datasets.keys()
 
     # all the parameter values and objectives collected during execution are stored in list below
     all_data = {}
@@ -375,7 +399,7 @@ def run(n_calls = 32,
         all_data[model] = {}
 
         for dataset in selected_datasets:
-            supports, _ = TesterClass.supports(model, dataset)
+            supports, _ = MLBench.supports(model, dataset)
 
             if not supports:
                 continue
@@ -385,10 +409,12 @@ def run(n_calls = 32,
             for surrogate in surrogates:
                 print(surrogate.__name__, model, dataset)
 
+                seeds = np.random.randint(0, 2 ** 30, n_runs)
+
                 raw_trace = Parallel(n_jobs=1)(
                     delayed(evaluate_optimizer)(
-                        surrogate, model, dataset, n_calls, np.random.randint(2 ** 30)
-                    ) for _ in range(n_runs)
+                        surrogate, model, dataset, n_calls, seed
+                    ) for seed in seeds
                 )
 
                 all_data[model][dataset][surrogate.__name__] = raw_trace
@@ -407,7 +433,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         '--n_calls', nargs="?", default=64, type=int,
-        help="Maximum number of allowed function calls.")
+        help="Number of function calls.")
     parser.add_argument(
         '--n_runs', nargs="?", default=5, type=int,
         help="Number of re-runs of single algorithm on single instance of a problem.")
@@ -415,8 +441,8 @@ if __name__ == "__main__":
         '--save_traces', nargs="?", default=False, type=bool,
         help="Whether to save pairs (point, objective) obtained during experiments in a json file.")
     parser.add_argument(
-        '--parallel_processes', nargs="?", default=-1, type=bool,
+        '--n_jobs', nargs="?", default=-1, type=bool,
         help="Whether to run in parallel or sequential mode.")
 
     args = parser.parse_args()
-    run(args.n_calls, args.n_runs, args.save_traces, args.parallel_processes)
+    run(args.n_calls, args.n_runs, args.save_traces, args.n_jobs)
