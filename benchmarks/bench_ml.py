@@ -1,3 +1,4 @@
+
 """
 This code implements benchmark for the black box optimization algorithms,
 applied to a task of optimizing parameters of ML algorithms for the task
@@ -45,6 +46,7 @@ DATASET_LOADER = "Dataset loader"
 # bunch of dataset preprocessing functions below
 
 def split_normalize(X, y, random_state):
+
     """
     Splits data into training and validation parts.
     Test data is assumed to be used after optimization.
@@ -56,6 +58,7 @@ def split_normalize(X, y, random_state):
     """
 
     X, Xv, y, yv = train_test_split(X, y, train_size=0.7, random_state=random_state)
+
 
     sc = StandardScaler() # normalize data
     sc.fit(X, y)
@@ -83,6 +86,7 @@ def load_data_target(data):
     return X, Y
 
 class MLBench():
+
     """
     A class which is used to perform benchmarking of black box optimization algorithms on various
     machine learning problems.
@@ -107,6 +111,7 @@ class MLBench():
     }
 
     # every model should have fields:
+
     # MODEL_PARAMETERS: dictionary whose keys correspond to parameters that are passed to __init__ of python class
     #                   that implements model
     # MODEL_BACKEND:    python class that implements model. Should be a subclass of RegressorMixin or ClassifierMixin,
@@ -196,6 +201,7 @@ class MLBench():
         :return: bool
         """
 
+
         if not dataset in MLBench.datasets:
             return False, "unknown dataset"
 
@@ -216,6 +222,7 @@ class MLBench():
                 model_output = MLBench.class_to_outp[k]
 
         if not selected_dataset[OUTPUT_TYPE] == model_output:
+
             return False, "model cannot be applied to the dataset"
 
         return True, None
@@ -224,6 +231,7 @@ class MLBench():
 
         supports, reason_if_not = MLBench.supports(model, dataset)
 
+
         if not supports:
             raise BaseException(reason_if_not)
 
@@ -231,6 +239,7 @@ class MLBench():
 
         self.dataset = split_normalize(X, Y, random_state)
         self.model_description = MLBench.models[model]
+
 
     def evaluate(self, point):
         """
@@ -289,6 +298,7 @@ def calculate_performance(all_data):
                     average_for_algo[Algorithm] = []
 
                 objs = [[v[-1] for v in d] for d in data] # leave only best objective values at particular iteration
+
                 # here objs is a 2d list, where first dimension corresponds to
                 # particular repeat of experiment, and second dimension corresponds to index
                 # of optimization step during optimization
@@ -337,6 +347,7 @@ def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
 
     # below seed is necessary for processes which fork at the same time
     # so that random numbers generated in processes are different
+
     np.random.seed(random_state)
 
     problem = MLBench(model, dataset, random_state=random_state)
@@ -374,16 +385,19 @@ def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
 def _evaluate_optimizer(params):
     return evaluate_optimizer(*params)
 
+
 def run(n_calls = 32,
         n_runs = 1,
         save_traces = True,
         n_jobs = -1):
+
     """
     Main function used to run the experiments.
 
     :param n_calls: evaluation budget
     :param n_runs: how many times to repeat the optimization in order to average out noise
     :param save_traces: whether to save data collected during optimization
+
     :param n_jobs: number of different repeats of optimization to run in parallel
     :return: None
     """
@@ -399,13 +413,12 @@ def run(n_calls = 32,
         all_data[model] = {}
 
         for dataset in selected_datasets:
-            supports, _ = MLBench.supports(model, dataset)
 
+            supports, _ = MLBench.supports(model, dataset)
             if not supports:
                 continue
 
             all_data[model][dataset] = {}
-
             for surrogate in surrogates:
                 print(surrogate.__name__, model, dataset)
 
@@ -415,6 +428,7 @@ def run(n_calls = 32,
                     delayed(evaluate_optimizer)(
                         surrogate, model, dataset, n_calls, seed
                     ) for seed in seeds
+
                 )
 
                 all_data[model][dataset][surrogate.__name__] = raw_trace
@@ -446,3 +460,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     run(args.n_calls, args.n_runs, args.save_traces, args.n_jobs)
+
