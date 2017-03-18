@@ -424,7 +424,7 @@ def run(n_calls = 32,
 
                 seeds = np.random.randint(0, 2 ** 30, n_runs)
 
-                raw_trace = Parallel(n_jobs=1)(
+                raw_trace = Parallel(n_jobs=n_jobs)(
                     delayed(evaluate_optimizer)(
                         surrogate, model, dataset, n_calls, seed
                     ) for seed in seeds
@@ -450,13 +450,13 @@ if __name__ == "__main__":
         help="Number of function calls.")
     parser.add_argument(
         '--n_runs', nargs="?", default=5, type=int,
-        help="Number of re-runs of single algorithm on single instance of a problem.")
+        help="Number of re-runs of single algorithm on single instance of a problem, in order to average out the noise.")
     parser.add_argument(
         '--save_traces', nargs="?", default=False, type=bool,
-        help="Whether to save pairs (point, objective) obtained during experiments in a json file.")
+        help="Whether to save pairs (point, objective, best_objective) obtained during experiments in a json file.")
     parser.add_argument(
         '--n_jobs', nargs="?", default=-1, type=bool,
-        help="Whether to run in parallel or sequential mode.")
+        help="Number of worker processes used for the benchmark.")
 
     args = parser.parse_args()
     run(args.n_calls, args.n_runs, args.save_traces, args.n_jobs)
