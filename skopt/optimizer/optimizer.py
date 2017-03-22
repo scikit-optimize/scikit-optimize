@@ -18,6 +18,18 @@ from ..space import Space
 from ..utils import create_result
 
 
+def thompson_sampling(model, n_rep_points, n_trial_points, space,
+                      random_state=None):
+    n_total = n_rep_points * n_trial_points
+
+    rep_points = []
+    for i in range(n_rep_points):
+        rep_cands = space.transform(
+            space.rvs(n_samples=n_trial_points, random_state=random_state))
+        vals = model.sample_y(rep_cands, 1, random_state=random_state)
+        rep_points.append(rep_cands[np.argmin(vals)])
+    return np.array(rep_points)
+
 class Optimizer(object):
     """Run bayesian optimisation loop.
 
@@ -275,10 +287,10 @@ class Optimizer(object):
                 n_rep_points = self.acq_func_kwargs.get("n_rep_points", 50)
                 n_trial_points = self.acq_func_kwargs.get(
                     "n_trial_points", 200)
-                n_total = n_rep_points*n_trial_points
-                rep_cands = self.space.transform(
-                    self.space.rvs(n_samples=n_total, random_state=self.rng))
-                self.acq_func_kwargs["rep_cands"] = rep_cands
+                rep_points = thompson_sampling(
+                    est, n_rep_points, n_trial_points, self.space,
+                    random_state=self.rng)
+                self.acq_func_kwargs["rep_points"] = rep_points
 
             X = self.space.transform(self.space.rvs(
                 n_samples=self.n_points, random_state=self.rng))

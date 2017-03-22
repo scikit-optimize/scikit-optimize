@@ -268,9 +268,8 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     return values
 
 
-def gaussian_entropy_search(X, model, n_rep_points=50,
-                            n_trial_points=200, measure="EI", n_samples=500,
-                            random_state=None, rep_cands=None, **kwargs):
+def gaussian_entropy_search(X, model, rep_points, n_samples=500,
+                            random_state=None, **kwargs):
     """
     Use entropy search to optimize the acquisition function.
 
@@ -302,13 +301,6 @@ def gaussian_entropy_search(X, model, n_rep_points=50,
     * `space` [Space instance]:
         This is required to sample representer points.
 
-    * `n_rep_points` [int, default 50]:
-        Number of representer points.
-
-    * `n_trial_points` [int, default 200]:
-        Number of trial points sampled uniformly for each representer point
-        candidate.
-
     * `n_samples` [int, default 500]:
         Number of functions to sample from the GP posterior at the
         representer points to approximate p_min at each of the representer
@@ -318,23 +310,8 @@ def gaussian_entropy_search(X, model, n_rep_points=50,
         For reproducible results.
     """
     rng = np.random.RandomState(random_state)
+    n_rep_points = len(rep_points)
     n_features = X.shape[1]
-
-    # Step 1: Sample `n_representer_points` from the given measure.
-    # XXX: Use MCMC sampling to sample from the quadrature measure.
-    if measure == "LCB":
-        quad_measure = gaussian_lcb
-
-    elif measure in ["EI", "PI"]:
-        if measure == "EI":
-            quad_measure = lambda X : -gaussian_ei(X, model)
-        else:
-            quad_measure = lambda X : -gaussian_pi(X, model)
-
-    n_total = n_rep_points * n_trial_points
-    all_values = np.reshape(quad_measure(rep_cands), (n_rep_points, n_trial_points))
-    rep_inds = np.arange(0, n_total, n_trial_points) + np.argmin(all_values, axis=1)
-    rep_points = rep_cands[rep_inds]
     X_all = np.vstack((rep_points, X))
     X_all_mean, X_all_cov = model.predict(X_all, return_cov=True)
 
