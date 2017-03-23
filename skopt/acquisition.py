@@ -332,7 +332,7 @@ def gaussian_entropy_search(X, model, rep_points, n_samples=500,
         cov_rep_X_row = np.reshape(cov_rep_X, (-1, 1))
         cov_rep_X_col = np.reshape(cov_rep_X, (1, -1))
         cov_cand_inv = 1.0 / X_all_cov[cand_ind, cand_ind]
-        cov_delta = cov_cand_inv * np.dot(cov_rep_X_row, cov_rep_X_col)
+        cov_delta = -cov_cand_inv * np.dot(cov_rep_X_row, cov_rep_X_col)
 
         # delta(cov(X_rep)) = \Sigma(X_rep, X_cand) \Sigma^-1(X_cand, X_cand) \Sigma(X_cand, X_rep) \Omega
         # where \Omega is a distributed normally.
@@ -340,7 +340,7 @@ def gaussian_entropy_search(X, model, rep_points, n_samples=500,
 
         # New simulated mean and simulated covariance.
         new_mean = init_mean + mean_delta
-        new_cov = init_cov - cov_delta
+        new_cov = init_cov + cov_delta
 
         # p_min(Xrep_{i}) = E(\prod_{j=1}^N_rep \theta(f(Xrep{j}) - f(Xrep{i})))
         # where \theta(f(Xrep{j}) - f(Xrep{i})) is zero if Xrep(j) < Xrep(i)
