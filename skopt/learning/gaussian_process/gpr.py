@@ -302,7 +302,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)    # Line 4 (y_mean = f_star)
-            y_mean = self._y_train_mean + y_mean  # undo normal.
+            y_mean = self.y_train_mean + y_mean  # undo normal.
 
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
