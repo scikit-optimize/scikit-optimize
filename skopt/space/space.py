@@ -236,6 +236,21 @@ class Real(Dimension):
             else:
                 return np.log10(self.low), np.log10(self.high)
 
+    def distance(self, a, b):
+        """Compute distance between point `a` and `b`.
+
+        Parameters
+        ----------
+        * `a` [float]
+            First point.
+
+        * `b` [float]
+            Second point.
+        """
+        assert a in self
+        assert b in self
+        return np.abs(a - b)
+
 
 class Integer(Dimension):
     def __init__(self, low, high, transform=None):
@@ -243,10 +258,10 @@ class Integer(Dimension):
 
         Parameters
         ----------
-        * `low` [float]:
+        * `low` [int]:
             Lower bound (inclusive).
 
-        * `high` [float]:
+        * `high` [int]:
             Upper bound (inclusive).
 
         * `transform` ["identity", "normalize", optional]:
@@ -305,6 +320,21 @@ class Integer(Dimension):
             return 0, 1
         else:
             return (self.low, self.high)
+
+    def distance(self, a, b):
+        """Compute distance between point `a` and `b`.
+
+        Parameters
+        ----------
+        * `a` [int]
+            First point.
+
+        * `b` [int]
+            Second point.
+        """
+        assert a in self
+        assert b in self
+        return np.abs(a - b)
 
 
 class Categorical(Dimension):
@@ -400,6 +430,24 @@ class Categorical(Dimension):
             return (0.0, 1.0)
         else:
             return [(0.0, 1.0) for i in range(self.transformed_size)]
+
+    def distance(self, a, b):
+        """Compute distance between category `a` and `b`.
+
+        As categories have no order the distance between two points is one
+        if a != b and zero otherwise.
+
+        Parameters
+        ----------
+        * `a` [category]
+            First category.
+
+        * `b` [category]
+            Second category.
+        """
+        assert a in self
+        assert b in self
+        return 0 if a != b else 1
 
 
 class Space:
@@ -610,3 +658,20 @@ class Space:
     @property
     def is_categorical(self):
         return all([isinstance(dim, Categorical) for dim in self.dimensions])
+
+    def distance(self, point_a, point_b):
+        """Compute distance between two points in this space.
+
+        Parameters
+        ----------
+        * `a` [array]
+            First point.
+
+        * `b` [array]
+            Second point.
+        """
+        distance = 0.
+        for a, b, dim in zip(point_a, point_b, self.dimensions):
+            distance += dim.distance(a, b)
+
+        return distance
