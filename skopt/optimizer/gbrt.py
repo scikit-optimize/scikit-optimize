@@ -11,7 +11,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
                   acq_func="EI", acq_optimizer="auto",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, xi=0.01, kappa=1.96,
-                  n_jobs=1):
+                  delta_x=None, n_jobs=1):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -106,6 +106,10 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
+    * `delta_x` [float, default=None]:
+        Stop optimization loop early if the difference between successive
+        points at which to evaluate the objective is less than `delta_x`.
+
     * `n_jobs` [int, default=1]:
         The number of jobs to run in parallel for `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
@@ -144,6 +148,6 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,
                          x0=x0, y0=y0, random_state=random_state, xi=xi,
-                         kappa=kappa, acq_func=acq_func,
+                         kappa=kappa, acq_func=acq_func, delta_x=delta_x,
                          verbose=verbose, callback=callback,
                          acq_optimizer="sampling")

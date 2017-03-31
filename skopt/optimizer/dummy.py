@@ -15,8 +15,8 @@ from ..utils import create_result
 
 
 def dummy_minimize(func, dimensions, n_calls=100,
-                   x0=None, y0=None, random_state=None, verbose=False,
-                   callback=None):
+                   x0=None, y0=None, delta_x=None, random_state=None,
+                   verbose=False, callback=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -57,6 +57,10 @@ def dummy_minimize(func, dimensions, n_calls=100,
           function at `x0`.
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
+
+    * `delta_x` [float, default=None]:
+        Stop optimization loop early if the difference between successive
+        points at which to evaluate the objective is less than `delta_x`.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -144,6 +148,11 @@ def dummy_minimize(func, dimensions, n_calls=100,
     first = True
 
     for i in range(len(y0), len(X)):
+        # Stop evaluating early if the suggested point is too close to the
+        # previous one
+        if (delta_x is not None and space.distance(X[i], X[i-1]) < delta_x):
+            break
+
         y_i = func(X[i])
 
         if first:

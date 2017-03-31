@@ -75,7 +75,7 @@ class Optimizer(object):
         with `acq_optimizer`.
 
         - If set to `"sampling"`, then `acq_func` is optimized by computing
-          `acq_func` at `n_points` sampled randomly.
+          `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
               - Sampling `n_restarts_optimizer` points randomly.
               - `"lbfgs"` is run for 20 iterations with these points as initial
@@ -213,6 +213,8 @@ class Optimizer(object):
         To add multiple observations in a batch pass a list-of-lists for `x`
         and a list of scalars for `y`.
 
+        Parameters
+        ----------
         * `x` [list or list-of-lists]:
             Point at which objective was evaluated.
         * `y` [scalar or list]:

@@ -31,7 +31,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1):
+                  xi=0.01, kappa=1.96, delta_x=None, n_jobs=1):
     """
     Parameters
     ----------
@@ -60,7 +60,7 @@ def base_minimize(func, dimensions, base_estimator,
         which returns `std(Y | x)`` along with `E[Y | x]`.
 
     * `n_calls` [int, default=100]:
-        Number of calls to `func`.
+        Maximum number of calls to `func`.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random initialization points
@@ -117,9 +117,10 @@ def base_minimize(func, dimensions, base_estimator,
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
-    * `n_points` [int, default=500]:
-        Number of points to sample to determine the next "best" point.
-        Useless if acq_optimizer is set to `"lbfgs"`.
+    * `n_points` [int, default=10000]:
+        If `acq_optimizer` is set to `"sampling"`, then `acq_func` is
+        optimized by computing `acq_func` at `n_points` randomly sampled
+        points.
 
     * `n_restarts_optimizer` [int, default=5]:
         The number of restarts of the optimizer when `acq_optimizer`
@@ -134,6 +135,10 @@ def base_minimize(func, dimensions, base_estimator,
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
+
+    * `delta_x` [float, default=None]:
+        Stop optimization loop early if the difference between successive
+        points at which to evaluate the objective is less than `delta_x`.
 
     * `n_jobs` [int, default=1]
         Number of cores to run in parallel while running the lbfgs
@@ -243,6 +248,14 @@ def base_minimize(func, dimensions, base_estimator,
     n_iterations = n_calls - n_init_func_calls
     for n in range(n_iterations):
         next_x = optimizer.ask()
+
+        # Stop evaluating early if the suggested point is too close to the
+        # previous one
+        if (delta_x is not None and
+                res is not None and  # need previous evaluations
+                optimizer.space.distance(next_x, res.x_iters[-1]) < delta_x):
+            break
+
         # no need to fit a model on the last iteration
         fit_model = n < n_iterations - 1
         next_y = func(next_x)
