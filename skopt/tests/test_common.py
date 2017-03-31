@@ -306,7 +306,26 @@ def test_repeated_x():
         assert_warns_message(
             UserWarning, "has been evaluated at", minimizer, lambda x: x[0],
             dimensions=[[0, 1]], x0=[[0], [1]], n_random_starts=0, n_calls=3)
+
         assert_warns_message(
             UserWarning, "has been evaluated at", minimizer, bench4,
-            dimensions=[("0", "1")], x0=["0", "1"], n_calls=3,
+            dimensions=[("0", "1")], x0=[["0"], ["1"]], n_calls=3,
             n_random_starts=0)
+
+
+def test_consistent_x_iter_dimensions():
+    # check that all entries in x_iters have the same dimensions
+    for minimizer in MINIMIZERS:
+        # two dmensional problem
+        res = minimizer(bench4,
+                        dimensions=[(0, 1), (2, 3)],
+                        x0=[[0, 2], [1, 2]], n_calls=3,
+                        n_random_starts=0)
+        assert len(set(len(x) for x in res.x_iters)) == 1
+        assert len(res.x_iters[0]) == 2
+
+        # one dimensional problem
+        res = minimizer(bench4, dimensions=[(0, 1)], x0=[[0], [1]], n_calls=3,
+                        n_random_starts=0)
+        assert len(set(len(x) for x in res.x_iters)) == 1
+        assert len(res.x_iters[0]) == 1

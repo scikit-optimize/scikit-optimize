@@ -181,6 +181,11 @@ def base_minimize(func, dimensions, base_estimator,
     elif not isinstance(x0[0], list):
         x0 = [x0]
 
+    if optimizer.space.n_dims == 1:
+        assert all(isinstance(p, Iterable) for p in x0)
+
+    assert all(len(p) == optimizer.space.n_dims for p in x0)
+
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, but got %s" % type(x0))
 
