@@ -184,7 +184,9 @@ def base_minimize(func, dimensions, base_estimator,
     if optimizer.space.n_dims == 1:
         assert all(isinstance(p, Iterable) for p in x0)
 
-    assert all(len(p) == optimizer.space.n_dims for p in x0)
+    if not all(len(p) == optimizer.space.n_dims for p in x0):
+        raise RuntimeError("Optimization space (%s) and initial points in x0 "
+                           "use inconsistent dimensions." % optimizer.space)
 
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, but got %s" % type(x0))

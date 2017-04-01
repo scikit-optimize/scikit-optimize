@@ -17,6 +17,7 @@ from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt import gbrt_minimize
 from skopt.benchmarks import branin
+from skopt.benchmarks import bench1
 from skopt.benchmarks import bench4
 from skopt.benchmarks import bench5
 from skopt.space import Space
@@ -316,8 +317,10 @@ def test_repeated_x():
 def test_consistent_x_iter_dimensions():
     # check that all entries in x_iters have the same dimensions
     for minimizer in MINIMIZERS:
-        # two dmensional problem
-        res = minimizer(bench4,
+        # two dmensional problem, bench1 is a 1D function but in this
+        # instance we do not really care about the objective, could be
+        # a total dummy
+        res = minimizer(bench1,
                         dimensions=[(0, 1), (2, 3)],
                         x0=[[0, 2], [1, 2]], n_calls=3,
                         n_random_starts=0)
@@ -325,7 +328,17 @@ def test_consistent_x_iter_dimensions():
         assert len(res.x_iters[0]) == 2
 
         # one dimensional problem
-        res = minimizer(bench4, dimensions=[(0, 1)], x0=[[0], [1]], n_calls=3,
+        res = minimizer(bench1, dimensions=[(0, 1)], x0=[[0], [1]], n_calls=3,
                         n_random_starts=0)
         assert len(set(len(x) for x in res.x_iters)) == 1
         assert len(res.x_iters[0]) == 1
+
+        assert_raise_message(RuntimeError,
+                             "use inconsistent dimensions",
+                             minimizer, bench1, dimensions=[(0, 1)],
+                             x0=[[0, 1]], n_calls=3, n_random_starts=0)
+
+        assert_raise_message(RuntimeError,
+                             "use inconsistent dimensions",
+                             minimizer, bench1, dimensions=[(0, 1)],
+                             x0=[0, 1], n_calls=3, n_random_starts=0)
