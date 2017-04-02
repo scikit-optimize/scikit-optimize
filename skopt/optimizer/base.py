@@ -254,6 +254,7 @@ def base_minimize(func, dimensions, base_estimator,
         if (delta_x is not None and
                 res is not None and  # need previous evaluations
                 optimizer.space.distance(next_x, res.x_iters[-1]) < delta_x):
+            print(next_x, 'is too close to an existing point.')
             break
 
         # no need to fit a model on the last iteration
