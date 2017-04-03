@@ -326,3 +326,39 @@ def test_categorical_identity():
     transformed = cat.transform(samples)
     assert_array_equal(transformed, samples)
     assert_array_equal(samples, cat.inverse_transform(transformed))
+
+
+def test_categorical_distance():
+    categories = ['car', 'dog', 'orange']
+    cat = Categorical(categories)
+    for cat1 in categories:
+        for cat2 in categories:
+            delta = cat.distance(cat1, cat2)
+            if cat1 == cat2:
+                assert delta == 0
+            else:
+                assert delta == 1
+
+
+def test_integer_distance():
+    ints = Integer(1, 10)
+    for i in range(1, 10+1):
+        assert_equal(ints.distance(4, i), abs(4 - i))
+
+
+def test_integer_distance_out_of_range():
+    ints = Integer(1, 10)
+    assert_raises_regex(RuntimeError, "compute distance for values within",
+                        ints.distance, 11, 10)
+
+
+def test_real_distance_out_of_range():
+    ints = Real(1, 10)
+    assert_raises_regex(RuntimeError, "compute distance for values within",
+                        ints.distance, 11, 10)
+
+
+def test_real_distance():
+    reals = Real(1, 10)
+    for i in range(1, 10+1):
+        assert_equal(reals.distance(4.1234, i), abs(4.1234 - i))

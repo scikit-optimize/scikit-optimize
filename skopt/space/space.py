@@ -247,8 +247,9 @@ class Real(Dimension):
         * `b` [float]
             Second point.
         """
-        assert a in self
-        assert b in self
+        if not (a in self and b in self):
+            raise RuntimeError("Can only compute distance for values within "
+                               "the space, not %s and %s." % (a, b))
         return np.abs(a - b)
 
 
@@ -332,8 +333,9 @@ class Integer(Dimension):
         * `b` [int]
             Second point.
         """
-        assert a in self
-        assert b in self
+        if not (a in self and b in self):
+            raise RuntimeError("Can only compute distance for values within "
+                               "the space, not %s and %s." % (a, b))
         return np.abs(a - b)
 
 
@@ -445,9 +447,10 @@ class Categorical(Dimension):
         * `b` [category]
             Second category.
         """
-        assert a in self
-        assert b in self
-        return 0 if a != b else 1
+        if not (a in self and b in self):
+            raise RuntimeError("Can only compute distance for values within "
+                               "the space, not %s and %s." % (a, b))
+        return 1 if a != b else 0
 
 
 class Space:
