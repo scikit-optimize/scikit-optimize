@@ -342,3 +342,15 @@ def test_consistent_x_iter_dimensions():
                              "use inconsistent dimensions",
                              minimizer, bench1, dimensions=[(0, 1)],
                              x0=[0, 1], n_calls=3, n_random_starts=0)
+
+
+def test_early_stopping_delta_x():
+    n_calls = 15
+    for minimizer in MINIMIZERS:
+        res = minimizer(bench1,
+                        delta_x=0.1,
+                        dimensions=[(-1., 1.)],
+                        x0=[[0.1], [-0.1], [0.9]],
+                        n_calls=n_calls,
+                        n_random_starts=0, random_state=1)
+        assert len(res.x_iters) < n_calls

@@ -183,7 +183,7 @@ def base_minimize(func, dimensions, base_estimator,
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
         x0 = []
-    elif not isinstance(x0[0], list):
+    elif not isinstance(x0[0], (list, tuple)):
         x0 = [x0]
 
     if optimizer.space.n_dims == 1:
@@ -254,7 +254,6 @@ def base_minimize(func, dimensions, base_estimator,
         if (delta_x is not None and
                 res is not None and  # need previous evaluations
                 optimizer.space.distance(next_x, res.x_iters[-1]) < delta_x):
-            print(next_x, 'is too close to an existing point.')
             break
 
         # no need to fit a model on the last iteration
