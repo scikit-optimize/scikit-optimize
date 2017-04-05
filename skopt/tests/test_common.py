@@ -20,6 +20,7 @@ from skopt.benchmarks import branin
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench4
 from skopt.benchmarks import bench5
+from skopt.optimizer import stop
 from skopt.space import Space
 
 
@@ -348,7 +349,7 @@ def test_early_stopping_delta_x():
     n_calls = 15
     for minimizer in MINIMIZERS:
         res = minimizer(bench1,
-                        delta_x=0.1,
+                        stopping=stop.delta_x(0.1),
                         dimensions=[(-1., 1.)],
                         x0=[[0.1], [-0.1], [0.9]],
                         n_calls=n_calls,

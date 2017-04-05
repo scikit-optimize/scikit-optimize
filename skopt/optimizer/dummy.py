@@ -15,7 +15,7 @@ from ..utils import create_result
 
 
 def dummy_minimize(func, dimensions, n_calls=100,
-                   x0=None, y0=None, delta_x=None, random_state=None,
+                   x0=None, y0=None, stopping=None, random_state=None,
                    verbose=False, callback=None):
     """Random search by uniform sampling within the given bounds.
 
@@ -58,9 +58,8 @@ def dummy_minimize(func, dimensions, n_calls=100,
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
-    * `delta_x` [float, default=None]:
-        Stop optimization loop early if the difference between successive
-        points at which to evaluate the objective is less than `delta_x`.
+    * `stopping` [callable, default=None]:
+        Stop optimization loop early if the callable evaluates as True.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -146,12 +145,13 @@ def dummy_minimize(func, dimensions, n_calls=100,
     # Random search
     X = X + space.rvs(n_samples=n_calls, random_state=rng)
     first = True
+    result = None
 
     for i in range(len(y0), len(X)):
-        # Stop evaluating early if the suggested point is too close to the
-        # previous one
-        if (delta_x is not None and space.distance(X[i], X[i-1]) < delta_x):
-            break
+        last = i == len(X) - 1
+        if not first and not last and stopping is not None:
+            if stopping(X[i+1], result):
+                break
 
         y_i = func(X[i])
 
@@ -161,10 +161,10 @@ def dummy_minimize(func, dimensions, n_calls=100,
                 raise ValueError("`func` should return a scalar")
 
         y.append(y_i)
+        result = create_result(X[:i + 1], y, space, rng, specs)
         if callbacks:
-            curr_res = create_result(X[: i + 1], y, space, rng, specs)
             for c in callbacks:
-                c(curr_res)
+                c(result)
 
     y = np.array(y)
     return create_result(X, y, space, rng, specs)

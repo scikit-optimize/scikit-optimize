@@ -31,7 +31,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, delta_x=None, n_jobs=1):
+                  xi=0.01, kappa=1.96, stopping=None, n_jobs=1):
     """
     Parameters
     ----------
@@ -136,9 +136,8 @@ def base_minimize(func, dimensions, base_estimator,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `delta_x` [float, default=None]:
-        Stop optimization loop early if the difference between successive
-        points at which to evaluate the objective is less than `delta_x`.
+    * `stopping` [callable, default=None]:
+        Stop optimization loop early if the callable evaluates as True.
 
     * `n_jobs` [int, default=1]
         Number of cores to run in parallel while running the lbfgs
@@ -249,11 +248,7 @@ def base_minimize(func, dimensions, base_estimator,
     for n in range(n_iterations):
         next_x = optimizer.ask()
 
-        # Stop evaluating early if the suggested point is too close to the
-        # previous one
-        if (delta_x is not None and
-                res is not None and  # need previous evaluations
-                optimizer.space.distance(next_x, res.x_iters[-1]) < delta_x):
+        if stopping is not None and res is not None and stopping(next_x, res):
             break
 
         # no need to fit a model on the last iteration
