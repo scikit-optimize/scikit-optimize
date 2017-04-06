@@ -57,15 +57,15 @@ def split_normalize(X, y, random_state):
             70% of data is used for training, rest for validation.
     """
 
-    X, Xv, y, yv = train_test_split(X, y, train_size=0.7, random_state=random_state)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, random_state=random_state)
 
 
     sc = StandardScaler() # normalize data
-    sc.fit(X, y)
+    sc.fit(X_train, y_train)
 
-    X, Xv = sc.transform(X), sc.transform(Xv)
+    X_train, X_test = sc.transform(X_train), sc.transform(X_test)
 
-    return X, y, Xv, yv
+    return X_train, y_train, X_test, y_test
 
 # functions below are used to apply non - linear maps to parameter values, eg
 # -3.0 -> 0.001
@@ -248,7 +248,7 @@ class MLBench():
         :return: score (more is better!) for some specific point
         """
 
-        X, Y, Xv, Yv = self.dataset
+        X_train, y_train, X_test, y_test = self.dataset # train, test split of the data
 
         # apply transformation to model parameters, for example exp transformation
         point_mapped = {}
@@ -261,8 +261,8 @@ class MLBench():
         model = self.model_description[MODEL_BACKEND](**point_mapped)
 
         try:
-            model.fit(X, Y)
-            r = model.score(Xv, Yv)
+            model.fit(X_train, y_train)
+            r = model.score(X_test, y_test)
         except BaseException as ex:
             r = 0.0 # on error: return assumed smallest value of objective function
 
