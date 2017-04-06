@@ -7,7 +7,10 @@ from sklearn.utils.testing import assert_true
 from skopt import gp_minimize
 from skopt import load
 from skopt import dump
+from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
+from skopt.learning import ExtraTreesRegressor
+from skopt.optimizer import Optimizer
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -50,3 +53,15 @@ def test_dump_and_load():
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
     assert_true(not ("func" in res_loaded.specs["args"]))
+
+
+def test_dump_and_load_optimizer():
+    base_estimator = ExtraTreesRegressor(random_state=2)
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
+                    acq_optimizer="sampling")
+
+    opt.run(bench1, n_iter=3)
+
+    with tempfile.TemporaryFile() as f:
+        dump(opt, f)
+        load(f)
