@@ -35,10 +35,10 @@ def fnc(x):
 
 pool = Pool()
 
-HISTORY_FILE = 'history_Leukemia_DTC.bin'
-PARALLEL_POINTS_VALUES = [(i, tp, regr) for i in [1,4] for tp in ['RND'] for regr in [ExtraTreesRegressor()]]
-FUNCTION_EVALUATIONS = 32
-REPEATS = 128
+HISTORY_FILE = 'history_1vs2vs4.bin'
+PARALLEL_POINTS_VALUES = [(i, tp, regr) for i in [1,2,4] for tp in ['NONE'] for regr in [ExtraTreesRegressor()]]
+FUNCTION_EVALUATIONS = 64
+REPEATS = 64
 LOAD_CACHED_RESULTS = True
 
 if not LOAD_CACHED_RESULTS:
