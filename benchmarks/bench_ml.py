@@ -20,13 +20,9 @@ import sys
 if sys.version_info.major == 2:
     # Python 2
     from urllib2 import HTTPError
-    from urllib2 import quote
-    from urllib2 import urlopen
     from urllib import urlretrieve
 else:
     from urllib.error import HTTPError
-    from urllib.parse import quote
-    from urllib.request import urlopen
     from urllib.request import urlretrieve
 
 import numpy as np
