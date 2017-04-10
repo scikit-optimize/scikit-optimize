@@ -183,10 +183,11 @@ class MLBench(object):
         X, Y = load_data_target(dataset)
         self.X_train, self.y_train, self.X_test, self.y_test = split_normalize(
             X, Y, random_state)
+        self.random_state = random_state
         self.model = model
         self.space = MODELS[model]
 
-    def evaluate(self, point, random_state):
+    def evaluate(self, point):
         """
         Fits model using the particular setting of hyperparameters and
         evaluates the model validation data.
@@ -195,8 +196,6 @@ class MLBench(object):
         ----------
         * `point`: dict
             A mapping of parameter names to the corresponding values
-        * `random_state`: seed
-            Initialization for the the random generator in numpy.
 
         Returns
         -------
@@ -212,7 +211,7 @@ class MLBench(object):
             point_mapped[param] = self.space[param][1](val)
 
         try:
-            params = {'random_state':random_state}
+            params = {'random_state':self.random_state}
             params.update(point_mapped)
             self.model.set_params(**params)
         except TypeError as ex:
@@ -327,7 +326,7 @@ def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
         point_dct = dict(zip(dimensions_names, point_list))
 
         # the result of "evaluate" is accuracy / r^2, which is the more the better
-        objective_at_point = -problem.evaluate(point_dct, random_state)
+        objective_at_point = -problem.evaluate(point_dct)
 
         if best_y > objective_at_point:
             best_y = objective_at_point
