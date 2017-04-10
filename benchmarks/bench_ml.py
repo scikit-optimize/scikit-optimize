@@ -409,7 +409,7 @@ if __name__ == "__main__":
         help="Number of re-runs of single algorithm on single instance of a "
         "problem, in order to average out the noise.")
     parser.add_argument(
-        '--save_traces', nargs="?", default=False, type=bool,
+        '--save_traces', nargs="?", default=True, type=bool,
         help="Whether to save pairs (point, objective, best_objective) obtained"
         " during experiments in a json file.")
     parser.add_argument(
@@ -417,4 +417,7 @@ if __name__ == "__main__":
         help="Number of worker processes used for the benchmark.")
 
     args = parser.parse_args()
+    import time
+    st = time.time()
     run(args.n_calls, args.n_runs, args.save_traces, args.n_jobs)
+    print(time.time()-st)
