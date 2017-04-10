@@ -320,7 +320,7 @@ def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
     estimator = surrogate(random_state=random_state)
     dimensions_names = sorted(space)
     dimensions = [space[d][0] for d in dimensions_names]
-    solver = Optimizer(dimensions, estimator, random_state=random_state)
+    solver = Optimizer(dimensions, estimator, random_state=random_state, acq_optimizer='sampling')
 
     trace = []
     best_y = np.inf
@@ -364,7 +364,7 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
     * `n_jobs`: int
         Number of different repeats of optimization to run in parallel.
     """
-    surrogates = [GaussianProcessRegressor, GradientBoostingQuantileRegressor, ExtraTreesRegressor] #
+    surrogates = [GradientBoostingQuantileRegressor] #GaussianProcessRegressor, ExtraTreesRegressor,
     selected_models = sorted(MODELS, key=lambda x: x.__class__.__name__)
     selected_datasets = (DATASETS.keys())
 
