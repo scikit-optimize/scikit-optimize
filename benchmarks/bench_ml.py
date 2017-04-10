@@ -111,7 +111,7 @@ DATASETS = {
 }
 
 # bunch of dataset preprocessing functions below
-def split_normalize(X, y):
+def split_normalize(X, y, random_state):
     """
     Splits data into training and validation parts.
     Test data is assumed to be used after optimization.
@@ -129,7 +129,7 @@ def split_normalize(X, y):
     Split of data into training and validation sets.
     70% of data is used for training, rest for validation.
     """
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, random_state=random_state)
     sc = StandardScaler()
     sc.fit(X_train, y_train)
     X_train, X_test = sc.transform(X_train), sc.transform(X_test)
@@ -179,14 +179,14 @@ class MLBench(object):
     * `dataset`: str
         Name of the dataset.
     """
-    def __init__(self, model, dataset):
+    def __init__(self, model, dataset, random_state):
         X, Y = load_data_target(dataset)
         self.X_train, self.y_train, self.X_test, self.y_test = split_normalize(
-            X, Y)
+            X, Y, random_state)
         self.model = model
         self.space = MODELS[model]
 
-    def evaluate(self, point):
+    def evaluate(self, point, random_state):
         """
         Fits model using the particular setting of hyperparameters and
         evaluates the model validation data.
@@ -195,6 +195,8 @@ class MLBench(object):
         ----------
         * `point`: dict
             A mapping of parameter names to the corresponding values
+        * `random_state`: seed
+            Initialization for the the random generator in numpy.
 
         Returns
         -------
@@ -208,7 +210,14 @@ class MLBench(object):
         point_mapped = {}
         for param, val in point.items():
             point_mapped[param] = self.space[param][1](val)
-        self.model.set_params(**point_mapped)
+
+        try:
+            params = {'random_state':random_state}
+            params.update(point_mapped)
+            self.model.set_params(**params)
+        except TypeError as ex:
+            self.model.set_params(**point_mapped)
+
 
         try:
             self.model.fit(X_train, y_train)
@@ -298,7 +307,7 @@ def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
     # below seed is necessary for processes which fork at the same time
     # so that random numbers generated in processes are different
     np.random.seed(random_state)
-    problem = MLBench(model, dataset)
+    problem = MLBench(model, dataset, random_state)
     space = problem.space
 
     # initialization
@@ -318,7 +327,7 @@ def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
         point_dct = dict(zip(dimensions_names, point_list))
 
         # the result of "evaluate" is accuracy / r^2, which is the more the better
-        objective_at_point = -problem.evaluate(point_dct)
+        objective_at_point = -problem.evaluate(point_dct, random_state)
 
         if best_y > objective_at_point:
             best_y = objective_at_point
