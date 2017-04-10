@@ -6,4 +6,4 @@ src/*
 build/
 dist/
 *.egg-info/
-.idea
+.idea/

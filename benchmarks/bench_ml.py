@@ -145,6 +145,9 @@ def load_data_target(name):
         data = load_boston()
     elif name == "Housing":
         data = fetch_california_housing()
+        dataset_size = 2000 # this is necessary so that SVR does not slow down too much
+        data["data"] = data["data"][:dataset_size]
+        data["target"] =data["target"][:dataset_size]
     elif name == "digits":
         data = load_digits()
     elif name == "Climate Model Crashes":
@@ -217,7 +220,7 @@ class MLBench(object):
             params = {'random_state':self.random_state}
             params.update(point_mapped)
             self.model.set_params(**params)
-        except TypeError as ex:
+        except (ValueError,TypeError) as ex:
             self.model.set_params(**point_mapped)
 
         # Infeasible parameters are expected to raise an exception, thus the try
@@ -361,9 +364,9 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
     * `n_jobs`: int
         Number of different repeats of optimization to run in parallel.
     """
-    surrogates = [GaussianProcessRegressor, ExtraTreesRegressor, GradientBoostingQuantileRegressor]
+    surrogates = [GaussianProcessRegressor, GradientBoostingQuantileRegressor, ExtraTreesRegressor] #
     selected_models = sorted(MODELS, key=lambda x: x.__class__.__name__)
-    selected_datasets = sorted(DATASETS.keys())
+    selected_datasets = (DATASETS.keys())
 
     # all the parameter values and objectives collected during execution are stored in list below
     all_data = {}
@@ -384,6 +387,9 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
                     ) for seed in seeds
                 )
                 all_data[model][dataset][surrogate.__name__] = raw_trace
+
+    # convert the model keys to strings so that results can be saved as json
+    all_data = {k.__class__.__name__: v for k,v in all_data.items()}
 
     # dump the recorded objective values as json
     if save_traces:
