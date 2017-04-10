@@ -50,7 +50,6 @@ from sklearn.preprocessing import StandardScaler
 from skopt import Optimizer
 from skopt.learning import ExtraTreesRegressor
 from skopt.learning import GaussianProcessRegressor
-from skopt.learning import RandomForestRegressor
 from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.space import Categorical
 from skopt.space import Integer
@@ -353,7 +352,7 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
     * `n_jobs`: int
         Number of different repeats of optimization to run in parallel.
     """
-    surrogates = [RandomForestRegressor, ExtraTreesRegressor, GradientBoostingQuantileRegressor, GaussianProcessRegressor]
+    surrogates = [ExtraTreesRegressor, GradientBoostingQuantileRegressor, GaussianProcessRegressor]
     selected_models = sorted(MODELS, key=lambda x: x.__class__.__name__)
     selected_datasets = sorted(DATASETS.keys())
 
