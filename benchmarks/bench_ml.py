@@ -34,14 +34,14 @@ from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.externals.joblib import delayed
 from sklearn.externals.joblib import Parallel
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
 
 from skopt import Optimizer
 from skopt.learning import ExtraTreesRegressor
@@ -169,7 +169,7 @@ class MLBench(object):
     A class which is used to perform benchmarking of black box optimization
     algorithms on various machine learning problems.
     On instantiation, the dataset is loaded that is used for experimentation
-    and is kept in memory in order to avoid reloading data.
+    and is kept in memory in order to avoid delays due to reloading of data.
 
     Parameters
     ----------
@@ -178,6 +178,9 @@ class MLBench(object):
 
     * `dataset`: str
         Name of the dataset.
+
+    * `random_state`: seed
+        Initialization for the random number generator in numpy.
     """
     def __init__(self, model, dataset, random_state):
         X, Y = load_data_target(dataset)
@@ -217,7 +220,8 @@ class MLBench(object):
         except TypeError as ex:
             self.model.set_params(**point_mapped)
 
-
+        # Infeasible parameters are expected to raise an exception, thus the try
+        # catch below, infeasible parameters yield assumed smallest objective.
         try:
             self.model.fit(X_train, y_train)
             r = self.model.score(X_test, y_test)
