@@ -22,7 +22,7 @@ if sys.version_info.major == 2:
     from urllib2 import HTTPError
     from urllib2 import quote
     from urllib2 import urlopen
-    from urllib2 import urlretrieve
+    from urllib import urlretrieve
 else:
     from urllib.error import HTTPError
     from urllib.parse import quote
@@ -155,10 +155,11 @@ def load_data_target(name):
         try:
             data = fetch_mldata("climate-model-simulation-crashes")
         except HTTPError as e:
-            url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
+            #url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
+            url = "http://nrvis.com/data/mldata/pop_failures.csv"
             urlretrieve(url, "pop_failures.dat")
             data = dict()
-            samples = np.loadtxt("pop_failures.dat", skiprows=1)
+            samples = np.loadtxt("pop_failures.dat", skiprows=1,delimiter=",")
             os.remove("pop_failures.dat")
             data["data"] = samples[:, :-1]
             data["target"] = np.array(samples[:, -1], dtype=np.int)
@@ -352,7 +353,7 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
     * `n_jobs`: int
         Number of different repeats of optimization to run in parallel.
     """
-    surrogates = [ExtraTreesRegressor, GradientBoostingQuantileRegressor, GaussianProcessRegressor]
+    surrogates = [GaussianProcessRegressor, ExtraTreesRegressor, GradientBoostingQuantileRegressor]
     selected_models = sorted(MODELS, key=lambda x: x.__class__.__name__)
     selected_datasets = sorted(DATASETS.keys())
 
