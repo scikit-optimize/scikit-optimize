@@ -13,17 +13,18 @@ import numpy as np
 
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
-from ..utils import create_result
 from .optimizer import Optimizer
 
 
-def _eval_callbacks(callbacks, optimizer, specs):
+def _eval_callbacks(callbacks, result):
+    stop = False
     if callbacks:
-        result = create_result(optimizer.Xi, optimizer.yi,
-                               optimizer.space, optimizer.rng,
-                               specs, optimizer.models)
         for c in callbacks:
-            c(result)
+            decision = c(result)
+            if decision is not None:
+                stop = stop or decision
+
+    return stop
 
 
 def base_minimize(func, dimensions, base_estimator,
@@ -31,7 +32,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, stopping=None, n_jobs=1):
+                  xi=0.01, kappa=1.96, n_jobs=1):
     """
     Parameters
     ----------
@@ -136,9 +137,6 @@ def base_minimize(func, dimensions, base_estimator,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `stopping` [callable, default=None]:
-        Stop optimization loop early if the callable evaluates as True.
-
     * `n_jobs` [int, default=1]
         Number of cores to run in parallel while running the lbfgs
         optimizations over the acquisition function. Valid only when
@@ -217,8 +215,8 @@ def base_minimize(func, dimensions, base_estimator,
     if x0 and y0 is None:
         y0 = map(func, x0)
 
-    # setting the scope for the result object we will return
-    res = None
+    # setting the scope for these variables
+    result = None
 
     # User is god and knows the value of the objective at these points
     if x0 and y0 is not None:
@@ -238,18 +236,16 @@ def base_minimize(func, dimensions, base_estimator,
             raise ValueError(
                 "`y0` elements should be scalars")
 
-        res = optimizer.tell(x0, y0)
-        res.specs = specs
+        result = optimizer.tell(x0, y0)
+        result.specs = specs
 
-        _eval_callbacks(callbacks, optimizer, specs)
+        if _eval_callbacks(callbacks, result):
+            return result
 
     # Bayesian optimization loop
     n_iterations = n_calls - n_init_func_calls
     for n in range(n_iterations):
         next_x = optimizer.ask()
-
-        if stopping is not None and res is not None and stopping(next_x, res):
-            break
 
         # no need to fit a model on the last iteration
         fit_model = n < n_iterations - 1
@@ -257,9 +253,10 @@ def base_minimize(func, dimensions, base_estimator,
         if not np.isscalar(next_y):
             raise ValueError("`func` should return a scalar")
 
-        res = optimizer.tell(next_x, next_y, fit=fit_model)
-        res.specs = specs
+        result = optimizer.tell(next_x, next_y, fit=fit_model)
+        result.specs = specs
 
-        _eval_callbacks(callbacks, optimizer, specs)
+        if _eval_callbacks(callbacks, result):
+            break
 
-    return res
+    return result

@@ -14,9 +14,8 @@ from ..space import Space
 from ..utils import create_result
 
 
-def dummy_minimize(func, dimensions, n_calls=100,
-                   x0=None, y0=None, stopping=None, random_state=None,
-                   verbose=False, callback=None):
+def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
+                   random_state=None, verbose=False, callback=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -57,9 +56,6 @@ def dummy_minimize(func, dimensions, n_calls=100,
           function at `x0`.
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
-
-    * `stopping` [callable, default=None]:
-        Stop optimization loop early if the callable evaluates as True.
 
     * `random_state` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
@@ -146,12 +142,11 @@ def dummy_minimize(func, dimensions, n_calls=100,
     X = X + space.rvs(n_samples=n_calls, random_state=rng)
     first = True
     result = None
+    early_stop = False
 
     for i in range(len(y0), len(X)):
-        last = i == len(X) - 1
-        if not first and not last and stopping is not None:
-            if stopping(X[i+1], result):
-                break
+        if early_stop:
+            break
 
         y_i = func(X[i])
 
@@ -164,7 +159,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
         result = create_result(X[:i + 1], y, space, rng, specs)
         if callbacks:
             for c in callbacks:
-                c(result)
+                decision = c(result)
+                if decision is not None:
+                    early_stop = early_stop or decision
 
     y = np.array(y)
     return create_result(X, y, space, rng, specs)

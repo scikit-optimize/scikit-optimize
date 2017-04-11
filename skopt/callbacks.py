@@ -125,3 +125,36 @@ class TimerCallback(object):
         elapsed_time = time() - self._time
         self.iter_time.append(elapsed_time)
         self._time = time()
+
+
+class EarlyStopper(object):
+    """Decide to continue or not given the results so far."""
+    def __call__(self, result):
+        """
+        Parameters
+        ----------
+        * `result` [`OptimizeResult`, scipy object]:
+            The optimization as a OptimizeResult object.
+        """
+        return self._criterion(result)
+
+
+class DeltaXStopper(EarlyStopper):
+    """Stop the optimization when |x1 - x2| < `delta`
+
+    If the last two positions at which the objective has been evaluated
+    are less than `delta` apart stop the optimization procedure.
+    """
+    def __init__(self, delta):
+        super(EarlyStopper, self).__init__()
+        self.delta = delta
+
+    def _criterion(self, result):
+        if len(result.x_iters) >= 2:
+            if result.space.distance(result.x_iters[-2],
+                                     result.x_iters[-1]) < self.delta:
+                return True
+            else:
+                return False
+        else:
+            return None
