@@ -355,3 +355,16 @@ def test_early_stopping_delta_x():
                         n_calls=n_calls,
                         n_random_starts=0, random_state=1)
         assert len(res.x_iters) < n_calls
+
+
+def test_early_stopping_delta_x_empty_result_object():
+    # check that the callback handles the case of being passed an empty
+    # results object, e.g. at the start of the optimization loop
+    n_calls = 15
+    for minimizer in MINIMIZERS:
+        res = minimizer(bench1,
+                        callback=DeltaXStopper(0.1),
+                        dimensions=[(-1., 1.)],
+                        n_calls=n_calls,
+                        n_random_starts=1, random_state=1)
+        assert len(res.x_iters) < n_calls
