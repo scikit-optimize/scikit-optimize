@@ -75,7 +75,7 @@ class Optimizer(object):
         with `acq_optimizer`.
 
         - If set to `"sampling"`, then `acq_func` is optimized by computing
-          `acq_func` at `n_points` sampled randomly.
+          `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
               - Sampling `n_restarts_optimizer` points randomly.
               - `"lbfgs"` is run for 20 iterations with these points as initial
@@ -186,31 +186,15 @@ class Optimizer(object):
 
         else:
             if not self.models:
-                raise ValueError("Random evaluations exhausted and no "
-                                 "model has been fit.")
+                raise RuntimeError("Random evaluations exhausted and no "
+                                   "model has been fit.")
 
-            cat_inds = self._cat_inds
-            non_cat_inds = self._non_cat_inds
             next_x = self._next_x
-
-            if len(cat_inds) == 0:
-                close_to_next_x = lambda x: np.allclose(x, next_x)
-                if np.any(np.apply_along_axis(close_to_next_x, 1, self.Xi)):
-                    warnings.warn("The objective has been evaluated "
-                                  "at this point before.")
-            else:
-                next_x_arr = np.array(next_x)
-                next_x_non_cat = np.array(
-                    next_x_arr[non_cat_inds], dtype=np.float32)
-                for x in self.Xi:
-                    x_arr = np.array(x)
-                    cat_eq = np.all(x_arr[cat_inds] == next_x_arr[cat_inds])
-                    non_cat_eq = np.allclose(
-                        np.array(x_arr[non_cat_inds], dtype=np.float32),
-                        next_x_non_cat)
-                    if cat_eq and non_cat_eq:
-                        warnings.warn("The objective has been evaluated "
-                                      "at this point before.")
+            min_delta_x = np.min([self.space.distance(next_x, xi)
+                                  for xi in self.Xi])
+            if np.allclose(min_delta_x, 0.):
+                warnings.warn("The objective has been evaluated "
+                              "at this point before.")
 
             # return point computed from last call to tell()
             return next_x
@@ -229,6 +213,8 @@ class Optimizer(object):
         To add multiple observations in a batch pass a list-of-lists for `x`
         and a list of scalars for `y`.
 
+        Parameters
+        ----------
         * `x` [list or list-of-lists]:
             Point at which objective was evaluated.
         * `y` [scalar or list]:

@@ -53,6 +53,36 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     return res
 
 
+def eval_callbacks(callbacks, result):
+    """Evaluate list of callbacks on result.
+
+    The return values of the `callbacks` are ORed together to give the
+    overall decision on whether or not the optimization procedure should
+    continue.
+
+    Parameters
+    ----------
+    * `callbacks` [list of callables]:
+        Callbacks to evaluate.
+
+    * `result` [`OptimizeResult`, scipy object]:
+        Optimization result object to be stored.
+
+    Returns
+    -------
+    * `decision` [bool]:
+        Decision of the callbacks whether or not to keep optimizing
+    """
+    stop = False
+    if callbacks:
+        for c in callbacks:
+            decision = c(result)
+            if decision is not None:
+                stop = stop or decision
+
+    return stop
+
+
 def dump(res, filename, store_objective=True, **kwargs):
     """
     Store an skopt optimization result into a file.

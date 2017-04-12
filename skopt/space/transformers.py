@@ -102,6 +102,10 @@ class Normalize(Transformer):
 
     * `high` [float]:
         Higher bound.
+
+    * `is_int` [bool, default=True]
+        Round and cast the return value of `inverse_transform` to integer. Set
+        to `True` when applying this transform to integers.
     """
     def __init__(self, low, high, is_int=False):
         self.low = low

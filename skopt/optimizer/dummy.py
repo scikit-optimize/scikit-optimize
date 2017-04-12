@@ -12,11 +12,11 @@ from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
 from ..space import Space
 from ..utils import create_result
+from ..utils import eval_callbacks
 
 
-def dummy_minimize(func, dimensions, n_calls=100,
-                   x0=None, y0=None, random_state=None, verbose=False,
-                   callback=None):
+def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
+                   random_state=None, verbose=False, callback=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -142,6 +142,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
     # Random search
     X = X + space.rvs(n_samples=n_calls, random_state=rng)
     first = True
+    result = None
 
     for i in range(len(y0), len(X)):
         y_i = func(X[i])
@@ -152,10 +153,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
                 raise ValueError("`func` should return a scalar")
 
         y.append(y_i)
-        if callbacks:
-            curr_res = create_result(X[: i + 1], y, space, rng, specs)
-            for c in callbacks:
-                c(curr_res)
+        result = create_result(X[:i + 1], y, space, rng, specs)
+        if eval_callbacks(callbacks, result):
+            break
 
     y = np.array(y)
     return create_result(X, y, space, rng, specs)

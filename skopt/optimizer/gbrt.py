@@ -144,6 +144,5 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,
                          x0=x0, y0=y0, random_state=random_state, xi=xi,
-                         kappa=kappa, acq_func=acq_func,
-                         verbose=verbose, callback=callback,
-                         acq_optimizer="sampling")
+                         kappa=kappa, acq_func=acq_func, verbose=verbose,
+                         callback=callback, acq_optimizer="sampling")
