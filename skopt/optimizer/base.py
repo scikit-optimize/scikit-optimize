@@ -14,17 +14,7 @@ import numpy as np
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
 from .optimizer import Optimizer
-
-
-def _eval_callbacks(callbacks, result):
-    stop = False
-    if callbacks:
-        for c in callbacks:
-            decision = c(result)
-            if decision is not None:
-                stop = stop or decision
-
-    return stop
+from ..utils import eval_callbacks
 
 
 def base_minimize(func, dimensions, base_estimator,
@@ -239,7 +229,7 @@ def base_minimize(func, dimensions, base_estimator,
         result = optimizer.tell(x0, y0)
         result.specs = specs
 
-        if _eval_callbacks(callbacks, result):
+        if eval_callbacks(callbacks, result):
             return result
 
     # Bayesian optimization loop
@@ -256,7 +246,7 @@ def base_minimize(func, dimensions, base_estimator,
         result = optimizer.tell(next_x, next_y, fit=fit_model)
         result.specs = specs
 
-        if _eval_callbacks(callbacks, result):
+        if eval_callbacks(callbacks, result):
             break
 
     return result

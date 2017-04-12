@@ -12,6 +12,7 @@ from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
 from ..space import Space
 from ..utils import create_result
+from ..utils import eval_callbacks
 
 
 def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
@@ -142,12 +143,8 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
     X = X + space.rvs(n_samples=n_calls, random_state=rng)
     first = True
     result = None
-    early_stop = False
 
     for i in range(len(y0), len(X)):
-        if early_stop:
-            break
-
         y_i = func(X[i])
 
         if first:
@@ -157,11 +154,8 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
 
         y.append(y_i)
         result = create_result(X[:i + 1], y, space, rng, specs)
-        if callbacks:
-            for c in callbacks:
-                decision = c(result)
-                if decision is not None:
-                    early_stop = early_stop or decision
+        if eval_callbacks(callbacks, result):
+            break
 
     y = np.array(y)
     return create_result(X, y, space, rng, specs)
