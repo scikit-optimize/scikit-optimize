@@ -1,3 +1,18 @@
+"""Monitor and influence the optimization procedure via callbacks.
+
+Callbacks are callables which are invoked after each iteration of the optimizer
+and are passed the results "so far". Callbacks can monitor progress, or stop
+the optimization early by returning `True`.
+
+Monitoring callbacks
+--------------------
+* VerboseCallback
+* TimerCallback
+
+Early stopping callbacks
+------------------------
+* DeltaXStopper
+"""
 from collections import Callable
 from time import time
 
@@ -128,7 +143,10 @@ class TimerCallback(object):
 
 
 class EarlyStopper(object):
-    """Decide to continue or not given the results so far."""
+    """Decide to continue or not given the results so far.
+
+    The optimization procedure will be stopped if the callback returns True.
+    """
     def __call__(self, result):
         """
         Parameters
