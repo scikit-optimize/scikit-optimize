@@ -16,6 +16,8 @@ Early stopping callbacks
 from collections import Callable
 from time import time
 
+import numpy as np
+
 
 def check_callback(callback):
     """
@@ -171,6 +173,31 @@ class DeltaXStopper(EarlyStopper):
         if len(result.x_iters) >= 2:
             if result.space.distance(result.x_iters[-2],
                                      result.x_iters[-1]) < self.delta:
+                return True
+            else:
+                return False
+        else:
+            return None
+
+
+class DeltaYStopper(EarlyStopper):
+    """Stop the optimization if the `n_best` minima are within `delta`
+
+    Stop the optimizer if the absolute difference between the `n_best`
+    objective values is less than `delta`.
+    """
+    def __init__(self, delta, n_best=5):
+        super(EarlyStopper, self).__init__()
+        self.delta = delta
+        self.n_best = n_best
+
+    def _criterion(self, result):
+        if len(result.x_iters) >= self.n_best:
+            x_iters = np.sort(result.x_iters)
+            worst = x_iters[self.n_best - 1]
+            best = x_iters[0]
+
+            if np.abs(worst - best) < self.delta:
                 return True
             else:
                 return False
