@@ -158,6 +158,26 @@ class EarlyStopper(object):
         """
         return self._criterion(result)
 
+    def _criterion(self, result):
+        """Compute the decision to stop or not.
+
+        Classes inheriting from `EarlyStop` should use this method to
+        implement their decision logic.
+
+        Parameters
+        ----------
+        * `result` [`OptimizeResult`, scipy object]:
+            The optimization as a OptimizeResult object.
+
+        Returns
+        -------
+        * `decision`:
+            Return True/False if the criterion can make a decision or `None` if
+            there is not enough data yet to make a decision.
+        """
+        raise NotImplementedError("The _criterion method should be implemented"
+                                  " by subclasses of EarlyStopper.")
+
 
 class DeltaXStopper(EarlyStopper):
     """Stop the optimization when |x1 - x2| < `delta`
@@ -171,11 +191,9 @@ class DeltaXStopper(EarlyStopper):
 
     def _criterion(self, result):
         if len(result.x_iters) >= 2:
-            if result.space.distance(result.x_iters[-2],
-                                     result.x_iters[-1]) < self.delta:
-                return True
-            else:
-                return False
+            return result.space.distance(result.x_iters[-2],
+                                         result.x_iters[-1]) < self.delta
+
         else:
             return None
 
@@ -197,9 +215,7 @@ class DeltaYStopper(EarlyStopper):
             worst = x_iters[self.n_best - 1]
             best = x_iters[0]
 
-            if np.abs(worst - best) < self.delta:
-                return True
-            else:
-                return False
+            return np.abs(worst - best) < self.delta
+
         else:
             return None
