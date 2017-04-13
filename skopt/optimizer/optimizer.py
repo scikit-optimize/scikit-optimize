@@ -1,6 +1,7 @@
 import warnings
 from collections import Iterable
 from numbers import Number
+import copy
 
 import numpy as np
 
@@ -176,7 +177,32 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
         self.acq_optimizer = acq_optimizer
 
-    def ask(self):
+    def ask(self, n_jobs=None, strategy="CL"):
+        """Query point or multiple points to evaluate.
+
+        * `n_jobs` [int or None]:
+            Number of function evaluations that can be done in parallel.
+            If the value is None, a single point to evaluate is returned.
+            Otherwise a list of points to evaluate is returned of size n_jobs.
+        * `strategy` [string]:
+            Strategy to use in order to query multiple points to evaluate.
+            Is ignored if n_jobs = None.
+        """
+        if n_jobs is None:
+            return self._ask()
+
+        opt = copy.deepcopy(self)
+        opt.rng = self.rng  # set random generator to not generate same points
+        x = []
+        for i in range(n_jobs):
+            x.append(opt.ask())
+            y_lie = np.min(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-min lie
+            opt.tell(x[-1], y_lie)  # lie to the optimizer
+            self._n_random_starts = max(0, self._n_random_starts - 1)
+        return x
+
+
+    def _ask(self):
         """Suggest next point at which to evaluate the objective.
 
         Returns a random point for the first `n_random_starts` calls, after
