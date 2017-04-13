@@ -1,6 +1,19 @@
 # Release history
 
 
+## Version 0.4
+
+Go forth!
+
+### New features
+
+* support early stopping of optimization loop.
+
+### Bug fixes
+
+### API changes
+
+
 ## Version 0.3
 
 Third time's a charm.
