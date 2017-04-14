@@ -15,10 +15,8 @@ classification models.
 from collections import defaultdict
 from datetime import datetime
 import json
-import os
 import sys
 import math
-import copy
 
 if sys.version_info.major == 2:
     # Python 2
@@ -159,11 +157,9 @@ def load_data_target(name):
             data = fetch_mldata("climate-model-simulation-crashes")
         except HTTPError as e:
             url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
-
             data = urlopen(url).read().split('\n')[1:]
             data = [[float(v) for v in d.split()] for d in data]
             samples = np.array(data)
-
             data = dict()
             data["data"] = samples[:, :-1]
             data["target"] = np.array(samples[:, -1], dtype=np.int)
@@ -373,7 +369,7 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
     * `n_jobs`: int
         Number of different repeats of optimization to run in parallel.
     """
-    surrogate_minimizers = [gbrt_minimize] #, ,, forest_minimize, gp_minimize
+    surrogate_minimizers = [gbrt_minimize, forest_minimize, gp_minimize]
     selected_models = sorted(MODELS, key=lambda x: x.__name__)
     selected_datasets = (DATASETS.keys())
 
@@ -411,14 +407,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--n_calls', nargs="?", default=11, type=int,
+        '--n_calls', nargs="?", default=50, type=int,
         help="Number of function calls.")
     parser.add_argument(
-        '--n_runs', nargs="?", default=2, type=int,
+        '--n_runs', nargs="?", default=10, type=int,
         help="Number of re-runs of single algorithm on single instance of a "
         "problem, in order to average out the noise.")
     parser.add_argument(
-        '--save_traces', nargs="?", default=True, type=bool,
+        '--save_traces', nargs="?", default=False, type=bool,
         help="Whether to save pairs (point, objective, best_objective) obtained"
         " during experiments in a json file.")
     parser.add_argument(
