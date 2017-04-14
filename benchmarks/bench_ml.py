@@ -418,7 +418,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--n_calls', nargs="?", default=50, type=int,
+        '--n_calls', nargs="?", default=200, type=int,
         help="Number of function calls.")
     parser.add_argument(
         '--n_runs', nargs="?", default=10, type=int,
