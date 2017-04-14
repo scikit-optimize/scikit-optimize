@@ -18,14 +18,15 @@ import json
 import os
 import sys
 import math
+import copy
 
 if sys.version_info.major == 2:
     # Python 2
     from urllib2 import HTTPError
-    from urllib import urlretrieve
+    from urllib import urlopen
 else:
     from urllib.error import HTTPError
-    from urllib.request import urlretrieve
+    from urllib import urlopen
 
 import numpy as np
 from sklearn.base import ClassifierMixin
@@ -88,19 +89,19 @@ nnparams = {
 
 
 MODELS = {
-    MLPRegressor(): nnparams,
-    SVR(): {
+    MLPRegressor: nnparams,
+    SVR: {
             'C': (Real(-4.0, 4.0), pow10map),
             'epsilon': (Real(-4.0, 1.0), pow10map),
             'gamma': (Real(-4.0, 1.0), pow10map)},
-    DecisionTreeRegressor(): {
+    DecisionTreeRegressor: {
             'max_depth': (Real(1.0, 4.0), pow2intmap),
             'min_samples_split': (Real(1.0, 8.0), pow2intmap)},
-    MLPClassifier(): nnparams,
-    SVC(): {
+    MLPClassifier: nnparams,
+    SVC: {
             'C': (Real(-4.0, 4.0), pow10map),
             'gamma': (Real(-4.0, 1.0), pow10map)},
-    DecisionTreeClassifier(): {
+    DecisionTreeClassifier: {
             'max_depth': (Real(1.0, 4.0), pow2intmap),
             'min_samples_split': (Real(1.0, 8.0), pow2intmap)}
 }
@@ -157,12 +158,13 @@ def load_data_target(name):
         try:
             data = fetch_mldata("climate-model-simulation-crashes")
         except HTTPError as e:
-            #url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
-            url = "http://nrvis.com/data/mldata/pop_failures.csv"
-            urlretrieve(url, "pop_failures.dat")
+            url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
+
+            data = urlopen(url).read().split('\n')[1:]
+            data = [[float(v) for v in d.split()] for d in data]
+            samples = np.array(data)
+
             data = dict()
-            samples = np.loadtxt("pop_failures.dat", skiprows=1,delimiter=",")
-            os.remove("pop_failures.dat")
             data["data"] = samples[:, :-1]
             data["target"] = np.array(samples[:, -1], dtype=np.int)
     else:
@@ -196,6 +198,7 @@ class MLBench(object):
         self.model = model
         self.space = MODELS[model]
 
+
     def evaluate(self, point):
         """
         Fits model using the particular setting of hyperparameters and
@@ -219,24 +222,22 @@ class MLBench(object):
         for param, val in point.items():
             point_mapped[param] = self.space[param][1](val)
 
-        # this is necessary to make things run in parallel
+        model_instance = self.model(**point_mapped)
 
-        self.model.set_params(**point_mapped)
-
-        if 'random_state' in self.model.get_params():
-            self.model.set_params(random_state=self.random_state)
+        if 'random_state' in model_instance.get_params():
+            model_instance.set_params(random_state=self.random_state)
 
         min_obj_val = -5.0
 
         # Infeasible parameters are expected to raise an exception, thus the try
         # catch below, infeasible parameters yield assumed smallest objective.
         try:
-            self.model.fit(X_train, y_train)
-            if isinstance(self.model, RegressorMixin): # r^2 metric
-                y_predicted = self.model.predict(X_test)
+            model_instance.fit(X_train, y_train)
+            if isinstance(model_instance, RegressorMixin): # r^2 metric
+                y_predicted = model_instance.predict(X_test)
                 score = r2_score(y_test, y_predicted)
-            elif isinstance(self.model, ClassifierMixin): # log loss
-                y_predicted = self.model.predict_proba(X_test)
+            elif isinstance(model_instance, ClassifierMixin): # log loss
+                y_predicted = model_instance.predict_proba(X_test)
                 score = -log_loss(y_test, y_predicted) # in the context of this function, the higher score is better
             # avoid any kind of singularitites, eg probability being zero, and thus breaking the log_loss
             if math.isnan(score):
@@ -306,8 +307,9 @@ def evaluate_optimizer(surrogate_minimize, model, dataset, n_calls, random_state
 
     Parameters
     ----------
-    * `surrogate`:
-        Estimator to use for optimization.
+    * `surrogate_minimize`:
+        Minimization function from skopt (eg gp_minimize) that is used
+        to minimize the objective.
     * `model`: scikit-learn estimator.
         sklearn estimator used for parameter tuning.
     * `dataset`: str
@@ -330,34 +332,25 @@ def evaluate_optimizer(surrogate_minimize, model, dataset, n_calls, random_state
     np.random.seed(random_state)
     problem = MLBench(model, dataset, random_state)
     space = problem.space
-
-    # initialization
     dimensions_names = sorted(space)
     dimensions = [space[d][0] for d in dimensions_names]
 
-    trace = []
-    # iteration index, best objective; values shared between function calls.
-    shared_values = [0, np.inf]
-
-    def objective(point_list):
+    def objective(x):
         # convert list of dimension values to dictionary
-        point_dct = dict(zip(dimensions_names, point_list))
-
+        x = dict(zip(dimensions_names, x))
         # the result of "evaluate" is accuracy / r^2, which is the more the better
-        objective_at_point = -problem.evaluate(point_dct)
-
-        if shared_values[-1] > objective_at_point:
-            shared_values[-1] = objective_at_point
-
-            # remember the point, objective pair
-        trace.append((point_dct, objective_at_point, shared_values[-1]))
-        #print("Evaluation no. " + str(shared_values[0] + 1))
-        shared_values[0] += 1
-
-        return objective_at_point
+        y = -problem.evaluate(x)
+        return y
 
     # optimization loop
-    surrogate_minimize(objective, dimensions, n_calls=n_calls, random_state=random_state)
+    result = surrogate_minimize(objective, dimensions, n_calls=n_calls, random_state=random_state)
+    trace = []
+    min_y = np.inf
+    for x, y in zip(result.x_iters, result.func_vals):
+        min_y = min(y, min_y)
+        x_dct = dict(zip(dimensions_names, x))
+        trace.append((x_dct, y, min_y))
+
     print(random_state)
     return trace
 
@@ -380,8 +373,8 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
     * `n_jobs`: int
         Number of different repeats of optimization to run in parallel.
     """
-    surrogate_minimizers = [gbrt_minimize, forest_minimize, gp_minimize] #, ,
-    selected_models = sorted(MODELS, key=lambda x: x.__class__.__name__)
+    surrogate_minimizers = [gbrt_minimize] #, ,, forest_minimize, gp_minimize
+    selected_models = sorted(MODELS, key=lambda x: x.__name__)
     selected_datasets = (DATASETS.keys())
 
     # all the parameter values and objectives collected during execution are stored in list below
@@ -390,12 +383,12 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
         all_data[model] = {}
 
         for dataset in selected_datasets:
-            if not isinstance(model, DATASETS[dataset]):
+            if not issubclass(model, DATASETS[dataset]):
                 continue
 
             all_data[model][dataset] = {}
             for surrogate_minimizer in surrogate_minimizers:
-                print(surrogate_minimizer.__name__, model.__class__.__name__, dataset)
+                print(surrogate_minimizer.__name__, model.__name__, dataset)
                 seeds = np.random.randint(0, 2**30, n_runs)
                 raw_trace = Parallel(n_jobs=n_jobs)(
                     delayed(evaluate_optimizer)(
@@ -405,7 +398,7 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
                 all_data[model][dataset][surrogate_minimizer.__name__] = raw_trace
 
     # convert the model keys to strings so that results can be saved as json
-    all_data = {k.__class__.__name__: v for k,v in all_data.items()}
+    all_data = {k.__name__: v for k,v in all_data.items()}
 
     # dump the recorded objective values as json
     if save_traces:
@@ -418,10 +411,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--n_calls', nargs="?", default=200, type=int,
+        '--n_calls', nargs="?", default=11, type=int,
         help="Number of function calls.")
     parser.add_argument(
-        '--n_runs', nargs="?", default=10, type=int,
+        '--n_runs', nargs="?", default=2, type=int,
         help="Number of re-runs of single algorithm on single instance of a "
         "problem, in order to average out the noise.")
     parser.add_argument(
@@ -433,7 +426,4 @@ if __name__ == "__main__":
         help="Number of worker processes used for the benchmark.")
 
     args = parser.parse_args()
-    import time
-    st = time.time()
     run(args.n_calls, args.n_runs, args.save_traces, args.n_jobs)
-    print(time.time()-st)
