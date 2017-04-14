@@ -221,12 +221,10 @@ class MLBench(object):
 
         # this is necessary to make things run in parallel
 
-        try:
-            params = {'random_state':self.random_state}
-            params.update(point_mapped)
-            self.model.set_params(**params)
-        except (ValueError,TypeError) as ex:
-            self.model.set_params(**point_mapped)
+        self.model.set_params(**point_mapped)
+
+        if 'random_state' in self.model.get_params():
+            self.model.set_params(random_state=self.random_state)
 
         min_obj_val = -5.0
 
