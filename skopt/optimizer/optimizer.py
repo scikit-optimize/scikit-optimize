@@ -13,6 +13,8 @@ from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
+from ..learning import RandomForestRegressor, ExtraTreesRegressor
+from ..learning import GradientBoostingQuantileRegressor
 from ..space import Categorical
 from ..space import Space
 from ..utils import create_result
@@ -162,11 +164,17 @@ class Optimizer(object):
                 "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
         self._n_random_starts = n_random_starts
 
+        if (isinstance(base_estimator, (ExtraTreesRegressor,
+                                        RandomForestRegressor,
+                                        GradientBoostingQuantileRegressor))
+            and not acq_optimizer == "sampling"):
+            raise ValueError("The tree-based regressor {0} should run with "
+                             "acq_optimizer='sampling'".format(type(base_estimator)))
+
+        if acq_optimizer not in ["lbfgs", "sampling"]:
+            raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
+                             "'sampling', got {0}".format(acq_optimizer))
         self.acq_optimizer = acq_optimizer
-        if self.acq_optimizer not in ["lbfgs", "sampling"]:
-            raise ValueError(
-                "Expected acq_optimizer to be 'lbfgs' or 'sampling', "
-                "got %s" % acq_optimizer)
 
     def ask(self):
         """Suggest next point at which to evaluate the objective.
