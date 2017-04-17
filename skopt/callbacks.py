@@ -16,6 +16,8 @@ Early stopping callbacks
 from collections import Callable
 from time import time
 
+import numpy as np
+
 
 def check_callback(callback):
     """
@@ -156,6 +158,26 @@ class EarlyStopper(object):
         """
         return self._criterion(result)
 
+    def _criterion(self, result):
+        """Compute the decision to stop or not.
+
+        Classes inheriting from `EarlyStop` should use this method to
+        implement their decision logic.
+
+        Parameters
+        ----------
+        * `result` [`OptimizeResult`, scipy object]:
+            The optimization as a OptimizeResult object.
+
+        Returns
+        -------
+        * `decision`:
+            Return True/False if the criterion can make a decision or `None` if
+            there is not enough data yet to make a decision.
+        """
+        raise NotImplementedError("The _criterion method should be implemented"
+                                  " by subclasses of EarlyStopper.")
+
 
 class DeltaXStopper(EarlyStopper):
     """Stop the optimization when |x1 - x2| < `delta`
@@ -169,10 +191,32 @@ class DeltaXStopper(EarlyStopper):
 
     def _criterion(self, result):
         if len(result.x_iters) >= 2:
-            if result.space.distance(result.x_iters[-2],
-                                     result.x_iters[-1]) < self.delta:
-                return True
-            else:
-                return False
+            return result.space.distance(result.x_iters[-2],
+                                         result.x_iters[-1]) < self.delta
+
+        else:
+            return None
+
+
+class DeltaYStopper(EarlyStopper):
+    """Stop the optimization if the `n_best` minima are within `delta`
+
+    Stop the optimizer if the absolute difference between the `n_best`
+    objective values is less than `delta`.
+    """
+    def __init__(self, delta, n_best=5):
+        super(EarlyStopper, self).__init__()
+        self.delta = delta
+        self.n_best = n_best
+
+    def _criterion(self, result):
+        if len(result.func_vals) >= self.n_best:
+            func_vals = np.sort(result.func_vals)
+            worst = func_vals[self.n_best - 1]
+            best = func_vals[0]
+
+            # worst is always larger, so no need for abs()
+            return worst - best < self.delta
+
         else:
             return None
