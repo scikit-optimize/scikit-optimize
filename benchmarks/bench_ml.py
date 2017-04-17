@@ -15,19 +15,16 @@ classification models.
 from collections import defaultdict
 from datetime import datetime
 import json
-import os
 import sys
+import math
+
 if sys.version_info.major == 2:
     # Python 2
     from urllib2 import HTTPError
-    from urllib2 import quote
-    from urllib2 import urlopen
-    from urllib2 import urlretrieve
+    from urllib import urlopen
 else:
     from urllib.error import HTTPError
-    from urllib.parse import quote
-    from urllib.request import urlopen
-    from urllib.request import urlretrieve
+    from urllib import urlopen
 
 import numpy as np
 from sklearn.base import ClassifierMixin
@@ -38,19 +35,20 @@ from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.externals.joblib import delayed
 from sklearn.externals.joblib import Parallel
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
+from sklearn.metrics import log_loss
 
-from skopt import Optimizer
-from skopt.learning import ExtraTreesRegressor
-from skopt.learning import GaussianProcessRegressor
-from skopt.learning import RandomForestRegressor
+from skopt import gbrt_minimize
+from skopt import gp_minimize
+from skopt import forest_minimize
 from skopt.space import Categorical
 from skopt.space import Integer
 from skopt.space import Real
@@ -89,19 +87,19 @@ nnparams = {
 
 
 MODELS = {
-    MLPRegressor(): nnparams,
-    SVR(): {
+    MLPRegressor: nnparams,
+    SVR: {
             'C': (Real(-4.0, 4.0), pow10map),
             'epsilon': (Real(-4.0, 1.0), pow10map),
             'gamma': (Real(-4.0, 1.0), pow10map)},
-    DecisionTreeRegressor(): {
+    DecisionTreeRegressor: {
             'max_depth': (Real(1.0, 4.0), pow2intmap),
             'min_samples_split': (Real(1.0, 8.0), pow2intmap)},
-    MLPClassifier(): nnparams,
-    SVC(): {
+    MLPClassifier: nnparams,
+    SVC: {
             'C': (Real(-4.0, 4.0), pow10map),
             'gamma': (Real(-4.0, 1.0), pow10map)},
-    DecisionTreeClassifier(): {
+    DecisionTreeClassifier: {
             'max_depth': (Real(1.0, 4.0), pow2intmap),
             'min_samples_split': (Real(1.0, 8.0), pow2intmap)}
 }
@@ -115,7 +113,7 @@ DATASETS = {
 }
 
 # bunch of dataset preprocessing functions below
-def split_normalize(X, y):
+def split_normalize(X, y, random_state):
     """
     Splits data into training and validation parts.
     Test data is assumed to be used after optimization.
@@ -133,7 +131,7 @@ def split_normalize(X, y):
     Split of data into training and validation sets.
     70% of data is used for training, rest for validation.
     """
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, random_state=random_state)
     sc = StandardScaler()
     sc.fit(X_train, y_train)
     X_train, X_test = sc.transform(X_train), sc.transform(X_test)
@@ -149,6 +147,9 @@ def load_data_target(name):
         data = load_boston()
     elif name == "Housing":
         data = fetch_california_housing()
+        dataset_size = 1000 # this is necessary so that SVR does not slow down too much
+        data["data"] = data["data"][:dataset_size]
+        data["target"] =data["target"][:dataset_size]
     elif name == "digits":
         data = load_digits()
     elif name == "Climate Model Crashes":
@@ -156,10 +157,10 @@ def load_data_target(name):
             data = fetch_mldata("climate-model-simulation-crashes")
         except HTTPError as e:
             url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
-            urlretrieve(url, "pop_failures.dat")
+            data = urlopen(url).read().split('\n')[1:]
+            data = [[float(v) for v in d.split()] for d in data]
+            samples = np.array(data)
             data = dict()
-            samples = np.loadtxt("pop_failures.dat", skiprows=1)
-            os.remove("pop_failures.dat")
             data["data"] = samples[:, :-1]
             data["target"] = np.array(samples[:, -1], dtype=np.int)
     else:
@@ -172,7 +173,7 @@ class MLBench(object):
     A class which is used to perform benchmarking of black box optimization
     algorithms on various machine learning problems.
     On instantiation, the dataset is loaded that is used for experimentation
-    and is kept in memory in order to avoid reloading data.
+    and is kept in memory in order to avoid delays due to reloading of data.
 
     Parameters
     ----------
@@ -181,13 +182,18 @@ class MLBench(object):
 
     * `dataset`: str
         Name of the dataset.
+
+    * `random_state`: seed
+        Initialization for the random number generator in numpy.
     """
-    def __init__(self, model, dataset):
+    def __init__(self, model, dataset, random_state):
         X, Y = load_data_target(dataset)
         self.X_train, self.y_train, self.X_test, self.y_test = split_normalize(
-            X, Y)
+            X, Y, random_state)
+        self.random_state = random_state
         self.model = model
         self.space = MODELS[model]
+
 
     def evaluate(self, point):
         """
@@ -211,17 +217,32 @@ class MLBench(object):
         point_mapped = {}
         for param, val in point.items():
             point_mapped[param] = self.space[param][1](val)
-        self.model.set_params(**point_mapped)
 
+        model_instance = self.model(**point_mapped)
+
+        if 'random_state' in model_instance.get_params():
+            model_instance.set_params(random_state=self.random_state)
+
+        min_obj_val = -5.0
+
+        # Infeasible parameters are expected to raise an exception, thus the try
+        # catch below, infeasible parameters yield assumed smallest objective.
         try:
-            self.model.fit(X_train, y_train)
-            r = self.model.score(X_test, y_test)
+            model_instance.fit(X_train, y_train)
+            if isinstance(model_instance, RegressorMixin): # r^2 metric
+                y_predicted = model_instance.predict(X_test)
+                score = r2_score(y_test, y_predicted)
+            elif isinstance(model_instance, ClassifierMixin): # log loss
+                y_predicted = model_instance.predict_proba(X_test)
+                score = -log_loss(y_test, y_predicted) # in the context of this function, the higher score is better
+            # avoid any kind of singularitites, eg probability being zero, and thus breaking the log_loss
+            if math.isnan(score):
+                score = min_obj_val
+            score = max(score, min_obj_val) # this is necessary to avoid -inf or NaN
         except BaseException as ex:
-            r = 0.0 # on error: return assumed smallest value of objective function
+            score = min_obj_val # on error: return assumed smallest value of objective function
 
-        # while negative values could be informative, they could be very large also,
-        # which could mess up the optimization procedure. Suggestions are welcome.
-        return max(r, 0.0)
+        return score
 
 # this is necessary to generate table for README in the end
 table_template = """|Blackbox Function| Minimum | Best minimum |
@@ -239,8 +260,8 @@ def calculate_performance(all_data):
         Traces data collected during run of algorithms. For more details, see
         'evaluate_optimizer' function.
     """
-    best_for_algo = defaultdict(list)
-    curr_func_algo = defaultdict(list)
+
+    sorted_traces = defaultdict(list)
 
     for model in all_data:
         for dataset in all_data[model]:
@@ -250,14 +271,17 @@ def calculate_performance(all_data):
                 # leave only best objective values at particular iteration
                 best = [v[-1] for d in data for v in d]
 
-                # here best is a 2d list, where first dimension corresponds to
+                supervised_learning_type = "Regression" if ("Regressor" in model) else "Classification"
+
+                # for every item in sorted_traces it is 2d array, where first dimension corresponds to
                 # particular repeat of experiment, and second dimension corresponds to index
                 # of optimization step during optimization
-                best_for_algo[algorithm].append(best)
+                key = (algorithm, supervised_learning_type)
+                sorted_traces[str(key)].append(best)
 
     # calculate averages
-    for algorithm in best_for_algo:
-        mean_obj_vals = np.mean(best_for_algo[algorithm], axis=0)
+    for key in sorted_traces:
+        mean_obj_vals = np.mean(sorted_traces[key], axis=0)
         min_mean = np.mean(mean_obj_vals)
         min_std = np.std(mean_obj_vals)
         min_best = np.min(mean_obj_vals)
@@ -268,19 +292,20 @@ def calculate_performance(all_data):
         output = "|".join([fmt(min_mean) + " +/- " + fmt(min_std), fmt(min_best)])
         result = table_template + output
         print("")
-        print(algorithm)
+        print(key)
         print(result)
 
 
-def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
+def evaluate_optimizer(surrogate_minimize, model, dataset, n_calls, random_state):
     """
     Evaluates some estimator for the task of optimization of parameters of some
     model, given limited number of model evaluations.
 
     Parameters
     ----------
-    * `surrogate`:
-        Estimator to use for optimization.
+    * `surrogate_minimize`:
+        Minimization function from skopt (eg gp_minimize) that is used
+        to minimize the objective.
     * `model`: scikit-learn estimator.
         sklearn estimator used for parameter tuning.
     * `dataset`: str
@@ -301,36 +326,28 @@ def evaluate_optimizer(surrogate, model, dataset, n_calls, random_state):
     # below seed is necessary for processes which fork at the same time
     # so that random numbers generated in processes are different
     np.random.seed(random_state)
-    problem = MLBench(model, dataset)
+    problem = MLBench(model, dataset, random_state)
     space = problem.space
-
-    # initialization
-    estimator = surrogate(random_state=random_state)
     dimensions_names = sorted(space)
     dimensions = [space[d][0] for d in dimensions_names]
-    solver = Optimizer(dimensions, estimator, random_state=random_state)
 
-    trace = []
-    best_y = np.inf
+    def objective(x):
+        # convert list of dimension values to dictionary
+        x = dict(zip(dimensions_names, x))
+        # the result of "evaluate" is accuracy / r^2, which is the more the better
+        y = -problem.evaluate(x)
+        return y
 
     # optimization loop
-    for i in range(n_calls):
-        point_list = solver.ask()
+    result = surrogate_minimize(objective, dimensions, n_calls=n_calls, random_state=random_state)
+    trace = []
+    min_y = np.inf
+    for x, y in zip(result.x_iters, result.func_vals):
+        min_y = min(y, min_y)
+        x_dct = dict(zip(dimensions_names, x))
+        trace.append((x_dct, y, min_y))
 
-        # convert list of dimension values to dictionary
-        point_dct = dict(zip(dimensions_names, point_list))
-
-        # the result of "evaluate" is accuracy / r^2, which is the more the better
-        objective_at_point = -problem.evaluate(point_dct)
-
-        if best_y > objective_at_point:
-            best_y = objective_at_point
-
-        # remember the point, objective pair
-        trace.append((point_dct, objective_at_point, best_y))
-        print("Evaluation no. " + str(i + 1))
-
-        solver.tell(point_list, objective_at_point)
+    print(random_state)
     return trace
 
 
@@ -352,9 +369,9 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
     * `n_jobs`: int
         Number of different repeats of optimization to run in parallel.
     """
-    surrogates = [GaussianProcessRegressor]
-    selected_models = sorted(MODELS, key=lambda x: x.__class__.__name__)
-    selected_datasets = sorted(DATASETS.keys())
+    surrogate_minimizers = [gbrt_minimize, forest_minimize, gp_minimize]
+    selected_models = sorted(MODELS, key=lambda x: x.__name__)
+    selected_datasets = (DATASETS.keys())
 
     # all the parameter values and objectives collected during execution are stored in list below
     all_data = {}
@@ -362,19 +379,22 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
         all_data[model] = {}
 
         for dataset in selected_datasets:
-            if not isinstance(model, DATASETS[dataset]):
+            if not issubclass(model, DATASETS[dataset]):
                 continue
 
             all_data[model][dataset] = {}
-            for surrogate in surrogates:
-                print(surrogate.__name__, model.__class__.__name__, dataset)
+            for surrogate_minimizer in surrogate_minimizers:
+                print(surrogate_minimizer.__name__, model.__name__, dataset)
                 seeds = np.random.randint(0, 2**30, n_runs)
                 raw_trace = Parallel(n_jobs=n_jobs)(
                     delayed(evaluate_optimizer)(
-                        surrogate, model, dataset, n_calls, seed
+                        surrogate_minimizer, model, dataset, n_calls, seed
                     ) for seed in seeds
                 )
-                all_data[model][dataset][surrogate.__name__] = raw_trace
+                all_data[model][dataset][surrogate_minimizer.__name__] = raw_trace
+
+    # convert the model keys to strings so that results can be saved as json
+    all_data = {k.__name__: v for k,v in all_data.items()}
 
     # dump the recorded objective values as json
     if save_traces:
