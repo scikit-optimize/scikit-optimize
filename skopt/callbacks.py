@@ -210,12 +210,13 @@ class DeltaYStopper(EarlyStopper):
         self.n_best = n_best
 
     def _criterion(self, result):
-        if len(result.x_iters) >= self.n_best:
-            x_iters = np.sort(result.x_iters)
-            worst = x_iters[self.n_best - 1]
-            best = x_iters[0]
+        if len(result.func_vals) >= self.n_best:
+            func_vals = np.sort(result.func_vals)
+            worst = func_vals[self.n_best - 1]
+            best = func_vals[0]
 
-            return np.abs(worst - best) < self.delta
+            # worst is always larger, so no need for abs()
+            return worst - best < self.delta
 
         else:
             return None

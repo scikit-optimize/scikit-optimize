@@ -19,7 +19,7 @@ def test_timer_callback():
 def test_deltay_stopper():
     deltay = DeltaYStopper(0.2, 3)
 
-    Result = namedtuple('Result', ['x_iters'])
+    Result = namedtuple('Result', ['func_vals'])
 
     assert deltay(Result([0, 1, 2, 3, 4, 0.1, 0.19]))
     assert not deltay(Result([0, 1, 2, 3, 4, 0.1]))
