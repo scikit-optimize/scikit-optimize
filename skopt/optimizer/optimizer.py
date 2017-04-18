@@ -205,7 +205,7 @@ class Optimizer(object):
         Provide values of the objective function at points suggested by `ask()`
         or other points. By default a new model will be fit to all
         observations. The new model is used to suggest the next point at
-        which to evluate the objective. This point can be retrieved by calling
+        which to evaluate the objective. This point can be retrieved by calling
         `ask()`.
 
         To add observations without fitting a new model set `fit` to False.
