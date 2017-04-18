@@ -250,7 +250,7 @@ class Real(Dimension):
         if not (a in self and b in self):
             raise RuntimeError("Can only compute distance for values within "
                                "the space, not %s and %s." % (a, b))
-        return np.abs(a - b)
+        return abs(a - b)
 
 
 class Integer(Dimension):
@@ -336,7 +336,7 @@ class Integer(Dimension):
         if not (a in self and b in self):
             raise RuntimeError("Can only compute distance for values within "
                                "the space, not %s and %s." % (a, b))
-        return np.abs(a - b)
+        return abs(a - b)
 
 
 class Categorical(Dimension):
