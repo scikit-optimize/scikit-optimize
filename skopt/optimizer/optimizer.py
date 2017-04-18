@@ -190,9 +190,9 @@ class Optimizer(object):
                                    "model has been fit.")
 
             next_x = self._next_x
-            min_delta_x = np.min([self.space.distance(next_x, xi)
-                                  for xi in self.Xi])
-            if np.allclose(min_delta_x, 0.):
+            min_delta_x = min([self.space.distance(next_x, xi)
+                               for xi in self.Xi])
+            if abs(min_delta_x) <= 1e-8:
                 warnings.warn("The objective has been evaluated "
                               "at this point before.")
 
