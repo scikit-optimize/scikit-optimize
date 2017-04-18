@@ -69,11 +69,15 @@ class Optimizer(object):
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
+    * `acq_optimizer` [string, `"sampling"`, `"lbfgs"`, or `"auto"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
+        - If set to `"auto"`, then `acq_optimizer` will be chosen based on
+          `base_estimator`, i.e., if it is any tree-based regressor, then
+          `acq_optimizer` is set to `"sampling"`, otherwise it is set to
+          `"lbfgs"`.
         - If set to `"sampling"`, then `acq_func` is optimized by computing
           `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
@@ -163,9 +167,8 @@ class Optimizer(object):
         self._n_random_starts = n_random_starts
 
         if acq_optimizer == "auto":
-            warnings.warn("The 'auto' option for the acq_optimizer will be "
-                          "removed in 0.4.")
             acq_optimizer = "lbfgs"
+
         self.acq_optimizer = acq_optimizer
         if self.acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError(
