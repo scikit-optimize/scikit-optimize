@@ -8,10 +8,13 @@ Go forth!
 ### New features
 
 * support early stopping of optimization loop.
+* benchmarking scripts to evaluate performance of different surrogate models.
 
 ### Bug fixes
 
 ### API changes
+
+* Dimensions of type Real are now inclusive of upper bound.
 
 
 ## Version 0.3

@@ -11,9 +11,11 @@ Scikit-Optimize is a community effort. Contributors include, in alphabetical ord
 * [Manoj Kumar][mechcoder]
 * [Gilles Louppe][glouppe]
 * [Katie Malone][cmmalone]
-* [Mikhail Pak][mp4096]
 * [nel215][nel215]
+* [Mikhail Pak][mp4096]
+* [Iaroslav Shcherbatyi](iaroslav-ai)
 * [Taylor Smith][jtsmith2]
+* [Zé Vinícius][mirca]
 
 The scikit-optimize logo was a contribution by
 [Jeremy Anderson][objectadjective] and **Rose Peng**.
@@ -31,3 +33,5 @@ The scikit-optimize logo was a contribution by
 [andreh7]: https://github.com/andreh7
 [mp4096]: https://github.com/mp4096
 [thomasjpfan]: https://github.com/thomasjpfan
+[mirca]: http://mirca.github.io/
+[iaroslav-ai]: http://iaroslav-ai.github.io/
