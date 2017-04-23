@@ -177,7 +177,7 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
         self.acq_optimizer = acq_optimizer
 
-    def ask(self, n_jobs=None, strategy="CL"):
+    def ask(self, n_points=None, strategy="CL"):
         """Query point or multiple points to evaluate.
 
         * `n_jobs` [int or None]:
@@ -188,13 +188,13 @@ class Optimizer(object):
             Strategy to use in order to query multiple points to evaluate.
             Is ignored if n_jobs = None.
         """
-        if n_jobs is None:
+        if n_points is None:
             return self._ask()
 
         opt = copy.deepcopy(self)
         opt.rng = self.rng  # set random generator to not generate same points
         x = []
-        for i in range(n_jobs):
+        for i in range(n_points):
             x.append(opt.ask())
             y_lie = np.min(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-min lie
             opt.tell(x[-1], y_lie)  # lie to the optimizer
