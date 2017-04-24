@@ -8,7 +8,7 @@ repeated 10 times.
 
 ## Branin
 
-To reproduce, run `python bech_branin.py`
+To reproduce, run `python bench_branin.py`
 
 | Method | Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
 ------------------|------------|-----------|---------------------|--------------------|-----------------------
@@ -21,7 +21,7 @@ To reproduce, run `python bech_branin.py`
 
 ## Hart6
 
-To reproduce, run `python bech_hart6.py`
+To reproduce, run `python bench_hart6.py`
 
 | Method | Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
 ------------------|------------|-----------|---------------------|--------------------|-----------------------
@@ -32,7 +32,7 @@ To reproduce, run `python bech_hart6.py`
 
 ## ML, Classification
 
-To reproduce, run `python bech_ml.py`
+To reproduce, run `python bench_ml.py`
 
 | Method | Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
 ------------------|------------|-----------|---------------------|--------------------|-----------------------
@@ -44,7 +44,7 @@ To reproduce, run `python bech_ml.py`
 
 ## ML, Regression
 
-To reproduce, run `python bech_ml.py`
+To reproduce, run `python bench_ml.py`
 
 | Method | Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
 ------------------|------------|-----------|---------------------|--------------------|-----------------------
