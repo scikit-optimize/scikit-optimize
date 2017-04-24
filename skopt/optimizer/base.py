@@ -162,6 +162,10 @@ def base_minimize(func, dimensions, base_estimator,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
 
+    if acq_optimizer == "auto":
+        warnings.warn("The 'auto' option for the acq_optimizer will be "
+                      "removed in 0.4.")
+
     optimizer = Optimizer(dimensions, base_estimator, n_random_starts,
                           acq_func, acq_optimizer, random_state,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
