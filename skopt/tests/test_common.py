@@ -95,8 +95,8 @@ def test_minimizer_api():
                                 verbose=verbose, callback=call)
 
         assert(result.models is None)
-        yield (check_minimizer_api, result, n_calls)
-        yield (check_minimizer_bounds, result, n_calls)
+        check_minimizer_api(result, n_calls)
+        check_minimizer_bounds(result, n_calls)
         assert_raise_message(ValueError,
                              "return a scalar",
                              dummy_minimize, lambda x: x, [[-5, 10]])
@@ -112,8 +112,8 @@ def test_minimizer_api():
                                random_state=1,
                                verbose=verbose, callback=call)
 
-            yield (check_minimizer_api, result, n_calls, n_models)
-            yield (check_minimizer_bounds, result, n_calls)
+            check_minimizer_api(result, n_calls, n_models)
+            check_minimizer_bounds(result, n_calls)
             assert_raise_message(ValueError,
                                  "return a scalar",
                                  minimizer, lambda x: x, [[-5, 10]])
@@ -130,8 +130,8 @@ def test_minimizer_api_random_only():
                            n_calls=n_calls,
                            random_state=1)
 
-        yield (check_minimizer_api, result, n_calls)
-        yield (check_minimizer_bounds, result, n_calls)
+        check_minimizer_api(result, n_calls)
+        check_minimizer_bounds(result, n_calls)
 
 
 def test_init_vals_and_models():
@@ -187,7 +187,7 @@ def test_init_vals():
             partial(gbrt_minimize, n_random_starts=n_random_starts)
         ]
         for optimizer in optimizers:
-            yield (check_init_vals, optimizer, branin, space, x0, n_calls)
+            check_init_vals(optimizer, branin, space, x0, n_calls)
 
 
 def test_categorical_init_vals():
@@ -201,7 +201,7 @@ def test_categorical_init_vals():
     x0 = [["0"], ["1"], ["2"]]
     n_calls = 5
     for optimizer in optimizers:
-        yield (check_init_vals, optimizer, bench4, space, x0, n_calls)
+        check_init_vals(optimizer, bench4, space, x0, n_calls)
 
 
 def test_mixed_spaces():
@@ -215,7 +215,7 @@ def test_mixed_spaces():
     x0 = [["0", 2.0], ["1", 1.0], ["2", 1.0]]
     n_calls = 10
     for optimizer in optimizers:
-        yield (check_init_vals, optimizer, bench5, space, x0, n_calls)
+        check_init_vals(optimizer, bench5, space, x0, n_calls)
 
 
 def check_init_vals(optimizer, func, space, x0, n_calls):

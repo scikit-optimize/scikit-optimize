@@ -68,6 +68,6 @@ pip install -r requirements.txt
 python setup.py develop
 ```
 
-Run the tests by executing `nosetests` in the top level directory.
+Run the tests by executing `pytest` in the top level directory.
 
 All contributors are welcome!

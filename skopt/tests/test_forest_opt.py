@@ -43,8 +43,8 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin,
 
 def test_tree_based_minimize():
     for name, minimizer in MINIMIZERS:
-        yield (check_minimize, minimizer, bench1, 0.,
-               [(-2.0, 2.0)], 0.05, 25, 5)
+        check_minimize(minimizer, bench1, 0.,
+                       [(-2.0, 2.0)], 0.05, 25, 5)
 
         # XXX: We supply points at the edge of the search
         # space as an initial point to the minimizer.
@@ -53,9 +53,9 @@ def test_tree_based_minimize():
         # the minimum, since for a decision tree any point greater than
         # max(sampled_points) would give a constant value.
         X0 = [[-5.6], [-5.8], [5.8], [5.6]]
-        yield (check_minimize, minimizer, bench2, -5,
-               [(-6.0, 6.0)], 0.1, 100, 10, X0)
-        yield (check_minimize, minimizer, bench3, -0.9,
-               [(-2.0, 2.0)], 0.05, 25)
-        yield (check_minimize, minimizer, bench4, 0.0,
-               [("-2", "-1", "0", "1", "2")], 0.05, 10, 1)
+        check_minimize(minimizer, bench2, -5,
+                       [(-6.0, 6.0)], 0.1, 100, 10, X0)
+        check_minimize(minimizer, bench3, -0.9,
+                       [(-2.0, 2.0)], 0.05, 25)
+        check_minimize(minimizer, bench4, 0.0,
+                       [("-2", "-1", "0", "1", "2")], 0.05, 10, 1)

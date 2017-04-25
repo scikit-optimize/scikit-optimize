@@ -40,12 +40,12 @@ def check_limits(value, low, high):
 
 
 def test_dimensions():
-    yield (check_dimension, Real, (1., 4.), 2.251066014107722)
-    yield (check_dimension, Real, (1, 4), 2.251066014107722)
-    yield (check_dimension, Integer, (1, 4), 2)
-    yield (check_dimension, Integer, (1., 4.), 2)
-    yield (check_categorical, ("a", "b", "c", "d"), "b")
-    yield (check_categorical, (1., 2., 3., 4.), 2.)
+    check_dimension(Real, (1., 4.), 2.251066014107722)
+    check_dimension(Real, (1, 4), 2.251066014107722)
+    check_dimension(Integer, (1, 4), 2)
+    check_dimension(Integer, (1., 4.), 2)
+    check_categorical(("a", "b", "c", "d"), "b")
+    check_categorical((1., 2., 3., 4.), 2.)
 
 
 def test_real():
@@ -64,7 +64,7 @@ def test_real():
     assert_not_equal(log_uniform, Real(10**-5, 10**5))
     for i in range(50):
         random_val = log_uniform.rvs(random_state=i)
-        yield (check_limits, random_val, 10**-5, 10**5)
+        check_limits(random_val, 10**-5, 10**5)
     random_values = log_uniform.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
     transformed_vals = log_uniform.transform(random_values)
@@ -255,7 +255,7 @@ def test_space_api():
 def test_normalize():
     a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):
-        yield (check_limits, a.rvs(random_state=i), 2, 30)
+        check_limits(a.rvs(random_state=i), 2, 30)
 
     rng = np.random.RandomState(0)
     X = rng.randn(100)
@@ -271,7 +271,7 @@ def test_normalize():
     # log-uniform prior
     a = Real(10**2.0, 10**4.0, prior="log-uniform", transform="normalize")
     for i in range(50):
-        yield (check_limits, a.rvs(random_state=i), 10**2, 10**4)
+        check_limits(a.rvs(random_state=i), 10**2, 10**4)
 
     rng = np.random.RandomState(0)
     X = np.clip(10**3 * rng.randn(100), 10**2.0, 10**4.0)
@@ -285,7 +285,7 @@ def test_normalize():
 
     a = Integer(2, 30, transform="normalize")
     for i in range(50):
-        yield (check_limits, a.rvs(random_state=i), 2, 30)
+        check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
     X = rng.randint(2, 31)
@@ -307,8 +307,8 @@ def check_valid_transformation(klass):
 
 
 def test_valid_transformation():
-    yield (check_valid_transformation, Integer)
-    yield (check_valid_transformation, Real)
+    check_valid_transformation(Integer)
+    check_valid_transformation(Real)
 
 
 def test_invalid_dimension():

@@ -29,7 +29,7 @@ popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n testenv --yes python pip nose \
+conda create -n testenv --yes python pip pytest nose \
    numpy scipy scikit-learn matplotlib
 source activate testenv
 

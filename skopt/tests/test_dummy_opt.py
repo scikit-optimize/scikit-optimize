@@ -12,6 +12,6 @@ def check_minimize(func, y_opt, dimensions, margin, n_calls):
 
 
 def test_dummy_minimize():
-    yield (check_minimize, bench1, 0., [(-2.0, 2.0)], 0.05, 10000)
-    yield (check_minimize, bench2, -5, [(-6.0, 6.0)], 0.05, 10000)
-    yield (check_minimize, bench3, -0.9, [(-2.0, 2.0)], 0.05, 10000)
+    check_minimize(bench1, 0., [(-2.0, 2.0)], 0.05, 10000)
+    check_minimize(bench2, -5, [(-6.0, 6.0)], 0.05, 10000)
+    check_minimize(bench3, -0.9, [(-2.0, 2.0)], 0.05, 10000)

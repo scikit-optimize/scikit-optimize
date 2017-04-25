@@ -43,7 +43,7 @@ The development version can be installed through:
     pip install -r requirements.txt
     python setup.py develop
 
-Run the tests by executing `nosetests` in the top level directory.
+Run the tests by executing `pytest` in the top level directory.
 """
 
 from . import acquisition
