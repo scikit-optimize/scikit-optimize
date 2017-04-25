@@ -3,6 +3,7 @@ from scipy import optimize
 from scipy.spatial.distance import pdist, squareform
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+import pytest
 
 from skopt.learning.gaussian_process import GaussianProcessRegressor
 from skopt.learning.gaussian_process.kernels import ConstantKernel
@@ -69,12 +70,12 @@ def check_gradient_correctness(kernel, X, Y, step_size=1e-4):
     assert_array_almost_equal(X_grad, num_grad, decimal=3)
 
 
-def test_gradient_correctness():
+@pytest.mark.parametrize("kernel", KERNELS)
+def test_gradient_correctness(kernel):
     rng = np.random.RandomState(0)
     X = rng.randn(5)
     Y = rng.randn(10, 5)
-    for kernel in KERNELS:
-        check_gradient_correctness(kernel, X, Y)
+    check_gradient_correctness(kernel, X, Y)
 
 
 def test_gradient_finiteness():
