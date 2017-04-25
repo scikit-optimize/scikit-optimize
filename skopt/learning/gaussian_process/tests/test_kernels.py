@@ -74,7 +74,7 @@ def test_gradient_correctness():
     X = rng.randn(5)
     Y = rng.randn(10, 5)
     for kernel in KERNELS:
-        yield check_gradient_correctness, kernel, X, Y
+        check_gradient_correctness(kernel, X, Y)
 
 
 def test_gradient_finiteness():
@@ -88,7 +88,7 @@ def test_gradient_finiteness():
         X = rng.randn(5).tolist()
         Y = [X]
         for kernel in KERNELS:
-            yield check_gradient_correctness, kernel, X, Y, 1e-6
+            check_gradient_correctness(kernel, X, Y, 1e-6)
 
 
 def test_distance_string():
