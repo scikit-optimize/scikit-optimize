@@ -17,8 +17,8 @@ install: source build_tools/travis/install.sh
 
 script:
   - if [ ${COVERAGE} == "true" ];
-    then pytest --cov=skopt --durations=10; else
-    pytest --durations=10;
+    then travis_wait 25 pytest --cov=skopt --durations=10; else
+    travis_wait 25 pytest --durations=10;
     fi
 
 after_success:
