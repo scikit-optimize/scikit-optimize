@@ -2,6 +2,7 @@ from itertools import product
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_less
+import pytest
 
 from skopt import gp_minimize
 from skopt.benchmarks import bench1
@@ -21,16 +22,16 @@ def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
     assert_less(r.fun, y_opt + margin)
 
 
-def test_gp_minimize():
-    for search, acq in product(["sampling", "lbfgs"], ["LCB", "EI"]):
-        check_minimize(bench1, 0.,
-                       [(-2.0, 2.0)], search, acq, 0.05, 50)
-        check_minimize(bench2, -5,
-                       [(-6.0, 6.0)], search, acq, 0.05, 75)
-        check_minimize(bench3, -0.9,
-                       [(-2.0, 2.0)], search, acq, 0.05, 50)
-        check_minimize(bench4, 0.0,
-                       [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)
+@pytest.mark.parametrize("search, acq", product(["sampling", "lbfgs"], ["LCB", "EI"]))
+def test_gp_minimize(search, acq):
+    check_minimize(bench1, 0.,
+                   [(-2.0, 2.0)], search, acq, 0.05, 50)
+    check_minimize(bench2, -5,
+                   [(-6.0, 6.0)], search, acq, 0.05, 75)
+    check_minimize(bench3, -0.9,
+                   [(-2.0, 2.0)], search, acq, 0.05, 50)
+    check_minimize(bench4, 0.0,
+                   [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)
 
 
 def test_n_jobs():

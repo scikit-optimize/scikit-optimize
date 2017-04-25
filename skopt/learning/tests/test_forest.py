@@ -2,6 +2,7 @@ import numpy as np
 from functools import partial
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+import pytest
 
 from skopt.learning import RandomForestRegressor
 from skopt.learning import ExtraTreesRegressor
@@ -22,11 +23,12 @@ def check_variance_toy_data(Regressor):
         var, np.sqrt([0.666667, 0.666667, 0.666667, 6.0, 6.0, 6.0]))
 
 
-def test_variance_toy_data():
+@pytest.mark.parametrize("Regressor",
+                         [partial(RandomForestRegressor, bootstrap=False),
+                          ExtraTreesRegressor])
+def test_variance_toy_data(Regressor):
     """Test that `return_std` behaves expected on toy data."""
-    for Regressor in [partial(RandomForestRegressor, bootstrap=False),
-                      ExtraTreesRegressor]:
-        check_variance_toy_data(Regressor)
+    check_variance_toy_data(Regressor)
 
 
 def check_variance_no_split(Regressor):
@@ -42,7 +44,10 @@ def check_variance_no_split(Regressor):
     assert_array_almost_equal([np.mean(y)] * 1000, pred)
 
 
-def test_variance_no_split():
+@pytest.mark.parametrize("Regressor",
+                         [partial(RandomForestRegressor, bootstrap=False),
+                          ExtraTreesRegressor])
+def test_variance_no_split(Regressor):
     """
     Test that `return_std` behaves expected on a tree with one node.
 
@@ -50,9 +55,7 @@ def test_variance_no_split():
     no information gain which enables us to verify the mean and
     standard deviation.
     """
-    for Regressor in [partial(RandomForestRegressor, bootstrap=False),
-                      ExtraTreesRegressor]:
-        check_variance_no_split(Regressor)
+    check_variance_no_split(Regressor)
 
 
 def test_min_variance():
