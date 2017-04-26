@@ -1,4 +1,6 @@
 from copy import deepcopy
+from collections import Iterable
+
 import numpy as np
 from scipy.optimize import OptimizeResult
 from sklearn.externals.joblib import dump as dump_
@@ -41,6 +43,9 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     """
     res = OptimizeResult()
     yi = np.asarray(yi)
+    if np.ndim(yi) == 2:
+        yi = np.ravel(yi[:, 0])
+        res.log_time = np.ravel(yi[:, 1])
     best = np.argmin(yi)
     res.x = Xi[best]
     res.fun = yi[best]
@@ -152,3 +157,20 @@ def load(filename, **kwargs):
         Reconstructed OptimizeResult instance.
     """
     return load_(filename, **kwargs)
+
+def is_listlike(x):
+    return isinstance(x, (list, tuple))
+
+def is_2Dlistlike(x):
+    return np.all([is_listlike(xi) for xi in x])
+
+def check_x_in_space(x, space):
+    if is_2Dlistlike(x):
+        if not np.all([p in space for p in x]):
+            raise ValueError("Not all points are within the bounds of"
+                             " the space.")
+    elif is_listlike(x):
+        if x not in space:
+            raise ValueError("Point (%s) is not within the bounds of"
+                             " the space (%s)."
+                             % (x, space.bounds))

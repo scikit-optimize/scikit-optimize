@@ -63,6 +63,10 @@ def base_minimize(func, dimensions, base_estimator,
         - `"LCB"` for lower confidence bound,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
+        - `"EIps"` for negated expected improvement per second.
+          In this case, the objective function is assumed to return two
+          values, the first being the objective value and the second being the
+          time taken.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -127,7 +131,7 @@ def base_minimize(func, dimensions, base_estimator,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `n_jobs` [int, default=1]
+    * `n_jobs` [int, default=1]:
         Number of cores to run in parallel while running the lbfgs
         optimizations over the acquisition function. Valid only when
         `acq_optimizer` is set to "lbfgs."
@@ -240,7 +244,9 @@ def base_minimize(func, dimensions, base_estimator,
         # no need to fit a model on the last iteration
         fit_model = n < n_iterations - 1
         next_y = func(next_x)
-        if not np.isscalar(next_y):
+        if "ps" in acq_func and np.ndim(next_y) != 1 and len(next_y) != 2:
+            raise ValueError("`func` should return a tuple of 2 values.")
+        elif "ps" not in acq_func and not np.isscalar(next_y):
             raise ValueError("`func` should return a scalar")
 
         result = optimizer.tell(next_x, next_y, fit=fit_model)

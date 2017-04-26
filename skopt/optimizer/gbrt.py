@@ -63,6 +63,10 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
+        - `"EIps"` for negated expected improvement per second.
+          In this case, the objective function is assumed to return a
+          tuple (f(x), t) the first being f(x) and the second being the time
+          taken to evaluate the function.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.

@@ -7,10 +7,12 @@ from ..learning import ExtraTreesRegressor
 from ..learning import RandomForestRegressor
 
 
-def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
-                    n_random_starts=10, acq_func="EI", x0=None, y0=None,
-                    random_state=None, verbose=False, callback=None,
-                    n_points=10000, xi=0.01, kappa=1.96, n_jobs=1):
+def forest_minimize(func, dimensions, base_estimator="ET",
+                    n_calls=100, n_random_starts=10,
+                    acq_func="EI", acq_optimizer="auto",
+                    x0=None, y0=None, random_state=None, verbose=False,
+                    callback=None, n_points=10000, xi=0.01, kappa=1.96,
+                    n_jobs=1):
     """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -74,6 +76,10 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
+        - `"EIps"` for negated expected improvement per second.
+          In this case, the objective function is assumed to return a
+          tuple (f(x), t) the first being f(x) and the second being the time
+          taken to evaluate the function.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.

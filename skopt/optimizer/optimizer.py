@@ -1,5 +1,5 @@
 import warnings
-from collections import Iterable
+from math import log
 from numbers import Number
 
 import numpy as np
@@ -9,6 +9,7 @@ from scipy.optimize import fmin_l_bfgs_b
 from sklearn.base import clone
 from sklearn.base import is_regressor
 from sklearn.externals.joblib import Parallel, delayed
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
@@ -18,6 +19,9 @@ from ..learning import GradientBoostingQuantileRegressor
 from ..space import Categorical
 from ..space import Space
 from ..utils import create_result
+from ..utils import check_x_in_space
+from ..utils import is_listlike
+from ..utils import is_2Dlistlike
 
 
 class Optimizer(object):
@@ -70,6 +74,10 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
+        - `"EIps"` for negated expected improvement per second.
+          In this case, the objective function is assumed to return two
+          values, the first being the objective value and the second being the
+          time taken.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -157,7 +165,11 @@ class Optimizer(object):
         if not is_regressor(base_estimator):
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
-        self.base_estimator = base_estimator
+
+        if "ps" in self.acq_func:
+            self.base_estimator = MultiOutputRegressor(base_estimator)
+        else:
+            self.base_estimator = base_estimator
 
         if n_random_starts < 0:
             raise ValueError(
@@ -228,20 +240,31 @@ class Optimizer(object):
             only be fitted after `n_random_starts` points have been queried
             irrespective of the value of `fit`.
         """
+        check_x_in_space(x, self.space)
+
+        if "ps" in self.acq_func:
+            if is_2Dlistlike(x):
+                if np.ndim(y) == 2 and np.shape(y)[1] == 2:
+                    y = [[val, log(t)] for (val, t) in y]
+                    self.Xi.extend(x)
+                    self.yi.extend(y)
+                else:
+                    raise TypeError("expcted y to be a list of (func_val, t)")
+            if is_listlike(x):
+                y = list(y)
+                if np.ndim(y) == 1 and len(y) == 2:
+                    y[1] = log(y[1])
+                    self.Xi.append(x)
+                    self.yi.append(y)
+                else:
+                    raise TypeError("expected y to be (func_val, t)")
+
         # if y isn't a scalar it means we have been handed a batch of points
-        if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
-                                            for point in x)):
-            if not np.all([p in self.space for p in x]):
-                raise ValueError("Not all points are within the bounds of"
-                                 " the space.")
+        elif is_listlike(y) and is_2Dlistlike(x):
             self.Xi.extend(x)
             self.yi.extend(y)
 
-        elif isinstance(x, Iterable) and isinstance(y, Number):
-            if x not in self.space:
-                raise ValueError("Point (%s) is not within the bounds of"
-                                 " the space (%s)."
-                                 % (x, self.space.bounds))
+        elif is_listlike(x) and isinstance(y, Number):
             self.Xi.append(x)
             self.yi.append(y)
 
@@ -280,15 +303,19 @@ class Optimizer(object):
                 elif self.acq_optimizer == "lbfgs":
                     x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
 
+                    approx_grad = False
+                    if "ps" in cand_acq_func:
+                        approx_grad = True
+
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
                         results = Parallel(n_jobs=self.n_jobs)(
                             delayed(fmin_l_bfgs_b)(
                                 gaussian_acquisition_1D, x,
                                 args=(est, np.min(self.yi), cand_acq_func,
-                                      self.acq_func_kwargs),
+                                      self.acq_func_kwargs, not approx_grad),
                                 bounds=self.space.transformed_bounds,
-                                approx_grad=False,
+                                approx_grad=approx_grad,
                                 maxiter=20)
                             for x in x0)
 

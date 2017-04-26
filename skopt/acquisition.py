@@ -5,7 +5,7 @@ from scipy.stats import norm
 
 
 def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB",
-                            acq_func_kwargs=None):
+                            acq_func_kwargs=None, return_grad=True):
     """
     A wrapper around the acquisition function that is called by fmin_l_bfgs_b.
 
@@ -14,7 +14,7 @@ def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB",
     return _gaussian_acquisition(np.expand_dims(X, axis=0),
                                  model, y_opt, acq_func=acq_func,
                                  acq_func_kwargs=acq_func_kwargs,
-                                 return_grad=True)
+                                 return_grad=return_grad)
 
 
 def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
@@ -34,14 +34,17 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
     kappa = acq_func_kwargs.get("kappa", 1.96)
 
     # Evaluate acquisition function
+    per_second = "ps" in acq_func
     if acq_func == "LCB":
         return gaussian_lcb(X, model, kappa, return_grad)
 
-    elif acq_func in ["EI", "PI"]:
+    elif acq_func in ["EI", "PI", "EIps", "PIps"]:
         if acq_func == "EI":
-            func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
+            func_and_grad = gaussian_ei(
+                X, model, y_opt, xi, return_grad, per_second)
         else:
-            func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
+            func_and_grad = gaussian_pi(
+                X, model, y_opt, xi, return_grad, per_second)
 
         if return_grad:
             return -func_and_grad[0], -func_and_grad[1]
@@ -105,7 +108,8 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
             return mu - kappa * std
 
 
-def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
+def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False,
+                per_second=False):
     """
     Use the probability of improvement to calculate the acquisition values.
 
@@ -150,6 +154,8 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     * `values`: [array-like, shape=(X.shape[0],)]:
         Acquisition function values computed at X.
     """
+    if per_second:
+        model, time_model = model.estimators_
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
@@ -157,7 +163,6 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
             mu, std, mu_grad, std_grad = model.predict(
                 X, return_std=True, return_mean_grad=True,
                 return_std_grad=True)
-
         else:
             mu, std = model.predict(X, return_std=True)
 
@@ -179,10 +184,15 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         return values, improve_grad * norm.pdf(scaled)
 
     else:
+        if per_second:
+            mean, std = time_model.predict(X, return_std=True)
+            inv_t = np.exp(-mean + 0.5*std**2)
+            return values / inv_t
         return values
 
 
-def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
+def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False,
+                per_second=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
@@ -263,4 +273,8 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         grad = exploit_grad + explore_grad
         return values, grad
 
+    if per_second:
+        mean, std = time_model.predict(X, return_std=True)
+        inv_t = np.exp(-mean + 0.5*std**2)
+        return values / inv_t
     return values
