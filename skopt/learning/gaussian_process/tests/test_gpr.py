@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+import pytest
 
 from skopt.learning import GaussianProcessRegressor
 from skopt.learning.gaussian_process.kernels import RBF
@@ -34,14 +35,14 @@ def predict_wrapper(X, gpr):
     return gpr.predict(X, return_std=True)
 
 
-def test_param_for_white_kernel_in_Sum():
-    for kernel in [kernel1, kernel2, kernel3, kernel4]:
-        kernel_with_noise = kernel + wk
-        wk_present, wk_param = _param_for_white_kernel_in_Sum(kernel + wk)
-        assert_true(wk_present)
-        kernel_with_noise.set_params(
-            **{wk_param: WhiteKernel(noise_level=0.0)})
-        assert_array_equal(kernel_with_noise(X), kernel(X))
+@pytest.mark.parametrize("kernel", [kernel1, kernel2, kernel3, kernel4])
+def test_param_for_white_kernel_in_Sum(kernel):
+    kernel_with_noise = kernel + wk
+    wk_present, wk_param = _param_for_white_kernel_in_Sum(kernel + wk)
+    assert_true(wk_present)
+    kernel_with_noise.set_params(
+        **{wk_param: WhiteKernel(noise_level=0.0)})
+    assert_array_equal(kernel_with_noise(X), kernel(X))
 
     assert_false(_param_for_white_kernel_in_Sum(kernel5)[0])
 
