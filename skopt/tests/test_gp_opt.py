@@ -22,14 +22,29 @@ def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
     assert_less(r.fun, y_opt + margin)
 
 
-@pytest.mark.parametrize("search, acq", product(["sampling", "lbfgs"], ["LCB", "EI"]))
-def test_gp_minimize(search, acq):
+SEARCH_AND_ACQ = list(product(["sampling", "lbfgs"], ["LCB", "EI"]))
+
+
+@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+def test_gp_minimize_bench1(search, acq):
     check_minimize(bench1, 0.,
                    [(-2.0, 2.0)], search, acq, 0.05, 50)
+
+
+@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+def test_gp_minimize_bench2(search, acq):
     check_minimize(bench2, -5,
                    [(-6.0, 6.0)], search, acq, 0.05, 75)
+
+
+@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+def test_gp_minimize_bench3(search, acq):
     check_minimize(bench3, -0.9,
                    [(-2.0, 2.0)], search, acq, 0.05, 50)
+
+
+@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+def test_gp_minimize_bench4(search, acq):
     check_minimize(bench4, 0.0,
                    [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)
 
