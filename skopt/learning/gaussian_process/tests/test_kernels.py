@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 from scipy import optimize
 from scipy.spatial.distance import pdist, squareform
@@ -78,18 +80,17 @@ def test_gradient_correctness(kernel):
     check_gradient_correctness(kernel, X, Y)
 
 
-def test_gradient_finiteness():
+@pytest.mark.parametrize("random_state, kernel", product([0, 1], KERNELS))
+def test_gradient_finiteness(random_state, kernel):
     """
     When x is the same as X_train, gradients might become undefined because
     they are divided by d(x, X_train).
     Check they are equal to numerical gradients at such points.
     """
-    for random_state in [0, 1]:
-        rng = np.random.RandomState(random_state)
-        X = rng.randn(5).tolist()
-        Y = [X]
-        for kernel in KERNELS:
-            check_gradient_correctness(kernel, X, Y, 1e-6)
+    rng = np.random.RandomState(random_state)
+    X = rng.randn(5).tolist()
+    Y = [X]
+    check_gradient_correctness(kernel, X, Y, 1e-6)
 
 
 def test_distance_string():
