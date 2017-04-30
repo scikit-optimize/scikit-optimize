@@ -5,12 +5,14 @@ from skopt.benchmarks import branin
 from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt import gbrt_minimize
+from skopt import dummy_minimize
 
 def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
     bounds = [(-5.0, 10.0), (0.0, 15.0)]
     optimizers = [("gp_minimize", gp_minimize),
                   ("forest_minimize", forest_minimize),
-                  ("gbrt_minimize", gbrt_minimize)]
+                  ("gbrt_minimize", gbrt_minimize),
+                  ("dummy_minimize", dummy_minimize)]
 
     for name, optimizer in optimizers:
         print(name)
@@ -24,6 +26,9 @@ def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
                     branin, bounds, random_state=random_state, n_calls=n_calls,
                     noise=1e-10, verbose=True, acq_optimizer=acq_optimizer,
                     n_jobs=-1)
+            elif name == "dummy_minimize":
+                res = optimizer(
+                    branin, bounds, random_state=random_state, n_calls=n_calls)
             else:
                 res = optimizer(
                     branin, bounds, random_state=random_state, n_calls=n_calls,

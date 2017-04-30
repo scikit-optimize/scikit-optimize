@@ -245,9 +245,9 @@ class MLBench(object):
         return score
 
 # this is necessary to generate table for README in the end
-table_template = """|Blackbox Function| Minimum | Best minimum |
-------------------|------------|-----------|---------------------|
-|ML_hypp_tune|"""
+table_template = """|Blackbox Function| Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
+------------------|------------|-----------|---------------------|--------------------|-----------------------
+| """
 
 def calculate_performance(all_data):
     """
@@ -269,7 +269,7 @@ def calculate_performance(all_data):
                 data = all_data[model][dataset][algorithm]
 
                 # leave only best objective values at particular iteration
-                best = [v[-1] for d in data for v in d]
+                best = [[v[-1] for v in d] for d in data]
 
                 supervised_learning_type = "Regression" if ("Regressor" in model) else "Classification"
 
@@ -277,22 +277,32 @@ def calculate_performance(all_data):
                 # particular repeat of experiment, and second dimension corresponds to index
                 # of optimization step during optimization
                 key = (algorithm, supervised_learning_type)
-                sorted_traces[str(key)].append(best)
+                sorted_traces[key].append(best)
 
     # calculate averages
     for key in sorted_traces:
+        # the meta objective: average over multiple tasks
         mean_obj_vals = np.mean(sorted_traces[key], axis=0)
-        min_mean = np.mean(mean_obj_vals)
-        min_std = np.std(mean_obj_vals)
-        min_best = np.min(mean_obj_vals)
+
+        minimums = np.min(mean_obj_vals, axis=1)
+        f_calls = np.argmin(mean_obj_vals, axis=1)
+
+        min_mean = np.mean(minimums)
+        min_stdd = np.std(minimums)
+        min_best = np.min(minimums)
+
+        f_mean = np.mean(f_calls)
+        f_stdd = np.std(f_calls)
+        f_best = np.min(f_calls)
 
         def fmt(float_value):
             return ("%.3f" % float_value)
 
-        output = "|".join([fmt(min_mean) + " +/- " + fmt(min_std), fmt(min_best)])
+        output = str(key[0]) + " | " + " | ".join(
+            [fmt(min_mean) + " +/- " + fmt(min_stdd)] + [fmt(v) for v in [min_best, f_mean, f_stdd, f_best]])
         result = table_template + output
         print("")
-        print(key)
+        print(key[1])
         print(result)
 
 
