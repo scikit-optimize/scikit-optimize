@@ -1,12 +1,19 @@
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 
 from skopt.benchmarks import bench1
-from skopt.learning import ExtraTreesRegressor
+from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
+from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.optimizer import Optimizer
 from scipy.optimize import OptimizeResult
+
+
+TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
+                   RandomForestRegressor(random_state=2),
+                   GradientBoostingQuantileRegressor(random_state=2))
 
 
 def test_multiple_asks():
@@ -29,7 +36,8 @@ def test_multiple_asks():
 
 def test_invalid_tell_arguments():
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1)
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
+                    acq_optimizer="sampling")
 
     # can't have single point and multiple values for y
     assert_raises(ValueError, opt.tell, [1.], [1., 1.])
@@ -89,3 +97,11 @@ def test_returns_result_object():
     assert isinstance(result, OptimizeResult)
     assert_equal(len(result.x_iters), len(result.func_vals))
     assert_equal(np.min(result.func_vals), result.fun)
+
+
+@pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
+def test_acq_optimizer(base_estimator):
+    with pytest.raises(ValueError) as e:
+        opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
+                        n_random_starts=1, acq_optimizer='lbfgs')
+    assert 'The tree-based regressor' in str(e.value)
