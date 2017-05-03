@@ -148,6 +148,27 @@ def test_minimizer_api_random_only(minimizer):
     check_minimizer_bounds(result, n_calls)
 
 
+@pytest.mark.parametrize("minimizer", MINIMIZERS)
+def test_minimizer_with_space(minimizer):
+    # check we can pass a Space instance as dimensions argument
+    n_calls = 7
+    n_random_starts = 4
+
+    space = Space([(-5.0, 10.0), (0.0, 15.0)])
+    space_result = minimizer(branin, space, n_calls=n_calls,
+                             n_random_starts=n_random_starts, random_state=1)
+
+    check_minimizer_api(space_result, n_calls)
+    check_minimizer_bounds(space_result, n_calls)
+
+    dimensions = [(-5.0, 10.0), (0.0, 15.0)]
+    result = minimizer(branin, dimensions, n_calls=n_calls,
+                       n_random_starts=n_random_starts, random_state=1)
+
+    assert np.allclose(space_result.x_iters, result.x_iters)
+    assert np.allclose(space_result.func_vals, result.func_vals)
+
+
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
                          product([0, 5],
                                  [gp_minimize,
