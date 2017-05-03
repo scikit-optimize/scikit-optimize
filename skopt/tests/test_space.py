@@ -259,7 +259,7 @@ def test_space_from_space():
 
     space2 = Space(space)
 
-    assert space == space2
+    assert_equal(space, space2)
 
 
 def test_normalize():

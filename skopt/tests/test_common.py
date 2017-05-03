@@ -9,6 +9,7 @@ import pytest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
@@ -163,8 +164,8 @@ def test_fixed_random_states(minimizer):
     result2 = minimizer(branin, dimensions, n_calls=n_calls,
                         n_random_starts=n_random_starts, random_state=1)
 
-    assert np.allclose(result1.x_iters, result2.x_iters)
-    assert np.allclose(result1.func_vals, result2.func_vals)
+    assert_array_almost_equal(result1.x_iters, result2.x_iters)
+    assert_array_almost_equal(result1.func_vals, result2.func_vals)
 
 
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
@@ -185,8 +186,8 @@ def test_minimizer_with_space(minimizer):
     result = minimizer(branin, dimensions, n_calls=n_calls,
                        n_random_starts=n_random_starts, random_state=1)
 
-    assert np.allclose(space_result.x_iters, result.x_iters)
-    assert np.allclose(space_result.func_vals, result.func_vals)
+    assert_array_almost_equal(space_result.x_iters, result.x_iters)
+    assert_array_almost_equal(space_result.func_vals, result.func_vals)
 
 
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
