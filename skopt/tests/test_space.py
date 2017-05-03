@@ -252,6 +252,16 @@ def test_space_api():
         assert_array_equal(b1, b2)
 
 
+def test_space_from_space():
+    # can you pass a Space instance to the Space constructor?
+    space = Space([(0.0, 1.0), (-5, 5),
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
+
+    space2 = Space(space)
+
+    assert_equal(space, space2)
+
+
 def test_normalize():
     a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):

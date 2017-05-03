@@ -309,8 +309,8 @@ class Optimizer(object):
                 logits -= np.max(logits)
                 exp_logits = np.exp(self.eta * logits)
                 probs = exp_logits / np.sum(exp_logits)
-                next_x = self.next_xs_[np.argmax(np.random.multinomial(1,
-                                                                       probs))]
+                next_x = self.next_xs_[np.argmax(self.rng.multinomial(1,
+                                                                      probs))]
             else:
                 next_x = self.next_xs_[0]
 

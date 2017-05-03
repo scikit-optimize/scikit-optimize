@@ -489,6 +489,9 @@ class Space:
         return "Space([{}])".format(
             ',\n       '.join(map(str, dims)))
 
+    def __iter__(self):
+        return iter(self.dimensions)
+
     @property
     def is_real(self):
         """

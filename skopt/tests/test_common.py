@@ -9,6 +9,7 @@ import pytest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
@@ -146,6 +147,47 @@ def test_minimizer_api_random_only(minimizer):
 
     check_minimizer_api(result, n_calls)
     check_minimizer_bounds(result, n_calls)
+
+
+@pytest.mark.parametrize("minimizer", MINIMIZERS)
+def test_fixed_random_states(minimizer):
+    # check that two runs produce exactly same results, if not there is a
+    # random state somewhere that is not reproducible
+    n_calls = 7
+    n_random_starts = 4
+
+    space = [(-5.0, 10.0), (0.0, 15.0)]
+    result1 = minimizer(branin, space, n_calls=n_calls,
+                        n_random_starts=n_random_starts, random_state=1)
+
+    dimensions = [(-5.0, 10.0), (0.0, 15.0)]
+    result2 = minimizer(branin, dimensions, n_calls=n_calls,
+                        n_random_starts=n_random_starts, random_state=1)
+
+    assert_array_almost_equal(result1.x_iters, result2.x_iters)
+    assert_array_almost_equal(result1.func_vals, result2.func_vals)
+
+
+@pytest.mark.parametrize("minimizer", MINIMIZERS)
+def test_minimizer_with_space(minimizer):
+    # check we can pass a Space instance as dimensions argument and get same
+    # result
+    n_calls = 7
+    n_random_starts = 4
+
+    space = Space([(-5.0, 10.0), (0.0, 15.0)])
+    space_result = minimizer(branin, space, n_calls=n_calls,
+                             n_random_starts=n_random_starts, random_state=1)
+
+    check_minimizer_api(space_result, n_calls)
+    check_minimizer_bounds(space_result, n_calls)
+
+    dimensions = [(-5.0, 10.0), (0.0, 15.0)]
+    result = minimizer(branin, dimensions, n_calls=n_calls,
+                       n_random_starts=n_random_starts, random_state=1)
+
+    assert_array_almost_equal(space_result.x_iters, result.x_iters)
+    assert_array_almost_equal(space_result.func_vals, result.func_vals)
 
 
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
