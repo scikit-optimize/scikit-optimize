@@ -149,8 +149,28 @@ def test_minimizer_api_random_only(minimizer):
 
 
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
+def test_fixed_random_states(minimizer):
+    # check that two runs produce exactly same results, if not there is a
+    # random state somewhere that is not reproducible
+    n_calls = 7
+    n_random_starts = 4
+
+    space = [(-5.0, 10.0), (0.0, 15.0)]
+    result1 = minimizer(branin, space, n_calls=n_calls,
+                        n_random_starts=n_random_starts, random_state=1)
+
+    dimensions = [(-5.0, 10.0), (0.0, 15.0)]
+    result2 = minimizer(branin, dimensions, n_calls=n_calls,
+                        n_random_starts=n_random_starts, random_state=1)
+
+    assert np.allclose(result1.x_iters, result2.x_iters)
+    assert np.allclose(result1.func_vals, result2.func_vals)
+
+
+@pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_minimizer_with_space(minimizer):
-    # check we can pass a Space instance as dimensions argument
+    # check we can pass a Space instance as dimensions argument and get same
+    # result
     n_calls = 7
     n_random_starts = 4
 
