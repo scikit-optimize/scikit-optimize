@@ -191,7 +191,10 @@ class Optimizer(object):
         if n_points is None:
             return self._ask()
 
-        opt = copy.deepcopy(self)
+        opt = copy.copy(self)
+        opt.__dict__ = {k:copy.copy(v) for k,v in self.__dict__.items()}
+        #opt = copy.deepcopy(self)
+
         opt.rng = self.rng  # set random generator to not generate same points
         x = []
         for i in range(n_points):
