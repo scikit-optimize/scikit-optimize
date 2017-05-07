@@ -95,6 +95,16 @@ class Optimizer(object):
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
+    * `parallel_strategy` [string, default=`"cl_min"`]:
+        Method to sample multiple points for evaluation in parallel. This parameter
+        is ignored if n_jobs = None. Supported options are `"cl_min"`, `"cl_mean"`
+        or `"cl_max"`. For further details see:
+        https://hal.archives-ouvertes.fr/hal-00732512/document
+
+        - If set to `"cl_min"`, then constant liar strtategy is used
+           with lie objective value being minimum of observed objective values.
+           `"cl_mean"` and `"cl_max"` means mean and max of values respectively.
+
     Attributes
     ----------
     * `Xi` [list]:
@@ -113,7 +123,8 @@ class Optimizer(object):
                  n_random_starts=10, acq_func="gp_hedge",
                  acq_optimizer="lbfgs",
                  random_state=None, acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None):
+                 acq_optimizer_kwargs=None,
+                 parallel_strategy="cl_min"):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
@@ -136,6 +147,7 @@ class Optimizer(object):
         self.n_restarts_optimizer = acq_optimizer_kwargs.get(
             "n_restarts_optimizer", 5)
         n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
+        self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
         self.space = Space(dimensions)
         self.models = []
@@ -149,11 +161,11 @@ class Optimizer(object):
                 self._cat_inds.append(ind)
             else:
                 self._non_cat_inds.append(ind)
-        self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
+        self._check_arguments(base_estimator, n_random_starts, acq_optimizer, parallel_strategy)
 
         self.n_jobs = n_jobs
 
-    def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
+    def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer, parallel_strategy):
         """Check arguments for sanity."""
         if not is_regressor(base_estimator):
             raise ValueError(
@@ -177,32 +189,71 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
         self.acq_optimizer = acq_optimizer
 
-    def ask(self, n_points=None, strategy="CL"):
+        par_strategies = ["cl_min", "cl_mean", "cl_max"]
+        if not parallel_strategy in par_strategies:
+            raise ValueError(
+                "Expected parallel_strategy to be one of " + str(par_strategies) + ", "
+                "got %s" % parallel_strategy)
+        self.parallel_strategy = parallel_strategy
+
+    def copy(self):
+        """Creates a shallow copy of optimizer."""
+        optimizer = Optimizer(
+            dimensions=self.space.dimensions,
+            base_estimator=self.base_estimator,
+            n_random_starts=self._n_random_starts,
+            acq_func=self.acq_func,
+            acq_optimizer=self.acq_optimizer,
+            random_state=copy.copy(self.rng),
+            acq_func_kwargs=self.acq_func_kwargs,
+            acq_optimizer_kwargs=self.acq_optimizer_kwargs,
+            parallel_strategy=self.parallel_strategy
+        )
+
+        if hasattr(self, "gains_"):
+            optimizer.gains_ = np.copy(self.gains_)
+
+        if len(self.Xi) > 0:
+            optimizer.tell(self.Xi, self.yi)
+
+        return optimizer
+
+    def ask(self, n_points=None):
         """Query point or multiple points to evaluate.
 
         * `n_jobs` [int or None]:
             Number of function evaluations that can be done in parallel.
             If the value is None, a single point to evaluate is returned.
             Otherwise a list of points to evaluate is returned of size n_jobs.
-        * `strategy` [string]:
-            Strategy to use in order to query multiple points to evaluate.
-            Is ignored if n_jobs = None.
         """
         if n_points is None:
             return self._ask()
 
-        opt = copy.copy(self)
-        opt.__dict__ = {k:copy.copy(v) for k,v in self.__dict__.items()}
-        #opt = copy.deepcopy(self)
+        opt = self.copy()
 
-        opt.rng = self.rng  # set random generator to not generate same points
-        x = []
+        # when _n_random_starts > 0, random state does not change
+        # during tell(), but only during ask(). As ask() is called
+        # on a copy of the optimizer only, the random state of original
+        # optimizer does not change during _n_random_starts > 0. If
+        # the random state is not shared with original optimizer,
+        # then same points are generated, which leads to exceptions
+        # with fitting of some models.
+        if self._n_random_starts > 0:
+            opt.rng = self.rng
+
+        X = []
         for i in range(n_points):
-            x.append(opt.ask())
-            y_lie = np.min(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-min lie
-            opt.tell(x[-1], y_lie)  # lie to the optimizer
+            x = opt.ask()
+            X.append(x)
+            if self.parallel_strategy == "cl_min":
+                y_lie = np.min(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-min lie
+            elif self.parallel_strategy == "cl_mean":
+                y_lie = np.mean(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-max lie
+            else:
+                y_lie = np.max(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-max lie
+            opt.tell(x, y_lie)  # lie to the optimizer
             self._n_random_starts = max(0, self._n_random_starts - 1)
-        return x
+        return X
 
 
     def _ask(self):

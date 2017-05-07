@@ -1,7 +1,6 @@
 """
 Example for parallel optimization with skopt.
 The points to evaluate in parallel are selected according to the "constant lie" approach.
-
 """
 
 import numpy as np
