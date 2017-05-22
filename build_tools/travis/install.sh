@@ -26,12 +26,14 @@ popd
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-   numpy scipy scikit-learn matplotlib
+   numpy scipy scikit-learn matplotlib cython
 source activate testenv
 
 if [[ "$COVERAGE" == "true" ]]; then
     pip install pytest-cov coverage coveralls
 fi
+
+pip install -r requirements.txt
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
