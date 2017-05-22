@@ -30,8 +30,10 @@ popd
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n testenv --yes python pip pytest nose \
-   numpy scipy scikit-learn matplotlib
+   numpy scipy scikit-learn matplotlib cython
 source activate testenv
+
+pip install -r requirements.txt
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
