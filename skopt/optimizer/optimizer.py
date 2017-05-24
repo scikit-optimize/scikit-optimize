@@ -95,15 +95,6 @@ class Optimizer(object):
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
-    * `parallel_strategy` [string, default=`"cl_min"`]:
-        Method to sample multiple points for evaluation in parallel. This parameter
-        is ignored if n_jobs = None. Supported options are `"cl_min"`, `"cl_mean"`
-        or `"cl_max"`. For further details see:
-        https://hal.archives-ouvertes.fr/hal-00732512/document
-
-        - If set to `"cl_min"`, then constant liar strtategy is used
-           with lie objective value being minimum of observed objective values.
-           `"cl_mean"` and `"cl_max"` means mean and max of values respectively.
 
     Attributes
     ----------
@@ -123,8 +114,7 @@ class Optimizer(object):
                  n_random_starts=10, acq_func="gp_hedge",
                  acq_optimizer="lbfgs",
                  random_state=None, acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None,
-                 parallel_strategy="cl_min"):
+                 acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
@@ -161,11 +151,15 @@ class Optimizer(object):
                 self._cat_inds.append(ind)
             else:
                 self._non_cat_inds.append(ind)
-        self._check_arguments(base_estimator, n_random_starts, acq_optimizer, parallel_strategy)
+        self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
 
         self.n_jobs = n_jobs
 
-    def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer, parallel_strategy):
+        # list of all strategies for parallelization. Used internally for testing.
+        # See description of `ask` method to see what parallel strategy means.
+        self.par_strats = ["cl_min", "cl_mean", "cl_max"]
+
+    def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
         """Check arguments for sanity."""
         if not is_regressor(base_estimator):
             raise ValueError(
@@ -189,12 +183,8 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
         self.acq_optimizer = acq_optimizer
 
-        par_strategies = ["cl_min", "cl_mean", "cl_max"]
-        if not parallel_strategy in par_strategies:
-            raise ValueError(
-                "Expected parallel_strategy to be one of " + str(par_strategies) + ", "
-                "got %s" % parallel_strategy)
-        self.parallel_strategy = parallel_strategy
+
+
 
     def copy(self):
         """Creates a shallow copy of optimizer."""
@@ -207,7 +197,6 @@ class Optimizer(object):
             random_state=copy.copy(self.rng),
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
-            parallel_strategy=self.parallel_strategy
         )
 
         if hasattr(self, "gains_"):
@@ -218,16 +207,36 @@ class Optimizer(object):
 
         return optimizer
 
-    def ask(self, n_points=None):
+
+
+    def ask(self, n_points=None, parallel_strategy="cl_min"):
         """Query point or multiple points to evaluate.
 
-        * `n_jobs` [int or None]:
+        * `n_points` [int or None]:
             Number of function evaluations that can be done in parallel.
             If the value is None, a single point to evaluate is returned.
             Otherwise a list of points to evaluate is returned of size n_jobs.
+
+        * `parallel_strategy` [string, default=`"cl_min"`]:
+            Method to use to sample multiple points for evaluation in parallel. This parameter
+            is ignored if n_points = None. Supported options are `"cl_min"`, `"cl_mean"`
+            or `"cl_max"`. For further details see:
+            https://hal.archives-ouvertes.fr/hal-00732512/document
+
+            - If set to `"cl_min"`, then constant liar strtategy is used
+               with lie objective value being minimum of observed objective values.
+               `"cl_mean"` and `"cl_max"` means mean and max of values respectively.
+
         """
         if n_points is None:
             return self._ask()
+
+
+        if not parallel_strategy in self.par_strats:
+            raise ValueError(
+                "Expected parallel_strategy to be one of " + str(self.par_strats) + ", "
+                "got %s" % parallel_strategy)
+
 
         opt = self.copy()
 
@@ -245,9 +254,9 @@ class Optimizer(object):
         for i in range(n_points):
             x = opt.ask()
             X.append(x)
-            if self.parallel_strategy == "cl_min":
+            if parallel_strategy == "cl_min":
                 y_lie = np.min(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-min lie
-            elif self.parallel_strategy == "cl_mean":
+            elif parallel_strategy == "cl_mean":
                 y_lie = np.mean(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-max lie
             else:
                 y_lie = np.max(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-max lie
