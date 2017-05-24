@@ -238,6 +238,12 @@ class Optimizer(object):
                 "got %s" % parallel_strategy)
 
 
+        # The copy is necessary as according to constant liar parallelization
+        # strategy points with fake objective are added to the optimizer,
+        # that should be discarded after call to `ask`.
+        # A copy of original optimizer is an easy way to ensure this,
+        # as one can just drop the copy and the state of the original optimizer
+        # is preserved.
         opt = self.copy()
 
         # when _n_random_starts > 0, random state does not change
