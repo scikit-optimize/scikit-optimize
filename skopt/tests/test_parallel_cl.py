@@ -48,6 +48,8 @@ def test_all_points_different():
 
 
 def test_same_set_of_points_ask():
+    """For n_points not None, tests whether two consecutive calls to ask
+    return the same sets of points."""
 
     optimizer = Optimizer(
         base_estimator=ExtraTreesRegressor(),

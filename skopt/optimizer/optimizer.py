@@ -158,6 +158,9 @@ class Optimizer(object):
         # list of all strategies for parallelization. Used internally for testing.
         # See description of `ask` method to see what parallel strategy means.
         self.par_strats = ["cl_min", "cl_mean", "cl_max"]
+        # the cache of responses of ask. For n_points not None, this ensures
+        # that multiple calls to ask return same sets of points.
+        self.cache = None
 
     def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
         """Check arguments for sanity."""
@@ -246,6 +249,12 @@ class Optimizer(object):
                 "Expected parallel_strategy to be one of " + str(self.par_strats) + ", "
                 "got %s" % strategy)
 
+        # Caching the result. If some new parameters are provided to the ask,
+        # the cache is not used.
+        if not self.cache is None:
+            if (n_points, strategy) in self.cache:
+                return self.cache[(n_points, strategy)]
+
         # The copy is necessary as according to constant liar parallelization
         # strategy points with fake objective are added to the optimizer,
         # that should be discarded after call to `ask`.
@@ -253,16 +262,6 @@ class Optimizer(object):
         # as one can just drop the copy and the state of the original optimizer
         # is preserved.
         opt = self.copy(copy_random_state=False)
-
-        # when _n_random_starts > 0, random state does not change
-        # during tell(), but only during ask(). As ask() is called
-        # on a copy of the optimizer only, the random state of original
-        # optimizer does not change during _n_random_starts > 0. If
-        # the random state is not shared with original optimizer,
-        # then same points are generated, which leads to exceptions
-        # with fitting of some models.
-        if self._n_random_starts > 0:
-            opt.rng = self.rng
 
         X = []
         for i in range(n_points):
@@ -276,6 +275,9 @@ class Optimizer(object):
                 y_lie = np.max(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-max lie
             opt.tell(x, y_lie)  # lie to the optimizer
             self._n_random_starts = max(0, self._n_random_starts - 1)
+
+        self.cache = {(n_points, strategy):X} # cache the result
+
         return X
 
     def _ask(self):
@@ -350,6 +352,8 @@ class Optimizer(object):
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
+
+        self.cache = None # optimizer learned somethnig new - discard the cache
 
         if fit and self._n_random_starts == 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
