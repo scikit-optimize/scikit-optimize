@@ -183,21 +183,23 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
         self.acq_optimizer = acq_optimizer
 
-
-
-
-    def copy(self):
+    def copy(self, copy_random_state=True):
         """Creates a shallow copy of optimizer."""
-        optimizer = Optimizer(
-            dimensions=self.space.dimensions,
-            base_estimator=self.base_estimator,
-            n_random_starts=self._n_random_starts,
-            acq_func=self.acq_func,
-            acq_optimizer=self.acq_optimizer,
-            random_state=copy.copy(self.rng),
-            acq_func_kwargs=self.acq_func_kwargs,
-            acq_optimizer_kwargs=self.acq_optimizer_kwargs,
-        )
+
+        params = {
+            'dimensions':self.space.dimensions,
+            'base_estimator':self.base_estimator,
+            'n_random_starts':self._n_random_starts,
+            'acq_func':self.acq_func,
+            'acq_optimizer':self.acq_optimizer,
+            'acq_func_kwargs':self.acq_func_kwargs,
+            'acq_optimizer_kwargs':self.acq_optimizer_kwargs,
+        }
+
+        if copy_random_state:
+            params['random_state'] = copy.copy(self.rng)
+
+        optimizer = Optimizer(**params)
 
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
@@ -207,36 +209,42 @@ class Optimizer(object):
 
         return optimizer
 
-
-
-    def ask(self, n_points=None, parallel_strategy="cl_min"):
-        """Query point or multiple points to evaluate.
+    def ask(self, n_points=None, strategy="cl_min"):
+        """Query point or multiple points at which objective should be evaluated.
 
         * `n_points` [int or None]:
-            Number of function evaluations that can be done in parallel.
+            Number of points returned by the ask method.
             If the value is None, a single point to evaluate is returned.
-            Otherwise a list of points to evaluate is returned of size n_jobs.
+            Otherwise a list of points to evaluate is returned of size n_points.
+            This is useful if you can evaluate your objective in parallel,
+            and thus obtain more objective function evaluations per unit of time.
 
-        * `parallel_strategy` [string, default=`"cl_min"`]:
-            Method to use to sample multiple points for evaluation in parallel. This parameter
-            is ignored if n_points = None. Supported options are `"cl_min"`, `"cl_mean"`
-            or `"cl_max"`. For further details see:
-            https://hal.archives-ouvertes.fr/hal-00732512/document
+        * `strategy` [string, default=`"cl_min"`]:
+            Method to use to sample multiple points (see also `n_points` description).
+            This parameter is ignored if n_points = None. Supported options are `"cl_min"`,
+            `"cl_mean"` or `"cl_max"`.
 
             - If set to `"cl_min"`, then constant liar strtategy is used
                with lie objective value being minimum of observed objective values.
                `"cl_mean"` and `"cl_max"` means mean and max of values respectively.
+               For details on this strategy see:
+
+               https://hal.archives-ouvertes.fr/hal-00732512/document
+
+               With this strategy a copy of optimizer is created, which is then asked
+               for a point, and the point is told to the copy of optimizer with
+               some fake objective (lie), the next point is asked from copy,
+               it is also told to the copy with fake objective and so on.
+               The type of lie defines different flavours of `cl_x` strategies.
 
         """
         if n_points is None:
             return self._ask()
 
-
-        if not parallel_strategy in self.par_strats:
+        if not strategy in self.par_strats:
             raise ValueError(
                 "Expected parallel_strategy to be one of " + str(self.par_strats) + ", "
-                "got %s" % parallel_strategy)
-
+                "got %s" % strategy)
 
         # The copy is necessary as according to constant liar parallelization
         # strategy points with fake objective are added to the optimizer,
@@ -244,7 +252,7 @@ class Optimizer(object):
         # A copy of original optimizer is an easy way to ensure this,
         # as one can just drop the copy and the state of the original optimizer
         # is preserved.
-        opt = self.copy()
+        opt = self.copy(copy_random_state=False)
 
         # when _n_random_starts > 0, random state does not change
         # during tell(), but only during ask(). As ask() is called
@@ -260,16 +268,15 @@ class Optimizer(object):
         for i in range(n_points):
             x = opt.ask()
             X.append(x)
-            if parallel_strategy == "cl_min":
+            if strategy == "cl_min":
                 y_lie = np.min(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-min lie
-            elif parallel_strategy == "cl_mean":
+            elif strategy == "cl_mean":
                 y_lie = np.mean(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-max lie
             else:
                 y_lie = np.max(opt.yi) if len(opt.yi) > 0 else 0.0  # CL-max lie
             opt.tell(x, y_lie)  # lie to the optimizer
             self._n_random_starts = max(0, self._n_random_starts - 1)
         return X
-
 
     def _ask(self):
         """Suggest next point at which to evaluate the objective.
