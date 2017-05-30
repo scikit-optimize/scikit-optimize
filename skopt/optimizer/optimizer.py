@@ -51,9 +51,9 @@ class Optimizer(object):
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
 
     * `n_random_starts` [int, default=10]:
-        Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`. While random
-        points are being suggested no model will be fit to the observations.
+        Number of evaluations of `func` with random points before approximating
+        the `func` with `base_estimator`. While random points are being
+        suggested no model will be fit to the observations.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either
@@ -290,11 +290,11 @@ class Optimizer(object):
     def _ask(self):
         """Suggest next point at which to evaluate the objective.
 
-        Returns a random point for the first `n_random_starts` calls, after
-        that `base_estimator` is used to determine the next point.
+        Return a random point while not at least `n_random_starts` observations
+        have been `tell`ed, after that `base_estimator` is used to determine
+        the next point.
         """
         if self._n_random_starts > 0:
-            self._n_random_starts -= 1
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
             return self.space.rvs(random_state=self.rng)[0]
@@ -360,9 +360,14 @@ class Optimizer(object):
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
 
-        self.cache_ = {}  # optimizer learned somethnig new - discard the cache_
+        # optimizer learned somethnig new - discard cache
+        self.cache_ = {}
 
-        if fit and self._n_random_starts == 0:
+        # after being "told" n_random_starts points we switch from sampling
+        # random points to using a surrogate model
+        self._n_random_starts -= 1
+
+        if fit and self._n_random_starts <= 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator)
 
