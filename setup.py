@@ -6,10 +6,7 @@ except ImportError:
 setup(name='scikit-optimize',
       version='0.3',
       description='Sequential model-based optimization toolbox.',
-      long_description=('Scikit-Optimize, or `skopt`, is a simple and efficient'
-                        ' library to minimize (very) expensive and noisy'
-                        ' black-box functions. It implements several methods'
-                        ' for sequential model-based optimization.'),
+      long_description=open('README.rst').read(),
       url='https://scikit-optimize.github.io/',
       license='BSD',
       author='The scikit-optimize contributors',
