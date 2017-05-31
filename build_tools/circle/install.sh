@@ -36,7 +36,7 @@ source activate testenv
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python setup.py develop
+pip install -e.
 export SKOPT_HOME=$(pwd)
 
 conda install --yes jupyter
