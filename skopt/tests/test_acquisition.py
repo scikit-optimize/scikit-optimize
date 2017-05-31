@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from scipy import optimize
 
@@ -20,6 +21,8 @@ class ConstSurrogate:
         return np.zeros(X.shape[0]), np.ones(X.shape[0])
 
 
+
+@pytest.mark.fast_test
 def test_acquisition_ei_correctness():
     # check that it works with a vector as well
     X = 10 * np.ones((4, 2))
@@ -27,6 +30,7 @@ def test_acquisition_ei_correctness():
     assert_array_almost_equal(ei, [0.1977966] * 4)
 
 
+@pytest.mark.fast_test
 def test_acquisition_pi_correctness():
     # check that it works with a vector as well
     X = 10 * np.ones((4, 2))
@@ -34,6 +38,7 @@ def test_acquisition_pi_correctness():
     assert_array_almost_equal(pi, [0.308538] * 4)
 
 
+@pytest.mark.fast_test
 def test_acquisition_lcb_correctness():
     # check that it works with a vector as well
     X = 10 * np.ones((4, 2))
@@ -41,6 +46,7 @@ def test_acquisition_lcb_correctness():
     assert_array_almost_equal(lcb, [-0.3] * 4)
 
 
+@pytest.mark.fast_test
 def test_acquisition_api():
     rng = np.random.RandomState(0)
     X = rng.randn(10, 2)
@@ -62,6 +68,7 @@ def check_gradient_correctness(X_new, model, acq_func, y_opt):
     assert_array_almost_equal(analytic_grad, num_grad, 4)
 
 
+@pytest.mark.fast_test
 def test_acquisition_gradient():
     rng = np.random.RandomState(0)
     X = rng.randn(20, 5)
