@@ -111,7 +111,7 @@ class Optimizer(object):
 
     """
     def __init__(self, dimensions, base_estimator,
-                 n_random_starts=10, acq_func="gp_hedge",
+                 n_random_starts=10, n_initial_points=10, acq_func="gp_hedge",
                  acq_optimizer="lbfgs",
                  random_state=None, acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
@@ -151,10 +151,16 @@ class Optimizer(object):
                 self._cat_inds.append(ind)
             else:
                 self._non_cat_inds.append(ind)
-        self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
+
+        if n_random_starts != 10:
+            # XXX warn that it has been renamed
+            n_initial_points = n_random_starts
+
+        self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
 
         self.n_jobs = n_jobs
 
+<<<<<<< e16a4cc53d3c21f3338dd419f50c6817c1a04aaf
         # The cache of responses of `ask` method for n_points not None.
         # This ensures that multiple calls to `ask` with n_points set
         # return same sets of points.
@@ -162,16 +168,20 @@ class Optimizer(object):
         self.cache_ = {}
 
     def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
+=======
+    def _check_arguments(self, base_estimator, n_initial_points,
+                         acq_optimizer):
+>>>>>>> Rename parameters
         """Check arguments for sanity."""
         if not is_regressor(base_estimator):
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
         self.base_estimator = base_estimator
 
-        if n_random_starts < 0:
+        if n_initial_points < 0:
             raise ValueError(
-                "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
-        self._n_random_starts = n_random_starts
+                "Expected `n_initial_points` >= 0, got %d" % n_initial_points)
+        self._n_initial_points = n_initial_points
 
         if (isinstance(base_estimator, (ExtraTreesRegressor,
                                         RandomForestRegressor,
@@ -294,7 +304,7 @@ class Optimizer(object):
         have been `tell`ed, after that `base_estimator` is used to determine
         the next point.
         """
-        if self._n_random_starts > 0:
+        if self._n_initial_points > 0:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
             return self.space.rvs(random_state=self.rng)[0]
@@ -347,6 +357,7 @@ class Optimizer(object):
                                  " the space.")
             self.Xi.extend(x)
             self.yi.extend(y)
+            self._n_initial_points -= len(y)
 
         elif isinstance(x, Iterable) and isinstance(y, Number):
             if x not in self.space:
@@ -355,6 +366,7 @@ class Optimizer(object):
                                  % (x, self.space.bounds))
             self.Xi.append(x)
             self.yi.append(y)
+            self._n_initial_points -= 1
 
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
@@ -363,11 +375,9 @@ class Optimizer(object):
         # optimizer learned somethnig new - discard cache
         self.cache_ = {}
 
-        # after being "told" n_random_starts points we switch from sampling
+        # after being "told" n_initial_points we switch from sampling
         # random points to using a surrogate model
-        self._n_random_starts -= 1
-
-        if fit and self._n_random_starts <= 0:
+        if fit and self._n_initial_points <= 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator)
 
