@@ -33,8 +33,6 @@ conda create -n testenv --yes python pip pytest nose \
    numpy scipy scikit-learn matplotlib cython
 source activate testenv
 
-pip install -r requirements.txt
-
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
