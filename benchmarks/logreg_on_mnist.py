@@ -113,10 +113,10 @@ if __name__ == "__main__":
     parser.add_argument(
         '--optimizer', nargs="?", default="gp", type=str, help="gp | forest")
     parser.add_argument(
-        '--random_state', nargs="?", default="50", type=int, help="Random State")
+        '--n_calls', nargs="?", default="50", type=int, help="Number of calls.")
     parser.add_argument(
-        '--n_runs', nargs="?", default="5", type=int, help="Number of runs")
+        '--random_state', nargs="?", default="5", type=int, help="Random State")
     args = parser.parse_args()
-    fun, func_vals = run(args.optimizer, args.random_state, args.n_runs)
+    fun, func_vals = run(args.optimizer, args.n_calls, args.random_state)
     print(fun)
     print(func_vals)
