@@ -10,7 +10,10 @@ Runs logistic regression on mnist with 4 hyperparameters.
 4. Number of learning epochs (5, 2000)
 """
 import pickle
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
 import numpy as np
 np.random.seed(42)
 
@@ -68,7 +71,7 @@ def log_reg_on_mnist(x):
     print("Test accuracy", score[1])
     return 1 - score[1]
 
-bounds = [[10**-9, 10**1, "log-uniform"],
+bounds = [[10**-9, 10**0, "log-uniform"],
           [0.0, 1.0],
           [20, 2000],
           [5, 2000]]
