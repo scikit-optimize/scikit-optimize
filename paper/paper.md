@@ -15,6 +15,46 @@ authors:
  - name: Gilles Louppe
    orcid:
    affiliation: 3
+ - name: Katie Malone
+   orcid:
+   affiliation: 4
+ - name: nel215
+   orcid:
+   affliation: 5
+ - name: Nuno Campos
+   orcid:
+   affliation: 6
+ - name: Zé Vinícius
+   orcid:
+   affliation: 7
+ - name: Thomas Fan
+   orcid:
+   affliation: 8
+ - name: Mikhail Pak
+   orcid:
+   affliation: 9
+ - name: Iaroslav Shcherbatyi
+   orcid:
+   affliation: 10
+ - name: Lilian Besson
+   orcid:
+   affliation: 11
+ - name: Fabian Linzberger
+   orcid:
+   affliation: 12
+ - name: Taylor Smith
+   orcid:
+   affliation: 13
+ - name: andreh7
+   orcid:
+   affliation: 14
+ - name: Mehdi Cherti
+   orcid:
+   affliation: 15
+ - name: Alexander Fabisch
+   orcid:
+   affliation: 16
+
 affiliations:
  - name: New York University
    index: 1
@@ -22,6 +62,32 @@ affiliations:
    index: 2
  - name:
    index: 3
+ - name:
+   index: 4
+ - name:
+   index: 5
+ - name:
+   index: 6
+ - name:
+   index: 7
+ - name:
+   index: 8
+ - name:
+   index: 9
+ - name:
+   index: 10
+ - name:
+   index: 11
+ - name:
+   index: 12
+ - name:
+   index: 13
+ - name:
+   index: 14
+ - name:
+   index: 15
+ - name:
+   index: 16
 date: June 2, 2017
 bibliography: paper.bib
 ---
