@@ -44,8 +44,8 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     res = OptimizeResult()
     yi = np.asarray(yi)
     if np.ndim(yi) == 2:
-        yi = np.ravel(yi[:, 0])
         res.log_time = np.ravel(yi[:, 1])
+        yi = np.ravel(yi[:, 0])
     best = np.argmin(yi)
     res.x = Xi[best]
     res.fun = yi[best]

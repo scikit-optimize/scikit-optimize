@@ -63,10 +63,11 @@ def base_minimize(func, dimensions, base_estimator,
         - `"LCB"` for lower confidence bound,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
-        - `"EIps"` for negated expected improvement per second.
-          In this case, the objective function is assumed to return two
-          values, the first being the objective value and the second being the
-          time taken.
+
+        You can add the suffix "ps" to `acq_func` to take into account the
+        function compute time. Then, the objective function is assumed to return
+        two values, the first being the objective value and the second being the
+        time taken.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -226,10 +227,13 @@ def base_minimize(func, dimensions, base_estimator,
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
 
-        if not all(map(np.isscalar, y0)):
-            raise ValueError(
-                "`y0` elements should be scalars")
+        if acq_func != "EIps":
+            if not all(map(np.isscalar, y0)):
+                raise ValueError(
+                    "`y0` elements should be scalars")
 
+        print(x0)
+        print(y0)
         result = optimizer.tell(x0, y0)
         result.specs = specs
 

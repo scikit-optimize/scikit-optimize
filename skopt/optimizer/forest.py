@@ -77,9 +77,11 @@ def forest_minimize(func, dimensions, base_estimator="ET",
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
         - `"EIps"` for negated expected improvement per second.
-          In this case, the objective function is assumed to return a
-          tuple (f(x), t) the first being f(x) and the second being the time
-          taken to evaluate the function.
+
+        You can add the suffix "ps" to the `acq_func` string such as
+        "EIps" and "PIps" to take into account the function compute time.
+        Then, the objective function is assumed to return two values, the first
+        being the objective value and the second being the time taken.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.

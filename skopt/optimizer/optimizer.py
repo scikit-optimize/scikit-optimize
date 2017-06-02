@@ -74,10 +74,10 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
-        - `"EIps"` for negated expected improvement per second.
-          In this case, the objective function is assumed to return two
-          values, the first being the objective value and the second being the
-          time taken.
+        You can add the suffix "ps" to `acq_func` to take into account the
+        function compute time. Then, the objective function is assumed to return
+        two values, the first being the objective value and the second being the
+        time taken.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -250,7 +250,7 @@ class Optimizer(object):
                     self.yi.extend(y)
                 else:
                     raise TypeError("expcted y to be a list of (func_val, t)")
-            if is_listlike(x):
+            elif is_listlike(x):
                 y = list(y)
                 if np.ndim(y) == 1 and len(y) == 2:
                     y[1] = log(y[1])

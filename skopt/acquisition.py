@@ -149,6 +149,13 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False,
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
 
+    * `per_second`: [boolean, optional]:
+        Whether or not to include the compute time while computing the
+        acquisition function. In this case, the `model` should be
+        a `MultiOutputRegressor` instance fit on two outputs,
+        the first estimator modelling `f(x)` and the second estimator
+        modelling `log(t(f(x)))`
+
     Returns
     -------
     * `values`: [array-like, shape=(X.shape[0],)]:
@@ -230,6 +237,13 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False,
     * `return_grad`: [boolean, optional]:
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
+
+    * `per_second`: [boolean, optional]:
+        Whether or not to include the compute time while computing the
+        acquisition function. In this case, the `model` should be
+        a `MultiOutputRegressor` instance fit on two outputs,
+        the first estimator modelling `f(x)` and the second estimator
+        modelling `log(t(f(x)))`
 
     Returns
     -------

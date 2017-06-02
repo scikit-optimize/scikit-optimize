@@ -97,11 +97,11 @@ def gp_minimize(func, dimensions, base_estimator=None,
                   chosen by `softmax(\eta g_i)`
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that `g_i -= \mu(X_i)`
-        - `"EIps"` for negated expected improvement per second.
-          In this case, the objective function is assumed to return two
-          values, the first being the objective value and the second being the
-          time taken.
-          Reference: https://dslpitt.org/uai/papers/11/p327-hoffman.pdf
+        You can add the suffix "ps" to the `acq_func` string such as
+        "EIps" and "PIps" to take into account the function compute time.
+        Then, the objective function is assumed to return two values, the first
+        being the objective value and the second being the time taken.
+
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
