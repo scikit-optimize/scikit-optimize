@@ -194,7 +194,7 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False,
         if per_second:
             mean, std = time_model.predict(X, return_std=True)
             inv_t = np.exp(-mean + 0.5*std**2)
-            return values / inv_t
+            return values * inv_t
         return values
 
 
@@ -250,6 +250,8 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False,
     * `values`: [array-like, shape=(X.shape[0],)]:
         Acquisition function values computed at X.
     """
+    if per_second:
+        model, time_model = model.estimators_
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
@@ -290,5 +292,5 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False,
     if per_second:
         mean, std = time_model.predict(X, return_std=True)
         inv_t = np.exp(-mean + 0.5*std**2)
-        return values / inv_t
+        return values * inv_t
     return values
