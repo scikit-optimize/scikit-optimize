@@ -14,7 +14,7 @@ from ..space import Space
 
 
 def gp_minimize(func, dimensions, base_estimator=None,
-                n_calls=100, n_random_starts=10,
+                n_calls=100, n_random_starts=None, n_initial_points=10,
                 acq_func="gp_hedge", acq_optimizer="lbfgs", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
                 n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
@@ -76,9 +76,12 @@ def gp_minimize(func, dimensions, base_estimator=None,
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
 
-    * `n_random_starts` [int, default=10]:
+    * `n_initial_points` [int, default=10]:
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
+
+    * `n_random_starts` [int, default=10]:
+        DEPRECATED, use `n_initial_points` instead.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
@@ -247,6 +250,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         acq_func=acq_func,
         xi=xi, kappa=kappa, acq_optimizer=acq_optimizer, n_calls=n_calls,
         n_points=n_points, n_random_starts=n_random_starts,
+        n_initial_points=n_initial_points,
         n_restarts_optimizer=n_restarts_optimizer,
         x0=x0, y0=y0, random_state=random_state, verbose=verbose,
         callback=callback, n_jobs=n_jobs)

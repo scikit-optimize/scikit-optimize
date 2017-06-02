@@ -7,6 +7,7 @@ It is sufficient that one re-implements the base estimator.
 import copy
 import inspect
 import numbers
+import warnings
 from collections import Iterable
 
 import numpy as np
@@ -18,7 +19,7 @@ from ..utils import eval_callbacks
 
 
 def base_minimize(func, dimensions, base_estimator,
-                  n_calls=100, n_random_starts=10,
+                  n_calls=100, n_initial_points=10, n_random_starts=None,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
@@ -53,9 +54,12 @@ def base_minimize(func, dimensions, base_estimator,
     * `n_calls` [int, default=100]:
         Maximum number of calls to `func`.
 
-    * `n_random_starts` [int, default=10]:
+    * `n_initial_points` [int, default=10]:
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
+
+    * `n_random_starts` [int, default=10]:
+        DEPRECATED, use `n_initial_points` instead.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either
@@ -162,8 +166,16 @@ def base_minimize(func, dimensions, base_estimator,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
 
-    optimizer = Optimizer(dimensions, base_estimator, n_random_starts,
-                          acq_func, acq_optimizer, random_state,
+    if n_random_starts is not None:
+        warnings.warn(("n_random_starts has been renamed to "
+                       "n_initial_points."),
+                      DeprecationWarning)
+        n_initial_points = n_random_starts
+
+    optimizer = Optimizer(dimensions, base_estimator,
+                          n_initial_points=n_initial_points,
+                          acq_func=acq_func, acq_optimizer=acq_optimizer,
+                          random_state=random_state,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
 
@@ -184,21 +196,21 @@ def base_minimize(func, dimensions, base_estimator,
         raise ValueError("`x0` should be a list, but got %s" % type(x0))
 
     n_init_func_calls = len(x0) if y0 is None else 0
-    n_total_init_calls = n_random_starts + n_init_func_calls
+    n_total_init_calls = n_initial_points + n_init_func_calls
 
     if n_calls < n_total_init_calls:
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (n_total_init_calls,
                                                   n_calls))
 
-    if n_random_starts == 0 and not x0:
-        raise ValueError("Either set `n_random_starts` > 0,"
+    if n_initial_points == 0 and not x0:
+        raise ValueError("Either set `n_initial_points` > 0,"
                          " or provide `x0`")
 
     callbacks = check_callback(callback)
     if verbose:
         callbacks.append(VerboseCallback(
-            n_init=n_init_func_calls, n_random=n_random_starts,
+            n_init=n_init_func_calls, n_random=n_initial_points,
             n_total=n_calls))
 
     # User suggested points at which to evaluate the objective first

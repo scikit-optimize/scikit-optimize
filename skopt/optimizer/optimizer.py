@@ -51,6 +51,9 @@ class Optimizer(object):
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
 
     * `n_random_starts` [int, default=10]:
+        DEPRECATED, use `n_initial_points` instead.
+
+    * `n_initial_points` [int, default=10]:
         Number of evaluations of `func` with random points before approximating
         the `func` with `base_estimator`. While random points are being
         suggested no model will be fit to the observations.
@@ -111,7 +114,8 @@ class Optimizer(object):
 
     """
     def __init__(self, dimensions, base_estimator,
-                 n_random_starts=10, n_initial_points=10, acq_func="gp_hedge",
+                 n_random_starts=None, n_initial_points=10,
+                 acq_func="gp_hedge",
                  acq_optimizer="lbfgs",
                  random_state=None, acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
@@ -152,8 +156,10 @@ class Optimizer(object):
             else:
                 self._non_cat_inds.append(ind)
 
-        if n_random_starts != 10:
-            # XXX warn that it has been renamed
+        if n_random_starts is not None:
+            warnings.warn(("n_random_starts has been renamed to "
+                           "n_initial_points."),
+                          DeprecationWarning)
             n_initial_points = n_random_starts
 
         self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
@@ -185,10 +191,11 @@ class Optimizer(object):
 
         if (isinstance(base_estimator, (ExtraTreesRegressor,
                                         RandomForestRegressor,
-                                        GradientBoostingQuantileRegressor))
-            and not acq_optimizer == "sampling"):
-            raise ValueError("The tree-based regressor {0} should run with "
-                             "acq_optimizer='sampling'".format(type(base_estimator)))
+                                        GradientBoostingQuantileRegressor)) and
+                not acq_optimizer == "sampling"):
+            raise ValueError(
+                "The tree-based regressor {0} should run with "
+                "acq_optimizer='sampling'".format(type(base_estimator)))
 
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "

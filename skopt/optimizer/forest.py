@@ -8,9 +8,10 @@ from ..learning import RandomForestRegressor
 
 
 def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
-                    n_random_starts=10, acq_func="EI", x0=None, y0=None,
-                    random_state=None, verbose=False, callback=None,
-                    n_points=10000, xi=0.01, kappa=1.96, n_jobs=1):
+                    n_random_starts=None, n_initial_points=10, acq_func="EI",
+                    x0=None, y0=None, random_state=None, verbose=False,
+                    callback=None, n_points=10000, xi=0.01, kappa=1.96,
+                    n_jobs=1):
     """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -64,9 +65,12 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
     * `n_calls` [int, default=100]:
         Number of calls to `func`.
 
-    * `n_random_starts` [int, default=10]:
+    * `n_initial_points` [int, default=10]:
         Number of evaluations of `func` with random initialization points
         before approximating the `func` with `base_estimator`.
+
+    * `n_random_starts` [int, default=10]:
+        DEPRECATED, use `n_initial_points` instead.
 
     * `acq_func` [string, default=`"LCB"`]:
         Function to minimize over the forest posterior. Can be either
@@ -163,6 +167,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,
+                         n_initial_points=n_initial_points,
                          x0=x0, y0=y0, random_state=random_state,
                          acq_func=acq_func,
                          xi=xi, kappa=kappa, verbose=verbose,
