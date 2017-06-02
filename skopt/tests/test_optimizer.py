@@ -14,6 +14,7 @@ from scipy.optimize import OptimizeResult
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
+ACQ_FUNCS_PS = ["EIps", "PIps", "LCBps", "gp_hedgeps"]
 
 
 def test_multiple_asks():
@@ -107,9 +108,10 @@ def test_acq_optimizer(base_estimator):
     assert 'The tree-based regressor' in str(e.value)
 
 @pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
-def test_acq_optimizer_with_time_api(base_estimator):
+@pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
+def test_acq_optimizer_with_time_api(base_estimator, acq_func):
     opt = Optimizer([(-2.0, 2.0),], base_estimator=base_estimator,
-                    acq_func="EIps", n_random_starts=1,
+                    acq_func=acq_func, n_random_starts=1,
                     acq_optimizer="sampling")
     x = opt.ask()
     opt.tell(x, (bench1(x), 1.0))

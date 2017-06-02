@@ -129,6 +129,9 @@ class Optimizer(object):
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
             self.gains_ = np.zeros(3)
+        elif self.acq_func == "gp_hedgeps":
+            self.cand_acq_funcs_ = ["EIps", "LCBps", "PIps"]
+            self.gains_ = np.zeros(3)
         else:
             self.cand_acq_funcs_ = [self.acq_func]
 
@@ -303,9 +306,7 @@ class Optimizer(object):
                 elif self.acq_optimizer == "lbfgs":
                     x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
 
-                    approx_grad = False
-                    if "ps" in cand_acq_func:
-                        approx_grad = True
+                    approx_grad = cand_acq_func.endswith("ps")
 
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
