@@ -231,9 +231,11 @@ def base_minimize(func, dimensions, base_estimator,
             if not all(map(np.isscalar, y0)):
                 raise ValueError(
                     "`y0` elements should be scalars")
+        else:
+            if np.ndim(y0) != 2 and np.shape(y0)[1] != 2:
+                raise ValueError(
+                    "`y0` elements should be a tuple of 2 values.")
 
-        print(x0)
-        print(y0)
         result = optimizer.tell(x0, y0)
         result.specs = specs
 

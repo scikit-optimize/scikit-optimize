@@ -1,9 +1,11 @@
+from math import log
 import numpy as np
 
 from scipy import optimize
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 
 from skopt.acquisition import gaussian_acquisition_1D
@@ -17,7 +19,25 @@ from skopt.learning.gaussian_process.kernels import WhiteKernel
 
 class ConstSurrogate:
     def predict(self, X, return_std=True):
+        X = np.array(X)
         return np.zeros(X.shape[0]), np.ones(X.shape[0])
+
+
+class MultiOutputSurrogate:
+    def fit(self, X, y):
+        """
+        The first estimator returns a constant value.
+        The second estimator is a gaussian process regressor that
+        models the logarithm of the time.
+        """
+        X = np.array(X)
+        y = np.array(y)
+        gpr = GaussianProcessRegressor()
+        gpr.fit(X, y[:, 1])
+        self.estimators_ = []
+        self.estimators_.append(ConstSurrogate())
+        self.estimators_.append(gpr)
+        return self
 
 
 def test_acquisition_ei_correctness():
@@ -74,3 +94,17 @@ def test_acquisition_gradient():
 
     for acq_func in ["LCB", "PI", "EI"]:
         check_gradient_correctness(X_new, gpr, acq_func, np.max(y))
+
+
+def test_acquisition_per_second():
+    X = [[3], [5], [7]]
+    y = [[1, log(3)], [1, log(5)], [1, log(7)]]
+    mos = MultiOutputSurrogate()
+    mos.fit(X, y)
+    ei_vals = gaussian_ei(
+        [[1], [2], [4], [6], [8], [9]], mos, y_opt=1.0, per_second=True)
+    pi_vals = gaussian_pi(
+        [[1], [2], [4], [6], [8], [9]], mos, y_opt=1.0, per_second=True)
+    for fast, slow in zip([0, 1, 2], [5, 4, 3]):
+        assert_greater(ei_vals[fast], ei_vals[slow])
+        assert_greater(pi_vals[fast], pi_vals[slow])
