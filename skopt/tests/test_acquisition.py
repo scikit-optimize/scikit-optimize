@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 
+from skopt.acquisition import _gaussian_acquisition
 from skopt.acquisition import gaussian_acquisition_1D
 from skopt.acquisition import gaussian_ei
 from skopt.acquisition import gaussian_lcb
@@ -101,10 +102,9 @@ def test_acquisition_per_second():
     y = [[1, log(3)], [1, log(5)], [1, log(7)]]
     mos = MultiOutputSurrogate()
     mos.fit(X, y)
-    ei_vals = gaussian_ei(
-        [[1], [2], [4], [6], [8], [9]], mos, y_opt=1.0, per_second=True)
-    pi_vals = gaussian_pi(
-        [[1], [2], [4], [6], [8], [9]], mos, y_opt=1.0, per_second=True)
-    for fast, slow in zip([0, 1, 2], [5, 4, 3]):
-        assert_greater(ei_vals[fast], ei_vals[slow])
-        assert_greater(pi_vals[fast], pi_vals[slow])
+
+    X_pred =  [[1], [2], [4], [6], [8], [9]]
+    for acq_func in ["EIps", "PIps", "LCBps"]:
+        vals = _gaussian_acquisition(X_pred, mos, y_opt=1.0, acq_func=acq_func)
+        for fast, slow in zip([0, 1, 2], [5, 4, 3]):
+            assert_greater(vals[slow], vals[fast])

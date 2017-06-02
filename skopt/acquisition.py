@@ -34,26 +34,40 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
     kappa = acq_func_kwargs.get("kappa", 1.96)
 
     # Evaluate acquisition function
-    per_second = "ps" in acq_func
-    if acq_func == "LCB":
-        return gaussian_lcb(X, model, kappa, return_grad)
+    per_second = acq_func.endswith("ps")
+    if per_second:
+        model, time_model = model.estimators_
+
+    if acq_func in ["LCB", "LCBps"]:
+        func_and_grad = gaussian_lcb(X, model, kappa, return_grad)
+        if return_grad:
+            acq_vals, acq_grad = func_and_grad
+        else:
+            acq_vals = func_and_grad
 
     elif acq_func in ["EI", "PI", "EIps", "PIps"]:
-        if acq_func == "EI":
-            func_and_grad = gaussian_ei(
-                X, model, y_opt, xi, return_grad, per_second)
+        if acq_func in ["EI", "EIps"]:
+            func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
         else:
-            func_and_grad = gaussian_pi(
-                X, model, y_opt, xi, return_grad, per_second)
+            func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
 
         if return_grad:
-            return -func_and_grad[0], -func_and_grad[1]
+            acq_vals = -func_and_grad[0]
+            acq_grad = -func_and_grad[1]
         else:
-            return -func_and_grad
+            acq_vals = -func_and_grad
 
     else:
         raise ValueError("Acquisition function not implemented.")
 
+    if return_grad:
+        return acq_vals, acq_grad
+
+    if per_second:
+        mean, std = time_model.predict(X, return_std=True)
+        inv_t = np.exp(-mean + 0.5*std**2)
+        return acq_vals * inv_t
+    return acq_vals
 
 def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
     """
@@ -108,8 +122,7 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
             return mu - kappa * std
 
 
-def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False,
-                per_second=False):
+def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the probability of improvement to calculate the acquisition values.
 
@@ -149,20 +162,11 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False,
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
 
-    * `per_second`: [boolean, optional]:
-        Whether or not to include the compute time while computing the
-        acquisition function. In this case, the `model` should be
-        a `MultiOutputRegressor` instance fit on two outputs,
-        the first estimator modelling `f(x)` and the second estimator
-        modelling `log(t(f(x)))`
-
     Returns
     -------
     * `values`: [array-like, shape=(X.shape[0],)]:
         Acquisition function values computed at X.
     """
-    if per_second:
-        model, time_model = model.estimators_
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
@@ -190,16 +194,10 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False,
 
         return values, improve_grad * norm.pdf(scaled)
 
-    else:
-        if per_second:
-            mean, std = time_model.predict(X, return_std=True)
-            inv_t = np.exp(-mean + 0.5*std**2)
-            return values * inv_t
-        return values
+    return values
 
 
-def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False,
-                per_second=False):
+def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
@@ -238,20 +236,11 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False,
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
 
-    * `per_second`: [boolean, optional]:
-        Whether or not to include the compute time while computing the
-        acquisition function. In this case, the `model` should be
-        a `MultiOutputRegressor` instance fit on two outputs,
-        the first estimator modelling `f(x)` and the second estimator
-        modelling `log(t(f(x)))`
-
     Returns
     -------
     * `values`: [array-like, shape=(X.shape[0],)]:
         Acquisition function values computed at X.
     """
-    if per_second:
-        model, time_model = model.estimators_
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
@@ -289,8 +278,4 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False,
         grad = exploit_grad + explore_grad
         return values, grad
 
-    if per_second:
-        mean, std = time_model.predict(X, return_std=True)
-        inv_t = np.exp(-mean + 0.5*std**2)
-        return values * inv_t
     return values
