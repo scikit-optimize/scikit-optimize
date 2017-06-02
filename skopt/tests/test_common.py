@@ -423,3 +423,13 @@ def test_early_stopping_delta_x_empty_result_object(minimizer):
                     n_calls=n_calls,
                     n_random_starts=1, random_state=1)
     assert len(res.x_iters) < n_calls
+
+def test_per_second_api():
+    def bench1_with_time(x):
+        return bench1(x), np.abs(x[0])
+
+    for minimizer in [gp_minimize, forest_minimize, gbrt_minimize]:
+        res = gp_minimize(bench1_with_time, [(-2.0, 2.0)],
+                          acq_func="EIps", n_calls=n_calls, n_random_starts=1,
+                          random_state=1)
+        assert len(res.log_time) == n_calls

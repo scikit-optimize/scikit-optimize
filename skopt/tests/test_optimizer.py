@@ -105,3 +105,16 @@ def test_acq_optimizer(base_estimator):
         opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
                         n_random_starts=1, acq_optimizer='lbfgs')
     assert 'The tree-based regressor' in str(e.value)
+
+@pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
+def test_acq_optimizer_with_time_api(base_estimator):
+    opt = Optimizer([(-2.0, 2.0),], base_estimator=base_estimator,
+                    acq_func="EIps", n_random_starts=1,
+                    acq_optimizer="sampling")
+    x = opt.ask()
+    opt.tell(x, (bench1(x), 1.0))
+    x = opt.ask()
+    opt.tell(x, (bench1(x), 1.0))
+
+    with pytest.raises(TypeError) as e:
+        opt.tell(x, bench1(x))

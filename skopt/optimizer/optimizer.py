@@ -251,8 +251,8 @@ class Optimizer(object):
                 else:
                     raise TypeError("expcted y to be a list of (func_val, t)")
             elif is_listlike(x):
-                y = list(y)
                 if np.ndim(y) == 1 and len(y) == 2:
+                    y = list(y)
                     y[1] = log(y[1])
                     self.Xi.append(x)
                     self.yi.append(y)
