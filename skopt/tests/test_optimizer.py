@@ -117,7 +117,7 @@ def test_acq_optimizer(base_estimator):
 def test_exhaust_random_calls():
     # check a model is fitted if there is at least one call to tell
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=2,
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=2,
                     acq_optimizer="sampling")
 
     x = opt.ask()  # random point
