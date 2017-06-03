@@ -368,16 +368,17 @@ def test_invalid_n_calls_arguments(minimizer):
                          minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
                          n_calls=1, n_initial_points=10, random_state=1)
 
-    # n_calls >= n_initial_points + len(x0)
+    # n_calls >= max(n_initial_points, len(x0))
     assert_raise_message(ValueError,
-                         "Expected `n_calls` >= 10",
+                         "Expected `n_calls` >= 7",
                          minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
                          n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
                          random_state=1, n_initial_points=7)
 
-    # n_calls >= n_initial_points when x0 and y0 are provided.
+    # n_calls >= n_initial_points when x0 and y0 are shorter
+    # than n_initial_points.
     assert_raise_message(ValueError,
-                         "Expected `n_calls` >= 7",
+                         "Expected `n_calls` >= 4",
                          minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
                          n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
                          y0=[2.0, 3.0, 5.0],

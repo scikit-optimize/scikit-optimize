@@ -54,9 +54,10 @@ class Optimizer(object):
         DEPRECATED, use `n_initial_points` instead.
 
     * `n_initial_points` [int, default=10]:
-        Number of evaluations of `func` with random points before approximating
-        the `func` with `base_estimator`. While random points are being
-        suggested no model will be fit to the observations.
+        Number of evaluations of `func` with initialization points
+        before approximating it with `base_estimator`. Points provided as
+        `x0` count as initialization points. If len(x0) < n_initial_points
+        additional points are sampled at random.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either

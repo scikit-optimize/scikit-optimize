@@ -55,8 +55,10 @@ def base_minimize(func, dimensions, base_estimator,
         Maximum number of calls to `func`.
 
     * `n_initial_points` [int, default=10]:
-        Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`.
+        Number of evaluations of `func` with initialization points
+        before approximating it with `base_estimator`. Points provided as
+        `x0` count as initialization points. If len(x0) < n_initial_points
+        additional points are sampled at random.
 
     * `n_random_starts` [int, default=10]:
         DEPRECATED, use `n_initial_points` instead.
@@ -185,6 +187,11 @@ def base_minimize(func, dimensions, base_estimator,
     elif not isinstance(x0[0], (list, tuple)):
         x0 = [x0]
 
+    if isinstance(y0, Iterable):
+        y0 = list(y0)
+    elif isinstance(y0, numbers.Number):
+        y0 = [y0]
+
     if optimizer.space.n_dims == 1:
         assert all(isinstance(p, Iterable) for p in x0)
 
@@ -195,12 +202,16 @@ def base_minimize(func, dimensions, base_estimator,
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, but got %s" % type(x0))
 
-    n_init_func_calls = len(x0) if y0 is None else 0
-    n_total_init_calls = n_initial_points + n_init_func_calls
+    # how many times do we need to call `func` to evaluate all points in `x0`
+    # or to have at least `n_initial_points` values
+    if y0 is None:
+        n_init_func_calls = max(n_initial_points, len(x0))
+    else:
+        n_init_func_calls = n_initial_points - len(y0)
 
-    if n_calls < n_total_init_calls:
+    if n_calls < n_init_func_calls:
         raise ValueError(
-            "Expected `n_calls` >= %d, got %d" % (n_total_init_calls,
+            "Expected `n_calls` >= %d, got %d" % (n_init_func_calls,
                                                   n_calls))
 
     if n_initial_points == 0 and not x0:
@@ -213,23 +224,19 @@ def base_minimize(func, dimensions, base_estimator,
             n_init=n_init_func_calls, n_random=n_initial_points,
             n_total=n_calls))
 
-    # User suggested points at which to evaluate the objective first
-    if x0 and y0 is None:
-        y0 = map(func, x0)
-
     # setting the scope for these variables
     result = None
 
-    # User is god and knows the value of the objective at these points
-    if x0 and y0 is not None:
+    # User suggested points at which to evaluate the objective first
+    if x0 and y0 is None:
+        y0 = list(map(func, x0))
+        n_calls -= len(y0)
+
+    # Pass user suggested initialisation points to the optimizer
+    if x0:
         if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
             raise ValueError(
                 "`y0` should be an iterable or a scalar, got %s" % type(y0))
-
-        if isinstance(y0, Iterable):
-            y0 = list(y0)
-        elif isinstance(y0, numbers.Number):
-            y0 = [y0]
 
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
@@ -245,12 +252,11 @@ def base_minimize(func, dimensions, base_estimator,
             return result
 
     # Bayesian optimization loop
-    n_iterations = n_calls - n_init_func_calls
-    for n in range(n_iterations):
+    for n in range(n_calls):
         next_x = optimizer.ask()
 
         # no need to fit a model on the last iteration
-        fit_model = n < n_iterations - 1
+        fit_model = n < n_calls - 1
         next_y = func(next_x)
         if not np.isscalar(next_y):
             raise ValueError("`func` should return a scalar")
