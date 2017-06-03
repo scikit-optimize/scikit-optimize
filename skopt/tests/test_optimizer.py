@@ -114,14 +114,22 @@ def test_acq_optimizer(base_estimator):
     assert 'The tree-based regressor' in str(e.value)
 
 
-def test_exhaust_random_calls():
-    # check a model is fitted if there is at least one call to tell
+def test_exhaust_initial_calls():
+    # check a model is fitted after we added n_initial_points via tell()
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=2,
-                    acq_optimizer="sampling")
+                    acq_optimizer="sampling", random_state=1)
 
-    x = opt.ask()  # random point
-    opt.tell(x, 3.)
-    opt.ask()  # random point
+    x0 = opt.ask()  # random point
+    x1 = opt.ask()  # random point
+    assert x0 != x1
+    opt.tell(x1, 3.)
+    x2 = opt.ask()  # random point
+    assert x1 != x2
+    opt.tell(x2, 4.)
     # this is the first non-random point
-    opt.ask()
+    x3 = opt.ask()
+    assert x2 != x3
+    x4 = opt.ask()
+    # no new information was added so should be the same
+    assert x3 == x4
