@@ -2,69 +2,120 @@
 skopt, where constant liar parallelization strategy is used.
 """
 
-import numpy as np
-from sklearn.externals.joblib import Parallel, delayed
+
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+
 from skopt.space import Real
-from skopt.learning import ExtraTreesRegressor
 from skopt import Optimizer
 from skopt.benchmarks import branin
+import skopt.learning as sol
+
 from scipy.spatial.distance import pdist
+import pytest
+
+# list of all strategies for parallelization
+supported_strategies = ["cl_min", "cl_mean", "cl_max"]
+# Extract available surrogates, so that new ones are used automatically
+available_surrogates = [
+    getattr(sol, name) for name in sol.__all__
+    if "GradientBoostingQuantileRegressor" not in name
+]  # excluding the GradientBoostingQuantileRegressor, will open issue later
+
+n_steps = 5  # number of steps to test the algorithms with
+n_points = 4  # number of points to evaluate at a single step
+# n_steps x n_points > n_random_restarts should hold
 
 
-def test_constant_liar_runs():
+@pytest.mark.parametrize("strategy", supported_strategies)
+@pytest.mark.parametrize("surrogate", available_surrogates)
+def test_constant_liar_runs(strategy, surrogate):
+    """
+    Tests whether the optimizer runs properly during the random
+    initialization phase and beyond
+
+    Parameters
+    ----------
+    * `strategy` [string]:
+        Name of the strategy to use during optimization.
+
+    * `surrogate` [scikit-optimize surrogate class]:
+        A class of the scikit-optimize surrogate used in Optimizer.
+    """
     optimizer = Optimizer(
-        base_estimator=ExtraTreesRegressor(),
-        dimensions=[Real(-5.0, 10.0),Real(0.0, 15.0)],
-        acq_optimizer='sampling'
+        base_estimator=surrogate(),
+        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        acq_optimizer='sampling',
+        random_state=0
     )
 
-    n_points, n_steps, Y = 2, 13, []
+    # test arguments check
+    assert_raises(ValueError, optimizer.ask, {"strategy": "cl_maen"})
+    assert_raises(ValueError, optimizer.ask, {"n_points": "0"})
+    assert_raises(ValueError, optimizer.ask, {"n_points": 0})
 
     for i in range(n_steps):
-        strategy = optimizer.par_strats[i % len(optimizer.par_strats)]
-        x = optimizer.ask(n_points, strategy)
+        x = optimizer.ask(n_points=n_points, strategy=strategy)
+        # check if actually n_points was generated
+        assert_equal(len(x), n_points)
         optimizer.tell(x, [branin(v) for v in x])
 
-def test_all_points_different():
-    # tests whether the parallel optimizer always generates different points to evaluate
 
+@pytest.mark.parametrize("strategy", supported_strategies)
+@pytest.mark.parametrize("surrogate", available_surrogates)
+def test_all_points_different(strategy, surrogate):
+    """
+    Tests whether the parallel optimizer always generates
+    different points to evaluate.
+
+    Parameters
+    ----------
+    * `strategy` [string]:
+        Name of the strategy to use during optimization.
+
+    * `surrogate` [scikit-optimize surrogate class]:
+        A class of the scikit-optimize surrogate used in Optimizer.
+    """
     optimizer = Optimizer(
-        base_estimator=ExtraTreesRegressor(),
-        dimensions=[Real(-5.0, 10.0),Real(0.0, 15.0)],
-        acq_optimizer='sampling'
+        base_estimator=surrogate(),
+        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        acq_optimizer='sampling',
+        random_state=1
     )
 
-    n_points, n_steps, Y = 8, 5, []
-    tolerance = 1e-3 # minimum distance at which points are considered to be the same
-
-
+    tolerance = 1e-3  # distance above which points are assumed same
     for i in range(n_steps):
-        strategy = optimizer.par_strats[i % len(optimizer.par_strats)]
         x = optimizer.ask(n_points, strategy)
         optimizer.tell(x, [branin(v) for v in x])
         distances = pdist(x)
-        if any(distances < tolerance):
-            raise ValueError("Same points were generated!")
+        assert all(distances > tolerance)
 
 
-def test_same_set_of_points_ask():
-    """For n_points not None, tests whether two consecutive calls to ask
-    return the same sets of points."""
+@pytest.mark.parametrize("strategy", supported_strategies)
+@pytest.mark.parametrize("surrogate", available_surrogates)
+def test_same_set_of_points_ask(strategy, surrogate):
+    """
+    For n_points not None, tests whether two consecutive calls to ask
+    return the same sets of points.
+
+    Parameters
+    ----------
+    * `strategy` [string]:
+        Name of the strategy to use during optimization.
+
+    * `surrogate` [scikit-optimize surrogate class]:
+        A class of the scikit-optimize surrogate used in Optimizer.
+    """
 
     optimizer = Optimizer(
-        base_estimator=ExtraTreesRegressor(),
-        dimensions=[Real(-5.0, 10.0),Real(0.0, 15.0)],
-        acq_optimizer='sampling'
+        base_estimator=surrogate(),
+        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        acq_optimizer='sampling',
+        random_state=2
     )
 
-    n_points, n_steps, Y = 8, 5, []
-
     for i in range(n_steps):
-        strategy = optimizer.par_strats[i % len(optimizer.par_strats)]
         xa = optimizer.ask(n_points, strategy)
         xb = optimizer.ask(n_points, strategy)
-
         optimizer.tell(xa, [branin(v) for v in xa])
-
-        if not (str(xa) == str(xb)):
-            raise ValueError("Different sets of points were generated for two consecutive calls to ask.")
+        assert_equal(xa, xb)  # check if the sets of points generated are equal

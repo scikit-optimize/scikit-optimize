@@ -155,9 +155,6 @@ class Optimizer(object):
 
         self.n_jobs = n_jobs
 
-        # list of all strategies for parallelization. Used internally for testing.
-        # See description of `ask` method to see what parallel strategy means.
-        self.par_strats = ["cl_min", "cl_mean", "cl_max"]
         # the cache of responses of ask. For n_points not None, this ensures
         # that multiple calls to ask return same sets of points.
         self.cache = None
@@ -244,9 +241,14 @@ class Optimizer(object):
         if n_points is None:
             return self._ask()
 
-        if not strategy in self.par_strats:
+        supported_strategies = ["cl_min", "cl_mean", "cl_max"]
+
+        if not (isinstance(n_points, int) and n_points > 0):
+            raise ValueError("n_points should be int > 0, got " + str(n_points))
+
+        if not strategy in supported_strategies:
             raise ValueError(
-                "Expected parallel_strategy to be one of " + str(self.par_strats) + ", "
+                "Expected parallel_strategy to be one of " + str(supported_strategies) + ", "
                 "got %s" % strategy)
 
         # Caching the result. If some new parameters are provided to the ask,
