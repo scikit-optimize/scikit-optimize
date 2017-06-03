@@ -308,9 +308,9 @@ class Optimizer(object):
     def _ask(self):
         """Suggest next point at which to evaluate the objective.
 
-        Return a random point while not at least `n_random_starts` observations
-        have been `tell`ed, after that `base_estimator` is used to determine
-        the next point.
+        Return a random point while not at least `n_initial_points`
+        observations have been `tell`ed, after that `base_estimator` is used
+        to determine the next point.
         """
         if self._n_initial_points > 0:
             # this will not make a copy of `self.rng` and hence keep advancing
