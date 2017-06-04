@@ -18,6 +18,7 @@ MINIMIZERS = [("ET", partial(forest_minimize, base_estimator='ET')),
               ("gbrt", gbrt_minimize)]
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("base_estimator", [42, DecisionTreeClassifier()])
 def test_forest_minimize_api(base_estimator):
     # invalid string value
@@ -42,6 +43,7 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin,
         assert_less(r.fun, y_opt + margin)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("name, minimizer", MINIMIZERS)
 def test_tree_based_minimize(name, minimizer):
     check_minimize(minimizer, bench1, 0.,

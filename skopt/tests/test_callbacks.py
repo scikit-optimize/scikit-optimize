@@ -1,3 +1,5 @@
+import pytest
+
 from collections import namedtuple
 
 from sklearn.utils.testing import assert_equal
@@ -9,6 +11,7 @@ from skopt.callbacks import TimerCallback
 from skopt.callbacks import DeltaYStopper
 
 
+@pytest.mark.fast_test
 def test_timer_callback():
     callback = TimerCallback()
     dummy_minimize(bench1, [(-1.0, 1.0)], callback=callback, n_calls=10)
@@ -16,6 +19,7 @@ def test_timer_callback():
     assert_less(0.0, sum(callback.iter_time))
 
 
+@pytest.mark.fast_test
 def test_deltay_stopper():
     deltay = DeltaYStopper(0.2, 3)
 

@@ -89,6 +89,7 @@ def call_single(res):
     pass
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("verbose, call",
                          product(
                             [True, False],
@@ -110,6 +111,7 @@ def test_minimizer_api_dummy_minimize(verbose, call):
                          dummy_minimize, lambda x: x, [[-5, 10]])
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("verbose, call, minimizer",
                          product(
                             [True, False],
@@ -134,6 +136,7 @@ def test_minimizer_api(verbose, call, minimizer):
                          minimizer, lambda x: x, [[-5, 10]])
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_minimizer_api_random_only(minimizer):
     # no models should be fit as we only evaluate at random points
@@ -149,6 +152,7 @@ def test_minimizer_api_random_only(minimizer):
     check_minimizer_bounds(result, n_calls)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_fixed_random_states(minimizer):
     # check that two runs produce exactly same results, if not there is a
@@ -168,6 +172,7 @@ def test_fixed_random_states(minimizer):
     assert_array_almost_equal(result1.func_vals, result2.func_vals)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_minimizer_with_space(minimizer):
     # check we can pass a Space instance as dimensions argument and get same
@@ -190,6 +195,7 @@ def test_minimizer_with_space(minimizer):
     assert_array_almost_equal(space_result.func_vals, result.func_vals)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
                          product([0, 5],
                                  [gp_minimize,
@@ -209,6 +215,7 @@ def test_init_vals_and_models(n_random_starts, optimizer_func):
     assert_equal(len(res.models), n_calls - n_random_starts)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
                          product([0, 5],
                                  [gp_minimize,
@@ -228,6 +235,7 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
                  n_calls - n_random_starts - len(x0))
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
                          product([0, 5],
                                  [gp_minimize,
@@ -242,6 +250,7 @@ def test_init_vals(n_random_starts, optimizer_func):
     check_init_vals(optimizer, branin, space, x0, n_calls)
 
 
+@pytest.mark.fast_test
 def test_init_vals_dummy_minimize():
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
@@ -249,6 +258,7 @@ def test_init_vals_dummy_minimize():
     check_init_vals(dummy_minimize, branin, space, x0, n_calls)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("optimizer", [
         dummy_minimize,
         partial(gp_minimize, n_random_starts=0),
@@ -261,6 +271,7 @@ def test_categorical_init_vals(optimizer):
     check_init_vals(optimizer, bench4, space, x0, n_calls)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("optimizer", [
         dummy_minimize,
         partial(gp_minimize, n_random_starts=0),
@@ -320,6 +331,7 @@ def check_init_vals(optimizer, func, space, x0, n_calls):
                   space, x0=x0, y0=[1])
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_invalid_n_calls_arguments(minimizer):
     assert_raise_message(ValueError,
@@ -358,6 +370,7 @@ def test_invalid_n_calls_arguments(minimizer):
                          random_state=1, n_random_starts=7)
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_repeated_x(minimizer):
     assert_warns_message(
@@ -370,6 +383,7 @@ def test_repeated_x(minimizer):
         n_random_starts=0)
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_consistent_x_iter_dimensions(minimizer):
     # check that all entries in x_iters have the same dimensions
@@ -400,6 +414,7 @@ def test_consistent_x_iter_dimensions(minimizer):
                          x0=[0, 1], n_calls=3, n_random_starts=0)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_early_stopping_delta_x(minimizer):
     n_calls = 15
@@ -412,6 +427,7 @@ def test_early_stopping_delta_x(minimizer):
     assert len(res.x_iters) < n_calls
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_early_stopping_delta_x_empty_result_object(minimizer):
     # check that the callback handles the case of being passed an empty

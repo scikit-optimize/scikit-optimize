@@ -16,6 +16,7 @@ TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
 
 
+@pytest.mark.fast_test
 def test_multiple_asks():
     # calling ask() multiple times without a tell() inbetween should
     # be a "no op"
@@ -34,6 +35,7 @@ def test_multiple_asks():
     assert_equal(opt.ask(), opt.ask())
 
 
+@pytest.mark.fast_test
 def test_invalid_tell_arguments():
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
@@ -43,6 +45,7 @@ def test_invalid_tell_arguments():
     assert_raises(ValueError, opt.tell, [1.], [1., 1.])
 
 
+@pytest.mark.fast_test
 def test_bounds_checking_1D():
     low = -2.
     high = 2.
@@ -57,6 +60,7 @@ def test_bounds_checking_1D():
     assert_raises(ValueError, opt.tell, [low - 0.5, high], (2., 3.))
 
 
+@pytest.mark.fast_test
 def test_bounds_checking_2D():
     low = -2.
     high = 2.
@@ -72,6 +76,7 @@ def test_bounds_checking_2D():
     assert_raises(ValueError, opt.tell, [low - 0.5, high + 0.5], 2.)
 
 
+@pytest.mark.fast_test
 def test_bounds_checking_2D_multiple_points():
     low = -2.
     high = 2.
@@ -88,6 +93,7 @@ def test_bounds_checking_2D_multiple_points():
                   [2., 3.])
 
 
+@pytest.mark.fast_test
 def test_returns_result_object():
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
@@ -99,6 +105,7 @@ def test_returns_result_object():
     assert_equal(np.min(result.func_vals), result.fun)
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
 def test_acq_optimizer(base_estimator):
     with pytest.raises(ValueError) as e:

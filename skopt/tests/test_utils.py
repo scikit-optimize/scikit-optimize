@@ -1,3 +1,4 @@
+import pytest
 import tempfile
 
 from sklearn.utils.testing import assert_array_equal
@@ -23,6 +24,7 @@ def check_optimization_results_equality(res_1, res_2):
     assert_array_equal(res_1.func_vals, res_2.func_vals)
 
 
+@pytest.mark.fast_test
 def test_dump_and_load():
     res = gp_minimize(bench3,
                       [(-2.0, 2.0)],
@@ -55,6 +57,7 @@ def test_dump_and_load():
     assert_true(not ("func" in res_loaded.specs["args"]))
 
 
+@pytest.mark.fast_test
 def test_dump_and_load_optimizer():
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
