@@ -79,11 +79,11 @@ The development version can be installed through:
     cd scikit-optimize
     pip install -e.
 
-Run all tests by executing `pytest` in the top level directory.
+Run all tests by executing ``pytest`` in the top level directory.
 
-To only run the subset of tests with low run time, you can use `pytest -m 'fast_test'`. On the other hand `pytest -m 'slow_test'` is also possible. To exclude all slow running tests try `pytest -m 'not slow_test'`.
+To only run the subset of tests with low run time, you can use ``pytest -m 'fast_test'``. On the other hand ``pytest -m 'slow_test'`` is also possible. To exclude all slow running tests try ``pytest -m 'not slow_test'``.
 
-This is implemented using pytest [attributes](https://docs.pytest.org/en/latest/mark.html). If a tests runs longer than 1 second, it is marked as slow, else as fast.
+This is implemented using pytest `attributes <https://docs.pytest.org/en/latest/mark.html>`__. If a tests runs longer than 1 second, it is marked as slow, else as fast.
 
 All contributors are welcome!
 
