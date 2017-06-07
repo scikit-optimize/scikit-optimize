@@ -155,9 +155,11 @@ class Optimizer(object):
 
         self.n_jobs = n_jobs
 
-        # the cache of responses of ask. For n_points not None, this ensures
-        # that multiple calls to ask return same sets of points.
-        self.cache = {}
+        # The cache of responses of `ask` method for n_points not None.
+        # This ensures that multiple calls to `ask` with n_points set
+        # return same sets of points.
+        # The cache is reset to {} at every call to `tell`.
+        self.cache_ = {}
 
     def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
         """Check arguments for sanity."""
@@ -258,10 +260,10 @@ class Optimizer(object):
                 str(supported_strategies) + ", " + "got %s" % strategy
             )
 
-        # Caching the result. If some new parameters are provided to the ask,
-        # the cache is not used.
-        if (n_points, strategy) in self.cache:
-            return self.cache[(n_points, strategy)]
+        # Caching the result with n_points not None. If some new parameters
+        # are provided to the ask, the cache_ is not used.
+        if (n_points, strategy) in self.cache_:
+            return self.cache_[(n_points, strategy)]
 
         # Copy of the optimizer is made in order to manage the
         # deletion of points with "lie" objective (the copy of
@@ -281,7 +283,7 @@ class Optimizer(object):
             opt.tell(x, y_lie)  # lie to the optimizer
             self._n_random_starts = max(0, self._n_random_starts - 1)
 
-        self.cache = {(n_points, strategy): X}  # cache the result
+        self.cache_ = {(n_points, strategy): X}  # cache_ the result
 
         return X
 
@@ -358,7 +360,7 @@ class Optimizer(object):
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
 
-        self.cache = {}  # optimizer learned somethnig new - discard the cache
+        self.cache_ = {}  # optimizer learned somethnig new - discard the cache_
 
         if fit and self._n_random_starts == 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
