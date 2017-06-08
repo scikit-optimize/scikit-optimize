@@ -155,7 +155,7 @@ def load(filename, **kwargs):
     return load_(filename, **kwargs)
 
 
-def expected_minimum(res, n_random_starts=20):
+def expected_minimum(res, n_random_starts=20, random_state=None):
     """
     Compute the minimum over the predictions of the last surrogate model.
 
@@ -171,6 +171,10 @@ def expected_minimum(res, n_random_starts=20):
         The number of random starts for the minimization of the surrogate
         model.
 
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
     Returns
     -------
     * `x` [list]: location of the minimum.
@@ -183,7 +187,7 @@ def expected_minimum(res, n_random_starts=20):
 
     xs = [res.x]
     if n_random_starts > 0:
-        xs.extend(res.space.rvs(n_random_starts))
+        xs.extend(res.space.rvs(n_random_starts, random_state=random_state))
 
     best_x = None
     best_fun = np.inf
