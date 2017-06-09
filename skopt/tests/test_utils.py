@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from skopt import gp_minimize
 from skopt import load
 from skopt import dump
+from skopt import expected_minimum
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
 from skopt.learning import ExtraTreesRegressor
@@ -68,3 +69,20 @@ def test_dump_and_load_optimizer():
     with tempfile.TemporaryFile() as f:
         dump(opt, f)
         load(f)
+
+
+@pytest.mark.fast_test
+def test_expected_minimum():
+    res = gp_minimize(bench3,
+                      [(-2.0, 2.0)],
+                      x0=[0.],
+                      noise=0.0,
+                      n_calls=20,
+                      random_state=1)
+
+    x_min, f_min = expected_minimum(res, random_state=1)
+    x_min2, f_min2 = expected_minimum(res, random_state=1)
+
+    assert f_min <= res.fun  # true since noise=0.0
+    assert x_min == x_min2
+    assert f_min == f_min2

@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 from scipy.optimize import OptimizeResult
+from scipy.optimize import minimize as sp_minimize
 from sklearn.externals.joblib import dump as dump_
 from sklearn.externals.joblib import load as load_
 
@@ -152,3 +153,50 @@ def load(filename, **kwargs):
         Reconstructed OptimizeResult instance.
     """
     return load_(filename, **kwargs)
+
+
+def expected_minimum(res, n_random_starts=20, random_state=None):
+    """
+    Compute the minimum over the predictions of the last surrogate model.
+
+    Note that the returned minimum may not necessarily be an accurate
+    prediction of the minimum of the true objective function.
+
+    Parameters
+    ----------
+    * `res`  [`OptimizeResult`, scipy object]:
+        The optimization result returned by a `skopt` minimizer.
+
+    * `n_random_starts` [int, default=20]:
+        The number of random starts for the minimization of the surrogate
+        model.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    * `x` [list]: location of the minimum.
+
+    * `fun` [float]: the surrogate function value at the minimum.
+    """
+    def func(x):
+        reg = res.models[-1]
+        return reg.predict(x.reshape(1, -1))[0]
+
+    xs = [res.x]
+    if n_random_starts > 0:
+        xs.extend(res.space.rvs(n_random_starts, random_state=random_state))
+
+    best_x = None
+    best_fun = np.inf
+
+    for x0 in xs:
+        r = sp_minimize(func, x0=x0, bounds=res.space.bounds)
+
+        if r.fun < best_fun:
+            best_x = r.x
+            best_fun = r.fun
+
+    return [v for v in best_x], best_fun

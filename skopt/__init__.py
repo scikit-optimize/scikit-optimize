@@ -58,7 +58,9 @@ from .optimizer import forest_minimize
 from .optimizer import gbrt_minimize
 from .optimizer import gp_minimize
 from .optimizer import Optimizer
-from .utils import load, dump
+from .utils import load
+from .utils import dump
+from .utils import expected_minimum
 
 
 __version__ = "0.3"
@@ -79,4 +81,5 @@ __all__ = (
     "Optimizer",
     "dump",
     "load",
+    "expected_minimum"
 )
