@@ -1,6 +1,7 @@
 import warnings
 from collections import Iterable
 from numbers import Number
+import copy
 
 import numpy as np
 
@@ -94,6 +95,7 @@ class Optimizer(object):
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
+
     Attributes
     ----------
     * `Xi` [list]:
@@ -135,6 +137,7 @@ class Optimizer(object):
         self.n_restarts_optimizer = acq_optimizer_kwargs.get(
             "n_restarts_optimizer", 5)
         n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
+        self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
         self.space = Space(dimensions)
         self.models = []
@@ -151,6 +154,12 @@ class Optimizer(object):
         self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
 
         self.n_jobs = n_jobs
+
+        # The cache of responses of `ask` method for n_points not None.
+        # This ensures that multiple calls to `ask` with n_points set
+        # return same sets of points.
+        # The cache is reset to {} at every call to `tell`.
+        self.cache_ = {}
 
     def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
         """Check arguments for sanity."""
@@ -176,7 +185,109 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
         self.acq_optimizer = acq_optimizer
 
-    def ask(self):
+    def copy(self, random_state=None):
+        """Create a shallow copy of an instance of the optimizer.
+
+        Parameters
+        ----------
+        * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state of the copy of optimizer.
+        """
+
+        optimizer = Optimizer(
+            dimensions=self.space.dimensions,
+            base_estimator=self.base_estimator,
+            n_random_starts=self._n_random_starts,
+            acq_func=self.acq_func,
+            acq_optimizer=self.acq_optimizer,
+            acq_func_kwargs=self.acq_func_kwargs,
+            acq_optimizer_kwargs=self.acq_optimizer_kwargs,
+            random_state=random_state,
+        )
+
+        if hasattr(self, "gains_"):
+            optimizer.gains_ = np.copy(self.gains_)
+
+        if self.Xi:
+            optimizer.tell(self.Xi, self.yi)
+
+        return optimizer
+
+    def ask(self, n_points=None, strategy="cl_min"):
+        """Query point or multiple points at which objective should be evaluated.
+
+        * `n_points` [int or None, default=None]:
+            Number of points returned by the ask method.
+            If the value is None, a single point to evaluate is returned.
+            Otherwise a list of points to evaluate is returned of size
+            n_points. This is useful if you can evaluate your objective in
+            parallel, and thus obtain more objective function evaluations per
+            unit of time.
+
+        * `strategy` [string, default=`"cl_min"`]:
+            Method to use to sample multiple points (see also `n_points`
+            description). This parameter is ignored if n_points = None.
+            Supported options are `"cl_min"`, `"cl_mean"` or `"cl_max"`.
+
+            - If set to `"cl_min"`, then constant liar strtategy is used
+               with lie objective value being minimum of observed objective
+               values. `"cl_mean"` and `"cl_max"` means mean and max of values
+               respectively. For details on this strategy see:
+
+               https://hal.archives-ouvertes.fr/hal-00732512/document
+
+               With this strategy a copy of optimizer is created, which is
+               then asked for a point, and the point is told to the copy of
+               optimizer with some fake objective (lie), the next point is
+               asked from copy, it is also told to the copy with fake
+               objective and so on. The type of lie defines different
+               flavours of `cl_x` strategies.
+
+        """
+        if n_points is None:
+            return self._ask()
+
+        supported_strategies = ["cl_min", "cl_mean", "cl_max"]
+
+        if not (isinstance(n_points, int) and n_points > 0):
+            raise ValueError(
+                "n_points should be int > 0, got " + str(n_points)
+            )
+
+        if strategy not in supported_strategies:
+            raise ValueError(
+                "Expected parallel_strategy to be one of " +
+                str(supported_strategies) + ", " + "got %s" % strategy
+            )
+
+        # Caching the result with n_points not None. If some new parameters
+        # are provided to the ask, the cache_ is not used.
+        if (n_points, strategy) in self.cache_:
+            return self.cache_[(n_points, strategy)]
+
+        # Copy of the optimizer is made in order to manage the
+        # deletion of points with "lie" objective (the copy of
+        # oiptimizer is simply discarded)
+        opt = self.copy()
+
+        X = []
+        for i in range(n_points):
+            x = opt.ask()
+            X.append(x)
+            if strategy == "cl_min":
+                y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
+            elif strategy == "cl_mean":
+                y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-max lie
+            else:
+                y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
+            opt.tell(x, y_lie)  # lie to the optimizer
+            self._n_random_starts = max(0, self._n_random_starts - 1)
+
+        self.cache_ = {(n_points, strategy): X}  # cache_ the result
+
+        return X
+
+    def _ask(self):
         """Suggest next point at which to evaluate the objective.
 
         Returns a random point for the first `n_random_starts` calls, after
@@ -248,6 +359,8 @@ class Optimizer(object):
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
+
+        self.cache_ = {}  # optimizer learned somethnig new - discard the cache_
 
         if fit and self._n_random_starts == 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
