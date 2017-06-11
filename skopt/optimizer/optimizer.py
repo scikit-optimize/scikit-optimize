@@ -1,7 +1,6 @@
 import warnings
 from collections import Iterable
 from numbers import Number
-import copy
 
 import numpy as np
 
@@ -167,18 +166,14 @@ class Optimizer(object):
 
         self.n_jobs = n_jobs
 
-<<<<<<< e16a4cc53d3c21f3338dd419f50c6817c1a04aaf
         # The cache of responses of `ask` method for n_points not None.
         # This ensures that multiple calls to `ask` with n_points set
         # return same sets of points.
         # The cache is reset to {} at every call to `tell`.
         self.cache_ = {}
 
-    def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
-=======
     def _check_arguments(self, base_estimator, n_initial_points,
                          acq_optimizer):
->>>>>>> Rename parameters
         """Check arguments for sanity."""
         if not is_regressor(base_estimator):
             raise ValueError(
