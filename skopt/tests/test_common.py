@@ -120,11 +120,11 @@ def test_minimizer_api_dummy_minimize(verbose, call):
                             MINIMIZERS))
 def test_minimizer_api(verbose, call, minimizer):
     n_calls = 7
-    n_initial_points = 3
-    n_models = n_calls - n_initial_points
+    n_random_starts = 3
+    n_models = n_calls - n_random_starts
 
     result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                       n_initial_points=n_initial_points,
+                       n_random_starts=n_random_starts,
                        n_calls=n_calls,
                        random_state=1,
                        verbose=verbose, callback=call)
@@ -141,10 +141,10 @@ def test_minimizer_api(verbose, call, minimizer):
 def test_minimizer_api_random_only(minimizer):
     # no models should be fit as we only evaluate at random points
     n_calls = 5
-    n_initial_points = 5
+    n_random_starts = 5
 
     result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
-                       n_initial_points=n_initial_points,
+                       n_random_starts=n_random_starts,
                        n_calls=n_calls,
                        random_state=1)
 
@@ -158,15 +158,15 @@ def test_fixed_random_states(minimizer):
     # check that two runs produce exactly same results, if not there is a
     # random state somewhere that is not reproducible
     n_calls = 7
-    n_initial_points = 4
+    n_random_starts = 4
 
     space = [(-5.0, 10.0), (0.0, 15.0)]
     result1 = minimizer(branin, space, n_calls=n_calls,
-                        n_initial_points=n_initial_points, random_state=1)
+                        n_random_starts=n_random_starts, random_state=1)
 
     dimensions = [(-5.0, 10.0), (0.0, 15.0)]
     result2 = minimizer(branin, dimensions, n_calls=n_calls,
-                        n_initial_points=n_initial_points, random_state=1)
+                        n_random_starts=n_random_starts, random_state=1)
 
     assert_array_almost_equal(result1.x_iters, result2.x_iters)
     assert_array_almost_equal(result1.func_vals, result2.func_vals)
@@ -178,89 +178,75 @@ def test_minimizer_with_space(minimizer):
     # check we can pass a Space instance as dimensions argument and get same
     # result
     n_calls = 7
-    n_initial_points = 4
+    n_random_starts = 4
 
     space = Space([(-5.0, 10.0), (0.0, 15.0)])
     space_result = minimizer(branin, space, n_calls=n_calls,
-                             n_initial_points=n_initial_points, random_state=1)
+                             n_random_starts=n_random_starts, random_state=1)
 
     check_minimizer_api(space_result, n_calls)
     check_minimizer_bounds(space_result, n_calls)
 
     dimensions = [(-5.0, 10.0), (0.0, 15.0)]
     result = minimizer(branin, dimensions, n_calls=n_calls,
-                       n_initial_points=n_initial_points, random_state=1)
+                       n_random_starts=n_random_starts, random_state=1)
 
     assert_array_almost_equal(space_result.x_iters, result.x_iters)
     assert_array_almost_equal(space_result.func_vals, result.func_vals)
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_initial_points, optimizer_func",
+@pytest.mark.parametrize("n_random_starts, optimizer_func",
                          product([0, 1, 2, 3, 4, 5],
                                  [gp_minimize,
                                   forest_minimize,
                                   gbrt_minimize]))
-def test_init_vals_and_models(n_initial_points, optimizer_func):
-    # test how many models are fitted when using initial points, values
+def test_init_vals_and_models(n_random_starts, optimizer_func):
+    # test how many models are fitted when using initial points, y0 values
     # and random starts
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
     y0 = list(map(branin, x0))
     n_calls = 7
 
-    optimizer = partial(optimizer_func, n_initial_points=n_initial_points)
+    optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     res = optimizer(branin, space, x0=x0, y0=y0, random_state=0,
                     n_calls=n_calls)
 
-    if n_initial_points <= len(y0):
-        # we require less initial points than we provide via x0 and y0
-        # so we should use all n_calls evaluating non-random suggestions
-        assert_equal(len(res.models), n_calls)
-    else:
-        # because we provide initial points with values we do not need
-        # to make `n_initial_points` calls using a random value but only
-        # n_initial_points - len(y0) calls
-        assert_equal(len(res.models), n_calls - (n_initial_points - len(y0)))
+    assert_equal(len(res.models), n_calls - n_random_starts)
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_initial_points, optimizer_func",
-                         product([0, 5],
+@pytest.mark.parametrize("n_random_starts, optimizer_func",
+                         product([0, 1, 2, 3, 4, 5],
                                  [gp_minimize,
                                   forest_minimize,
                                   gbrt_minimize]))
-def test_init_points_and_models(n_initial_points, optimizer_func):
+def test_init_points_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points and random
     # starts (no y0 in this case)
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = 8
 
-    optimizer = partial(optimizer_func, n_initial_points=n_initial_points)
+    optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     res = optimizer(branin, space, x0=x0, random_state=0,
                     n_calls=n_calls)
-    if n_initial_points <= len(x0):
-        # we require less initial points than we provide via x0
-        # so we should use what is left of n_calls after evaluating the x0
-        # points, which uses up calls
-        assert_equal(len(res.models), n_calls - len(x0))
-    else:
-        assert_equal(len(res.models), n_calls - n_initial_points)
+    assert_equal(len(res.models), n_calls - len(x0) - n_random_starts)
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_initial_points, optimizer_func",
+@pytest.mark.parametrize("n_random_starts, optimizer_func",
                          product([0, 5],
                                  [gp_minimize,
                                   forest_minimize,
                                   gbrt_minimize]))
-def test_init_vals(n_initial_points, optimizer_func):
+def test_init_vals(n_random_starts, optimizer_func):
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = 10
 
-    optimizer = partial(optimizer_func, n_initial_points=n_initial_points)
+    optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     check_init_vals(optimizer, branin, space, x0, n_calls)
 
 
@@ -275,9 +261,9 @@ def test_init_vals_dummy_minimize():
 @pytest.mark.slow_test
 @pytest.mark.parametrize("optimizer", [
         dummy_minimize,
-        partial(gp_minimize, n_initial_points=0),
-        partial(forest_minimize, n_initial_points=0),
-        partial(gbrt_minimize, n_initial_points=0)])
+        partial(gp_minimize, n_random_starts=0),
+        partial(forest_minimize, n_random_starts=0),
+        partial(gbrt_minimize, n_random_starts=0)])
 def test_categorical_init_vals(optimizer):
     space = [("-2", "-1", "0", "1", "2")]
     x0 = [["0"], ["1"], ["2"]]
@@ -288,9 +274,9 @@ def test_categorical_init_vals(optimizer):
 @pytest.mark.slow_test
 @pytest.mark.parametrize("optimizer", [
         dummy_minimize,
-        partial(gp_minimize, n_initial_points=0),
-        partial(forest_minimize, n_initial_points=0),
-        partial(gbrt_minimize, n_initial_points=0)])
+        partial(gp_minimize, n_random_starts=0),
+        partial(forest_minimize, n_random_starts=0),
+        partial(gbrt_minimize, n_random_starts=0)])
 def test_mixed_spaces(optimizer):
     space = [("-2", "-1", "0", "1", "2"), (-2.0, 2.0)]
     x0 = [["0", 2.0], ["1", 1.0], ["2", 1.0]]
@@ -356,33 +342,32 @@ def test_invalid_n_calls_arguments(minimizer):
                          random_state=1)
 
     assert_raise_message(ValueError,
-                         "set `n_initial_points` > 0, or provide `x0`",
+                         "set `n_random_starts` > 0, or provide `x0`",
                          minimizer,
                          branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_initial_points=0,
+                         n_random_starts=0,
                          random_state=1)
 
-    # n_calls >= n_initial_points
+    # n_calls >= n_random_starts
     assert_raise_message(ValueError,
                          "Expected `n_calls` >= 10",
                          minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_calls=1, n_initial_points=10, random_state=1)
+                         n_calls=1, n_random_starts=10, random_state=1)
 
-    # n_calls >= max(n_initial_points, len(x0))
+    # n_calls >= n_random_starts + len(x0)
+    assert_raise_message(ValueError,
+                         "Expected `n_calls` >= 10",
+                         minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
+                         n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
+                         random_state=1, n_random_starts=7)
+
+    # n_calls >= n_random_starts
     assert_raise_message(ValueError,
                          "Expected `n_calls` >= 7",
                          minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
                          n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
-                         random_state=1, n_initial_points=7)
-
-    # n_calls >= n_initial_points when x0 and y0 are shorter
-    # than n_initial_points.
-    assert_raise_message(ValueError,
-                         "Expected `n_calls` >= 4",
-                         minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
                          y0=[2.0, 3.0, 5.0],
-                         random_state=1, n_initial_points=7)
+                         random_state=1, n_random_starts=7)
 
 
 @pytest.mark.fast_test
@@ -390,12 +375,12 @@ def test_invalid_n_calls_arguments(minimizer):
 def test_repeated_x(minimizer):
     assert_warns_message(
         UserWarning, "has been evaluated at", minimizer, lambda x: x[0],
-        dimensions=[[0, 1]], x0=[[0], [1]], n_initial_points=0, n_calls=3)
+        dimensions=[[0, 1]], x0=[[0], [1]], n_random_starts=0, n_calls=3)
 
     assert_warns_message(
         UserWarning, "has been evaluated at", minimizer, bench4,
         dimensions=[("0", "1")], x0=[["0"], ["1"]], n_calls=3,
-        n_initial_points=0)
+        n_random_starts=0)
 
 
 @pytest.mark.fast_test
@@ -408,25 +393,25 @@ def test_consistent_x_iter_dimensions(minimizer):
     res = minimizer(bench1,
                     dimensions=[(0, 1), (2, 3)],
                     x0=[[0, 2], [1, 2]], n_calls=3,
-                    n_initial_points=0)
+                    n_random_starts=0)
     assert len(set(len(x) for x in res.x_iters)) == 1
     assert len(res.x_iters[0]) == 2
 
     # one dimensional problem
     res = minimizer(bench1, dimensions=[(0, 1)], x0=[[0], [1]], n_calls=3,
-                    n_initial_points=0)
+                    n_random_starts=0)
     assert len(set(len(x) for x in res.x_iters)) == 1
     assert len(res.x_iters[0]) == 1
 
     assert_raise_message(RuntimeError,
                          "use inconsistent dimensions",
                          minimizer, bench1, dimensions=[(0, 1)],
-                         x0=[[0, 1]], n_calls=3, n_initial_points=0)
+                         x0=[[0, 1]], n_calls=3, n_random_starts=0)
 
     assert_raise_message(RuntimeError,
                          "use inconsistent dimensions",
                          minimizer, bench1, dimensions=[(0, 1)],
-                         x0=[0, 1], n_calls=3, n_initial_points=0)
+                         x0=[0, 1], n_calls=3, n_random_starts=0)
 
 
 @pytest.mark.slow_test
@@ -438,7 +423,7 @@ def test_early_stopping_delta_x(minimizer):
                     dimensions=[(-1., 1.)],
                     x0=[[0.1], [-0.1], [0.9]],
                     n_calls=n_calls,
-                    n_initial_points=0, random_state=1)
+                    n_random_starts=0, random_state=1)
     assert len(res.x_iters) < n_calls
 
 
@@ -452,5 +437,5 @@ def test_early_stopping_delta_x_empty_result_object(minimizer):
                     callback=DeltaXStopper(0.1),
                     dimensions=[(-1., 1.)],
                     n_calls=n_calls,
-                    n_initial_points=1, random_state=1)
+                    n_random_starts=1, random_state=1)
     assert len(res.x_iters) < n_calls

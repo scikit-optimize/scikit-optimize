@@ -7,7 +7,6 @@ It is sufficient that one re-implements the base estimator.
 import copy
 import inspect
 import numbers
-import warnings
 from collections import Iterable
 
 import numpy as np
@@ -19,7 +18,7 @@ from ..utils import eval_callbacks
 
 
 def base_minimize(func, dimensions, base_estimator,
-                  n_calls=100, n_initial_points=10, n_random_starts=None,
+                  n_calls=100, n_random_starts=10,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
@@ -54,14 +53,9 @@ def base_minimize(func, dimensions, base_estimator,
     * `n_calls` [int, default=100]:
         Maximum number of calls to `func`.
 
-    * `n_initial_points` [int, default=10]:
-        Number of evaluations of `func` with initialization points
-        before approximating it with `base_estimator`. Points provided as
-        `x0` count as initialization points. If len(x0) < n_initial_points
-        additional points are sampled at random.
-
     * `n_random_starts` [int, default=10]:
-        DEPRECATED, use `n_initial_points` instead.
+        Number of evaluations of `func` with random points before
+        approximating it with `base_estimator`.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either
@@ -168,29 +162,39 @@ def base_minimize(func, dimensions, base_estimator,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
 
-    if n_random_starts is not None:
-        warnings.warn(("n_random_starts has been renamed to "
-                       "n_initial_points."),
-                      DeprecationWarning)
-        n_initial_points = n_random_starts
-
-    optimizer = Optimizer(dimensions, base_estimator,
-                          n_initial_points=n_initial_points,
-                          acq_func=acq_func, acq_optimizer=acq_optimizer,
-                          random_state=random_state,
-                          acq_optimizer_kwargs=acq_optimizer_kwargs,
-                          acq_func_kwargs=acq_func_kwargs)
-
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], (list, tuple)):
         x0 = [x0]
 
+    if not isinstance(x0, list):
+        raise ValueError("`x0` should be a list, but got %s" % type(x0))
+
+    if n_random_starts == 0 and not x0:
+        raise ValueError("Either set `n_random_starts` > 0,"
+                         " or provide `x0`")
+
     if isinstance(y0, Iterable):
         y0 = list(y0)
     elif isinstance(y0, numbers.Number):
         y0 = [y0]
+
+    # is the budget for calling `func` large enough?
+    required_calls = n_random_starts + (len(x0) if not y0 else 0)
+    if n_calls < required_calls:
+        raise ValueError(
+            "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
+
+    # Number of points the user wants to evaluate before it makes sense to
+    # fit a surrogate model
+    n_initial_points = n_random_starts + len(x0)
+    optimizer = Optimizer(dimensions, base_estimator,
+                          n_initial_points=n_initial_points,
+                          acq_func=acq_func, acq_optimizer=acq_optimizer,
+                          random_state=random_state,
+                          acq_optimizer_kwargs=acq_optimizer_kwargs,
+                          acq_func_kwargs=acq_func_kwargs)
 
     if optimizer.space.n_dims == 1:
         assert all(isinstance(p, Iterable) for p in x0)
@@ -199,29 +203,11 @@ def base_minimize(func, dimensions, base_estimator,
         raise RuntimeError("Optimization space (%s) and initial points in x0 "
                            "use inconsistent dimensions." % optimizer.space)
 
-    if not isinstance(x0, list):
-        raise ValueError("`x0` should be a list, but got %s" % type(x0))
-
-    # how many times do we need to call `func` to evaluate all points in `x0`
-    # or to have at least `n_initial_points` values
-    if y0 is None:
-        n_init_func_calls = max(n_initial_points, len(x0))
-    else:
-        n_init_func_calls = n_initial_points - len(y0)
-
-    if n_calls < n_init_func_calls:
-        raise ValueError(
-            "Expected `n_calls` >= %d, got %d" % (n_init_func_calls,
-                                                  n_calls))
-
-    if n_initial_points == 0 and not x0:
-        raise ValueError("Either set `n_initial_points` > 0,"
-                         " or provide `x0`")
-
     callbacks = check_callback(callback)
     if verbose:
         callbacks.append(VerboseCallback(
-            n_init=n_init_func_calls, n_random=n_initial_points,
+            n_init=len(x0) if not y0 else 0,
+            n_random=n_random_starts,
             n_total=n_calls))
 
     # setting the scope for these variables
