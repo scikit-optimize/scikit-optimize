@@ -184,6 +184,7 @@ class Optimizer(object):
             raise ValueError(
                 "Expected `n_initial_points` >= 0, got %d" % n_initial_points)
         self._n_initial_points = n_initial_points
+        self.n_initial_points_ = n_initial_points
 
         if (isinstance(base_estimator, (ExtraTreesRegressor,
                                         RandomForestRegressor,
@@ -204,13 +205,13 @@ class Optimizer(object):
         Parameters
         ----------
         * `random_state` [int, RandomState instance, or None (default)]:
-        Set random state of the copy of optimizer.
+            Set the random state of the copy.
         """
 
         optimizer = Optimizer(
             dimensions=self.space.dimensions,
             base_estimator=self.base_estimator,
-            n_random_starts=self._n_random_starts,
+            n_initial_points=self.n_initial_points_,
             acq_func=self.acq_func,
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
@@ -294,7 +295,6 @@ class Optimizer(object):
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
             opt.tell(x, y_lie)  # lie to the optimizer
-            self._n_random_starts = max(0, self._n_random_starts - 1)
 
         self.cache_ = {(n_points, strategy): X}  # cache_ the result
 
@@ -345,12 +345,14 @@ class Optimizer(object):
         ----------
         * `x` [list or list-of-lists]:
             Point at which objective was evaluated.
+
         * `y` [scalar or list]:
             Value of objective at `x`.
+
         * `fit` [bool, default=True]
             Fit a model to observed evaluations of the objective. A model will
-            only be fitted after `n_random_starts` points have been queried
-            irrespective of the value of `fit`.
+            only be fitted after `n_initial_points` points have been told to the
+            optimizer irrespective of the value of `fit`.
         """
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
