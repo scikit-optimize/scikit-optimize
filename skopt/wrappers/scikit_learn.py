@@ -218,12 +218,11 @@ class SkoptSearchCV(skms.BaseSearchCV):
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
-        self.param_distributions = param_distributions
+        self.param_space = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
 
-        self.optimizer = None
-
+        self.optimizer = {}
         self.cv_results_ = {}
 
         self._params_n = 'params'
@@ -244,20 +243,40 @@ class SkoptSearchCV(skms.BaseSearchCV):
     def _fit_best_model(self, X, y):
         self.best_estimator_ = clone(self.estimator).set_params(**self.best_params_).fit(X, y)
 
+    def _make_optimizer(self, params_space):
+        dimensions = [params_space[k] for k in sorted(params_space.keys())]
+        return Optimizer(dimensions, GaussianProcessRegressor())
 
-    def step(self, X, y, groups=None):
+    def _skopt_to_dict(self, params_space, params):
+        params_dict = {k: v for k,v in zip(sorted(params_space.keys()), params)}
+        return params_dict
+
+    def step(self, X, y, param_space, groups=None):
+        """
+        Having a separate function for a single step for search allows to
+        save easily checkpoints for the parameter search and restore from
+        possible failures. This provides additional flexibility with
+        stopping criterion of the search.
+
+        :param X:
+        :param y:
+        :param param_space:
+        :param groups:
+        :return:
+        """
 
         cv = skms.check_cv(self.cv, y, classifier=skms.is_classifier(self.estimator))
         self.scorer_ = skms.check_scoring(self.estimator, scoring=self.scoring)
 
-        pd = self.param_distributions
+        key = str(param_space)
 
-        if self.optimizer is None:
-            dimensions = [pd[k] for k in sorted(pd.keys())]
-            self.optimizer = Optimizer(dimensions, GaussianProcessRegressor())
+        if key not in self.optimizer:
+            self.optimizer[key] =  self._make_optimizer(param_space)
 
-        params = self.optimizer.ask()
-        params_dict = {k: v for k,v in zip(sorted(pd.keys()), params)}
+        optimizer = self.optimizer[key]
+
+        params = optimizer.ask()
+        params_dict = self._skopt_to_dict(param_space, params)
 
         cv_iter = list(cv.split(X, y, groups))
 
@@ -295,7 +314,7 @@ class SkoptSearchCV(skms.BaseSearchCV):
             if self.refit:
                 self._fit_best_model(X, y)
 
-        self.optimizer.tell(params, -score)
+        optimizer.tell(params, -score)
 
 
     def fit(self, X, y=None, groups=None):
@@ -316,13 +335,13 @@ class SkoptSearchCV(skms.BaseSearchCV):
             train/test set.
         """
 
-        for i in range(self.n_iter):
-            self.step(X, y=y, groups=groups)
+        while self.n_iter:
             self.n_iter -= 1
+            self.step(X, y, self.param_space, groups=groups)
 
 if __name__ == "__main__":
 
-    from skopt.space import Real
+    from skopt.space import Real, Categorical, Integer
 
     from sklearn.datasets import load_iris
     from sklearn.svm import SVC
@@ -333,17 +352,28 @@ if __name__ == "__main__":
         SVC(),
         {
             'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1,3),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
         },
         n_jobs=-1,
+        n_iter=32,
         verbose=2
     )
 
-    for i in range(32):
-        opt.step(X, y)
-        print(opt.best_score_)
+    sequencial = False
+
+    if sequencial:
+
+        for i in range(32):
+            opt.step(X, y)
+            print(opt.best_score_)
+            print(opt.score(X, y))
+            print(opt.predict(X))
+            import pickle as pc
+            pc.dump(opt, open("m.bin",'w'))
+            opt = pc.load(open("m.bin",'r'))
+
+    else:
+
+        opt.fit(X, y)
         print(opt.score(X, y))
-        print(opt.predict(X))
-        import pickle as pc
-        pc.dump(opt, open("m.bin",'w'))
-        opt = pc.load(open("m.bin",'r'))
