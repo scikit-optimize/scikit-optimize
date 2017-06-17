@@ -1,12 +1,14 @@
 from skopt import Optimizer
-from skopt.learning import GaussianProcessRegressor
+from skopt.learning import GaussianProcessRegressor, ExtraTreesRegressor
 
 from sklearn.base import clone
-from sklearn.model_selection import cross_val_score
-from sklearn.externals.joblib import Parallel, delayed
+from sklearn.externals.joblib import Parallel, delayed, cpu_count
 import sklearn.model_selection._search as skms
 
 import numpy as np
+
+from collections import *
+
 
 class SkoptSearchCV(skms.BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -208,29 +210,19 @@ class SkoptSearchCV(skms.BaseSearchCV):
     :class:`GridSearchCV`:
         Does exhaustive search over a grid of parameters.
 
-    :class:`ParameterSampler`:
-        A generator over parameter settins, constructed from
-        param_distributions.
-
     """
 
-    def __init__(self, estimator, param_distributions, n_iter=128, scoring=None,
+    def __init__(self, estimator, param_distributions, surrogate="default", n_iter=128, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
         self.param_space = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
+        self.surrogate = surrogate
 
         self.optimizer = {}
-        self.cv_results_ = {}
-
-        self._params_n = 'params'
-        self._mean_test_score_n = 'mean_test_score'
-        self._std_test_score_n = 'std_test_score'
-
-        for k in [self._params_n, self._mean_test_score_n, self._std_test_score_n]:
-            self.cv_results_[k] = []
+        self.cv_results_ = defaultdict(list)
 
         self.best_index_ = None
 
@@ -245,13 +237,19 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
     def _make_optimizer(self, params_space):
         dimensions = [params_space[k] for k in sorted(params_space.keys())]
-        return Optimizer(dimensions, GaussianProcessRegressor())
+
+        if self.surrogate == "default":
+            surrogate = GaussianProcessRegressor()
+        else:
+            surrogate = self.surrogate
+
+        return Optimizer(dimensions, surrogate, acq_optimizer='sampling')
 
     def _skopt_to_dict(self, params_space, params):
         params_dict = {k: v for k,v in zip(sorted(params_space.keys()), params)}
         return params_dict
 
-    def step(self, X, y, param_space, groups=None):
+    def step(self, X, y, param_space, groups=None, n_jobs=1):
         """
         Having a separate function for a single step for search allows to
         save easily checkpoints for the parameter search and restore from
@@ -265,6 +263,10 @@ class SkoptSearchCV(skms.BaseSearchCV):
         :return:
         """
 
+        # account for case n_jobs < 0
+        if n_jobs < 0:
+            n_jobs = max(1, cpu_count() + n_jobs + 1)
+
         cv = skms.check_cv(self.cv, y, classifier=skms.is_classifier(self.estimator))
         self.scorer_ = skms.check_scoring(self.estimator, scoring=self.scoring)
 
@@ -275,8 +277,7 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
         optimizer = self.optimizer[key]
 
-        params = optimizer.ask()
-        params_dict = self._skopt_to_dict(param_space, params)
+        params_list = optimizer.ask(n_points=n_jobs)
 
         cv_iter = list(cv.split(X, y, groups))
 
@@ -284,12 +285,13 @@ class SkoptSearchCV(skms.BaseSearchCV):
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=self.pre_dispatch
         )(delayed(skms._fit_and_score)(clone(self.estimator), X, y, self.scorer_,
-                                  train, test, self.verbose, params_dict,
+                                  train, test, self.verbose, self._skopt_to_dict(param_space, params),
                                   fit_params=self.fit_params,
                                   return_train_score=self.return_train_score,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=True,
                                   error_score=self.error_score)
+          for params in params_list
           for train, test in cv_iter)
 
         # if one choose to see train score, "out" will contain train score info
@@ -300,21 +302,25 @@ class SkoptSearchCV(skms.BaseSearchCV):
             (test_scores, test_sample_counts,
              fit_time, score_time, parameters) = zip(*out)
 
+        splits = int(len(train_scores) / n_jobs)
 
-        score = np.mean(test_scores)
-        score_std = np.std(test_scores)
+        for i, params in enumerate(params_list):
+            I = slice(i*splits, (i+1)*splits, 1)
 
-        self.cv_results_[self._params_n].append(params_dict)
-        self.cv_results_[self._mean_test_score_n].append(score)
-        self.cv_results_[self._std_test_score_n].append(score_std)
+            score = np.mean(test_scores[I])
+            score_std = np.std(test_scores[I])
 
-        if self.best_index_ is None or score > self.best_score_:
-            self.best_index_ = len(self.cv_results_[self._params_n])-1
+            self.cv_results_['params'].append(self._skopt_to_dict(param_space, params))
+            self.cv_results_['mean_test_score'].append(score)
+            self.cv_results_['std_test_score'].append(score_std)
 
-            if self.refit:
-                self._fit_best_model(X, y)
+            if self.best_index_ is None or score > self.best_score_:
+                self.best_index_ = len(self.cv_results_['params'])-1
 
-        optimizer.tell(params, -score)
+            optimizer.tell(params, -score)
+
+        if self.refit:
+            self._fit_best_model(X, y)
 
 
     def fit(self, X, y=None, groups=None):
@@ -335,45 +341,48 @@ class SkoptSearchCV(skms.BaseSearchCV):
             train/test set.
         """
 
-        while self.n_iter:
-            self.n_iter -= 1
-            self.step(X, y, self.param_space, groups=groups)
+        n_jobs = self.n_jobs
+
+        # account for case n_jobs < 0
+        if n_jobs < 0:
+            n_jobs = max(1, cpu_count() + n_jobs + 1)
+
+        for elem in self.param_space:
+
+            # if tuple
+            if isinstance(elem, tuple):
+                psp, n_iter = elem
+            elif isinstance(elem, dict):
+                psp, n_iter = elem, self.n_iter
+            else:
+                raise ValueError("Unsupported type of parameter space. "
+                                 "Expected tuple or dict, got " + str(elem))
+
+            while n_iter:
+                n_iter -= n_jobs
+                self.step(X, y, psp, groups=groups, n_jobs=self.n_jobs)
 
 if __name__ == "__main__":
-
     from skopt.space import Real, Categorical, Integer
+    from skopt.wrappers import SkoptSearchCV
 
     from sklearn.datasets import load_iris
     from sklearn.svm import SVC
+    from sklearn.model_selection import train_test_split
 
     X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, random_state=0)
 
     opt = SkoptSearchCV(
         SVC(),
-        {
+        [{
             'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'degree': Integer(1,3),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
             'kernel': Categorical(['linear', 'poly', 'rbf']),
-        },
-        n_jobs=-1,
-        n_iter=32,
-        verbose=2
+        }],
+        n_jobs=1, n_iter=32,
     )
 
-    sequencial = False
-
-    if sequencial:
-
-        for i in range(32):
-            opt.step(X, y)
-            print(opt.best_score_)
-            print(opt.score(X, y))
-            print(opt.predict(X))
-            import pickle as pc
-            pc.dump(opt, open("m.bin",'w'))
-            opt = pc.load(open("m.bin",'r'))
-
-    else:
-
-        opt.fit(X, y)
-        print(opt.score(X, y))
+    opt.fit(X_train, y_train)
+    print(opt.score(X_test, y_test))
