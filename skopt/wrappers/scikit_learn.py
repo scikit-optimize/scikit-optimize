@@ -361,28 +361,3 @@ class SkoptSearchCV(skms.BaseSearchCV):
             while n_iter:
                 n_iter -= n_jobs
                 self.step(X, y, psp, groups=groups, n_jobs=self.n_jobs)
-
-if __name__ == "__main__":
-    from skopt.space import Real, Categorical, Integer
-    from skopt.wrappers import SkoptSearchCV
-
-    from sklearn.datasets import load_iris
-    from sklearn.svm import SVC
-    from sklearn.model_selection import train_test_split
-
-    X, y = load_iris(True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, random_state=0)
-
-    opt = SkoptSearchCV(
-        SVC(),
-        [{
-            'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            'degree': Integer(1, 8),
-            'kernel': Categorical(['linear', 'poly', 'rbf']),
-        }],
-        n_jobs=1, n_iter=32,
-    )
-
-    opt.fit(X_train, y_train)
-    print(opt.score(X_test, y_test))
