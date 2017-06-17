@@ -6,7 +6,6 @@ from sklearn.externals.joblib import Parallel, delayed, cpu_count
 import sklearn.model_selection._search as skms
 
 import numpy as np
-
 from collections import *
 
 
@@ -27,9 +26,6 @@ class SkoptSearchCV(skms.BaseSearchCV):
     given by n_iter.
 
     Parameters are presented as a list of skopt.space.Dimension objects.
-    It is highly recommended to use continuous distributions for continuous
-    parameters.
-
 
     Parameters
     ----------
@@ -39,15 +35,26 @@ class SkoptSearchCV(skms.BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    param_distributions : dict
-        Dictionary with parameters names (string) as keys and distributions
-        or lists of parameters to try. Distributions must provide a ``rvs``
-        method for sampling (such as those from scipy.stats.distributions).
-        If a list is given, it is sampled uniformly.
+    search_spaces : list of dict or tuple
+        Either list  of dictionary objects or list of tuples of
+        (dict, int > 0). The keys of every dictionary are parameter
+        names (strings) and values are skopt.space.Dimension instances
+        (Real, Integer or Categorical) which represents search space
+        for particular parameter.
+        If a list of dictionary objects is given, then the search is
+        performed sequentially for every parameter space with maximum
+        number of evaluations set to self.n_iter. Alternatively, if
+        a list of (dict, int > 0) is given, the search is done for
+        every search space for number of iterations given as a second
+        element of tuple.
 
     n_iter : int, default=128
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
+
+    surrogate : string or skopt surrogate, default='auto'
+        Surrogate to use for optimization of score of estimator.
+        By default skopt.learning.GaussianProcessRegressor() is used.
 
     scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
@@ -212,15 +219,17 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_distributions, surrogate="default", n_iter=128, scoring=None,
+    def __init__(self, estimator, search_spaces, surrogate="auto", n_iter=128, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
-        self.param_space = param_distributions
+        self.search_spaces = search_spaces
         self.n_iter = n_iter
         self.random_state = random_state
         self.surrogate = surrogate
 
+        # this dict is used in order to keep track of skopt Optimizer
+        # instances for different search spaces (str(space) is used as key)
         self.optimizer = {}
         self.cv_results_ = defaultdict(list)
 
@@ -233,54 +242,129 @@ class SkoptSearchCV(skms.BaseSearchCV):
              return_train_score=return_train_score)
 
     def _fit_best_model(self, X, y):
+        """Fits the estimator copy with best parameters found to the
+        provided data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output],
+            Target relative to X for classification or regression.
+
+        Returns
+        -------
+        self
+        """
         self.best_estimator_ = clone(self.estimator).set_params(**self.best_params_).fit(X, y)
+        return self
 
     def _make_optimizer(self, params_space):
+        """Method to instantiate skopt Optimizer class.
+
+        Parameters
+        ----------
+        params_space : dict
+            Represents parameter search space. The keys are parameter
+            names (strings) and values are skopt.space.Dimension instances,
+            one of Real, Integer or Categorical.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output],
+            Target relative to X for classification or regression.
+
+        Returns
+        -------
+        optimizer: Instance of the `Optimizer` class used for for search
+            in some parameter space.
+
+        """
+        # convert search space from dict to list
         dimensions = [params_space[k] for k in sorted(params_space.keys())]
 
-        if self.surrogate == "default":
+        if self.surrogate == "auto":
             surrogate = GaussianProcessRegressor()
         else:
             surrogate = self.surrogate
 
-        return Optimizer(dimensions, surrogate, acq_optimizer='sampling')
+        optimizer = Optimizer(dimensions, surrogate, acq_optimizer='sampling')
+        return optimizer
 
     def _skopt_to_dict(self, params_space, params):
+        """Converts list of parameter values into the dictionary with
+        keys as parameter names and corresponding values of parameter.
+
+        Parameters
+        ----------
+        params_space : dict
+            Represents parameter search space. The keys are parameter
+            names (strings) and values are skopt.space.Dimension instances,
+            one of Real, Integer or Categorical.
+
+        params : list
+            Parameter values as list. The order of parameters in the list
+            is given by sorted(params_space.keys()).
+
+        Returns
+        -------
+        params_dict: dictionary with parameter values.
+        """
         params_dict = {k: v for k,v in zip(sorted(params_space.keys()), params)}
         return params_dict
 
     def step(self, X, y, param_space, groups=None, n_jobs=1):
-        """
+        """Generates n_jobs parameters and evaluates corresponding
+        estimators.
+
         Having a separate function for a single step for search allows to
         save easily checkpoints for the parameter search and restore from
-        possible failures. This provides additional flexibility with
-        stopping criterion of the search.
+        possible failures. This provides additional flexibility which allows
+        to use `step` in loop with custom search stopping criterion.
 
-        :param X:
-        :param y:
-        :param param_space:
-        :param groups:
-        :return:
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The target values (class labels) as integers or strings.
+
+        params_space : dict
+            Represents parameter search space. The keys are parameter
+            names (strings) and values are skopt.space.Dimension instances,
+            one of Real, Integer or Categorical.
+
+        params : list
+            Parameter values as list. The order of parameters in the list
+            is given by sorted(params_space.keys()).
+
+        Returns
+        -------
+        params_dict: dictionary with parameter values.
         """
 
-        # account for case n_jobs < 0
+        # convert n_jobst to int > 0 if necessary
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
+        # check parameters; taken from BaseSearchCV.
         cv = skms.check_cv(self.cv, y, classifier=skms.is_classifier(self.estimator))
         self.scorer_ = skms.check_scoring(self.estimator, scoring=self.scoring)
 
+        # use the cached optimizer for particular parameter space
         key = str(param_space)
-
         if key not in self.optimizer:
-            self.optimizer[key] =  self._make_optimizer(param_space)
-
+            self.optimizer[key] = self._make_optimizer(param_space)
         optimizer = self.optimizer[key]
 
+        # get parameter values to evaluate
         params_list = optimizer.ask(n_points=n_jobs)
 
+        # run the evaluation
         cv_iter = list(cv.split(X, y, groups))
-
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=self.pre_dispatch
@@ -304,6 +388,8 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
         splits = int(len(train_scores) / n_jobs)
 
+        # this is used later in order to record results of
+        # evaluation in cv_results_
         out_and_name = [
             ('test_score', test_scores),
             ('test_sample_count', test_sample_counts),
@@ -314,26 +400,31 @@ class SkoptSearchCV(skms.BaseSearchCV):
         if self.return_train_score:
             out_and_name = out_and_name + [('train_score', train_scores)]
 
+        # record all results in cv_results_
         for i, params in enumerate(params_list):
+            # a slice that corresponds to results with different
+            # validation splits for some particular parameter values
             I = slice(i*splits, (i+1)*splits, 1)
 
+            # record results for particular parameters point
             self.cv_results_['params'].append(self._skopt_to_dict(param_space, params))
-
             for name, result in out_and_name:
-                self.cv_results_[name].append(result[I])
+                for split, data in enumerate(result[I]):
+                    self.cv_results_['split'+str(split)+"_"+name].append(data)
                 self.cv_results_['mean_' + name].append(np.mean(result[I]))
                 self.cv_results_['std_' + name].append(np.std(result[I]))
 
+            # update index of best parameters if necessary
             score = np.mean(test_scores[I])
-
             if self.best_index_ is None or score > self.best_score_:
                 self.best_index_ = len(self.cv_results_['params'])-1
 
+            # feed the point and objective back into optimizer
             optimizer.tell(params, -score)
 
+        # fit the best model if necessary
         if self.refit:
             self._fit_best_model(X, y)
-
 
     def fit(self, X, y=None, groups=None):
         """Run fit on the estimator with randomly drawn parameters.
@@ -344,14 +435,24 @@ class SkoptSearchCV(skms.BaseSearchCV):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        y : array-like, shape = [n_samples] or [n_samples, n_output]
             Target relative to X for classification or regression;
-            None for unsupervised learning.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
+
+        # check if the list of parameter spaces is provided. If not, then
+        # only step in manual mode can be used.
+
+        if self.search_spaces is None:
+            raise ValueError(
+                "None search space is only supported with manual usage of "
+                "`step` method. Please provide list of search spaces "
+                " at initialization stage in order to be able to use"
+                "`fit` method."
+            )
 
         n_jobs = self.n_jobs
 
@@ -359,17 +460,19 @@ class SkoptSearchCV(skms.BaseSearchCV):
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
-        for elem in self.param_space:
+        for elem in self.search_spaces:
 
-            # if tuple
+            # if tuple: (dict: search space, int: n_iter)
             if isinstance(elem, tuple):
                 psp, n_iter = elem
+            # if dict: represents search space
             elif isinstance(elem, dict):
                 psp, n_iter = elem, self.n_iter
             else:
                 raise ValueError("Unsupported type of parameter space. "
                                  "Expected tuple or dict, got " + str(elem))
 
+            # do the optimization for particular search space
             while n_iter:
                 n_iter -= n_jobs
                 self.step(X, y, psp, groups=groups, n_jobs=self.n_jobs)
