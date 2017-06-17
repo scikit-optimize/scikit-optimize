@@ -304,15 +304,27 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
         splits = int(len(train_scores) / n_jobs)
 
+        out_and_name = [
+            ('test_score', test_scores),
+            ('test_sample_count', test_sample_counts),
+            ('fit_time', fit_time),
+            ('score_time', score_time),
+        ]
+
+        if self.return_train_score:
+            out_and_name = out_and_name + [('train_score', train_scores)]
+
         for i, params in enumerate(params_list):
             I = slice(i*splits, (i+1)*splits, 1)
 
-            score = np.mean(test_scores[I])
-            score_std = np.std(test_scores[I])
-
             self.cv_results_['params'].append(self._skopt_to_dict(param_space, params))
-            self.cv_results_['mean_test_score'].append(score)
-            self.cv_results_['std_test_score'].append(score_std)
+
+            for name, result in out_and_name:
+                self.cv_results_[name].append(result[I])
+                self.cv_results_['mean_' + name].append(np.mean(result[I]))
+                self.cv_results_['std_' + name].append(np.std(result[I]))
+
+            score = np.mean(test_scores[I])
 
             if self.best_index_ is None or score > self.best_score_:
                 self.best_index_ = len(self.cv_results_['params'])-1
@@ -361,3 +373,29 @@ class SkoptSearchCV(skms.BaseSearchCV):
             while n_iter:
                 n_iter -= n_jobs
                 self.step(X, y, psp, groups=groups, n_jobs=self.n_jobs)
+
+if __name__ == "__main__":
+    from skopt.space import Real, Categorical, Integer
+    from skopt.wrappers import SkoptSearchCV
+
+    from sklearn.datasets import load_iris
+    from sklearn.svm import SVC
+    from sklearn.model_selection import train_test_split
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, random_state=0)
+
+    opt = SkoptSearchCV(
+        SVC(),
+        [{
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
+        }],
+        n_jobs=2, n_iter=32, verbose=2
+    )
+
+    opt.fit(X_train, y_train)
+    print(opt.score(X_test, y_test))
+
