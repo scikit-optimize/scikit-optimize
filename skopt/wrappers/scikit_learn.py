@@ -315,12 +315,11 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
     def step(self, X, y, param_space, groups=None, n_jobs=1):
         """Generates n_jobs parameters and evaluates corresponding
-        estimators.
+        estimators in parallel.
 
         Having a separate function for a single step for search allows to
         save easily checkpoints for the parameter search and restore from
-        possible failures. This provides additional flexibility which allows
-        to use `step` in loop with custom search stopping criterion.
+        possible failures.
 
         Parameters
         ----------
