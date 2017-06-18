@@ -24,12 +24,14 @@ available_surrogates = [
 # include the "auto" surrogate to test
 available_surrogates += ["auto"]
 
-@pytest.mark.parametrize("surrogate", available_surrogates)  # test with all available surrogates
-@pytest.mark.parametrize("n_jobs", [1,-1])  # test in sequential and parallel
-def test_constant_liar_runs(surrogate, n_jobs):
+
+@pytest.mark.parametrize("surrogate", available_surrogates)
+@pytest.mark.parametrize("n_jobs", [1, -1])  # test in sequential and parallel
+def test_searchcv_runs(surrogate, n_jobs):
     """
     Tests whether the cross validation search wrapper around sklearn
-     runs properly during the randominitialization phase and beyond
+     models runs properly with available surrogates and with single
+     or multiple workers.
 
     Parameters
     ----------
@@ -49,9 +51,11 @@ def test_constant_liar_runs(surrogate, n_jobs):
     from sklearn.model_selection import train_test_split
 
     X, y = load_iris(True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
 
-    # None search space is only supported when `step` function is called manually
+    # None search space is only supported when only `step` function is used
     assert_raises(ValueError, SkoptSearchCV(SVC(), None).fit, (X, y))
 
     # create an instance of a surrogate if it is not a string

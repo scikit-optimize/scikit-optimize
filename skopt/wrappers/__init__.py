@@ -1,1 +1,1 @@
-from .scikit_learn import SkoptSearchCV
+from .search_cv import SkoptSearchCV

@@ -219,9 +219,10 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, search_spaces, surrogate="auto", n_iter=128, scoring=None,
-                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs', random_state=None,
+    def __init__(self, estimator, search_spaces, surrogate="auto",
+                 n_iter=128, scoring=None, fit_params=None, n_jobs=1,
+                 iid=True, refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
         self.search_spaces = search_spaces
         self.n_iter = n_iter
@@ -258,7 +259,9 @@ class SkoptSearchCV(skms.BaseSearchCV):
         -------
         self
         """
-        self.best_estimator_ = clone(self.estimator).set_params(**self.best_params_).fit(X, y)
+        self.best_estimator_ = clone(self.estimator)
+        self.best_estimator_.set_params(**self.best_params_)
+        self.best_estimator_.fit(X, y)
         return self
 
     def _make_optimizer(self, params_space):
@@ -310,7 +313,9 @@ class SkoptSearchCV(skms.BaseSearchCV):
         -------
         params_dict: dictionary with parameter values.
         """
-        params_dict = {k: v for k,v in zip(sorted(params_space.keys()), params)}
+        params_dict = {
+            k: v for k, v in zip(sorted(params_space.keys()), params)
+        }
         return params_dict
 
     def step(self, X, y, param_space, groups=None, n_jobs=1):
@@ -350,7 +355,10 @@ class SkoptSearchCV(skms.BaseSearchCV):
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
         # check parameters; taken from BaseSearchCV.
-        cv = skms.check_cv(self.cv, y, classifier=skms.is_classifier(self.estimator))
+        cv = skms.check_cv(
+            self.cv, y,
+            classifier=skms.is_classifier(self.estimator)
+        )
         self.scorer_ = skms.check_scoring(self.estimator, scoring=self.scoring)
 
         # use the cached optimizer for particular parameter space
@@ -367,13 +375,16 @@ class SkoptSearchCV(skms.BaseSearchCV):
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=self.pre_dispatch
-        )(delayed(skms._fit_and_score)(clone(self.estimator), X, y, self.scorer_,
-                                  train, test, self.verbose, self._skopt_to_dict(param_space, params),
-                                  fit_params=self.fit_params,
-                                  return_train_score=self.return_train_score,
-                                  return_n_test_samples=True,
-                                  return_times=True, return_parameters=True,
-                                  error_score=self.error_score)
+        )(delayed(skms._fit_and_score)(
+            clone(self.estimator), X, y, self.scorer_,
+            train, test, self.verbose,
+            self._skopt_to_dict(param_space, params),
+            fit_params=self.fit_params,
+            return_train_score=self.return_train_score,
+            return_n_test_samples=True,
+            return_times=True, return_parameters=True,
+            error_score=self.error_score
+        )
           for params in params_list
           for train, test in cv_iter)
 
@@ -406,7 +417,9 @@ class SkoptSearchCV(skms.BaseSearchCV):
             I = slice(i*splits, (i+1)*splits, 1)
 
             # record results for particular parameters point
-            self.cv_results_['params'].append(self._skopt_to_dict(param_space, params))
+            self.cv_results_['params'].append(
+                self._skopt_to_dict(param_space, params)
+            )
             for name, result in out_and_name:
                 for split, data in enumerate(result[I]):
                     self.cv_results_['split'+str(split)+"_"+name].append(data)
@@ -475,29 +488,3 @@ class SkoptSearchCV(skms.BaseSearchCV):
             while n_iter:
                 n_iter -= n_jobs
                 self.step(X, y, psp, groups=groups, n_jobs=self.n_jobs)
-
-if __name__ == "__main__":
-    from skopt.space import Real, Categorical, Integer
-    from skopt.wrappers import SkoptSearchCV
-
-    from sklearn.datasets import load_iris
-    from sklearn.svm import SVC
-    from sklearn.model_selection import train_test_split
-
-    X, y = load_iris(True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, random_state=0)
-
-    opt = SkoptSearchCV(
-        SVC(),
-        [{
-            'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            'degree': Integer(1, 8),
-            'kernel': Categorical(['linear', 'poly', 'rbf']),
-        }],
-        n_jobs=2, n_iter=32, verbose=2
-    )
-
-    opt.fit(X_train, y_train)
-    print(opt.score(X_test, y_test))
-
