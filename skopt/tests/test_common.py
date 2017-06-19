@@ -197,12 +197,12 @@ def test_minimizer_with_space(minimizer):
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 5],
+                         product([0, 1, 2, 3, 4, 5],
                                  [gp_minimize,
                                   forest_minimize,
                                   gbrt_minimize]))
 def test_init_vals_and_models(n_random_starts, optimizer_func):
-    # test how many models are fitted when using initial points, values
+    # test how many models are fitted when using initial points, y0 values
     # and random starts
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
@@ -212,18 +212,19 @@ def test_init_vals_and_models(n_random_starts, optimizer_func):
     optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     res = optimizer(branin, space, x0=x0, y0=y0, random_state=0,
                     n_calls=n_calls)
+
     assert_equal(len(res.models), n_calls - n_random_starts)
 
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 5],
+                         product([0, 1, 2, 3, 4, 5],
                                  [gp_minimize,
                                   forest_minimize,
                                   gbrt_minimize]))
 def test_init_points_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points and random
-    # starts 9no y0 in this case)
+    # starts (no y0 in this case)
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = 8
@@ -231,8 +232,7 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
     optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     res = optimizer(branin, space, x0=x0, random_state=0,
                     n_calls=n_calls)
-    assert_equal(len(res.models),
-                 n_calls - n_random_starts - len(x0))
+    assert_equal(len(res.models), n_calls - len(x0) - n_random_starts)
 
 
 @pytest.mark.slow_test
@@ -361,7 +361,7 @@ def test_invalid_n_calls_arguments(minimizer):
                          n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
                          random_state=1, n_random_starts=7)
 
-    # n_calls >= n_random_starts when x0 and y0 are provided.
+    # n_calls >= n_random_starts
     assert_raise_message(ValueError,
                          "Expected `n_calls` >= 7",
                          minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],

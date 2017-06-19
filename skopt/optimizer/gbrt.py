@@ -54,8 +54,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         Number of calls to `func`.
 
     * `n_random_starts` [int, default=10]:
-        Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`.
+        Number of evaluations of `func` with random points before
+        approximating it with `base_estimator`.
 
     * `acq_func` [string, default=`"LCB"`]:
         Function to minimize over the forest posterior. Can be either

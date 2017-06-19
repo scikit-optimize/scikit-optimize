@@ -1,7 +1,6 @@
 import warnings
 from collections import Iterable
 from numbers import Number
-import copy
 
 import numpy as np
 
@@ -51,9 +50,13 @@ class Optimizer(object):
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
 
     * `n_random_starts` [int, default=10]:
-        Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`. While random
-        points are being suggested no model will be fit to the observations.
+        DEPRECATED, use `n_initial_points` instead.
+
+    * `n_initial_points` [int, default=10]:
+        Number of evaluations of `func` with initialization points
+        before approximating it with `base_estimator`. Points provided as
+        `x0` count as initialization points. If len(x0) < n_initial_points
+        additional points are sampled at random.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either
@@ -111,7 +114,8 @@ class Optimizer(object):
 
     """
     def __init__(self, dimensions, base_estimator,
-                 n_random_starts=10, acq_func="gp_hedge",
+                 n_random_starts=None, n_initial_points=10,
+                 acq_func="gp_hedge",
                  acq_optimizer="lbfgs",
                  random_state=None, acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
@@ -151,7 +155,14 @@ class Optimizer(object):
                 self._cat_inds.append(ind)
             else:
                 self._non_cat_inds.append(ind)
-        self._check_arguments(base_estimator, n_random_starts, acq_optimizer)
+
+        if n_random_starts is not None:
+            warnings.warn(("n_random_starts will be removed in favour of "
+                           "n_initial_points."),
+                          DeprecationWarning)
+            n_initial_points = n_random_starts
+
+        self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
 
         self.n_jobs = n_jobs
 
@@ -161,24 +172,27 @@ class Optimizer(object):
         # The cache is reset to {} at every call to `tell`.
         self.cache_ = {}
 
-    def _check_arguments(self, base_estimator, n_random_starts, acq_optimizer):
+    def _check_arguments(self, base_estimator, n_initial_points,
+                         acq_optimizer):
         """Check arguments for sanity."""
         if not is_regressor(base_estimator):
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
         self.base_estimator = base_estimator
 
-        if n_random_starts < 0:
+        if n_initial_points < 0:
             raise ValueError(
-                "Expected `n_random_starts` >= 0, got %d" % n_random_starts)
-        self._n_random_starts = n_random_starts
+                "Expected `n_initial_points` >= 0, got %d" % n_initial_points)
+        self._n_initial_points = n_initial_points
+        self.n_initial_points_ = n_initial_points
 
         if (isinstance(base_estimator, (ExtraTreesRegressor,
                                         RandomForestRegressor,
-                                        GradientBoostingQuantileRegressor))
-            and not acq_optimizer == "sampling"):
-            raise ValueError("The tree-based regressor {0} should run with "
-                             "acq_optimizer='sampling'".format(type(base_estimator)))
+                                        GradientBoostingQuantileRegressor)) and
+                not acq_optimizer == "sampling"):
+            raise ValueError(
+                "The tree-based regressor {0} should run with "
+                "acq_optimizer='sampling'".format(type(base_estimator)))
 
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
@@ -191,13 +205,13 @@ class Optimizer(object):
         Parameters
         ----------
         * `random_state` [int, RandomState instance, or None (default)]:
-        Set random state of the copy of optimizer.
+            Set the random state of the copy.
         """
 
         optimizer = Optimizer(
             dimensions=self.space.dimensions,
             base_estimator=self.base_estimator,
-            n_random_starts=self._n_random_starts,
+            n_initial_points=self.n_initial_points_,
             acq_func=self.acq_func,
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
@@ -281,7 +295,6 @@ class Optimizer(object):
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
             opt.tell(x, y_lie)  # lie to the optimizer
-            self._n_random_starts = max(0, self._n_random_starts - 1)
 
         self.cache_ = {(n_points, strategy): X}  # cache_ the result
 
@@ -290,11 +303,11 @@ class Optimizer(object):
     def _ask(self):
         """Suggest next point at which to evaluate the objective.
 
-        Returns a random point for the first `n_random_starts` calls, after
-        that `base_estimator` is used to determine the next point.
+        Return a random point while not at least `n_initial_points`
+        observations have been `tell`ed, after that `base_estimator` is used
+        to determine the next point.
         """
-        if self._n_random_starts > 0:
-            self._n_random_starts -= 1
+        if self._n_initial_points > 0:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
             return self.space.rvs(random_state=self.rng)[0]
@@ -332,12 +345,14 @@ class Optimizer(object):
         ----------
         * `x` [list or list-of-lists]:
             Point at which objective was evaluated.
+
         * `y` [scalar or list]:
             Value of objective at `x`.
+
         * `fit` [bool, default=True]
             Fit a model to observed evaluations of the objective. A model will
-            only be fitted after `n_random_starts` points have been queried
-            irrespective of the value of `fit`.
+            only be fitted after `n_initial_points` points have been told to the
+            optimizer irrespective of the value of `fit`.
         """
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
@@ -347,6 +362,7 @@ class Optimizer(object):
                                  " the space.")
             self.Xi.extend(x)
             self.yi.extend(y)
+            self._n_initial_points -= len(y)
 
         elif isinstance(x, Iterable) and isinstance(y, Number):
             if x not in self.space:
@@ -355,14 +371,18 @@ class Optimizer(object):
                                  % (x, self.space.bounds))
             self.Xi.append(x)
             self.yi.append(y)
+            self._n_initial_points -= 1
 
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
 
-        self.cache_ = {}  # optimizer learned somethnig new - discard the cache_
+        # optimizer learned somethnig new - discard cache
+        self.cache_ = {}
 
-        if fit and self._n_random_starts == 0:
+        # after being "told" n_initial_points we switch from sampling
+        # random points to using a surrogate model
+        if fit and self._n_initial_points <= 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator)
 

@@ -54,8 +54,8 @@ def base_minimize(func, dimensions, base_estimator,
         Maximum number of calls to `func`.
 
     * `n_random_starts` [int, default=10]:
-        Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`.
+        Number of evaluations of `func` with random points before
+        approximating it with `base_estimator`.
 
     * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the posterior distribution. Can be either
@@ -162,62 +162,66 @@ def base_minimize(func, dimensions, base_estimator,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
 
-    optimizer = Optimizer(dimensions, base_estimator, n_random_starts,
-                          acq_func, acq_optimizer, random_state,
-                          acq_optimizer_kwargs=acq_optimizer_kwargs,
-                          acq_func_kwargs=acq_func_kwargs)
-
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], (list, tuple)):
         x0 = [x0]
 
-    if optimizer.space.n_dims == 1:
-        assert all(isinstance(p, Iterable) for p in x0)
-
-    if not all(len(p) == optimizer.space.n_dims for p in x0):
-        raise RuntimeError("Optimization space (%s) and initial points in x0 "
-                           "use inconsistent dimensions." % optimizer.space)
-
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, but got %s" % type(x0))
-
-    n_init_func_calls = len(x0) if y0 is None else 0
-    n_total_init_calls = n_random_starts + n_init_func_calls
-
-    if n_calls < n_total_init_calls:
-        raise ValueError(
-            "Expected `n_calls` >= %d, got %d" % (n_total_init_calls,
-                                                  n_calls))
 
     if n_random_starts == 0 and not x0:
         raise ValueError("Either set `n_random_starts` > 0,"
                          " or provide `x0`")
 
+    if isinstance(y0, Iterable):
+        y0 = list(y0)
+    elif isinstance(y0, numbers.Number):
+        y0 = [y0]
+
+    # is the budget for calling `func` large enough?
+    required_calls = n_random_starts + (len(x0) if not y0 else 0)
+    if n_calls < required_calls:
+        raise ValueError(
+            "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
+
+    # Number of points the user wants to evaluate before it makes sense to
+    # fit a surrogate model
+    n_initial_points = n_random_starts + len(x0)
+    optimizer = Optimizer(dimensions, base_estimator,
+                          n_initial_points=n_initial_points,
+                          acq_func=acq_func, acq_optimizer=acq_optimizer,
+                          random_state=random_state,
+                          acq_optimizer_kwargs=acq_optimizer_kwargs,
+                          acq_func_kwargs=acq_func_kwargs)
+
+    assert all(isinstance(p, Iterable) for p in x0)
+
+    if not all(len(p) == optimizer.space.n_dims for p in x0):
+        raise RuntimeError("Optimization space (%s) and initial points in x0 "
+                           "use inconsistent dimensions." % optimizer.space)
+
     callbacks = check_callback(callback)
     if verbose:
         callbacks.append(VerboseCallback(
-            n_init=n_init_func_calls, n_random=n_random_starts,
+            n_init=len(x0) if not y0 else 0,
+            n_random=n_random_starts,
             n_total=n_calls))
-
-    # User suggested points at which to evaluate the objective first
-    if x0 and y0 is None:
-        y0 = map(func, x0)
 
     # setting the scope for these variables
     result = None
 
-    # User is god and knows the value of the objective at these points
-    if x0 and y0 is not None:
+    # User suggested points at which to evaluate the objective first
+    if x0 and y0 is None:
+        y0 = list(map(func, x0))
+        n_calls -= len(y0)
+
+    # Pass user suggested initialisation points to the optimizer
+    if x0:
         if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
             raise ValueError(
                 "`y0` should be an iterable or a scalar, got %s" % type(y0))
-
-        if isinstance(y0, Iterable):
-            y0 = list(y0)
-        elif isinstance(y0, numbers.Number):
-            y0 = [y0]
 
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
@@ -233,12 +237,11 @@ def base_minimize(func, dimensions, base_estimator,
             return result
 
     # Bayesian optimization loop
-    n_iterations = n_calls - n_init_func_calls
-    for n in range(n_iterations):
+    for n in range(n_calls):
         next_x = optimizer.ask()
 
         # no need to fit a model on the last iteration
-        fit_model = n < n_iterations - 1
+        fit_model = n < n_calls - 1
         next_y = func(next_x)
         if not np.isscalar(next_y):
             raise ValueError("`func` should return a scalar")
