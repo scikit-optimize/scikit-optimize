@@ -2,8 +2,18 @@ from copy import deepcopy
 import numpy as np
 from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize as sp_minimize
+from sklearn.base import is_regressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.externals.joblib import dump as dump_
 from sklearn.externals.joblib import load as load_
+
+from .learning import ExtraTreesRegressor
+from .learning import GaussianProcessRegressor
+from .learning import GradientBoostingQuantileRegressor
+from .learning import RandomForestRegressor
+from .learning.gaussian_process.kernels import ConstantKernel
+from .learning.gaussian_process.kernels import HammingKernel
+from .learning.gaussian_process.kernels import Matern
 
 __all__ = (
     "load",
@@ -200,3 +210,39 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
             best_fun = r.fun
 
     return [v for v in best_x], best_fun
+
+
+def cook_skopt_estimator(base_estimator, n_dims=1, is_cat=False, **kwargs):
+    if isinstance(base_estimator, str):
+        base_estimator = base_estimator.upper()
+        if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
+            raise ValueError("Valid strings for the base_estimator parameter "
+                             " are: 'RF', 'ET' or 'GP' not %s" % base_estimator)
+    elif not is_regressor(base_estimator):
+        raise ValueError("base_estimator has to be a regressor.")
+
+    if base_estimator == "GP":
+        cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
+        if is_cat:
+            other_kernel = HammingKernel(length_scale=np.ones(n_dims))
+        else:
+            other_kernel = Matern(
+                length_scale=np.ones(n_dims),
+                length_scale_bounds=[(0.01, 100)] * n_dims, nu=2.5)
+
+        base_estimator = GaussianProcessRegressor(
+            kernel=cov_amplitude * other_kernel,
+            normalize_y=True, random_state=None, alpha=0.0, noise="gaussian",
+            n_restarts_optimizer=2)
+    elif base_estimator == "RF":
+        base_estimator = RandomForestRegressor(n_estimators=100,
+                                               min_samples_leaf=3)
+    elif base_estimator == "ET":
+        base_estimator = ExtraTreesRegressor(n_estimators=100,
+                                             min_samples_leaf=3)
+    elif base_estimator == "GBRT":
+        gbrt = GradientBoostingRegressor(n_estimators=30, loss="quantile")
+        base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt)
+
+    base_estimator.set_params(**kwargs)
+    return base_estimator

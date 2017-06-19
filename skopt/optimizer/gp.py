@@ -11,7 +11,7 @@ from ..learning.gaussian_process.kernels import Matern
 from ..space import check_dimension
 from ..space import Categorical
 from ..space import Space
-
+from ..utils import cook_skopt_estimator
 
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
@@ -223,24 +223,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
                     )
 
     space = Space(transformed_dims)
-    # Default GP
-    if base_estimator is None:
-        cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
-
-        if is_cat:
-            other_kernel = HammingKernel(
-                length_scale=np.ones(space.transformed_n_dims))
-            acq_optimizer = "sampling"
-        else:
-            other_kernel = Matern(
-                length_scale=np.ones(space.transformed_n_dims),
-                length_scale_bounds=[(0.01, 100)] * space.transformed_n_dims,
-                nu=2.5)
-
-    base_estimator = GaussianProcessRegressor(
-        kernel=cov_amplitude * other_kernel,
-        normalize_y=True, random_state=rng, alpha=0.0, noise=noise,
-        n_restarts_optimizer=2)
+    base_estimator = cook_skopt_estimator(
+        "GP", is_cat=is_cat, random_state=rng, noise=noise,
+        n_dims=space.transformed_n_dims)
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,
