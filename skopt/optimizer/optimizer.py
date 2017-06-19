@@ -157,7 +157,7 @@ class Optimizer(object):
                 self._non_cat_inds.append(ind)
 
         if n_random_starts is not None:
-            warnings.warn(("n_random_starts has been renamed to "
+            warnings.warn(("n_random_starts will be removed in favour of "
                            "n_initial_points."),
                           DeprecationWarning)
             n_initial_points = n_random_starts

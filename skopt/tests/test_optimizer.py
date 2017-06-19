@@ -124,12 +124,12 @@ def test_exhaust_initial_calls():
     x0 = opt.ask()  # random point
     x1 = opt.ask()  # random point
     assert x0 != x1
-    print("tell1")
+    # first call to tell()
     r1 = opt.tell(x1, 3.)
     assert len(r1.models) == 0
     x2 = opt.ask()  # random point
     assert x1 != x2
-    print("tell2")
+    # second call to tell()
     r2 = opt.tell(x2, 4.)
     assert len(r2.models) == 1
     # this is the first non-random point

@@ -196,8 +196,7 @@ def base_minimize(func, dimensions, base_estimator,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
 
-    if optimizer.space.n_dims == 1:
-        assert all(isinstance(p, Iterable) for p in x0)
+    assert all(isinstance(p, Iterable) for p in x0)
 
     if not all(len(p) == optimizer.space.n_dims for p in x0):
         raise RuntimeError("Optimization space (%s) and initial points in x0 "
