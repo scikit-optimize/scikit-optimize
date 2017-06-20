@@ -15,6 +15,7 @@ from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..learning import ExtraTreesRegressor
 from ..learning import RandomForestRegressor
+from ..learning import GaussianProcessRegressor
 from ..learning import GradientBoostingQuantileRegressor
 from ..space import Categorical
 from ..space import Space
@@ -115,7 +116,7 @@ class Optimizer(object):
         to sample points, bounds, and type of parameters.
 
     """
-    def __init__(self, dimensions, base_estimator,
+    def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
@@ -199,6 +200,9 @@ class Optimizer(object):
 
         if acq_optimizer == "auto":
             if is_tree_based:
+                acq_optimizer = "sampling"
+            elif (isinstance(self.base_estimator_, GaussianProcessRegressor)
+                  and self.space.is_categorical):
                 acq_optimizer = "sampling"
             else:
                 acq_optimizer = "lbfgs"

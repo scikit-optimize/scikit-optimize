@@ -226,6 +226,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
     base_estimator = cook_skopt_estimator(
         "GP", is_cat=is_cat, random_state=rng, noise=noise,
         n_dims=space.transformed_n_dims)
+    if is_cat:
+        acq_optimizer = "sampling"
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,
