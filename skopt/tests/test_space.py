@@ -160,6 +160,7 @@ def test_space_consistency():
     s3 = Space([Real(0, 1)])
     s4 = Space([(0.0, 1.0)])
     s5 = Space([(0.0, 1.0, "uniform")])
+    s6 = Space([(0, 1.0)])
     a1 = s1.rvs(n_samples=10, random_state=0)
     a2 = s2.rvs(n_samples=10, random_state=0)
     a3 = s3.rvs(n_samples=10, random_state=0)
@@ -169,6 +170,7 @@ def test_space_consistency():
     assert_equal(s1, s3)
     assert_equal(s1, s4)
     assert_equal(s1, s5)
+    assert_equal(s1, s6)
     assert_array_equal(a1, a2)
     assert_array_equal(a1, a3)
     assert_array_equal(a1, a4)
@@ -215,6 +217,10 @@ def test_space_consistency():
 def test_space_api():
     space = Space([(0.0, 1.0), (-5, 5),
                    ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
+
+    cat_space = Space([(1, "r"), (1.0, "r")])
+    assert isinstance(cat_space.dimensions[0], Categorical)
+    assert isinstance(cat_space.dimensions[1], Categorical)
 
     assert_equal(len(space.dimensions), 5)
     assert_true(isinstance(space.dimensions[0], Real))

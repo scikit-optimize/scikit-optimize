@@ -66,21 +66,29 @@ def check_dimension(dimension, transform=None):
     if not isinstance(dimension, (list, tuple, np.ndarray)):
         raise ValueError("Dimension has to be a list or tuple.")
 
-    if (len(dimension) == 3 and
-            isinstance(dimension[0], numbers.Real) and
-            isinstance(dimension[2], str)):
-        return Real(*dimension, transform=transform)
+    if len(dimension) == 2:
+        if any([isinstance(d, str) for d in dimension]):
+            return Categorical(dimension, transform=transform)
+        elif any([isinstance(dim, float) for dim in dimension]):
+            return Real(*dimension, transform=transform)
+        elif all([isinstance(dim, int) for dim in dimension]):
+            return Integer(*dimension, transform=transform)
+        else:
+            raise ValueError("Invalid dimension {}. Read the documentation for"
+                             " supported types.".format(dimension))
 
-    if len(dimension) > 2 or isinstance(dimension[0], str):
+    if len(dimension) == 3:
+        if (any([isinstance(dim, (float, int)) for dim in dimension[:2]])
+            and dimension[2] in ["uniform", "log-uniform"]):
+            return Real(*dimension, transform=transform)
+        else:
+            return Categorical(dimension, transform=transform)
+
+    if len(dimension) > 3:
         return Categorical(dimension, transform=transform)
 
-    if len(dimension) == 2 and isinstance(dimension[0], numbers.Integral):
-        return Integer(*dimension, transform=transform)
-
-    if len(dimension) == 2 and isinstance(dimension[0], numbers.Real):
-        return Real(*dimension, transform=transform)
-    raise ValueError("Invalid dimension %s. Read the documentation for "
-                     "supported types." % dimension)
+    raise ValueError("Invalid dimension {}. Read the documentation for "
+                     "supported types.".format(dimension))
 
 
 class Dimension(object):
@@ -173,9 +181,8 @@ class Real(Dimension):
         self.transform_ = transform
 
         if self.transform_ not in ["normalize", "identity"]:
-            raise ValueError(
-                "transform should be 'normalize' or 'identity' got %s" %
-                self.transform_)
+            raise ValueError( "transform should be 'normalize' or 'identity'"
+                              " got {}".format(self.transform_))
 
         # Define _rvs and transformer spaces.
         # XXX: The _rvs is for sampling in the transformed space.
@@ -282,9 +289,8 @@ class Integer(Dimension):
         self.transform_ = transform
 
         if transform not in ["normalize", "identity"]:
-            raise ValueError(
-                "transform should be 'normalize' or 'identity' got %s" %
-                self.transform_)
+            raise ValueError("transform should be 'normalize' or 'identity'"
+                             " got {}".format(self.transform_))
         if transform == "normalize":
             self._rvs = uniform(0, 1)
             self.transformer = Normalize(low, high, is_int=True)
@@ -364,7 +370,7 @@ class Categorical(Dimension):
         self.transform_ = transform
         if transform not in ["identity", "onehot"]:
             raise ValueError("Expected transform to be 'identity' or 'onehot' "
-                             "got %s" % transform)
+                             "got {}".format(transform))
         if transform == "onehot":
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
@@ -399,8 +405,7 @@ class Categorical(Dimension):
         else:
             prior = self.prior
 
-        return "Categorical(categories={}, prior={})".format(
-            cats, prior)
+        return "Categorical(categories={}, prior={})".format(cats, prior)
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
@@ -448,12 +453,12 @@ class Categorical(Dimension):
             Second category.
         """
         if not (a in self and b in self):
-            raise RuntimeError("Can only compute distance for values within "
-                               "the space, not %s and %s." % (a, b))
+            raise RuntimeError("Can only compute distance for values within"
+                               " the space, not {} and {}.".format(a, b))
         return 1 if a != b else 0
 
 
-class Space:
+class Space(object):
     """Search space."""
 
     def __init__(self, dimensions):
@@ -486,8 +491,7 @@ class Space:
             dims = self.dimensions[:15] + [_Ellipsis()] + self.dimensions[-15:]
         else:
             dims = self.dimensions
-        return "Space([{}])".format(
-            ',\n       '.join(map(str, dims)))
+        return "Space([{}])".format(',\n       '.join(map(str, dims)))
 
     def __iter__(self):
         return iter(self.dimensions)
