@@ -78,8 +78,8 @@ def check_dimension(dimension, transform=None):
                              " supported types.".format(dimension))
 
     if len(dimension) == 3:
-        if (any([isinstance(dim, (float, int))
-                 for dim in dimension[:2]]) and isinstance(dimension[2], str)):
+        if (any([isinstance(dim, (float, int)) for dim in dimension[:2]])
+            and dimension[2] in ["uniform", "log-uniform"]):
             return Real(*dimension, transform=transform)
         else:
             return Categorical(dimension, transform=transform)
