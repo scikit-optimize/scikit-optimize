@@ -20,7 +20,7 @@ from ..learning import GradientBoostingQuantileRegressor
 from ..space import Categorical
 from ..space import Space
 from ..utils import create_result
-from ..utils import cook_skopt_estimator
+from ..utils import cook_estimator
 
 
 class Optimizer(object):
@@ -47,10 +47,13 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [sklearn regressor, default="gp"]:
+    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="gp"]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+        If provided base_estimator is in ["GP", "RF", "ET", "GBRT"]
+        then the corresponding estimator used in the minimize functions
+        are used.
 
     * `n_random_starts` [int, default=10]:
         DEPRECATED, use `n_initial_points` instead.
@@ -78,11 +81,15 @@ class Optimizer(object):
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
+    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
+        - If set to `"auto"`, then `acq_optimizer` is configured on the
+          basis of the base_estimator and the space searched over.
+          If the space is Categorical or if the estimator provided based on
+          tree-models then this is set to be "sampling"`.
         - If set to `"sampling"`, then `acq_func` is optimized by computing
           `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
@@ -179,10 +186,8 @@ class Optimizer(object):
         """Check arguments for sanity."""
 
         if isinstance(base_estimator, str):
-            base_estimator = cook_skopt_estimator(
-                base_estimator, random_state=self.rng,
-                n_dims=self.space.transformed_n_dims,
-                is_cat=self.space.is_categorical)
+            base_estimator = cook_estimator(
+                base_estimator, space=self.space, random_state=self.rng)
         if not is_regressor(base_estimator):
             raise ValueError("%s has to be a regressor." % base_estimator)
         self.base_estimator_ = base_estimator
@@ -209,7 +214,7 @@ class Optimizer(object):
 
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
-            "'sampling', got {0}".format(acq_optimizer))
+                             "'sampling', got {0}".format(acq_optimizer))
 
         if is_tree_based and acq_optimizer != "sampling":
             raise ValueError("The tree-based regressor {0} should run with "

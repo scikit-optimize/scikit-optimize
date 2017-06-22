@@ -212,7 +212,30 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
     return [v for v in best_x], best_fun
 
 
-def cook_skopt_estimator(base_estimator, n_dims=1, is_cat=False, **kwargs):
+def cook_estimator(base_estimator, space=None, **kwargs):
+    """
+    Cook a default estimator.
+
+    Parameters
+    ----------
+    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="gp"]:
+        Should inherit from `sklearn.base.RegressorMixin`.
+        In addition the `predict` method, should have an optional `return_std`
+        argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+        If provided base_estimator is in ["GP", "RF", "ET", "GBRT"]
+        then the corresponding estimator used in the minimize functions
+        are used.
+
+    * `space` [Space instance]:
+        Has to be provided is the base_estimator is a gaussian process.
+        Ignored otherwise.
+
+    * `kwargs` [dict]:
+        Extra parameters provided to the base_estimator at init time.
+    """
+    if space is not None:
+        n_dims = space.transformed_n_dims
+        is_cat = space.is_categorical
     if isinstance(base_estimator, str):
         base_estimator = base_estimator.upper()
         if base_estimator not in ["GP", "ET", "RF", "GBRT"]:

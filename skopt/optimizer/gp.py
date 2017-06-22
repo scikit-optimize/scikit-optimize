@@ -11,11 +11,11 @@ from ..learning.gaussian_process.kernels import Matern
 from ..space import check_dimension
 from ..space import Categorical
 from ..space import Space
-from ..utils import cook_skopt_estimator
+from ..utils import cook_estimator
 
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
-                acq_func="gp_hedge", acq_optimizer="lbfgs", x0=None, y0=None,
+                acq_func="gp_hedge", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
                 n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
                 noise="gaussian", n_jobs=1):
@@ -107,6 +107,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
 
         The `acq_func` is computed at `n_points` sampled randomly.
 
+        - If set to `"auto"`, then `acq_optimizer` is configured on the
+          basis of the space searched over.
+          If the space is Categorical then this is set to be "sampling"`.
         - If set to `"sampling"`, then the point among these `n_points`
           where the `acq_func` is minimum is the next candidate minimum.
         - If set to `"lbfgs"`, then
@@ -223,11 +226,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
                     )
 
     space = Space(transformed_dims)
-    base_estimator = cook_skopt_estimator(
-        "GP", is_cat=is_cat, random_state=rng, noise=noise,
-        n_dims=space.transformed_n_dims)
-    if is_cat:
-        acq_optimizer = "sampling"
+    base_estimator = cook_estimator("GP", space=space, random_state=rng, noise=noise)
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,
