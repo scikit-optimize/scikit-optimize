@@ -152,7 +152,11 @@ class Pipeline(Transformer):
 
     def fit(self, X):
         for transformer in self.transformers:
-            transformer.fit(X)
+            if isinstance(transformer, CategoricalEncoder):
+                transformer.fit(X)
+            else:
+                raise TypeError("{} is not an instance of CategoricalEncoder"
+                                .format(transformer))
         return self
 
     def transform(self, X):
