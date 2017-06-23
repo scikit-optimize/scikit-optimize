@@ -104,7 +104,7 @@ def test_acquisition_per_second():
     mos.fit(X, y)
 
     X_pred =  [[1], [2], [4], [6], [8], [9]]
-    for acq_func in ["EIps", "PIps", "LCBps"]:
+    for acq_func in ["EIps", "PIps"]:
         vals = _gaussian_acquisition(X_pred, mos, y_opt=1.0, acq_func=acq_func)
         for fast, slow in zip([0, 1, 2], [5, 4, 3]):
             assert_greater(vals[slow], vals[fast])

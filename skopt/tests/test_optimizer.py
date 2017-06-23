@@ -14,7 +14,7 @@ from scipy.optimize import OptimizeResult
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
-ACQ_FUNCS_PS = ["EIps", "PIps", "LCBps", "gp_hedgeps"]
+ACQ_FUNCS_PS = ["EIps", "PIps"]
 
 
 def test_multiple_asks():

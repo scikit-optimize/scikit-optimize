@@ -76,12 +76,11 @@ def forest_minimize(func, dimensions, base_estimator="ET",
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
-        - `"EIps"` for negated expected improvement per second.
-
-        You can add the suffix "ps" to the `acq_func` string such as
-        "EIps" and "PIps" to take into account the function compute time.
-        Then, the objective function is assumed to return two values, the first
-        being the objective value and the second being the time taken.
+        - `"EIps" for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken.
+        - `"PIps"` for negated probability of improvement per second.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.

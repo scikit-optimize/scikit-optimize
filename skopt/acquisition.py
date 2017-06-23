@@ -38,7 +38,7 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
     if per_second:
         model, time_model = model.estimators_
 
-    if acq_func in ["LCB", "LCBps"]:
+    if acq_func == "LCB":
         func_and_grad = gaussian_lcb(X, model, kappa, return_grad)
         if return_grad:
             acq_vals, acq_grad = func_and_grad

@@ -74,10 +74,11 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
-        You can add the suffix "ps" to `acq_func` to take into account the
-        function compute time. Then, the objective function is assumed to return
-        two values, the first being the objective value and the second being the
-        time taken.
+        - ``"EIps"`` for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken.
+        - `"PIps"` for negated probability of improvement per second.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -126,11 +127,12 @@ class Optimizer(object):
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
 
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        if self.acq_func not in allowed_acq_funcs:
+            raise ValueError("expected acq_func to be in %s, got %s" %
+                             (allowed_acq_funcs, self.acq_func))
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
-            self.gains_ = np.zeros(3)
-        elif self.acq_func == "gp_hedgeps":
-            self.cand_acq_funcs_ = ["EIps", "LCBps", "PIps"]
             self.gains_ = np.zeros(3)
         else:
             self.cand_acq_funcs_ = [self.acq_func]
