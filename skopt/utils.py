@@ -212,22 +212,32 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
     return [v for v in best_x], best_fun
 
 
+def has_gradients(estimator, space):
+    tree_estimators = (
+            ExtraTreesRegressor, RandomForestRegressor,
+            GradientBoostingQuantileRegressor)
+    return (
+        isinstance(estimator, tree_estimators) or
+        (isinstance(estimator, GaussianProcessRegressor) and space.is_categorical)
+    )
+
+
 def cook_estimator(base_estimator, space=None, **kwargs):
     """
     Cook a default estimator.
 
     Parameters
     ----------
-    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="gp"]:
+    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
         If provided base_estimator is in ["GP", "RF", "ET", "GBRT"]
-        then the corresponding estimator used in the minimize functions
-        are used.
+        then the corresponding estimator in the minimize functions is used
+        as a surrogate model.
 
     * `space` [Space instance]:
-        Has to be provided is the base_estimator is a gaussian process.
+        Has to be provided if the base_estimator is a gaussian process.
         Ignored otherwise.
 
     * `kwargs` [dict]:

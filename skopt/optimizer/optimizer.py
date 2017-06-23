@@ -21,6 +21,7 @@ from ..space import Categorical
 from ..space import Space
 from ..utils import create_result
 from ..utils import cook_estimator
+from ..utils import has_gradients
 
 
 class Optimizer(object):
@@ -47,13 +48,13 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="gp"]:
+    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
         If provided base_estimator is in ["GP", "RF", "ET", "GBRT"]
-        then the corresponding estimator used in the minimize functions
-        are used.
+        then the corresponding estimator in the minimize functions is used
+        as a surrogate model.
 
     * `n_random_starts` [int, default=10]:
         DEPRECATED, use `n_initial_points` instead.
@@ -198,16 +199,8 @@ class Optimizer(object):
         self._n_initial_points = n_initial_points
         self.n_initial_points_ = n_initial_points
 
-        tree_ests = (
-            ExtraTreesRegressor, RandomForestRegressor,
-            GradientBoostingQuantileRegressor)
-        is_tree_based = isinstance(self.base_estimator_, tree_ests)
-
         if acq_optimizer == "auto":
-            if is_tree_based:
-                acq_optimizer = "sampling"
-            elif (isinstance(self.base_estimator_, GaussianProcessRegressor)
-                  and self.space.is_categorical):
+            if has_gradients(self.base_estimator_, self.space):
                 acq_optimizer = "sampling"
             else:
                 acq_optimizer = "lbfgs"
@@ -216,8 +209,8 @@ class Optimizer(object):
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
 
-        if is_tree_based and acq_optimizer != "sampling":
-            raise ValueError("The tree-based regressor {0} should run with "
+        if has_gradients(self.base_estimator_, self.space) and acq_optimizer != "sampling":
+            raise ValueError("The regressor {0} should run with "
                              "acq_optimizer='sampling'".format(type(base_estimator)))
 
         self.acq_optimizer = acq_optimizer
