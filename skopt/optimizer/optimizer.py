@@ -52,9 +52,9 @@ class Optimizer(object):
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
-        If provided base_estimator is in ["GP", "RF", "ET", "GBRT"]
-        then the corresponding estimator in the minimize functions is used
-        as a surrogate model.
+        If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
+        surrogate model of the corresponding type is used corresponding to what
+        is used in the minimize functions.
 
     * `n_random_starts` [int, default=10]:
         DEPRECATED, use `n_initial_points` instead.
@@ -200,7 +200,7 @@ class Optimizer(object):
         self.n_initial_points_ = n_initial_points
 
         if acq_optimizer == "auto":
-            if has_gradients(self.base_estimator_, self.space):
+            if has_gradients(self.base_estimator_):
                 acq_optimizer = "sampling"
             else:
                 acq_optimizer = "lbfgs"
@@ -209,7 +209,7 @@ class Optimizer(object):
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
 
-        if has_gradients(self.base_estimator_, self.space) and acq_optimizer != "sampling":
+        if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer='sampling'".format(type(base_estimator)))
 

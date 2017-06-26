@@ -212,14 +212,27 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
     return [v for v in best_x], best_fun
 
 
-def has_gradients(estimator, space):
+def has_gradients(estimator):
+    """
+    Check if an estimators predict method can provide gradients.
+
+    Parameters
+    ----------
+    estimator: sklearn BaseEstimator instance.
+    """
     tree_estimators = (
             ExtraTreesRegressor, RandomForestRegressor,
-            GradientBoostingQuantileRegressor)
-    return (
-        isinstance(estimator, tree_estimators) or
-        (isinstance(estimator, GaussianProcessRegressor) and space.is_categorical)
+            GradientBoostingQuantileRegressor
     )
+    cat_gp = False
+    if hasattr(estimator, "kernel"):
+        params = estimator.get_params()
+        cat_gp = (
+            isinstance(estimator.kernel, HammingKernel) or
+            any([isinstance(params[p], HammingKernel) for p in params])
+        )
+
+    return isinstance(estimator, tree_estimators) or cat_gp
 
 
 def cook_estimator(base_estimator, space=None, **kwargs):
@@ -230,11 +243,11 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     ----------
     * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
         Should inherit from `sklearn.base.RegressorMixin`.
-        In addition the `predict` method, should have an optional `return_std`
+        In addition the `predict` method should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
-        If provided base_estimator is in ["GP", "RF", "ET", "GBRT"]
-        then the corresponding estimator in the minimize functions is used
-        as a surrogate model.
+        If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
+        surrogate model of the corresponding type is used corresponding to what
+        is used in the minimize functions.
 
     * `space` [Space instance]:
         Has to be provided if the base_estimator is a gaussian process.
