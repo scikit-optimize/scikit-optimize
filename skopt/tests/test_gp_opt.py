@@ -47,7 +47,7 @@ def test_gp_minimize_bench3(search, acq):
 
 
 @pytest.mark.fast_test
-@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+@pytest.mark.parametrize("search, acq", list(product(["sampling"], ["LCB", "EI"])))
 def test_gp_minimize_bench4(search, acq):
     check_minimize(bench4, 0.0,
                    [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)

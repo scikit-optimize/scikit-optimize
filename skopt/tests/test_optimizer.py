@@ -14,6 +14,7 @@ from scipy.optimize import OptimizeResult
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
+ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "gp", "rf", "et", "gbrt"]
 
 
 @pytest.mark.fast_test
@@ -111,7 +112,7 @@ def test_acq_optimizer(base_estimator):
     with pytest.raises(ValueError) as e:
         opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
                         n_random_starts=1, acq_optimizer='lbfgs')
-    assert 'The tree-based regressor' in str(e.value)
+    assert "should run with acq_optimizer='sampling'" in str(e.value)
 
 
 def test_exhaust_initial_calls():
@@ -140,3 +141,19 @@ def test_exhaust_initial_calls():
     assert x3 == x4
     r3 = opt.tell(x3, 1.)
     assert len(r3.models) == 2
+
+
+@pytest.mark.fast_test
+def test_optimizer_base_estimator_string_invalid():
+    with pytest.raises(ValueError) as e:
+        opt = Optimizer([(-2.0, 2.0)], base_estimator="rtr",
+                        n_random_starts=1)
+    assert "'RF', 'ET' or 'GP'" in str(e.value)
+
+
+@pytest.mark.fast_test
+@pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
+def test_optimizer_base_estimator_string_smoke(base_estimator):
+    opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
+                    n_random_starts=1, acq_func="EI")
+    opt.run(func=lambda x: x[0]**2, n_iter=3)

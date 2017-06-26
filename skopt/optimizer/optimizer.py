@@ -13,11 +13,15 @@ from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
-from ..learning import RandomForestRegressor, ExtraTreesRegressor
+from ..learning import ExtraTreesRegressor
+from ..learning import RandomForestRegressor
+from ..learning import GaussianProcessRegressor
 from ..learning import GradientBoostingQuantileRegressor
 from ..space import Categorical
 from ..space import Space
 from ..utils import create_result
+from ..utils import cook_estimator
+from ..utils import has_gradients
 
 
 class Optimizer(object):
@@ -44,10 +48,13 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [sklearn regressor]:
+    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+        If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
+        surrogate model of the corresponding type is used corresponding to what
+        is used in the minimize functions.
 
     * `n_random_starts` [int, default=10]:
         DEPRECATED, use `n_initial_points` instead.
@@ -75,11 +82,15 @@ class Optimizer(object):
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
+    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
+        - If set to `"auto"`, then `acq_optimizer` is configured on the
+          basis of the base_estimator and the space searched over.
+          If the space is Categorical or if the estimator provided based on
+          tree-models then this is set to be "sampling"`.
         - If set to `"sampling"`, then `acq_func` is optimized by computing
           `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
@@ -113,10 +124,10 @@ class Optimizer(object):
         to sample points, bounds, and type of parameters.
 
     """
-    def __init__(self, dimensions, base_estimator,
+    def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
-                 acq_optimizer="lbfgs",
+                 acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
@@ -163,7 +174,6 @@ class Optimizer(object):
             n_initial_points = n_random_starts
 
         self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
-
         self.n_jobs = n_jobs
 
         # The cache of responses of `ask` method for n_points not None.
@@ -175,10 +185,13 @@ class Optimizer(object):
     def _check_arguments(self, base_estimator, n_initial_points,
                          acq_optimizer):
         """Check arguments for sanity."""
+
+        if isinstance(base_estimator, str):
+            base_estimator = cook_estimator(
+                base_estimator, space=self.space, random_state=self.rng)
         if not is_regressor(base_estimator):
-            raise ValueError(
-                "%s has to be a regressor." % base_estimator)
-        self.base_estimator = base_estimator
+            raise ValueError("%s has to be a regressor." % base_estimator)
+        self.base_estimator_ = base_estimator
 
         if n_initial_points < 0:
             raise ValueError(
@@ -186,17 +199,20 @@ class Optimizer(object):
         self._n_initial_points = n_initial_points
         self.n_initial_points_ = n_initial_points
 
-        if (isinstance(base_estimator, (ExtraTreesRegressor,
-                                        RandomForestRegressor,
-                                        GradientBoostingQuantileRegressor)) and
-                not acq_optimizer == "sampling"):
-            raise ValueError(
-                "The tree-based regressor {0} should run with "
-                "acq_optimizer='sampling'".format(type(base_estimator)))
+        if acq_optimizer == "auto":
+            if has_gradients(self.base_estimator_):
+                acq_optimizer = "sampling"
+            else:
+                acq_optimizer = "lbfgs"
 
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
+
+        if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
+            raise ValueError("The regressor {0} should run with "
+                             "acq_optimizer='sampling'".format(type(base_estimator)))
+
         self.acq_optimizer = acq_optimizer
 
     def copy(self, random_state=None):
@@ -210,7 +226,7 @@ class Optimizer(object):
 
         optimizer = Optimizer(
             dimensions=self.space.dimensions,
-            base_estimator=self.base_estimator,
+            base_estimator=self.base_estimator_,
             n_initial_points=self.n_initial_points_,
             acq_func=self.acq_func,
             acq_optimizer=self.acq_optimizer,
@@ -384,7 +400,7 @@ class Optimizer(object):
         # random points to using a surrogate model
         if fit and self._n_initial_points <= 0:
             transformed_bounds = np.array(self.space.transformed_bounds)
-            est = clone(self.base_estimator)
+            est = clone(self.base_estimator_)
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
