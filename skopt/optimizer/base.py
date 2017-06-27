@@ -64,7 +64,7 @@ def base_minimize(func, dimensions, base_estimator,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
         - ``"EIps"`` for negated expected improvement per second to take into
-          account the function compute time. Then, the objective function is
+          account the function compute time. Then the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken.
         - `"PIps"` for negated probability of improvement per second.
@@ -233,12 +233,11 @@ def base_minimize(func, dimensions, base_estimator,
 
         if acq_func not in ["EIps", "Pips"]:
             if not all(map(np.isscalar, y0)):
-                raise ValueError(
-                    "`y0` elements should be scalars")
+                raise ValueError("Every element in y0 should be a scalar")
         else:
             if np.ndim(y0) != 2 and np.shape(y0)[1] != 2:
-                raise ValueError(
-                    "`y0` elements should be a tuple of 2 values.")
+                raise ValueError("Every element in y0 should be a tuple or list "
+                                 "containing 2 scalar values.")
 
         result = optimizer.tell(x0, y0)
         result.specs = specs

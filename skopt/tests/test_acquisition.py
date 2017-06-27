@@ -25,7 +25,7 @@ class ConstSurrogate:
         return np.zeros(X.shape[0]), np.ones(X.shape[0])
 
 
-class MultiOutputSurrogate:
+class ConstantGPRSurrogate:
     def fit(self, X, y):
         """
         The first estimator returns a constant value.
@@ -106,11 +106,11 @@ def test_acquisition_gradient():
 def test_acquisition_per_second():
     X = [[3], [5], [7]]
     y = [[1, log(3)], [1, log(5)], [1, log(7)]]
-    mos = MultiOutputSurrogate()
-    mos.fit(X, y)
+    cgpr = ConstantGPRSurrogate()
+    cgpr.fit(X, y)
 
     X_pred =  [[1], [2], [4], [6], [8], [9]]
     for acq_func in ["EIps", "PIps"]:
-        vals = _gaussian_acquisition(X_pred, mos, y_opt=1.0, acq_func=acq_func)
+        vals = _gaussian_acquisition(X_pred, cgpr, y_opt=1.0, acq_func=acq_func)
         for fast, slow in zip([0, 1, 2], [5, 4, 3]):
             assert_greater(vals[slow], vals[fast])

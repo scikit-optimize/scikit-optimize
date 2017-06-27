@@ -31,7 +31,7 @@ from skopt.space import Space
 # treated separately
 MINIMIZERS = [gp_minimize]
 ACQUISITION = ["LCB", "PI", "EI"]
-ACQ_FUNCS_PS = ["LCBps", "PIps", "EIps", "gp_hedgeps"]
+ACQ_FUNCS_PS = ["PIps", "EIps"]
 
 for est, acq in product(["ET", "RF"], ACQUISITION):
     MINIMIZERS.append(

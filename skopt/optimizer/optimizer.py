@@ -147,7 +147,7 @@ class Optimizer(object):
         allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
-                             (allowed_acq_funcs, self.acq_func))
+                             (",".join(allowed_acq_funcs), self.acq_func))
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
             self.gains_ = np.zeros(3)
