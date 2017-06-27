@@ -3,13 +3,12 @@
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..learning import ExtraTreesRegressor
-from ..learning import RandomForestRegressor
+from ..utils import cook_estimator
 
 
-def forest_minimize(func, dimensions, base_estimator="ET",
-                    n_calls=100, n_random_starts=10,
-                    acq_func="EI", acq_optimizer="auto",
+
+def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
+                    n_random_starts=10, acq_func="EI",
                     x0=None, y0=None, random_state=None, verbose=False,
                     callback=None, n_points=10000, xi=0.01, kappa=1.96,
                     n_jobs=1):
@@ -67,8 +66,8 @@ def forest_minimize(func, dimensions, base_estimator="ET",
         Number of calls to `func`.
 
     * `n_random_starts` [int, default=10]:
-        Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`.
+        Number of evaluations of `func` with random points before
+        approximating it with `base_estimator`.
 
     * `acq_func` [string, default=`"LCB"`]:
         Function to minimize over the forest posterior. Can be either
@@ -148,24 +147,8 @@ def forest_minimize(func, dimensions, base_estimator="ET",
     """
     rng = check_random_state(random_state)
 
-    # Default estimator
     if isinstance(base_estimator, str):
-        if base_estimator not in ("RF", "ET"):
-            raise ValueError(
-                "Valid strings for the base_estimator parameter"
-                " are: 'RF' or 'ET', not '%s'" % base_estimator)
-
-        if base_estimator == "RF":
-            base_estimator = RandomForestRegressor(n_estimators=100,
-                                                   min_samples_leaf=3,
-                                                   n_jobs=n_jobs,
-                                                   random_state=rng)
-
-        elif base_estimator == "ET":
-            base_estimator = ExtraTreesRegressor(n_estimators=100,
-                                                 min_samples_leaf=3,
-                                                 n_jobs=n_jobs,
-                                                 random_state=rng)
+        base_estimator = cook_estimator(base_estimator, n_jobs=n_jobs, random_state=rng)
 
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,

@@ -3,8 +3,19 @@ from collections import Iterable
 
 import numpy as np
 from scipy.optimize import OptimizeResult
+from scipy.optimize import minimize as sp_minimize
+from sklearn.base import is_regressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.externals.joblib import dump as dump_
 from sklearn.externals.joblib import load as load_
+
+from .learning import ExtraTreesRegressor
+from .learning import GaussianProcessRegressor
+from .learning import GradientBoostingQuantileRegressor
+from .learning import RandomForestRegressor
+from .learning.gaussian_process.kernels import ConstantKernel
+from .learning.gaussian_process.kernels import HammingKernel
+from .learning.gaussian_process.kernels import Matern
 
 __all__ = (
     "load",
@@ -158,11 +169,14 @@ def load(filename, **kwargs):
     """
     return load_(filename, **kwargs)
 
+
 def is_listlike(x):
     return isinstance(x, (list, tuple))
 
+
 def is_2Dlistlike(x):
     return np.all([is_listlike(xi) for xi in x])
+
 
 def check_x_in_space(x, space):
     if is_2Dlistlike(x):
@@ -174,3 +188,132 @@ def check_x_in_space(x, space):
             raise ValueError("Point (%s) is not within the bounds of"
                              " the space (%s)."
                              % (x, space.bounds))
+
+
+def expected_minimum(res, n_random_starts=20, random_state=None):
+    """
+    Compute the minimum over the predictions of the last surrogate model.
+
+    Note that the returned minimum may not necessarily be an accurate
+    prediction of the minimum of the true objective function.
+
+    Parameters
+    ----------
+    * `res`  [`OptimizeResult`, scipy object]:
+        The optimization result returned by a `skopt` minimizer.
+
+    * `n_random_starts` [int, default=20]:
+        The number of random starts for the minimization of the surrogate
+        model.
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    * `x` [list]: location of the minimum.
+
+    * `fun` [float]: the surrogate function value at the minimum.
+    """
+    def func(x):
+        reg = res.models[-1]
+        return reg.predict(x.reshape(1, -1))[0]
+
+    xs = [res.x]
+    if n_random_starts > 0:
+        xs.extend(res.space.rvs(n_random_starts, random_state=random_state))
+
+    best_x = None
+    best_fun = np.inf
+
+    for x0 in xs:
+        r = sp_minimize(func, x0=x0, bounds=res.space.bounds)
+
+        if r.fun < best_fun:
+            best_x = r.x
+            best_fun = r.fun
+
+    return [v for v in best_x], best_fun
+
+
+def has_gradients(estimator):
+    """
+    Check if an estimators predict method can provide gradients.
+
+    Parameters
+    ----------
+    estimator: sklearn BaseEstimator instance.
+    """
+    tree_estimators = (
+            ExtraTreesRegressor, RandomForestRegressor,
+            GradientBoostingQuantileRegressor
+    )
+    cat_gp = False
+    if hasattr(estimator, "kernel"):
+        params = estimator.get_params()
+        cat_gp = (
+            isinstance(estimator.kernel, HammingKernel) or
+            any([isinstance(params[p], HammingKernel) for p in params])
+        )
+
+    return isinstance(estimator, tree_estimators) or cat_gp
+
+
+def cook_estimator(base_estimator, space=None, **kwargs):
+    """
+    Cook a default estimator.
+
+    Parameters
+    ----------
+    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
+        Should inherit from `sklearn.base.RegressorMixin`.
+        In addition the `predict` method should have an optional `return_std`
+        argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+        If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
+        surrogate model of the corresponding type is used corresponding to what
+        is used in the minimize functions.
+
+    * `space` [Space instance]:
+        Has to be provided if the base_estimator is a gaussian process.
+        Ignored otherwise.
+
+    * `kwargs` [dict]:
+        Extra parameters provided to the base_estimator at init time.
+    """
+    if space is not None:
+        n_dims = space.transformed_n_dims
+        is_cat = space.is_categorical
+    if isinstance(base_estimator, str):
+        base_estimator = base_estimator.upper()
+        if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
+            raise ValueError("Valid strings for the base_estimator parameter "
+                             " are: 'RF', 'ET' or 'GP' not %s" % base_estimator)
+    elif not is_regressor(base_estimator):
+        raise ValueError("base_estimator has to be a regressor.")
+
+    if base_estimator == "GP":
+        cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
+        if is_cat:
+            other_kernel = HammingKernel(length_scale=np.ones(n_dims))
+        else:
+            other_kernel = Matern(
+                length_scale=np.ones(n_dims),
+                length_scale_bounds=[(0.01, 100)] * n_dims, nu=2.5)
+
+        base_estimator = GaussianProcessRegressor(
+            kernel=cov_amplitude * other_kernel,
+            normalize_y=True, random_state=None, alpha=0.0, noise="gaussian",
+            n_restarts_optimizer=2)
+    elif base_estimator == "RF":
+        base_estimator = RandomForestRegressor(n_estimators=100,
+                                               min_samples_leaf=3)
+    elif base_estimator == "ET":
+        base_estimator = ExtraTreesRegressor(n_estimators=100,
+                                             min_samples_leaf=3)
+    elif base_estimator == "GBRT":
+        gbrt = GradientBoostingRegressor(n_estimators=30, loss="quantile")
+        base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt)
+
+    base_estimator.set_params(**kwargs)
+    return base_estimator

@@ -1,3 +1,4 @@
+import pytest
 import numbers
 import numpy as np
 
@@ -39,6 +40,7 @@ def check_limits(value, low, high):
     assert_greater_equal(high, value)
 
 
+@pytest.mark.fast_test
 def test_dimensions():
     check_dimension(Real, (1., 4.), 2.251066014107722)
     check_dimension(Real, (1, 4), 2.251066014107722)
@@ -48,6 +50,7 @@ def test_dimensions():
     check_categorical((1., 2., 3., 4.), 2.)
 
 
+@pytest.mark.fast_test
 def test_real():
     a = Real(1, 25)
     for i in range(50):
@@ -73,6 +76,7 @@ def test_real():
         log_uniform.inverse_transform(transformed_vals), random_values)
 
 
+@pytest.mark.fast_test
 def test_real_bounds():
     # should give same answer as using check_limits() but this is easier
     # to read
@@ -84,6 +88,7 @@ def test_real_bounds():
     assert_false(np.nextafter(2.1, 3.) in a)
 
 
+@pytest.mark.fast_test
 def test_integer():
     a = Integer(1, 10)
     for i in range(50):
@@ -98,6 +103,7 @@ def test_integer():
     assert_array_equal(a.inverse_transform(random_values), random_values)
 
 
+@pytest.mark.fast_test
 def test_categorical_transform():
     categories = ["apple", "orange", "banana", None, True, False, 3]
     cat = Categorical(categories)
@@ -127,6 +133,7 @@ def test_categorical_transform():
     assert_array_equal(ent_inverse, categories)
 
 
+@pytest.mark.fast_test
 def test_categorical_transform_binary():
     categories = ["apple", "orange"]
     cat = Categorical(categories)
@@ -144,6 +151,7 @@ def test_categorical_transform_binary():
     assert_array_equal(ent_inverse, categories)
 
 
+@pytest.mark.fast_test
 def test_space_consistency():
     # Reals (uniform)
 
@@ -152,6 +160,7 @@ def test_space_consistency():
     s3 = Space([Real(0, 1)])
     s4 = Space([(0.0, 1.0)])
     s5 = Space([(0.0, 1.0, "uniform")])
+    s6 = Space([(0, 1.0)])
     a1 = s1.rvs(n_samples=10, random_state=0)
     a2 = s2.rvs(n_samples=10, random_state=0)
     a3 = s3.rvs(n_samples=10, random_state=0)
@@ -161,6 +170,7 @@ def test_space_consistency():
     assert_equal(s1, s3)
     assert_equal(s1, s4)
     assert_equal(s1, s5)
+    assert_equal(s1, s6)
     assert_array_equal(a1, a2)
     assert_array_equal(a1, a3)
     assert_array_equal(a1, a4)
@@ -203,9 +213,14 @@ def test_space_consistency():
     assert_array_equal(a1, a2)
 
 
+@pytest.mark.fast_test
 def test_space_api():
     space = Space([(0.0, 1.0), (-5, 5),
                    ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
+
+    cat_space = Space([(1, "r"), (1.0, "r")])
+    assert isinstance(cat_space.dimensions[0], Categorical)
+    assert isinstance(cat_space.dimensions[1], Categorical)
 
     assert_equal(len(space.dimensions), 5)
     assert_true(isinstance(space.dimensions[0], Real))
@@ -252,6 +267,7 @@ def test_space_api():
         assert_array_equal(b1, b2)
 
 
+@pytest.mark.fast_test
 def test_space_from_space():
     # can you pass a Space instance to the Space constructor?
     space = Space([(0.0, 1.0), (-5, 5),
@@ -262,6 +278,7 @@ def test_space_from_space():
     assert_equal(space, space2)
 
 
+@pytest.mark.fast_test
 def test_normalize():
     a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):
@@ -316,11 +333,13 @@ def check_valid_transformation(klass):
                         klass, 2, 30, transform='not a valid transform name')
 
 
+@pytest.mark.fast_test
 def test_valid_transformation():
     check_valid_transformation(Integer)
     check_valid_transformation(Real)
 
 
+@pytest.mark.fast_test
 def test_invalid_dimension():
     assert_raises_regex(ValueError, "has to be a list or tuple",
                         space_check_dimension, "23")
@@ -328,6 +347,7 @@ def test_invalid_dimension():
                         space_check_dimension, (23,))
 
 
+@pytest.mark.fast_test
 def test_categorical_identity():
     categories = ["cat", "dog", "rat"]
     cat = Categorical(categories, transform="identity")
@@ -338,6 +358,7 @@ def test_categorical_identity():
     assert_array_equal(samples, cat.inverse_transform(transformed))
 
 
+@pytest.mark.fast_test
 def test_categorical_distance():
     categories = ['car', 'dog', 'orange']
     cat = Categorical(categories)
@@ -350,24 +371,28 @@ def test_categorical_distance():
                 assert delta == 1
 
 
+@pytest.mark.fast_test
 def test_integer_distance():
     ints = Integer(1, 10)
     for i in range(1, 10+1):
         assert_equal(ints.distance(4, i), abs(4 - i))
 
 
+@pytest.mark.fast_test
 def test_integer_distance_out_of_range():
     ints = Integer(1, 10)
     assert_raises_regex(RuntimeError, "compute distance for values within",
                         ints.distance, 11, 10)
 
 
+@pytest.mark.fast_test
 def test_real_distance_out_of_range():
     ints = Real(1, 10)
     assert_raises_regex(RuntimeError, "compute distance for values within",
                         ints.distance, 11, 10)
 
 
+@pytest.mark.fast_test
 def test_real_distance():
     reals = Real(1, 10)
     for i in range(1, 10+1):

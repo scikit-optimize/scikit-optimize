@@ -25,30 +25,35 @@ def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
 SEARCH_AND_ACQ = list(product(["sampling", "lbfgs"], ["LCB", "EI"]))
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
 def test_gp_minimize_bench1(search, acq):
     check_minimize(bench1, 0.,
                    [(-2.0, 2.0)], search, acq, 0.05, 50)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
 def test_gp_minimize_bench2(search, acq):
     check_minimize(bench2, -5,
                    [(-6.0, 6.0)], search, acq, 0.05, 75)
 
 
+@pytest.mark.slow_test
 @pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
 def test_gp_minimize_bench3(search, acq):
     check_minimize(bench3, -0.9,
                    [(-2.0, 2.0)], search, acq, 0.05, 50)
 
 
-@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+@pytest.mark.fast_test
+@pytest.mark.parametrize("search, acq", list(product(["sampling"], ["LCB", "EI"])))
 def test_gp_minimize_bench4(search, acq):
     check_minimize(bench4, 0.0,
                    [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)
 
 
+@pytest.mark.fast_test
 def test_n_jobs():
     r_single = gp_minimize(bench3, [(-2.0, 2.0)], acq_optimizer="lbfgs",
                            acq_func="EI", n_calls=2, n_random_starts=1,
@@ -59,6 +64,7 @@ def test_n_jobs():
     assert_array_equal(r_single.x_iters, r_double.x_iters)
 
 
+@pytest.mark.fast_test
 def test_gpr_default():
     """Smoke test that gp_minimize does not fail for default values."""
     gpr = GaussianProcessRegressor()

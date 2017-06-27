@@ -1,3 +1,4 @@
+import pytest
 import tempfile
 
 from sklearn.utils.testing import assert_array_equal
@@ -7,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from skopt import gp_minimize
 from skopt import load
 from skopt import dump
+from skopt import expected_minimum
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
 from skopt.learning import ExtraTreesRegressor
@@ -23,6 +25,7 @@ def check_optimization_results_equality(res_1, res_2):
     assert_array_equal(res_1.func_vals, res_2.func_vals)
 
 
+@pytest.mark.fast_test
 def test_dump_and_load():
     res = gp_minimize(bench3,
                       [(-2.0, 2.0)],
@@ -55,6 +58,7 @@ def test_dump_and_load():
     assert_true(not ("func" in res_loaded.specs["args"]))
 
 
+@pytest.mark.fast_test
 def test_dump_and_load_optimizer():
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
@@ -65,3 +69,20 @@ def test_dump_and_load_optimizer():
     with tempfile.TemporaryFile() as f:
         dump(opt, f)
         load(f)
+
+
+@pytest.mark.fast_test
+def test_expected_minimum():
+    res = gp_minimize(bench3,
+                      [(-2.0, 2.0)],
+                      x0=[0.],
+                      noise=0.0,
+                      n_calls=20,
+                      random_state=1)
+
+    x_min, f_min = expected_minimum(res, random_state=1)
+    x_min2, f_min2 = expected_minimum(res, random_state=1)
+
+    assert f_min <= res.fun  # true since noise=0.0
+    assert x_min == x_min2
+    assert f_min == f_min2

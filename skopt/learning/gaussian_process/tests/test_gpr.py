@@ -1,4 +1,6 @@
 import numpy as np
+import pytest
+
 from scipy import optimize
 
 from sklearn.utils.testing import assert_almost_equal
@@ -7,7 +9,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-import pytest
 
 from skopt.learning import GaussianProcessRegressor
 from skopt.learning.gaussian_process.kernels import RBF
@@ -35,6 +36,7 @@ def predict_wrapper(X, gpr):
     return gpr.predict(X, return_std=True)
 
 
+@pytest.mark.fast_test
 @pytest.mark.parametrize("kernel", [kernel1, kernel2, kernel3, kernel4])
 def test_param_for_white_kernel_in_Sum(kernel):
     kernel_with_noise = kernel + wk
@@ -47,6 +49,7 @@ def test_param_for_white_kernel_in_Sum(kernel):
     assert_false(_param_for_white_kernel_in_Sum(kernel5)[0])
 
 
+@pytest.mark.fast_test
 def test_noise_equals_gaussian():
     gpr1 = GaussianProcessRegressor(rbf + wk).fit(X, y)
 
@@ -61,6 +64,7 @@ def test_noise_equals_gaussian():
     assert_false(np.any(std1 == std2))
 
 
+@pytest.mark.fast_test
 def test_mean_gradient():
     length_scale = np.arange(1, 6)
     X = rng.randn(10, 5)
@@ -78,6 +82,7 @@ def test_mean_gradient():
     assert_array_almost_equal(mean_grad, num_grad, decimal=3)
 
 
+@pytest.mark.fast_test
 def test_std_gradient():
     length_scale = np.arange(1, 6)
     X = rng.randn(10, 5)

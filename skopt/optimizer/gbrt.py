@@ -1,9 +1,9 @@
 
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
 from ..learning import GradientBoostingQuantileRegressor
+from ..utils import cook_estimator
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None,
@@ -54,8 +54,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         Number of calls to `func`.
 
     * `n_random_starts` [int, default=10]:
-        Number of evaluations of `func` with random initialization points
-        before approximating the `func` with `base_estimator`.
+        Number of evaluations of `func` with random points before
+        approximating it with `base_estimator`.
 
     * `acq_func` [string, default=`"LCB"`]:
         Function to minimize over the forest posterior. Can be either
@@ -138,13 +138,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     # Check params
     rng = check_random_state(random_state)
 
-    # Default estimator
     if base_estimator is None:
-        gbrt = GradientBoostingRegressor(n_estimators=30, loss="quantile")
-        base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
-                                                           n_jobs=n_jobs,
-                                                           random_state=rng)
-
+        base_estimator = cook_estimator("GBRT", random_state=rng, n_jobs=n_jobs)
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,
