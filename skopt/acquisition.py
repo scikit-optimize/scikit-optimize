@@ -57,17 +57,34 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             acq_vals = -func_and_grad
 
+        if acq_func in ["EIps", "PIps"]:
+
+            if return_grad:
+                mu, std, mu_grad, std_grad = time_model.predict(
+                    X, return_std=True, return_mean_grad=True,
+                    return_std_grad=True)
+            else:
+                mu, std = time_model.predict(X, return_std=True)
+
+            # acq = acq / E(t)
+            inv_t = np.exp(-mu + 0.5*std**2)
+            acq_vals *= inv_t
+
+            # grad = d(acq_func) * inv_t + (acq_vals *d(inv_t))
+            # inv_t = exp(g)
+            # d(inv_t) = inv_t * grad(g)
+            # d(inv_t) = inv_t * (-mu_grad + std * std_grad)
+            if return_grad:
+                acq_grad *= inv_t
+                acq_grad += acq_vals * (-mu_grad + std*std_grad)
+
     else:
         raise ValueError("Acquisition function not implemented.")
 
     if return_grad:
         return acq_vals, acq_grad
-
-    if per_second:
-        mean, std = time_model.predict(X, return_std=True)
-        inv_t = np.exp(-mean + 0.5*std**2)
-        return acq_vals * inv_t
     return acq_vals
+
 
 def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
     """

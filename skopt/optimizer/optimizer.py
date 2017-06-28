@@ -458,17 +458,15 @@ class Optimizer(object):
                 elif self.acq_optimizer == "lbfgs":
                     x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
 
-                    approx_grad = cand_acq_func.endswith("ps")
-
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
                         results = Parallel(n_jobs=self.n_jobs)(
                             delayed(fmin_l_bfgs_b)(
                                 gaussian_acquisition_1D, x,
                                 args=(est, np.min(self.yi), cand_acq_func,
-                                      self.acq_func_kwargs, not approx_grad),
+                                      self.acq_func_kwargs),
                                 bounds=self.space.transformed_bounds,
-                                approx_grad=approx_grad,
+                                approx_grad=False,
                                 maxiter=20)
                             for x in x0)
 

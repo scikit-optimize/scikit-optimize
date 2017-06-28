@@ -4,6 +4,7 @@ import pytest
 
 from scipy import optimize
 
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
@@ -90,7 +91,7 @@ def check_gradient_correctness(X_new, model, acq_func, y_opt):
     num_grad_func = lambda x:  gaussian_acquisition_1D(
         x, model, y_opt, acq_func=acq_func)[0]
     num_grad = optimize.approx_fprime(X_new, num_grad_func, 1e-5)
-    assert_array_almost_equal(analytic_grad, num_grad, 4)
+    assert_array_almost_equal(analytic_grad, num_grad, 3)
 
 
 @pytest.mark.fast_test
@@ -108,7 +109,9 @@ def test_acquisition_gradient():
         check_gradient_correctness(X_new, gpr, acq_func, np.max(y))
 
 
-def test_acquisition_per_second():
+@pytest.mark.fast_test
+@pytest.mark.parametrize("acq_func", ["EIps", "PIps"])
+def test_acquisition_per_second(acq_func):
     X = np.reshape(np.linspace(4.0, 8.0, 10), (-1, 1))
     y = np.vstack((np.ones(10), np.ravel(np.log(X)))).T
     cgpr = ConstantGPRSurrogate(Space(((1.0, 9.0),)))
@@ -116,7 +119,22 @@ def test_acquisition_per_second():
 
     X_pred = np.reshape(np.linspace(1.0, 11.0, 20), (-1, 1))
     indices = np.arange(6)
-    for acq_func in ["EIps", "PIps"]:
-        vals = _gaussian_acquisition(X_pred, cgpr, y_opt=1.0, acq_func=acq_func)
-        for fast, slow in zip(indices[:-1], indices[1:]):
-            assert_greater(vals[slow], vals[fast])
+    vals = _gaussian_acquisition(X_pred, cgpr, y_opt=1.0, acq_func=acq_func)
+    for fast, slow in zip(indices[:-1], indices[1:]):
+        assert_greater(vals[slow], vals[fast])
+
+
+@pytest.mark.fast_test
+@pytest.mark.parametrize("acq_func", ["EIps", "PIps"])
+def test_acquisition_per_second_gradient(acq_func):
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 10)
+    # Make the second component large, so that mean_grad and std_grad
+    # do not become zero.
+    y = np.vstack((X[:, 0], np.abs(X[:, 0])**3)).T
+
+    for X_new in [rng.randn(10), rng.randn(10)]:
+        gpr = cook_estimator("GP", Space(((-5.0, 5.0),)), random_state=0)
+        mor = MultiOutputRegressor(gpr)
+        mor.fit(X, y)
+        check_gradient_correctness(X_new, mor, acq_func, 1.5)
