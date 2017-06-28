@@ -398,6 +398,7 @@ class Optimizer(object):
                     self.yi.extend(y)
                 else:
                     raise TypeError("expcted y to be a list of (func_val, t)")
+                self._n_initial_points -= len(y)
             elif is_listlike(x):
                 if np.ndim(y) == 1 and len(y) == 2:
                     y = list(y)
@@ -406,6 +407,7 @@ class Optimizer(object):
                     self.yi.append(y)
                 else:
                     raise TypeError("expected y to be (func_val, t)")
+                self._n_initial_points -= 1
 
         # if y isn't a scalar it means we have been handed a batch of points
         elif is_listlike(y) and is_2Dlistlike(x):

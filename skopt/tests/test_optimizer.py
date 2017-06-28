@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
 
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 from skopt.benchmarks import bench1
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
@@ -120,15 +122,24 @@ def test_acq_optimizer(base_estimator):
 @pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
 def test_acq_optimizer_with_time_api(base_estimator, acq_func):
     opt = Optimizer([(-2.0, 2.0),], base_estimator=base_estimator,
-                    acq_func=acq_func, n_random_starts=1,
-                    acq_optimizer="sampling")
-    x = opt.ask()
-    opt.tell(x, (bench1(x), 1.0))
-    x = opt.ask()
-    opt.tell(x, (bench1(x), 1.0))
+                    acq_func=acq_func,
+                    acq_optimizer="sampling", n_initial_points=2)
+    x1 = opt.ask()
+    opt.tell(x1, (bench1(x1), 1.0))
+    x2 = opt.ask()
+    res = opt.tell(x2, (bench1(x2), 2.0))
+
+    # x1 and x2 are random.
+    assert_true(x1 != x2)
+
+    assert_true(len(res.models) == 1)
+    assert_array_equal(res.func_vals.shape, (2,))
+    assert_array_equal(res.log_time.shape, (2,))
+
+    # x3 = opt.ask()
 
     with pytest.raises(TypeError) as e:
-        opt.tell(x, bench1(x))
+        opt.tell(x2, bench1(x2))
 
 
 def test_exhaust_initial_calls():
