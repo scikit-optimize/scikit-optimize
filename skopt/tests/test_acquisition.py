@@ -17,6 +17,8 @@ from skopt.acquisition import gaussian_pi
 from skopt.learning import GaussianProcessRegressor
 from skopt.learning.gaussian_process.kernels import Matern
 from skopt.learning.gaussian_process.kernels import WhiteKernel
+from skopt.space import Space
+from skopt.utils import cook_estimator
 
 
 class ConstSurrogate:
@@ -25,7 +27,10 @@ class ConstSurrogate:
         return np.zeros(X.shape[0]), np.ones(X.shape[0])
 
 
-class ConstantGPRSurrogate:
+class ConstantGPRSurrogate(object):
+    def __init__(self, space):
+        self.space = space
+
     def fit(self, X, y):
         """
         The first estimator returns a constant value.
@@ -34,7 +39,7 @@ class ConstantGPRSurrogate:
         """
         X = np.array(X)
         y = np.array(y)
-        gpr = GaussianProcessRegressor()
+        gpr = cook_estimator("GP", self.space, random_state=0)
         gpr.fit(X, y[:, 1])
         self.estimators_ = []
         self.estimators_.append(ConstSurrogate())
@@ -104,13 +109,14 @@ def test_acquisition_gradient():
 
 
 def test_acquisition_per_second():
-    X = [[3], [5], [7]]
-    y = [[1, log(3)], [1, log(5)], [1, log(7)]]
-    cgpr = ConstantGPRSurrogate()
+    X = np.reshape(np.linspace(4.0, 8.0, 10), (-1, 1))
+    y = np.vstack((np.ones(10), np.ravel(np.log(X)))).T
+    cgpr = ConstantGPRSurrogate(Space(((1.0, 9.0),)))
     cgpr.fit(X, y)
 
-    X_pred =  [[1], [2], [4], [6], [8], [9]]
+    X_pred = np.reshape(np.linspace(1.0, 11.0, 20), (-1, 1))
+    indices = np.arange(6)
     for acq_func in ["EIps", "PIps"]:
         vals = _gaussian_acquisition(X_pred, cgpr, y_opt=1.0, acq_func=acq_func)
-        for fast, slow in zip([0, 1, 2], [5, 4, 3]):
+        for fast, slow in zip(indices[:-1], indices[1:]):
             assert_greater(vals[slow], vals[fast])
