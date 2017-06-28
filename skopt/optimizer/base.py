@@ -231,13 +231,6 @@ def base_minimize(func, dimensions, base_estimator,
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
 
-        if acq_func not in ["EIps", "Pips"]:
-            if not all(map(np.isscalar, y0)):
-                raise ValueError("Every element in y0 should be a scalar")
-        else:
-            if np.ndim(y0) != 2 and np.shape(y0)[1] != 2:
-                raise ValueError("Every element in y0 should be a tuple or list "
-                                 "containing 2 scalar values.")
 
         result = optimizer.tell(x0, y0)
         result.specs = specs
@@ -252,11 +245,6 @@ def base_minimize(func, dimensions, base_estimator,
         # no need to fit a model on the last iteration
         fit_model = n < n_calls - 1
         next_y = func(next_x)
-        if "ps" in acq_func and np.ndim(next_y) != 1 and len(next_y) != 2:
-            raise ValueError("`func` should return a tuple of 2 values.")
-        elif "ps" not in acq_func and not np.isscalar(next_y):
-            raise ValueError("`func` should return a scalar")
-
         result = optimizer.tell(next_x, next_y, fit=fit_model)
         result.specs = specs
 

@@ -413,10 +413,13 @@ class Optimizer(object):
             self.yi.extend(y)
             self._n_initial_points -= len(y)
 
-        elif is_listlike(x) and isinstance(y, Number):
-            self.Xi.append(x)
-            self.yi.append(y)
-            self._n_initial_points -= 1
+        elif is_listlike(x):
+            if isinstance(y, Number):
+                self.Xi.append(x)
+                self.yi.append(y)
+                self._n_initial_points -= 1
+            else:
+                raise ValueError("`func` should return a scalar")
 
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
