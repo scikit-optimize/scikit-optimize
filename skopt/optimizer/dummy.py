@@ -84,7 +84,7 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
     else:
         n_random_calls = n_calls
 
-    return base_minimize(func, dimensions, base_estimator=None,
+    return base_minimize(func, dimensions, base_estimator="dummy",
                          n_calls=n_calls, n_random_starts=n_random_calls,
                          x0=x0, y0=y0, random_state=random_state,
                          verbose=verbose,

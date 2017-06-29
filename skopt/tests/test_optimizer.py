@@ -148,7 +148,7 @@ def test_optimizer_base_estimator_string_invalid():
     with pytest.raises(ValueError) as e:
         Optimizer([(-2.0, 2.0)], base_estimator="rtr",
                   n_initial_points=1)
-    assert "'RF', 'ET' or 'GP'" in str(e.value)
+    assert "'RF', 'ET', 'GP', 'GBRT' or 'DUMMY'" in str(e.value)
 
 
 @pytest.mark.fast_test
