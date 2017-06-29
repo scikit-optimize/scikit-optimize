@@ -1,15 +1,15 @@
 from skopt import Optimizer
-from skopt.learning import GaussianProcessRegressor, ExtraTreesRegressor
+
 
 from sklearn.base import clone
 from sklearn.externals.joblib import Parallel, delayed, cpu_count
-import sklearn.model_selection._search as skms
+import sklearn.model_selection._search as sk_model_sel
 
 import numpy as np
-from collections import *
+from collections import defaultdict
 
 
-class SkoptSearchCV(skms.BaseSearchCV):
+class BayesSearchCV(sk_model_sel.BaseSearchCV):
     """Bayesian optimization over hyper parameters.
 
     SkoptSearchCV implements a "fit" and a "score" method.
@@ -30,8 +30,8 @@ class SkoptSearchCV(skms.BaseSearchCV):
     Parameters
     ----------
     estimator : estimator object.
-        A object of that type is instantiated for each grid point.
-        This is assumed to implement the scikit-learn estimator interface.
+        A object of that type is instantiated for each search point.
+        This object is assumed to implement the scikit-learn estimator api.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
@@ -219,24 +219,28 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, search_spaces, surrogate="auto",
-                 n_iter=128, scoring=None, fit_params=None, n_jobs=1,
+    def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
+                 n_iter=256, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
         self.search_spaces = search_spaces
         self.n_iter = n_iter
         self.random_state = random_state
-        self.surrogate = surrogate
+
+        if optimizer_kwargs is None:
+            self.optimizer_kwargs = {}
+        else:
+            self.optimizer_kwargs = optimizer_kwargs
 
         # this dict is used in order to keep track of skopt Optimizer
         # instances for different search spaces (str(space) is used as key)
-        self.optimizer = {}
+        self.optimizer_ = {}
         self.cv_results_ = defaultdict(list)
 
         self.best_index_ = None
 
-        super(SkoptSearchCV, self).__init__(
+        super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring, fit_params=fit_params,
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
@@ -274,9 +278,6 @@ class SkoptSearchCV(skms.BaseSearchCV):
             names (strings) and values are skopt.space.Dimension instances,
             one of Real, Integer or Categorical.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_output],
-            Target relative to X for classification or regression.
-
         Returns
         -------
         optimizer: Instance of the `Optimizer` class used for for search
@@ -286,12 +287,10 @@ class SkoptSearchCV(skms.BaseSearchCV):
         # convert search space from dict to list
         dimensions = [params_space[k] for k in sorted(params_space.keys())]
 
-        if self.surrogate == "auto":
-            surrogate = GaussianProcessRegressor()
-        else:
-            surrogate = self.surrogate
+        kwargs = self.optimizer_kwargs.copy()
+        kwargs['dimensions'] = dimensions
+        optimizer = Optimizer(**kwargs)
 
-        optimizer = Optimizer(dimensions, surrogate, acq_optimizer='sampling')
         return optimizer
 
     def _skopt_to_dict(self, params_space, params):
@@ -354,85 +353,37 @@ class SkoptSearchCV(skms.BaseSearchCV):
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
-        # check parameters; taken from BaseSearchCV.
-        cv = skms.check_cv(
-            self.cv, y,
-            classifier=skms.is_classifier(self.estimator)
-        )
-        self.scorer_ = skms.check_scoring(self.estimator, scoring=self.scoring)
-
         # use the cached optimizer for particular parameter space
         key = str(param_space)
-        if key not in self.optimizer:
-            self.optimizer[key] = self._make_optimizer(param_space)
-        optimizer = self.optimizer[key]
+        if key not in self.optimizer_:
+            self.optimizer_[key] = self._make_optimizer(param_space)
+        optimizer = self.optimizer_[key]
 
         # get parameter values to evaluate
-        params_list = optimizer.ask(n_points=n_jobs)
+        params = optimizer.ask(n_points=n_jobs)
+        params_dict = [self._skopt_to_dict(param_space, p) for p in params]
 
-        # run the evaluation
-        cv_iter = list(cv.split(X, y, groups))
-        out = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=self.pre_dispatch
-        )(delayed(skms._fit_and_score)(
-            clone(self.estimator), X, y, self.scorer_,
-            train, test, self.verbose,
-            self._skopt_to_dict(param_space, params),
-            fit_params=self.fit_params,
-            return_train_score=self.return_train_score,
-            return_n_test_samples=True,
-            return_times=True, return_parameters=True,
-            error_score=self.error_score
-        )
-          for params in params_list
-          for train, test in cv_iter)
+        # self.cv_results_ is reset at every call to _fit, keep current
+        all_cv_results = self.cv_results_
 
-        # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score:
-            (train_scores, test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
-        else:
-            (test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
+        # record performances with different points
+        refit = self.refit
+        self.refit = False # do not fit yet - will be fit later
+        self._fit(X, y, groups, params_dict)
+        self.refit = refit
 
-        splits = int(len(train_scores) / n_jobs)
+        # merge existing and new cv_results_
+        for k in self.cv_results_:
+            all_cv_results[k].extend(self.cv_results_[k])
 
-        # this is used later in order to record results of
-        # evaluation in cv_results_
-        out_and_name = [
-            ('test_score', test_scores),
-            ('test_sample_count', test_sample_counts),
-            ('fit_time', fit_time),
-            ('score_time', score_time),
-        ]
+        self.cv_results_ = all_cv_results
+        self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
 
-        if self.return_train_score:
-            out_and_name = out_and_name + [('train_score', train_scores)]
+        # feed the point and objective back into optimizer
+        local_results = self.cv_results_['mean_test_score'][-len(params):]
 
-        # record all results in cv_results_
-        for i, params in enumerate(params_list):
-            # a slice that corresponds to results with different
-            # validation splits for some particular parameter values
-            I = slice(i*splits, (i+1)*splits, 1)
-
-            # record results for particular parameters point
-            self.cv_results_['params'].append(
-                self._skopt_to_dict(param_space, params)
-            )
-            for name, result in out_and_name:
-                for split, data in enumerate(result[I]):
-                    self.cv_results_['split'+str(split)+"_"+name].append(data)
-                self.cv_results_['mean_' + name].append(np.mean(result[I]))
-                self.cv_results_['std_' + name].append(np.std(result[I]))
-
-            # update index of best parameters if necessary
-            score = np.mean(test_scores[I])
-            if self.best_index_ is None or score > self.best_score_:
-                self.best_index_ = len(self.cv_results_['params'])-1
-
-            # feed the point and objective back into optimizer
-            optimizer.tell(params, -score)
+        # optimizer minimizes objective, hence provide negative score
+        optimizer.tell(params, [-score for score in local_results])
 
         # fit the best model if necessary
         if self.refit:
@@ -476,15 +427,22 @@ class SkoptSearchCV(skms.BaseSearchCV):
 
             # if tuple: (dict: search space, int: n_iter)
             if isinstance(elem, tuple):
-                psp, n_iter = elem
+                parameter_search_space, n_iter = elem
             # if dict: represents search space
             elif isinstance(elem, dict):
-                psp, n_iter = elem, self.n_iter
+                parameter_search_space, n_iter = elem, self.n_iter
             else:
-                raise ValueError("Unsupported type of parameter space. "
-                                 "Expected tuple or dict, got " + str(elem))
+                raise ValueError(
+                    "Unsupported type of parameter space. "
+                    "Expected tuple (dict, int) or dict, got %s " + elem)
 
             # do the optimization for particular search space
-            while n_iter:
+            while n_iter > 0:
+                # when n_iter < n_jobs points left for evaluation
+                n_jobs_adjusted = min(n_iter, self.n_jobs)
+
+                self.step(
+                    X, y, parameter_search_space,
+                    groups=groups, n_jobs=n_jobs_adjusted
+                )
                 n_iter -= n_jobs
-                self.step(X, y, psp, groups=groups, n_jobs=self.n_jobs)

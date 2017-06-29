@@ -61,7 +61,7 @@ from .optimizer import Optimizer
 from .utils import load
 from .utils import dump
 from .utils import expected_minimum
-
+from .searchcv import BayesSearchCV
 
 __version__ = "0.3"
 
@@ -81,5 +81,6 @@ __all__ = (
     "Optimizer",
     "dump",
     "load",
-    "expected_minimum"
+    "expected_minimum",
+    "BayesSearchCV"
 )

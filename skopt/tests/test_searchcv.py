@@ -1,37 +1,26 @@
-"""This script contains set of functions that test parallel optimization with
-skopt, where constant liar parallelization strategy is used.
+"""This script contains set of functions that test scikit-optimize
+based implementation of parameter search with interface similar to
+those of GridSearchCV
 """
 
-
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
-
-from skopt.space import Real
-from skopt import Optimizer
-from skopt.benchmarks import branin
-import skopt.learning as sol
-
-from scipy.spatial.distance import pdist
 import pytest
 
 # Extract available surrogates, so that new ones are used automatically
-available_surrogates = [
-    getattr(sol, name) for name in sol.__all__
-    if "GradientBoostingQuantileRegressor" not in name
-]
+from test_optimizer import ESTIMATOR_STRINGS
 
-# include the "auto" surrogate to test
-available_surrogates += ["auto"]
+# None means to use default surrogate
+available_surrogates = [ESTIMATOR_STRINGS[0], None]
 
 
 @pytest.mark.parametrize("surrogate", available_surrogates)
-@pytest.mark.parametrize("n_jobs", [1, -1])  # test in sequential and parallel
+@pytest.mark.parametrize("n_jobs", [1, -1])  # test sequential and parallel
 def test_searchcv_runs(surrogate, n_jobs):
     """
     Tests whether the cross validation search wrapper around sklearn
-     models runs properly with available surrogates and with single
-     or multiple workers.
+    models runs properly with available surrogates and with single
+    or multiple workers.
 
     Parameters
     ----------
@@ -44,7 +33,7 @@ def test_searchcv_runs(surrogate, n_jobs):
 
     """
     from skopt.space import Real, Categorical, Integer
-    from skopt.wrappers import SkoptSearchCV
+    from skopt import BayesSearchCV
 
     from sklearn.datasets import load_iris
     from sklearn.svm import SVC
@@ -56,12 +45,15 @@ def test_searchcv_runs(surrogate, n_jobs):
     )
 
     # None search space is only supported when only `step` function is used
-    assert_raises(ValueError, SkoptSearchCV(SVC(), None).fit, (X, y))
+    assert_raises(ValueError, BayesSearchCV(SVC(), None).fit, (X, y))
 
     # create an instance of a surrogate if it is not a string
-    surrogate_input = surrogate if isinstance(surrogate, str) else surrogate()
+    if surrogate is not None:
+        optimizer_kwargs = {'base_estimator': surrogate}
+    else:
+        optimizer_kwargs = None
 
-    opt = SkoptSearchCV(
+    opt = BayesSearchCV(
         SVC(),
         [{
             'C': Real(1e-6, 1e+6, prior='log-uniform'),
@@ -69,8 +61,8 @@ def test_searchcv_runs(surrogate, n_jobs):
             'degree': Integer(1, 8),
             'kernel': Categorical(['linear', 'poly', 'rbf']),
         }],
-        n_jobs=n_jobs, n_iter=64,
-        surrogate=surrogate_input
+        n_jobs=n_jobs, n_iter=11,
+        optimizer_kwargs=optimizer_kwargs
     )
 
     opt.fit(X_train, y_train)
