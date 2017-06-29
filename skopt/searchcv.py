@@ -1,5 +1,5 @@
 from skopt import Optimizer
-
+from skopt.utils import params_asdict, dims_aslist
 
 from sklearn.base import clone
 from sklearn.externals.joblib import Parallel, delayed, cpu_count
@@ -12,7 +12,7 @@ from collections import defaultdict
 class BayesSearchCV(sk_model_sel.BaseSearchCV):
     """Bayesian optimization over hyper parameters.
 
-    SkoptSearchCV implements a "fit" and a "score" method.
+    BayesSearchCV implements a "fit" and a "score" method.
     It also implements "predict", "predict_proba", "decision_function",
     "transform" and "inverse_transform" if they are implemented in the
     estimator used.
@@ -234,7 +234,9 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
             self.optimizer_kwargs = optimizer_kwargs
 
         # this dict is used in order to keep track of skopt Optimizer
-        # instances for different search spaces (str(space) is used as key)
+        # instances for different search spaces. `str(space)` is used as key
+        # as `space` is a dict, which is unhashable. however, str(space)
+        # is fixed and unique if space is not changed.
         self.optimizer_ = {}
         self.cv_results_ = defaultdict(list)
 
@@ -247,7 +249,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
              return_train_score=return_train_score)
 
     def _fit_best_model(self, X, y):
-        """Fits the estimator copy with best parameters found to the
+        """Fit the estimator copy with best parameters found to the
         provided data.
 
         Parameters
@@ -269,7 +271,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         return self
 
     def _make_optimizer(self, params_space):
-        """Method to instantiate skopt Optimizer class.
+        """Instantiate skopt Optimizer class.
 
         Parameters
         ----------
@@ -284,38 +286,13 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
             in some parameter space.
 
         """
-        # convert search space from dict to list
-        dimensions = [params_space[k] for k in sorted(params_space.keys())]
 
         kwargs = self.optimizer_kwargs.copy()
-        kwargs['dimensions'] = dimensions
+        kwargs['dimensions'] = dims_aslist(params_space)
         optimizer = Optimizer(**kwargs)
 
         return optimizer
 
-    def _skopt_to_dict(self, params_space, params):
-        """Converts list of parameter values into the dictionary with
-        keys as parameter names and corresponding values of parameter.
-
-        Parameters
-        ----------
-        params_space : dict
-            Represents parameter search space. The keys are parameter
-            names (strings) and values are skopt.space.Dimension instances,
-            one of Real, Integer or Categorical.
-
-        params : list
-            Parameter values as list. The order of parameters in the list
-            is given by sorted(params_space.keys()).
-
-        Returns
-        -------
-        params_dict: dictionary with parameter values.
-        """
-        params_dict = {
-            k: v for k, v in zip(sorted(params_space.keys()), params)
-        }
-        return params_dict
 
     def step(self, X, y, param_space, groups=None, n_jobs=1):
         """Generates n_jobs parameters and evaluates corresponding
@@ -354,14 +331,13 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
         # use the cached optimizer for particular parameter space
-        key = str(param_space)
-        if key not in self.optimizer_:
-            self.optimizer_[key] = self._make_optimizer(param_space)
-        optimizer = self.optimizer_[key]
+        optimizer = self.optimizer_.get(
+            str(param_space), self._make_optimizer(param_space)
+        )
 
         # get parameter values to evaluate
         params = optimizer.ask(n_points=n_jobs)
-        params_dict = [self._skopt_to_dict(param_space, p) for p in params]
+        params_dict = [params_asdict(param_space, p) for p in params]
 
         # self.cv_results_ is reset at every call to _fit, keep current
         all_cv_results = self.cv_results_

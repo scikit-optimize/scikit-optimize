@@ -292,3 +292,75 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
     base_estimator.set_params(**kwargs)
     return base_estimator
+
+
+def dims_aslist(params_space):
+    """Convert dictionary of parameter names : skopt.space.Dimension
+    a list of skopt.space.Dimension, that can be used in Optimizer.
+
+    Parameters
+    ----------
+    params_space : dict
+        Represents parameter search space. The keys are parameter
+        names (strings) and values are skopt.space.Dimension instances,
+        one of Real, Integer or Categorical.
+
+    Returns
+    -------
+    params_space_list: list of skopt.space.Dimension instances.
+    """
+    params_space_list = {
+        params_space[k] for k in sorted(params_space.keys())
+    }
+    return params_space_list
+
+
+def params_asdict(params_space, params_list):
+    """Convert list of parameter values into the dictionary with
+    keys as parameter names and corresponding values of parameter.
+
+    Parameters
+    ----------
+    params_space : dict
+        Represents parameter search space. The keys are parameter
+        names (strings) and values are skopt.space.Dimension instances,
+        one of Real, Integer or Categorical.
+
+    params_list : list
+        Parameter values as list. The order of parameters in the list
+        is given by sorted(params_space.keys()).
+
+    Returns
+    -------
+    params_dict: dictionary with parameter values.
+    """
+    params_dict = {
+        k: v for k, v in zip(sorted(params_space.keys()), params_list)
+    }
+    return params_dict
+
+
+def params_aslist(params_space, param_dict):
+    """Convert dict with keys as parameter names and corresponding
+    values of parameter name:value into the list of parameter values.
+
+    Parameters
+    ----------
+    params_space : dict
+        Represents parameter search space. The keys are parameter
+        names (strings) and values are skopt.space.Dimension instances,
+        one of Real, Integer or Categorical.
+
+    param_dict : dict
+        Parameter values as set of key: value pairs.
+
+    Returns
+    -------
+    params_list: list with parameter values.The order of
+        parameters in the list is given by sorted(params_space.keys()).
+    """
+    param_list = [
+        param_dict[k] for k in sorted(params_space.keys())
+    ]
+    return param_list
+
