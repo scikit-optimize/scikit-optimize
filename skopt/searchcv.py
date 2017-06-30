@@ -331,9 +331,10 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
         # use the cached optimizer for particular parameter space
-        optimizer = self.optimizer_.get(
-            str(param_space), self._make_optimizer(param_space)
-        )
+        key = str(param_space)
+        if key not in self.optimizer_:
+            self.optimizer_[key] = self._make_optimizer(param_space)
+        optimizer = self.optimizer_[key]
 
         # get parameter values to evaluate
         params = optimizer.ask(n_points=n_jobs)
