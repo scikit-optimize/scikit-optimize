@@ -309,9 +309,9 @@ def dims_aslist(params_space):
     -------
     params_space_list: list of skopt.space.Dimension instances.
     """
-    params_space_list = {
+    params_space_list = [
         params_space[k] for k in sorted(params_space.keys())
-    }
+    ]
     return params_space_list
 
 
