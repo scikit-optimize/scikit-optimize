@@ -294,73 +294,97 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     return base_estimator
 
 
-def dims_aslist(params_space):
-    """Convert dictionary of parameter names : skopt.space.Dimension
-    a list of skopt.space.Dimension, that can be used in Optimizer.
+def dimensions_aslist(search_space):
+    """Convert a dict representation of a search space into a list of
+    dimensions, ordered by sorted(search_space.keys()).
 
     Parameters
     ----------
-    params_space : dict
-        Represents parameter search space. The keys are parameter
-        names (strings) and values are skopt.space.Dimension instances,
-        one of Real, Integer or Categorical.
+    search_space : dict
+        Represents search space. The keys are dimension names (strings)
+        and values are instances of classes that inherit from the class
+        skopt.space.Dimension (Real, Integer or Categorical)
+        Example:
+            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
 
     Returns
     -------
     params_space_list: list of skopt.space.Dimension instances.
+        Example output with example inputs:
+            [Real(0,1), Integer(2,4), Real(-1,1)]
     """
     params_space_list = [
-        params_space[k] for k in sorted(params_space.keys())
+        search_space[k] for k in sorted(search_space.keys())
     ]
     return params_space_list
 
 
-def params_asdict(params_space, params_list):
-    """Convert list of parameter values into the dictionary with
-    keys as parameter names and corresponding values of parameter.
+def point_asdict(search_space, point_as_list):
+    """Convert the list representation of a point from a search space
+    to the dictionary representation, where keys are dimension names
+    and values are corresponding to the values of dimensions in the list.
+
+    Counterpart to parameters_aslist.
 
     Parameters
     ----------
-    params_space : dict
-        Represents parameter search space. The keys are parameter
-        names (strings) and values are skopt.space.Dimension instances,
-        one of Real, Integer or Categorical.
+    search_space : dict
+        Represents search space. The keys are dimension names (strings)
+        and values are instances of classes that inherit from the class
+        skopt.space.Dimension (Real, Integer or Categorical)
+        Example:
+            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
 
-    params_list : list
-        Parameter values as list. The order of parameters in the list
+    point_as_list : list
+        list with parameter values.The order of parameters in the list
         is given by sorted(params_space.keys()).
+        Example:
+            [0.66, 3, -0.15]
 
     Returns
     -------
-    params_dict: dictionary with parameter values.
+    params_dict: dictionary with parameter names as keys to which
+        corresponding parameter values are assigned.
+        Example output with inputs:
+            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
     """
     params_dict = {
-        k: v for k, v in zip(sorted(params_space.keys()), params_list)
+        k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
     }
     return params_dict
 
 
-def params_aslist(params_space, param_dict):
-    """Convert dict with keys as parameter names and corresponding
-    values of parameter name:value into the list of parameter values.
+def point_aslist(search_space, point_as_dict):
+    """Convert a dictionary representation of a point from a search space to
+    the list representation. The list of values is created from the values of
+    the dictionary, sorted by the names of dimensions used as keys.
+
+    Counterpart to parameters_asdict.
 
     Parameters
     ----------
-    params_space : dict
-        Represents parameter search space. The keys are parameter
-        names (strings) and values are skopt.space.Dimension instances,
-        one of Real, Integer or Categorical.
+    search_space : dict
+        Represents search space. The keys are dimension names (strings)
+        and values are instances of classes that inherit from the class
+        skopt.space.Dimension (Real, Integer or Categorical)
+        Example:
+            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
 
-    param_dict : dict
-        Parameter values as set of key: value pairs.
+    point_as_dict : dict
+        dict with parameter names as keys to which corresponding
+        parameter values are assigned.
+        Example:
+            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
 
     Returns
     -------
-    params_list: list with parameter values.The order of
+    point_as_list: list with point values.The order of
         parameters in the list is given by sorted(params_space.keys()).
+        Example output with example inputs:
+            [0.66, 3, -0.15]
     """
-    param_list = [
-        param_dict[k] for k in sorted(params_space.keys())
+    point_as_list = [
+        point_as_dict[k] for k in sorted(search_space.keys())
     ]
-    return param_list
+    return point_as_list
 

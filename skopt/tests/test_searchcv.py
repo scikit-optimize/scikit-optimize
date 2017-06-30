@@ -1,43 +1,38 @@
-"""This script contains set of functions that test scikit-optimize
-based implementation of parameter search with interface similar to
-those of GridSearchCV
+"""Test scikit-optimize based implementation of hyperparameter
+search with interface similar to those of GridSearchCV
 """
+
+import pytest
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
-import pytest
+from sklearn.datasets import load_iris
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
 
-# Extract available surrogates, so that new ones are used automatically
-from test_optimizer import ESTIMATOR_STRINGS
-
-# None means to use default surrogate
-available_surrogates = [ESTIMATOR_STRINGS[0], None]
+from skopt.space import Real, Categorical, Integer
+from skopt import BayesSearchCV
 
 
-@pytest.mark.parametrize("surrogate", available_surrogates)
+@pytest.mark.parametrize("surrogate", ['gp', None])
 @pytest.mark.parametrize("n_jobs", [1, -1])  # test sequential and parallel
 def test_searchcv_runs(surrogate, n_jobs):
     """
-    Tests whether the cross validation search wrapper around sklearn
+    Test whether the cross validation search wrapper around sklearn
     models runs properly with available surrogates and with single
     or multiple workers.
 
     Parameters
     ----------
 
-    * `surrogate` [scikit-optimize surrogate class]:
-        A class of the scikit-optimize surrogate used.
+    * `surrogate` [str or None]:
+        A class of the scikit-optimize surrogate used. None means
+        to use default surrogate.
 
     * `n_jobs` [int]:
         Number of parallel processes to use for computations.
 
     """
-    from skopt.space import Real, Categorical, Integer
-    from skopt import BayesSearchCV
-
-    from sklearn.datasets import load_iris
-    from sklearn.svm import SVC
-    from sklearn.model_selection import train_test_split
 
     X, y = load_iris(True)
     X_train, X_test, y_train, y_test = train_test_split(

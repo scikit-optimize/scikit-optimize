@@ -1,13 +1,13 @@
-from skopt import Optimizer
-from skopt.utils import params_asdict, dims_aslist
+from collections import defaultdict
+
+import numpy as np
 
 from sklearn.base import clone
 from sklearn.externals.joblib import Parallel, delayed, cpu_count
 import sklearn.model_selection._search as sk_model_sel
 
-import numpy as np
-from collections import defaultdict
-
+from skopt import Optimizer
+from skopt.utils import point_asdict, dimensions_aslist
 
 class BayesSearchCV(sk_model_sel.BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -288,7 +288,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         """
 
         kwargs = self.optimizer_kwargs.copy()
-        kwargs['dimensions'] = dims_aslist(params_space)
+        kwargs['dimensions'] = dimensions_aslist(params_space)
         optimizer = Optimizer(**kwargs)
 
         return optimizer
@@ -338,7 +338,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
 
         # get parameter values to evaluate
         params = optimizer.ask(n_points=n_jobs)
-        params_dict = [params_asdict(param_space, p) for p in params]
+        params_dict = [point_asdict(param_space, p) for p in params]
 
         # self.cv_results_ is reset at every call to _fit, keep current
         all_cv_results = self.cv_results_
