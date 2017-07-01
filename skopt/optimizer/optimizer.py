@@ -167,7 +167,7 @@ class Optimizer(object):
         self.n_jobs = n_jobs
 
         if base_estimator == "gp":
-            transformed_dims = transform_gpdims(dimensions)
+            transformed_dims = transform_gpdims(self.space.dimensions)
             self.space = Space(transformed_dims)
         else:
             self.space = Space(dimensions)
