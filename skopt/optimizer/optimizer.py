@@ -200,7 +200,7 @@ class Optimizer(object):
         self.cache_ = {}
 
     def _check_arguments(self, base_estimator, n_initial_points,
-                         acq_optimizer):
+                         acq_optimizer, space):
         """Check arguments for sanity."""
 
         if isinstance(base_estimator, str):
