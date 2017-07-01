@@ -129,7 +129,9 @@ class Optimizer(object):
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
-                 random_state=None, acq_func_kwargs=None,
+                 random_state=None,
+                 acq_func_kwargs=None,
+                 space=None,
                  acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
@@ -164,7 +166,7 @@ class Optimizer(object):
         self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
         self.n_jobs = n_jobs
 
-        if base_estimator == "GP":
+        if base_estimator == "gp":
             transformed_dims = transform_gpdims(dimensions)
             self.space = Space(transformed_dims)
         else:
