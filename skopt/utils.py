@@ -15,6 +15,8 @@ from .learning.gaussian_process.kernels import ConstantKernel
 from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
+from .space import check_dimension
+
 __all__ = (
     "load",
     "dump",
