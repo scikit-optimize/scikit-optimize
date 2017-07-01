@@ -163,7 +163,7 @@ class Optimizer(object):
                           DeprecationWarning)
             n_initial_points = n_random_starts
 
-        self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
+        self._check_arguments(base_estimator, n_initial_points, acq_optimizer, space)
         self.n_jobs = n_jobs
 
         if base_estimator == "gp":
