@@ -167,9 +167,9 @@ class Optimizer(object):
         self.n_jobs = n_jobs
 
         self.space = Space(dimensions)
-        if base_estimator == "GP":
-            transformed_dims = transform_gpdims(dimensions)
-            self.space = Space(transformed_dims)
+        # if base_estimator == "GP":
+        #     transformed_dims = transform_gpdims(dimensions)
+        #     self.space = Space(transformed_dims)
 
         self.models = []
         self.Xi = []
@@ -241,7 +241,6 @@ class Optimizer(object):
         """
 
         optimizer = Optimizer(
-            space=self.space,
             dimensions=self.space.dimensions,
             base_estimator=self.base_estimator_,
             n_initial_points=self.n_initial_points_,
