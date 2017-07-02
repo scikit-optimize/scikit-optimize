@@ -146,7 +146,7 @@ def test_exhaust_initial_calls():
 @pytest.mark.fast_test
 def test_optimizer_base_estimator_string_invalid():
     with pytest.raises(ValueError) as e:
-        opt = Optimizer([(-2.0, 2.0)], space, base_estimator="rtr",
+        opt = Optimizer([(-2.0, 2.0)], base_estimator="rtr",
                         n_initial_points=1)
     assert "'RF', 'ET' or 'GP'" in str(e.value)
 
@@ -155,5 +155,5 @@ def test_optimizer_base_estimator_string_invalid():
 @pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
 def test_optimizer_base_estimator_string_smoke(base_estimator):
     opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
-                    n_initial_points=1, space, acq_func="EI")
+                    n_initial_points=1, acq_func="EI")
     opt.run(func=lambda x: x[0]**2, n_iter=3)
