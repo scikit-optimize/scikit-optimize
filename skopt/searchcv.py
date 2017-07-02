@@ -276,7 +276,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
             # account for the case when search space is a dict
             if isinstance(search_spaces, dict):
                 search_spaces = [search_spaces]
-            self.add_spaces(search_spaces, range(len(search_spaces)))
+            self.add_spaces(range(len(search_spaces)), search_spaces)
 
         self.n_iter = n_iter
         self.random_state = random_state
@@ -348,7 +348,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
                 "Search space should be provided as a dict or list of dict,"
                 "got %s" % search_space)
 
-    def add_spaces(self, spaces, names):
+    def add_spaces(self, names, spaces):
 
         self._check_search_space(spaces)
 
