@@ -42,6 +42,15 @@ def test_searchcv_runs(surrogate, n_jobs):
     # None search space is only supported when only `step` function is used
     assert_raises(ValueError, BayesSearchCV(SVC(), None).fit, (X, y))
 
+    # check if invalid dimensions are raising errors
+    def constructor(x): BayesSearchCV(*x)
+    assert_raises(
+        ValueError, constructor, (SVC(), {'C':'1 ... 100.0'})
+    )
+    assert_raises(
+        TypeError, constructor, (SVC(), ['C', (1.0, 1)])
+    )
+
     # create an instance of a surrogate if it is not a string
     if surrogate is not None:
         optimizer_kwargs = {'base_estimator': surrogate}
@@ -65,6 +74,7 @@ def test_searchcv_runs(surrogate, n_jobs):
     # this normally does not hold only if something is wrong
     # with the optimizaiton procedure as such
     assert_greater(opt.score(X_test, y_test), 0.9)
+
 
 def test_searchcv_runs_multiple_subspaces():
     """

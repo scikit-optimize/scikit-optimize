@@ -8,7 +8,7 @@ import sklearn.model_selection._search as sk_model_sel
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist
-from .space import Dimension
+from .space import check_dimension
 
 class BayesSearchCV(sk_model_sel.BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -36,12 +36,14 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    search_spaces : dict, list of dict or list of tuple containing (dict, int)
-        One of 3 following cases:
+    search_spaces : dict, list of dict or list of tuple containing
+        (dict, int), or None.
+        One of 4 following cases:
         1. dictionary, where keys are parameter names (strings)
         and values are skopt.space.Dimension instances (Real, Integer
-        or Categorical). Represents search space over parameters
-        of the provided estimator.
+        or Categorical) or any other valid value that defines skopt
+        dimension (see skopt.Optimizer docs). Represents search space
+        over parameters of the provided estimator.
         2. list of dictionaries: a list of dictionaries, where every
         dictionary fits the description given in case 1 above.
         If a list of dictionary objects is given, then the search is
@@ -52,6 +54,8 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         some search subspace, similarly as in case 2, and second element
         is a number of iterations that will be spent optimizing over
         this subspace.
+        4. None, in which case it is assumed that a user will provide
+        search space via the `add_spaces` function.
 
     n_iter : int, default=128
         Number of parameter settings that are sampled. n_iter trades
@@ -256,7 +260,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
+    def __init__(self, estimator, search_spaces=None, optimizer_kwargs=None,
                  n_iter=256, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
@@ -338,13 +342,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
             # 2. check all the dicts for correctness of contents
             for subspace in dicts_only:
                 for k, v in subspace.items():
-                    if not isinstance(v, Dimension):
-                        raise TypeError(
-                            "Parameter of space should be an instance of"
-                            "skopt.space.Dimension (Real, Integer, ...),"
-                            "but in subspace %s the dimension %s is %s" %
-                            (subspace, k, v)
-                        )
+                    check_dimension(v)
         else:
             raise TypeError(
                 "Search space should be provided as a dict or list of dict,"
@@ -544,4 +542,3 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
                     groups=groups, n_jobs=n_jobs_adjusted
                 )
                 n_iter -= n_jobs
-                print(n_iter)
