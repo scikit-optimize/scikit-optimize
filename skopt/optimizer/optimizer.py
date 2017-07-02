@@ -22,6 +22,7 @@ from ..space import Space
 from ..utils import create_result
 from ..utils import cook_estimator
 from ..utils import has_gradients
+from ..utils import transform_gpdims
 
 
 class Optimizer(object):
@@ -128,7 +129,9 @@ class Optimizer(object):
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
-                 random_state=None, acq_func_kwargs=None,
+                 random_state=None,
+                 acq_func_kwargs=None,
+                 space=None,
                  acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
@@ -154,7 +157,20 @@ class Optimizer(object):
         n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
+        if n_random_starts is not None:
+            warnings.warn(("n_random_starts will be removed in favour of "
+                           "n_initial_points."),
+                          DeprecationWarning)
+            n_initial_points = n_random_starts
+
+        self._check_arguments(base_estimator, n_initial_points, acq_optimizer, space)
+        self.n_jobs = n_jobs
+
         self.space = Space(dimensions)
+        # if base_estimator == "GP":
+        #     transformed_dims = transform_gpdims(dimensions)
+        #     self.space = Space(transformed_dims)
+
         self.models = []
         self.Xi = []
         self.yi = []
@@ -167,14 +183,14 @@ class Optimizer(object):
             else:
                 self._non_cat_inds.append(ind)
 
-        if n_random_starts is not None:
-            warnings.warn(("n_random_starts will be removed in favour of "
-                           "n_initial_points."),
-                          DeprecationWarning)
-            n_initial_points = n_random_starts
-
-        self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
-        self.n_jobs = n_jobs
+        # if n_random_starts is not None:
+        #     warnings.warn(("n_random_starts will be removed in favour of "
+        #                    "n_initial_points."),
+        #                   DeprecationWarning)
+        #     n_initial_points = n_random_starts
+        #
+        # self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
+        # self.n_jobs = n_jobs
 
         # The cache of responses of `ask` method for n_points not None.
         # This ensures that multiple calls to `ask` with n_points set
@@ -183,7 +199,7 @@ class Optimizer(object):
         self.cache_ = {}
 
     def _check_arguments(self, base_estimator, n_initial_points,
-                         acq_optimizer):
+                         acq_optimizer, space):
         """Check arguments for sanity."""
 
         if isinstance(base_estimator, str):

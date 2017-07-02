@@ -12,6 +12,7 @@ from ..space import check_dimension
 from ..space import Categorical
 from ..space import Space
 from ..utils import cook_estimator
+from ..utils import transform_gpdims
 
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
@@ -205,26 +206,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
     """
     # Check params
     rng = check_random_state(random_state)
-
-    dim_types = [check_dimension(d) for d in dimensions]
-    is_cat = all([isinstance(check_dimension(d), Categorical)
-                  for d in dim_types])
-    if is_cat:
-        transformed_dims = [check_dimension(d, transform="identity")
-                            for d in dimensions]
-    else:
-        transformed_dims = []
-        for dim_type, dim in zip(dim_types, dimensions):
-            if isinstance(dim_type, Categorical):
-                transformed_dims.append(
-                    check_dimension(dim, transform="onehot")
-                    )
-            # To make sure that GP operates in the [0, 1] space
-            else:
-                transformed_dims.append(
-                    check_dimension(dim, transform="normalize")
-                    )
-
+    transformed_dims = transform_gpdims(dimensions)
     space = Space(transformed_dims)
     base_estimator = cook_estimator("GP", space=space, random_state=rng, noise=noise)
 
