@@ -50,12 +50,12 @@ def test_searchcv_runs(surrogate, n_jobs):
 
     opt = BayesSearchCV(
         SVC(),
-        [{
+        {
             'C': Real(1e-6, 1e+6, prior='log-uniform'),
             'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
             'degree': Integer(1, 8),
             'kernel': Categorical(['linear', 'poly', 'rbf']),
-        }],
+        },
         n_jobs=n_jobs, n_iter=11,
         optimizer_kwargs=optimizer_kwargs
     )
@@ -65,3 +65,32 @@ def test_searchcv_runs(surrogate, n_jobs):
     # this normally does not hold only if something is wrong
     # with the optimizaiton procedure as such
     assert_greater(opt.score(X_test, y_test), 0.9)
+
+def test_searchcv_runs_multiple_subspaces():
+    """
+    Test whether the BayesSearchCV runs without exceptions when
+    multiple subspaces are given.
+    """
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    opt = BayesSearchCV(
+        SVC(),
+        [
+            ({
+                'C': Real(1e-6, 1e+6, prior='log-uniform'),
+                'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            },10),
+            {
+                'degree': Integer(1, 8),
+                'kernel': Categorical(['linear', 'poly', 'rbf']),
+            }
+        ],
+        n_iter=10
+    )
+
+    opt.fit(X_train, y_train)
+
