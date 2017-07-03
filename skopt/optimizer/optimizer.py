@@ -124,7 +124,7 @@ class Optimizer(object):
         to sample points, bounds, and type of parameters.
 
     """
-    def __init__(self, dimensions, base_estimator="gp",
+    def __init__(self, dimensions, base_estimator="GP",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
@@ -154,6 +154,8 @@ class Optimizer(object):
         n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
+        if base_estimator == "GP":
+            dimensions = transform_gpdims(dimensions)
         self.space = Space(dimensions)
         self.models = []
         self.Xi = []
