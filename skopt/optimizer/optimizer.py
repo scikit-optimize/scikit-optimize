@@ -22,6 +22,7 @@ from ..space import Space
 from ..utils import create_result
 from ..utils import cook_estimator
 from ..utils import has_gradients
+from ..utils import transform_gpdims
 
 
 class Optimizer(object):
