@@ -302,8 +302,6 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         raise ValueError("base_estimator has to be a regressor.")
 
     if base_estimator == "GP":
-        if space is not None:
-
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
         if is_cat:
             other_kernel = HammingKernel(length_scale=np.ones(n_dims))
