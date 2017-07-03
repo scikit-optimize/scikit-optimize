@@ -348,21 +348,53 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
                 "Search space should be provided as a dict or list of dict,"
                 "got %s" % search_space)
 
-    def add_spaces(self, names, spaces):
+    def add_spaces(self, names, search_spaces):
+        """
+        Add a parameter search space over which to search for parameter
+        values. Naming of search subspaces is necessary in order to specify
+        for the `step` function over which subspace to perform search step.
 
-        self._check_search_space(spaces)
+        names: str or list of str
+            Define names for the parameter search subspaces.
+            if search_spaces is a single dict, then names should be str
+            representing name of the single search subspace.
+            if search_spaces is a list of dicts, defines names for every
+            search subspace in the list.
 
-        if not isinstance(spaces, list):
-            spaces = [spaces]
+        search_spaces : dict, list of dict or list of tuple (dict, int)
+            Define search subspaces over which to search for parameters
+            of the model.
+            One of 3 following cases:
+            1. dictionary, where keys are parameter names (strings)
+            and values are skopt.space.Dimension instances (Real, Integer
+            or Categorical) or any other valid value that defines skopt
+            dimension (see skopt.Optimizer docs). Represents search space
+            over parameters of the provided estimator.
+            2. list of dictionaries: a list of dictionaries, where every
+            dictionary fits the description given in case 1 above.
+            If a list of dictionary objects is given, then the search is
+            performed sequentially for every parameter space with maximum
+            number of evaluations set to self.n_iter.
+            3. list of (dict, int > 0): an extension of case 2 above,
+            where first element of every tuple is a dictionary representing
+            some search subspace, similarly as in case 2, and second element
+            is a number of iterations that will be spent optimizing over
+            this subspace.
+        """
+
+        self._check_search_space(search_spaces)
+
+        if not isinstance(search_spaces, list):
+            search_spaces = [search_spaces]
         if not isinstance(names, list):
             names = [names]
 
         # first check whether space already exits ...
-        for space, name in zip(spaces, names):
+        for space, name in zip(search_spaces, names):
             if name in self.search_spaces_:
                 raise ValueError("Search space %s already exists!" % name)
 
-        for space, name in zip(spaces, names):
+        for space, name in zip(search_spaces, names):
             self.search_spaces_[name] = space
 
     def _fit_best_model(self, X, y):

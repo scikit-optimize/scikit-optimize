@@ -43,13 +43,11 @@ def test_searchcv_runs(surrogate, n_jobs):
     assert_raises(ValueError, BayesSearchCV(SVC(), None).fit, (X, y))
 
     # check if invalid dimensions are raising errors
-    def constructor(x): BayesSearchCV(*x)
-    assert_raises(
-        ValueError, constructor, (SVC(), {'C':'1 ... 100.0'})
-    )
-    assert_raises(
-        TypeError, constructor, (SVC(), ['C', (1.0, 1)])
-    )
+    with pytest.raises(ValueError):
+        BayesSearchCV(SVC(), {'C':'1 ... 100.0'})
+
+    with pytest.raises(TypeError):
+        BayesSearchCV(SVC(), ['C', (1.0, 1)])
 
     # create an instance of a surrogate if it is not a string
     if surrogate is not None:
