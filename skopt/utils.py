@@ -17,6 +17,9 @@ from .learning.gaussian_process.kernels import ConstantKernel
 from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
+from ..space import check_dimension
+from ..space import Categorical
+
 __all__ = (
     "load",
     "dump",
@@ -299,6 +302,8 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         raise ValueError("base_estimator has to be a regressor.")
 
     if base_estimator == "GP":
+        if space is not None:
+
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
         if is_cat:
             other_kernel = HammingKernel(length_scale=np.ones(n_dims))
@@ -327,6 +332,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     base_estimator.set_params(**kwargs)
     return base_estimator
 
+<<<<<<< HEAD
 
 def dimensions_aslist(search_space):
     """Convert a dict representation of a search space into a list of
@@ -421,3 +427,45 @@ def point_aslist(search_space, point_as_dict):
         point_as_dict[k] for k in sorted(search_space.keys())
     ]
     return point_as_list
+=======
+def transform_gpdims(dimensions):
+    """
+    Transforms space for Gaussian processes.
+
+    Parameters
+    ----------
+    * `dimensions` [list, shape=(n_dims,)]:
+        List of search space dimensions.
+        Each search dimension can be defined either as
+
+        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+          dimensions),
+        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+          dimensions),
+        - as a list of categories (for `Categorical` dimensions), or
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
+
+         NOTE: The upper and lower bounds are inclusive for `Integer`
+         dimensions.
+    """
+    dim_types = [check_dimension(d) for d in dimensions]
+    is_cat = all([isinstance(check_dimension(d), Categorical)
+                  for d in dim_types])
+    if is_cat:
+        transformed_dims = [check_dimension(d, transform="identity")
+                            for d in dimensions]
+    else:
+        transformed_dims = []
+        for dim_type, dim in zip(dim_types, dimensions):
+            if isinstance(dim_type, Categorical):
+                transformed_dims.append(
+                    check_dimension(dim, transform="onehot")
+                    )
+            # To make sure that GP operates in the [0, 1] space
+            else:
+                transformed_dims.append(
+                    check_dimension(dim, transform="normalize")
+                    )
+    return transformed_dims
+>>>>>>> Refactoring transformation for gp dimensions for gp_minimize and Optimizer

@@ -22,6 +22,7 @@ from ..utils import create_result
 from ..utils import has_gradients
 from ..utils import is_listlike
 from ..utils import is_2Dlistlike
+from ..utils import normalize_dimensions
 
 
 class Optimizer(object):
@@ -131,7 +132,7 @@ class Optimizer(object):
         to sample points, bounds, and type of parameters.
 
     """
-    def __init__(self, dimensions, base_estimator="gp",
+    def __init__(self, dimensions, base_estimator="GP",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
@@ -165,6 +166,8 @@ class Optimizer(object):
         n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
+        if base_estimator == "GP":
+            dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
         self.models = []
         self.Xi = []
