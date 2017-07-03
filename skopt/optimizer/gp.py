@@ -9,7 +9,6 @@ from ..space import Space
 from ..utils import cook_estimator
 from ..utils import normalize_dimensions
 
-
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
                 acq_func="gp_hedge", acq_optimizer="auto", x0=None, y0=None,
