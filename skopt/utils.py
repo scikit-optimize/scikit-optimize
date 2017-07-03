@@ -17,8 +17,8 @@ from .learning.gaussian_process.kernels import ConstantKernel
 from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
-from ..space import check_dimension
-from ..space import Categorical
+from .space import check_dimension
+from .space import Categorical
 
 __all__ = (
     "load",
