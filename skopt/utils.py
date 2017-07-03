@@ -332,7 +332,6 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     base_estimator.set_params(**kwargs)
     return base_estimator
 
-<<<<<<< HEAD
 
 def dimensions_aslist(search_space):
     """Convert a dict representation of a search space into a list of
@@ -427,8 +426,9 @@ def point_aslist(search_space, point_as_dict):
         point_as_dict[k] for k in sorted(search_space.keys())
     ]
     return point_as_list
-=======
-def transform_gpdims(dimensions):
+
+
+def normalize_dimensions(dimensions):
     """
     Transforms space for Gaussian processes.
 
@@ -468,4 +468,3 @@ def transform_gpdims(dimensions):
                     check_dimension(dim, transform="normalize")
                     )
     return transformed_dims
->>>>>>> Refactoring transformation for gp dimensions for gp_minimize and Optimizer
