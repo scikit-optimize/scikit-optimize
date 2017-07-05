@@ -133,15 +133,24 @@ def test_exhaust_initial_calls(base_estimator):
     assert x1 != x2
     # second call to tell()
     r2 = opt.tell(x2, 4.)
-    assert len(r2.models) == 1
+    if base_estimator.lower() == 'dummy':
+        assert len(r2.models) == 0
+    else:
+        assert len(r2.models) == 1
     # this is the first non-random point
     x3 = opt.ask()
     assert x2 != x3
     x4 = opt.ask()
-    # no new information was added so should be the same
-    assert x3 == x4
     r3 = opt.tell(x3, 1.)
-    assert len(r3.models) == 2
+    # no new information was added so should be the same, unless we are using
+    # the dummy estimator which will forever return random points and never
+    # fits any models
+    if base_estimator.lower() == 'dummy':
+        assert x3 != x4
+        assert len(r3.models) == 0
+    else:
+        assert x3 == x4
+        assert len(r3.models) == 2
 
 
 @pytest.mark.fast_test

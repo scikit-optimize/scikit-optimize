@@ -207,12 +207,8 @@ class Optimizer(object):
 
         if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
             raise ValueError("The regressor {0} should run with "
-<<<<<<< 393d03b61d4e0981316699374b7c80565db166c9
                              "acq_optimizer"
-                             "='sampling'".format(type(base_estimator)))
-=======
-                             "acq_optimizer='sampling'.".format(type(base_estimator)))
->>>>>>> Add support for random "base estimator" in Optimizer
+                             "='sampling'.".format(type(base_estimator)))
 
         self.acq_optimizer = acq_optimizer
 
