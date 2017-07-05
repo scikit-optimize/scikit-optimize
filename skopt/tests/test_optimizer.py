@@ -14,7 +14,8 @@ from scipy.optimize import OptimizeResult
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
-ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "gp", "rf", "et", "gbrt"]
+ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "DUMMY",
+                     "gp", "rf", "et", "gbrt", "dummy"]
 
 
 @pytest.mark.fast_test

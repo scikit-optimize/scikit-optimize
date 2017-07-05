@@ -79,8 +79,8 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
     """
     # all our calls want random suggestions, except if we need to evaluate
     # some initial points
-    if x0 is not None:
-        n_random_calls = n_calls - (len(x0) if not y0 else 0)
+    if x0 is not None and y0 is None:
+        n_random_calls = n_calls - len(x0)
     else:
         n_random_calls = n_calls
 
