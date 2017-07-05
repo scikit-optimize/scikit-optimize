@@ -288,7 +288,7 @@ class Optimizer(object):
                https://hal.archives-ouvertes.fr/hal-00732512/document
 
                With this strategy a copy of optimizer is created, which is
-               then asked for a point, and the point is told to the copy of
+               then ed for a point, and the point is told to the copy of
                optimizer with some fake objective (lie), the next point is
                asked from copy, it is also told to the copy with fake
                objective and so on. The type of lie defines different

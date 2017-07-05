@@ -469,4 +469,6 @@ def normalize_dimensions(dimensions):
                     transformed_dims.append(
                         check_dimension(dim, transform="normalize")
                         )
+    else:
+        transformed_dims = dimensions
     return transformed_dims
