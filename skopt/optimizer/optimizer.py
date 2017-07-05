@@ -24,7 +24,6 @@ from ..utils import is_listlike
 from ..utils import is_2Dlistlike
 from ..utils import normalize_dimensions
 
-
 class Optimizer(object):
     """Run bayesian optimisation loop.
 
