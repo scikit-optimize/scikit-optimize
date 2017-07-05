@@ -446,23 +446,27 @@ def normalize_dimensions(dimensions):
 
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
+    * `estimator` [str, ]:
+        optimization estimator to be used.
+        each estimator may use different transformations for dimensions.
     """
-    dim_types = [check_dimension(d) for d in dimensions]
-    is_cat = all([isinstance(check_dimension(d), Categorical)
-                  for d in dim_types])
-    if is_cat:
-        transformed_dims = [check_dimension(d, transform="identity")
-                            for d in dimensions]
-    else:
-        transformed_dims = []
-        for dim_type, dim in zip(dim_types, dimensions):
-            if isinstance(dim_type, Categorical):
-                transformed_dims.append(
-                    check_dimension(dim, transform="onehot")
-                    )
-            # To make sure that GP operates in the [0, 1] space
-            else:
-                transformed_dims.append(
-                    check_dimension(dim, transform="normalize")
-                    )
+    if estimator == "GP":
+        dim_types = [check_dimension(d) for d in dimensions]
+        is_cat = all([isinstance(check_dimension(d), Categorical)
+                      for d in dim_types])
+        if is_cat:
+            transformed_dims = [check_dimension(d, transform="identity")
+                                for d in dimensions]
+        else:
+            transformed_dims = []
+            for dim_type, dim in zip(dim_types, dimensions):
+                if isinstance(dim_type, Categorical):
+                    transformed_dims.append(
+                        check_dimension(dim, transform="onehot")
+                        )
+                # To make sure that GP operates in the [0, 1] space
+                else:
+                    transformed_dims.append(
+                        check_dimension(dim, transform="normalize")
+                        )
     return transformed_dims
