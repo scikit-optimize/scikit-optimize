@@ -115,10 +115,10 @@ def test_acq_optimizer(base_estimator):
     assert "should run with acq_optimizer='sampling'" in str(e.value)
 
 
-def test_exhaust_initial_calls():
+@pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
+def test_exhaust_initial_calls(base_estimator):
     # check a model is fitted and used to make suggestions after we added
     # at least n_initial_points via tell()
-    base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=2,
                     acq_optimizer="sampling", random_state=1)
 
