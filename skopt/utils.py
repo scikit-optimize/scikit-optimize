@@ -25,7 +25,6 @@ __all__ = (
     "dump",
 )
 
-
 def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
     """
     Initialize an `OptimizeResult` object.
@@ -428,7 +427,10 @@ def point_aslist(search_space, point_as_dict):
 
 def normalize_dimensions(dimensions):
     """
-    Transforms space for Gaussian processes.
+    Normalize all dimensions.
+
+    This is particularly useful for Gaussian process based regressors and is used
+    internally by `gp_minimize.`
 
     Parameters
     ----------
@@ -446,11 +448,20 @@ def normalize_dimensions(dimensions):
 
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
-    * `estimator` [str, ]:
+
+    * `estimator` ["GP", "RF", "ET", "GBRT", or sklearn regressor, default="GP"]:
         optimization estimator to be used.
         each estimator may use different transformations for dimensions.
     """
-    if estimator == "GP":
+    if isinstance(base_estimator, str):
+        base_estimator = base_estimator.upper()
+        if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
+            raise ValueError("Valid strings for base_estimator parameter "
+                             " are: 'RF, 'ET' or 'GP', not %s" % base_estimator)
+        elif not is_regressor(base_estimator):
+            raise ValueError("base_estimator has to be a regressor.")
+
+    if estimator == "GP" or estimator == GaussianProcessRegressor:
         dim_types = [check_dimension(d) for d in dimensions]
         is_cat = all([isinstance(check_dimension(d), Categorical)
                       for d in dim_types])
