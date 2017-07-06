@@ -461,7 +461,7 @@ def normalize_dimensions(dimensions):
     elif not is_regressor(base_estimator):
         raise ValueError("base_estimator has to be a regressor.")
 
-    if estimator == "GP" or estimator == GaussianProcessRegressor:
+    if estimator == "GP":
         dim_types = [check_dimension(d) for d in dimensions]
         is_cat = all([isinstance(check_dimension(d), Categorical)
                       for d in dim_types])
