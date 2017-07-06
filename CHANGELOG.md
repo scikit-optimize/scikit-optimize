@@ -19,6 +19,8 @@ Go forth!
 
 ### API changes
 
+* change interface of GradientBoostingQuantileRegressor's predict method to
+  match return type of other regressors
 * Dimensions of type Real are now inclusive of upper bound.
 
 
