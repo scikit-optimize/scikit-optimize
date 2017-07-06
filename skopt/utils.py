@@ -453,15 +453,15 @@ def normalize_dimensions(dimensions):
         optimization estimator to be used.
         each estimator may use different transformations for dimensions.
     """
-    if isinstance(base_estimator, str):
-        base_estimator = base_estimator.upper()
-        if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
+    if isinstance(estimator, str):
+        estimator = base_estimator.upper()
+        if estimator not in ["GP", "ET", "RF", "GBRT"]:
             raise ValueError("Valid strings for base_estimator parameter "
                              " are: 'RF, 'ET' or 'GP', not %s" % base_estimator)
-    elif not is_regressor(base_estimator):
-        raise ValueError("base_estimator has to be a regressor.")
+    elif not is_regressor(estimator):
+        raise ValueError("estimator has to be a regressor.")
 
-    if estimator == "GP":
+    if estimator == "GP" or estimator == GaussianProcessRegressor: 
         dim_types = [check_dimension(d) for d in dimensions]
         is_cat = all([isinstance(check_dimension(d), Categorical)
                       for d in dim_types])
