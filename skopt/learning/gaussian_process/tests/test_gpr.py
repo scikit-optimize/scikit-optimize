@@ -4,7 +4,6 @@ import pytest
 from scipy import optimize
 
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_almost_equal

@@ -263,7 +263,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         base_estimator = base_estimator.upper()
         if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
             raise ValueError("Valid strings for the base_estimator parameter "
-                             " are: 'RF', 'ET' or 'GP' not %s" % base_estimator)
+                             "are: 'RF', 'ET' or 'GP' not %s" % base_estimator)
     elif not is_regressor(base_estimator):
         raise ValueError("base_estimator has to be a regressor.")
 
@@ -387,4 +387,3 @@ def point_aslist(search_space, point_as_dict):
         point_as_dict[k] for k in sorted(search_space.keys())
     ]
     return point_as_list
-

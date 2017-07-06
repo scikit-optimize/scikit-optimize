@@ -44,7 +44,7 @@ def test_searchcv_runs(surrogate, n_jobs):
 
     # check if invalid dimensions are raising errors
     with pytest.raises(ValueError):
-        BayesSearchCV(SVC(), {'C':'1 ... 100.0'})
+        BayesSearchCV(SVC(), {'C': '1 ... 100.0'})
 
     with pytest.raises(TypeError):
         BayesSearchCV(SVC(), ['C', (1.0, 1)])
@@ -91,7 +91,7 @@ def test_searchcv_runs_multiple_subspaces():
             ({
                 'C': Real(1e-6, 1e+6, prior='log-uniform'),
                 'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            },10),
+            }, 10),
             {
                 'degree': Integer(1, 8),
                 'kernel': Categorical(['linear', 'poly', 'rbf']),
@@ -101,4 +101,3 @@ def test_searchcv_runs_multiple_subspaces():
     )
 
     opt.fit(X_train, y_train)
-

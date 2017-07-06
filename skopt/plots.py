@@ -7,7 +7,6 @@ from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator
 
-from scipy.interpolate import griddata
 from scipy.optimize import OptimizeResult
 
 

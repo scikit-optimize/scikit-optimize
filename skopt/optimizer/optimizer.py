@@ -13,10 +13,6 @@ from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
-from ..learning import ExtraTreesRegressor
-from ..learning import RandomForestRegressor
-from ..learning import GaussianProcessRegressor
-from ..learning import GradientBoostingQuantileRegressor
 from ..space import Categorical
 from ..space import Space
 from ..utils import create_result
@@ -211,7 +207,8 @@ class Optimizer(object):
 
         if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
             raise ValueError("The regressor {0} should run with "
-                             "acq_optimizer='sampling'".format(type(base_estimator)))
+                             "acq_optimizer"
+                             "='sampling'".format(type(base_estimator)))
 
         self.acq_optimizer = acq_optimizer
 
@@ -367,8 +364,8 @@ class Optimizer(object):
 
         * `fit` [bool, default=True]
             Fit a model to observed evaluations of the objective. A model will
-            only be fitted after `n_initial_points` points have been told to the
-            optimizer irrespective of the value of `fit`.
+            only be fitted after `n_initial_points` points have been told to
+            the optimizer irrespective of the value of `fit`.
         """
         # if y isn't a scalar it means we have been handed a batch of points
         if (isinstance(y, Iterable) and all(isinstance(point, Iterable)

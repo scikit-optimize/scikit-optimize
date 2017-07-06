@@ -142,7 +142,8 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
     rng = check_random_state(random_state)
 
     if isinstance(base_estimator, str):
-        base_estimator = cook_estimator(base_estimator, n_jobs=n_jobs, random_state=rng)
+        base_estimator = cook_estimator(base_estimator, n_jobs=n_jobs,
+                                        random_state=rng)
 
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,

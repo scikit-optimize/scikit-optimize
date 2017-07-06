@@ -97,14 +97,14 @@ def test_dict_list_space_representation():
     """
 
     chef_space = {
-        'Cooking time': (0, 1200), # in minutes
+        'Cooking time': (0, 1200),  # in minutes
         'Main ingredient': [
             'cheese', 'cherimoya', 'chicken', 'chard', 'chocolate', 'chicory'
         ],
         'Secondary ingredient': [
             'love', 'passion', 'dedication'
         ],
-        'Cooking temperature': (-273.16, 10000.0) # in Celsius
+        'Cooking temperature': (-273.16, 10000.0)  # in Celsius
     }
 
     opt = Optimizer(dimensions=dimensions_aslist(chef_space))
@@ -115,5 +115,3 @@ def test_dict_list_space_representation():
         point,
         point_aslist(chef_space, point_asdict(chef_space, point))
     )
-
-
