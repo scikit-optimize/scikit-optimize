@@ -110,8 +110,8 @@ def test_returns_result_object():
 @pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
 def test_acq_optimizer(base_estimator):
     with pytest.raises(ValueError) as e:
-        opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
-                        n_initial_points=1, acq_optimizer='lbfgs')
+        Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
+                  n_initial_points=1, acq_optimizer='lbfgs')
     assert "should run with acq_optimizer='sampling'" in str(e.value)
 
 
@@ -146,8 +146,8 @@ def test_exhaust_initial_calls():
 @pytest.mark.fast_test
 def test_optimizer_base_estimator_string_invalid():
     with pytest.raises(ValueError) as e:
-        opt = Optimizer([(-2.0, 2.0)], base_estimator="rtr",
-                        n_initial_points=1)
+        Optimizer([(-2.0, 2.0)], base_estimator="rtr",
+                  n_initial_points=1)
     assert "'RF', 'ET' or 'GP'" in str(e.value)
 
 

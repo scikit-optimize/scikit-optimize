@@ -3,12 +3,13 @@ from collections import defaultdict
 import numpy as np
 
 from sklearn.base import clone
-from sklearn.externals.joblib import Parallel, delayed, cpu_count
+from sklearn.externals.joblib import cpu_count
 import sklearn.model_selection._search as sk_model_sel
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist
 from .space import check_dimension
+
 
 class BayesSearchCV(sk_model_sel.BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -272,7 +273,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         self.search_spaces_ = {}
 
         # can be None if user intends to provide spaces later manually
-        if not search_spaces is None:
+        if search_spaces is not None:
             # account for the case when search space is a dict
             if isinstance(search_spaces, dict):
                 search_spaces = [search_spaces]
@@ -501,7 +502,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
 
         # record performances with different points
         refit = self.refit
-        self.refit = False # do not fit yet - will be fit later
+        self.refit = False  # do not fit yet - will be fit later
         self._fit(X, y, groups, params_dict)
         self.refit = refit
 

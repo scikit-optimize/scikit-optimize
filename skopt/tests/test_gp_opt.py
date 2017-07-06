@@ -47,7 +47,8 @@ def test_gp_minimize_bench3(search, acq):
 
 
 @pytest.mark.fast_test
-@pytest.mark.parametrize("search, acq", list(product(["sampling"], ["LCB", "EI"])))
+@pytest.mark.parametrize("search, acq",
+                         list(product(["sampling"], ["LCB", "EI"])))
 def test_gp_minimize_bench4(search, acq):
     check_minimize(bench4, 0.0,
                    [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)
@@ -67,6 +68,5 @@ def test_n_jobs():
 @pytest.mark.fast_test
 def test_gpr_default():
     """Smoke test that gp_minimize does not fail for default values."""
-    gpr = GaussianProcessRegressor()
-    res = gp_minimize(
-        branin, ((-5.0, 10.0), (0.0, 15.0)), n_random_starts=1, n_calls=2)
+    gp_minimize(branin, ((-5.0, 10.0), (0.0, 15.0)), n_random_starts=1,
+                n_calls=2)

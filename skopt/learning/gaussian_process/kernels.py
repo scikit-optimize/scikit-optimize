@@ -314,7 +314,8 @@ class DotProduct(Kernel, sk_DotProduct):
         return np.asarray(X_train)
 
 
-class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, Kernel):
+class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin,
+                    Kernel):
     """
     The HammingKernel is used to handle categorical inputs.
 
@@ -408,9 +409,11 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin, Kernel):
 
         # dK / dL computation
         if anisotropic:
-            grad = -np.expand_dims(kernel_prod, axis=-1) * np.array(indicator, dtype=np.float32)
+            grad = (-np.expand_dims(kernel_prod, axis=-1) *
+                    np.array(indicator, dtype=np.float32))
         else:
-            grad = -np.expand_dims(kernel_prod * np.sum(indicator, axis=2), axis=-1)
+            grad = -np.expand_dims(kernel_prod * np.sum(indicator, axis=2),
+                                   axis=-1)
 
         grad *= length_scale
         if eval_gradient:
