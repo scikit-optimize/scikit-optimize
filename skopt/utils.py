@@ -456,8 +456,8 @@ def normalize_dimensions(dimensions):
     if isinstance(estimator, str):
         estimator = estimator.upper()
         if estimator not in ["GP", "ET", "RF", "GBRT"]:
-            raise ValueError("Valid strings for base_estimator parameter "
-                             " are: 'RF, 'ET' or 'GP', not %s" % base_estimator)
+            raise ValueError("Valid strings for estimator parameter "
+                             " are: 'RF, 'ET' or 'GP', not %s" % estimator)
     elif not is_regressor(estimator):
         raise ValueError("estimator has to be a regressor.")
 
@@ -483,87 +483,3 @@ def normalize_dimensions(dimensions):
     else:
         transformed_dims = dimensions
     return transformed_dims
-
-def dimensions_aslist(search_space):
-    """Convert a dict representation of a search space into a list of
-    dimensions, ordered by sorted(search_space.keys()).
-    Parameters
-    ----------
-    search_space : dict
-        Represents search space. The keys are dimension names (strings)
-        and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
-    Returns
-    -------
-    params_space_list: list of skopt.space.Dimension instances.
-        Example output with example inputs:
-            [Real(0,1), Integer(2,4), Real(-1,1)]
-    """
-    params_space_list = [
-        search_space[k] for k in sorted(search_space.keys())
-    ]
-    return params_space_list
-
-
-def point_asdict(search_space, point_as_list):
-    """Convert the list representation of a point from a search space
-    to the dictionary representation, where keys are dimension names
-    and values are corresponding to the values of dimensions in the list.
-    Counterpart to parameters_aslist.
-    Parameters
-    ----------
-    search_space : dict
-        Represents search space. The keys are dimension names (strings)
-        and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
-    point_as_list : list
-        list with parameter values.The order of parameters in the list
-        is given by sorted(params_space.keys()).
-        Example:
-            [0.66, 3, -0.15]
-    Returns
-    -------
-    params_dict: dictionary with parameter names as keys to which
-        corresponding parameter values are assigned.
-        Example output with inputs:
-            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
-    """
-    params_dict = {
-        k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
-    }
-    return params_dict
-
-
-def point_aslist(search_space, point_as_dict):
-    """Convert a dictionary representation of a point from a search space to
-    the list representation. The list of values is created from the values of
-    the dictionary, sorted by the names of dimensions used as keys.
-    Counterpart to parameters_asdict.
-    Parameters
-    ----------
-    search_space : dict
-        Represents search space. The keys are dimension names (strings)
-        and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
-    point_as_dict : dict
-        dict with parameter names as keys to which corresponding
-        parameter values are assigned.
-        Example:
-            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
-    Returns
-    -------
-    point_as_list: list with point values.The order of
-        parameters in the list is given by sorted(params_space.keys()).
-        Example output with example inputs:
-            [0.66, 3, -0.15]
-    """
-    point_as_list = [
-        point_as_dict[k] for k in sorted(search_space.keys())
-    ]
-    return point_as_list
