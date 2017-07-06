@@ -359,7 +359,6 @@ def point_asdict(search_space, point_as_list):
     """Convert the list representation of a point from a search space
     to the dictionary representation, where keys are dimension names
     and values are corresponding to the values of dimensions in the list.
-
     Counterpart to parameters_aslist.
 
     Parameters
@@ -388,41 +387,6 @@ def point_asdict(search_space, point_as_list):
         k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
     }
     return params_dict
-
-
-def point_aslist(search_space, point_as_dict):
-    """Convert a dictionary representation of a point from a search space to
-    the list representation. The list of values is created from the values of
-    the dictionary, sorted by the names of dimensions used as keys.
-
-    Counterpart to parameters_asdict.
-
-    Parameters
-    ----------
-    search_space : dict
-        Represents search space. The keys are dimension names (strings)
-        and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
-
-    point_as_dict : dict
-        dict with parameter names as keys to which corresponding
-        parameter values are assigned.
-        Example:
-            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
-
-    Returns
-    -------
-    point_as_list: list with point values.The order of
-        parameters in the list is given by sorted(params_space.keys()).
-        Example output with example inputs:
-            [0.66, 3, -0.15]
-    """
-    point_as_list = [
-        point_as_dict[k] for k in sorted(search_space.keys())
-    ]
-    return point_as_list
 
 
 def normalize_dimensions(dimensions):
