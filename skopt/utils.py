@@ -390,9 +390,6 @@ def point_asdict(search_space, point_as_list):
     return params_dict
 
 
-<<<<<<< HEAD
-def normalize_dimensions(dimensions):
-=======
 def point_aslist(search_space, point_as_dict):
     """Convert a dictionary representation of a point from a search space to
     the list representation. The list of values is created from the values of
@@ -428,8 +425,7 @@ def point_aslist(search_space, point_as_dict):
     return point_as_list
 
 
-def normalize_dimensions(dimensions, base_estimator="GP"):
->>>>>>> swapping argument name for consistency and matching error statements.
+def normalize_dimensions(dimensions):
     """
     Normalize all dimensions.
 
@@ -460,8 +456,8 @@ def normalize_dimensions(dimensions, base_estimator="GP"):
     if isinstance(base_estimator, str):
         base_estimator = base_estimator.upper()
         if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
-            raise ValueError("Valid strings for the base_estimator parameter are: \
-                              'RF', 'ET','GBRT', or 'GP', not %s." % base_estimator)
+            raise ValueError("Valid strings for the base_estimator parameter \
+                              are: 'RF', 'ET','GBRT', or 'GP'.")
     elif not is_regressor(base_estimator):
         raise ValueError("base_estimator has to be a regressor.")
 
