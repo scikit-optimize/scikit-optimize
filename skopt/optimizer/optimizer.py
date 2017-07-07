@@ -131,7 +131,7 @@ class Optimizer(object):
         to sample points, bounds, and type of parameters.
 
     """
-    def __init__(self, dimensions, base_estimator="GP",
+    def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
@@ -197,7 +197,6 @@ class Optimizer(object):
 
         self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
         self.n_jobs = n_jobs
-
 
         # The cache of responses of `ask` method for n_points not None.
         # This ensures that multiple calls to `ask` with n_points set
