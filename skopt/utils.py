@@ -390,7 +390,46 @@ def point_asdict(search_space, point_as_list):
     return params_dict
 
 
+<<<<<<< HEAD
 def normalize_dimensions(dimensions):
+=======
+def point_aslist(search_space, point_as_dict):
+    """Convert a dictionary representation of a point from a search space to
+    the list representation. The list of values is created from the values of
+    the dictionary, sorted by the names of dimensions used as keys.
+
+    Counterpart to parameters_asdict.
+
+    Parameters
+    ----------
+    search_space : dict
+        Represents search space. The keys are dimension names (strings)
+        and values are instances of classes that inherit from the class
+        skopt.space.Dimension (Real, Integer or Categorical)
+        Example:
+            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
+
+    point_as_dict : dict
+        dict with parameter names as keys to which corresponding
+        parameter values are assigned.
+        Example:
+            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+
+    Returns
+    -------
+    point_as_list: list with point values.The order of
+        parameters in the list is given by sorted(params_space.keys()).
+        Example output with example inputs:
+            [0.66, 3, -0.15]
+    """
+    point_as_list = [
+        point_as_dict[k] for k in sorted(search_space.keys())
+    ]
+    return point_as_list
+
+
+def normalize_dimensions(dimensions, base_estimator="GP"):
+>>>>>>> swapping argument name for consistency and matching error statements.
     """
     Normalize all dimensions.
 
@@ -414,19 +453,19 @@ def normalize_dimensions(dimensions):
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
 
-    * `estimator` ["GP", "RF", "ET", "GBRT", or sklearn regressor, default="GP"]:
+    * `base_estimator` ["GP", "RF", "ET", "GBRT", or sklearn regressor, default="GP"]:
         optimization estimator to be used.
         each estimator may use different transformations for dimensions.
     """
-    if isinstance(estimator, str):
-        estimator = estimator.upper()
-        if estimator not in ["GP", "ET", "RF", "GBRT"]:
-            raise ValueError("Valid strings for the estimator parameter are: \
-                              'RF', 'ET', 'GBRT', or 'GP', not %s" % estimator)
-    elif not is_regressor(estimator):
-        raise ValueError("estimator has to be a regressor.")
+    if isinstance(base_estimator, str):
+        base_estimator = base_estimator.upper()
+        if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
+            raise ValueError("Valid strings for the base_estimator parameter are: \
+                              'RF', 'ET','GBRT', or 'GP', not %s." % base_estimator)
+    elif not is_regressor(base_estimator):
+        raise ValueError("base_estimator has to be a regressor.")
 
-    if estimator == "GP" or estimator == GaussianProcessRegressor:
+    if base_estimator == "GP" or base_estimator == GaussianProcessRegressor:
         dim_types = [check_dimension(d) for d in dimensions]
         is_cat = all([isinstance(check_dimension(d), Categorical)
                       for d in dim_types])
