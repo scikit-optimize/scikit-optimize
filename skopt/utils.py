@@ -457,7 +457,7 @@ def normalize_dimensions(dimensions):
         base_estimator = base_estimator.upper()
         if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
             raise ValueError("Valid strings for the base_estimator parameter "
-                   "are: 'RF', 'ET', 'GBRT', or 'GP'.")
+                             "are: 'RF', 'ET', 'GBRT', or 'GP'.")
     elif not is_regressor(base_estimator):
         raise ValueError("base_estimator has to be a regressor.")
 
