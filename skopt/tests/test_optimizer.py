@@ -14,7 +14,8 @@ from scipy.optimize import OptimizeResult
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
-ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "gp", "rf", "et", "gbrt"]
+ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "DUMMY",
+                     "gp", "rf", "et", "gbrt", "dummy"]
 
 
 @pytest.mark.fast_test
@@ -115,10 +116,10 @@ def test_acq_optimizer(base_estimator):
     assert "should run with acq_optimizer='sampling'" in str(e.value)
 
 
-def test_exhaust_initial_calls():
+@pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
+def test_exhaust_initial_calls(base_estimator):
     # check a model is fitted and used to make suggestions after we added
     # at least n_initial_points via tell()
-    base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=2,
                     acq_optimizer="sampling", random_state=1)
 
@@ -132,15 +133,24 @@ def test_exhaust_initial_calls():
     assert x1 != x2
     # second call to tell()
     r2 = opt.tell(x2, 4.)
-    assert len(r2.models) == 1
+    if base_estimator.lower() == 'dummy':
+        assert len(r2.models) == 0
+    else:
+        assert len(r2.models) == 1
     # this is the first non-random point
     x3 = opt.ask()
     assert x2 != x3
     x4 = opt.ask()
-    # no new information was added so should be the same
-    assert x3 == x4
     r3 = opt.tell(x3, 1.)
-    assert len(r3.models) == 2
+    # no new information was added so should be the same, unless we are using
+    # the dummy estimator which will forever return random points and never
+    # fits any models
+    if base_estimator.lower() == 'dummy':
+        assert x3 != x4
+        assert len(r3.models) == 0
+    else:
+        assert x3 == x4
+        assert len(r3.models) == 2
 
 
 @pytest.mark.fast_test
@@ -148,7 +158,7 @@ def test_optimizer_base_estimator_string_invalid():
     with pytest.raises(ValueError) as e:
         Optimizer([(-2.0, 2.0)], base_estimator="rtr",
                   n_initial_points=1)
-    assert "'RF', 'ET' or 'GP'" in str(e.value)
+    assert "'RF', 'ET', 'GP', 'GBRT' or 'DUMMY'" in str(e.value)
 
 
 @pytest.mark.fast_test

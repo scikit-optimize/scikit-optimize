@@ -239,15 +239,20 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     """
     Cook a default estimator.
 
+    For the special base_estimator called "DUMMY" the return value is None.
+    This corresponds to sampling points at random, hence there is no need
+    for an estimator.
+
     Parameters
     ----------
-    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
+    * `base_estimator` ["GP", "RF", "ET", "GBRT", "DUMMY"
+                        or sklearn regressor, default="GP"]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
-        If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
-        surrogate model of the corresponding type is used corresponding to what
-        is used in the minimize functions.
+        If base_estimator is one of ["GP", "RF", "ET", "GBRT", "DUMMY"], a
+        surrogate model corresponding to the relevant `X_minimize` function
+        is created.
 
     * `space` [Space instance]:
         Has to be provided if the base_estimator is a gaussian process.
@@ -261,9 +266,10 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         is_cat = space.is_categorical
     if isinstance(base_estimator, str):
         base_estimator = base_estimator.upper()
-        if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
+        if base_estimator not in ["GP", "ET", "RF", "GBRT", "DUMMY"]:
             raise ValueError("Valid strings for the base_estimator parameter "
-                             "are: 'RF', 'ET' or 'GP' not %s" % base_estimator)
+                             " are: 'RF', 'ET', 'GP', 'GBRT' or 'DUMMY' not "
+                             "%s." % base_estimator)
     elif not is_regressor(base_estimator):
         raise ValueError("base_estimator has to be a regressor.")
 
@@ -289,6 +295,9 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     elif base_estimator == "GBRT":
         gbrt = GradientBoostingRegressor(n_estimators=30, loss="quantile")
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt)
+
+    elif base_estimator == "DUMMY":
+        return None
 
     base_estimator.set_params(**kwargs)
     return base_estimator

@@ -185,7 +185,7 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=self.space, random_state=self.rng)
-        if not is_regressor(base_estimator):
+        if not is_regressor(base_estimator) and base_estimator is not None:
             raise ValueError("%s has to be a regressor." % base_estimator)
         self.base_estimator_ = base_estimator
 
@@ -208,7 +208,7 @@ class Optimizer(object):
         if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
-                             "='sampling'".format(type(base_estimator)))
+                             "='sampling'.".format(type(base_estimator)))
 
         self.acq_optimizer = acq_optimizer
 
@@ -304,7 +304,7 @@ class Optimizer(object):
             if strategy == "cl_min":
                 y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
             elif strategy == "cl_mean":
-                y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-max lie
+                y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
             opt.tell(x, y_lie)  # lie to the optimizer
@@ -320,7 +320,7 @@ class Optimizer(object):
         observations have been `tell`ed, after that `base_estimator` is used
         to determine the next point.
         """
-        if self._n_initial_points > 0:
+        if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
             return self.space.rvs(random_state=self.rng)[0]
@@ -395,7 +395,8 @@ class Optimizer(object):
 
         # after being "told" n_initial_points we switch from sampling
         # random points to using a surrogate model
-        if fit and self._n_initial_points <= 0:
+        if (fit and self._n_initial_points <= 0 and
+           self.base_estimator_ is not None):
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator_)
 

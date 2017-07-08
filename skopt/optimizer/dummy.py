@@ -1,18 +1,6 @@
 """Random search."""
 
-import copy
-import inspect
-import numbers
-import numpy as np
-
-from collections import Iterable
-from sklearn.utils import check_random_state
-
-from ..callbacks import check_callback
-from ..callbacks import VerboseCallback
-from ..space import Space
-from ..utils import create_result
-from ..utils import eval_callbacks
+from .base import base_minimize
 
 
 def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
@@ -89,73 +77,15 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    # Save call args
-    specs = {"args": copy.copy(inspect.currentframe().f_locals),
-             "function": inspect.currentframe().f_code.co_name}
+    # all our calls want random suggestions, except if we need to evaluate
+    # some initial points
+    if x0 is not None and y0 is None:
+        n_random_calls = n_calls - len(x0)
+    else:
+        n_random_calls = n_calls
 
-    # Check params
-    rng = check_random_state(random_state)
-    space = Space(dimensions)
-
-    if x0 is None:
-        x0 = []
-    elif not isinstance(x0[0], list):
-        x0 = [x0]
-
-    if not isinstance(x0, list):
-        raise ValueError("`x0` should be a list, got %s" % type(x0))
-
-    n_init_func_calls = 0
-    if len(x0) > 0 and y0 is not None:
-        if isinstance(y0, Iterable):
-            y0 = list(y0)
-        elif isinstance(y0, numbers.Number):
-            y0 = [y0]
-        else:
-            raise ValueError("`y0` should be an iterable or a scalar, got %s"
-                             % type(y0))
-        if len(x0) != len(y0):
-            raise ValueError("`x0` and `y0` should have the same length")
-
-        if not all(map(np.isscalar, y0)):
-            raise ValueError("`y0` elements should be scalars")
-
-    elif len(x0) > 0 and y0 is None:
-        y0 = []
-        n_calls -= len(x0)
-        n_init_func_calls = len(x0)
-
-    elif len(x0) == 0 and y0 is not None:
-        raise ValueError("`x0`cannot be `None` when `y0` is provided")
-
-    else:  # len(x0) == 0 and y0 is None
-        y0 = []
-
-    callbacks = check_callback(callback)
-    if verbose:
-        callbacks.append(VerboseCallback(
-            n_init=n_init_func_calls, n_total=n_calls))
-
-    X = x0
-    y = y0
-
-    # Random search
-    X = X + space.rvs(n_samples=n_calls, random_state=rng)
-    first = True
-    result = None
-
-    for i in range(len(y0), len(X)):
-        y_i = func(X[i])
-
-        if first:
-            first = False
-            if not np.isscalar(y_i):
-                raise ValueError("`func` should return a scalar")
-
-        y.append(y_i)
-        result = create_result(X[:i + 1], y, space, rng, specs)
-        if eval_callbacks(callbacks, result):
-            break
-
-    y = np.array(y)
-    return create_result(X, y, space, rng, specs)
+    return base_minimize(func, dimensions, base_estimator="dummy",
+                         n_calls=n_calls, n_random_starts=n_random_calls,
+                         x0=x0, y0=y0, random_state=random_state,
+                         verbose=verbose,
+                         callback=callback)
