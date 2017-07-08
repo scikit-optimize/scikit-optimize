@@ -1,17 +1,13 @@
 """Gaussian process-based minimization algorithms."""
 
-import numpy as np
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..learning import GaussianProcessRegressor
-from ..learning.gaussian_process.kernels import ConstantKernel
-from ..learning.gaussian_process.kernels import HammingKernel
-from ..learning.gaussian_process.kernels import Matern
 from ..space import check_dimension
 from ..space import Categorical
 from ..space import Space
 from ..utils import cook_estimator
+
 
 def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
@@ -91,8 +87,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
           given to these gains can be set by `\eta` through `acq_func_kwargs`.
             - The gains `g_i` are initialized to zero.
             - At every iteration,
-                - Each acquisition function is optimised independently to propose an
-                  candidate point `X_i`.
+                - Each acquisition function is optimised independently to
+                  propose an candidate point `X_i`.
                 - Out of all these candidate points, the next point `X_best` is
                   chosen by `softmax(\eta g_i)`
                 - After fitting the surrogate model with `(X_best, y_best)`,
@@ -229,7 +225,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
                     )
 
     space = Space(transformed_dims)
-    base_estimator = cook_estimator("GP", space=space, random_state=rng, noise=noise)
+    base_estimator = cook_estimator("GP", space=space, random_state=rng,
+                                    noise=noise)
 
     return base_minimize(
         func, dimensions, base_estimator=base_estimator,

@@ -9,11 +9,18 @@ Go forth!
 
 * support early stopping of optimization loop.
 * benchmarking scripts to evaluate performance of different surrogate models.
+* support for parallel evaluations of the objective function via several
+  constant liar stategies.
+* BayesSearchCV as a drop in replacement for scikit-learn's GridSearchCV.
 
 ### Bug fixes
 
+* fixed inference of dimensions of type Real.
+
 ### API changes
 
+* change interface of GradientBoostingQuantileRegressor's predict method to
+  match return type of other regressors
 * Dimensions of type Real are now inclusive of upper bound.
 
 

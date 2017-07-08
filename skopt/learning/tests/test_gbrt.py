@@ -6,7 +6,6 @@ from scipy import stats
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
@@ -30,7 +29,7 @@ def test_gbrt_gaussian():
     rgr = GradientBoostingQuantileRegressor()
     rgr.fit(X, y)
 
-    estimates = rgr.predict(X)
+    estimates = rgr.predict(X, return_quantiles=True)
     assert_almost_equal(stats.norm.ppf(rgr.quantiles),
                         np.mean(estimates, axis=0),
                         decimal=2)
@@ -56,7 +55,7 @@ def test_gbrt_base_estimator():
     rgr = GradientBoostingQuantileRegressor(base_estimator=base)
     rgr.fit(X, y)
 
-    estimates = rgr.predict(X)
+    estimates = rgr.predict(X, return_quantiles=True)
     assert_almost_equal(stats.norm.ppf(rgr.quantiles),
                         np.mean(estimates, axis=0),
                         decimal=2)
@@ -75,9 +74,14 @@ def test_gbrt_with_std():
     model = GradientBoostingQuantileRegressor()
     model.fit(X, y)
 
-    assert_array_equal(model.predict(X_).shape, (len(X_), 3))
+    # three quantiles, so three numbers per sample
+    assert_array_equal(model.predict(X_, return_quantiles=True).shape,
+                       (len(X_), 3))
+    # "traditional" API which returns one number per sample, in this case
+    # just the median/mean
+    assert_array_equal(model.predict(X_).shape, (len(X_)))
 
-    l, c, h = model.predict(X_).T
+    l, c, h = model.predict(X_, return_quantiles=True).T
     assert_equal(l.shape, c.shape, h.shape)
     assert_equal(l.shape[0], X_.shape[0])
 

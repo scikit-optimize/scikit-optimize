@@ -78,8 +78,8 @@ def check_dimension(dimension, transform=None):
                              " supported types.".format(dimension))
 
     if len(dimension) == 3:
-        if (any([isinstance(dim, (float, int)) for dim in dimension[:2]])
-            and dimension[2] in ["uniform", "log-uniform"]):
+        if (any([isinstance(dim, (float, int)) for dim in dimension[:2]]) and
+            dimension[2] in ["uniform", "log-uniform"]):
             return Real(*dimension, transform=transform)
         else:
             return Categorical(dimension, transform=transform)
@@ -181,8 +181,8 @@ class Real(Dimension):
         self.transform_ = transform
 
         if self.transform_ not in ["normalize", "identity"]:
-            raise ValueError( "transform should be 'normalize' or 'identity'"
-                              " got {}".format(self.transform_))
+            raise ValueError("transform should be 'normalize' or 'identity'"
+                             " got {}".format(self.transform_))
 
         # Define _rvs and transformer spaces.
         # XXX: The _rvs is for sampling in the transformed space.
@@ -359,7 +359,8 @@ class Categorical(Dimension):
             are equally likely.
 
         * `transform` ["onehot", "identity", default="onehot"] :
-            - "identity", the transformed space is the same as the original space.
+            - "identity", the transformed space is the same as the original
+              space.
             - "onehot", the transformed space is a one-hot encoded
               representation of the original space.
         """

@@ -88,7 +88,7 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
         return self
 
-    def predict(self, X, return_std=False):
+    def predict(self, X, return_std=False, return_quantiles=False):
         """Predict.
 
         Predict `X` at every quantile if `return_std` is set to False.
@@ -104,9 +104,10 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
         """
         predicted_quantiles = np.asarray(
             [rgr.predict(X) for rgr in self.regressors_])
-        if not return_std:
+        if return_quantiles:
             return predicted_quantiles.T
-        else:
+
+        elif return_std:
             std_quantiles = [0.16, 0.5, 0.84]
             is_present_mask = np.in1d(std_quantiles, self.quantiles)
             if not np.all(is_present_mask):
@@ -117,3 +118,6 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
             high = self.regressors_[self.quantiles.index(0.84)].predict(X)
             mean = self.regressors_[self.quantiles.index(0.5)].predict(X)
             return mean, ((high - low) / 2.0)
+
+        # return the mean
+        return self.regressors_[self.quantiles.index(0.5)].predict(X)

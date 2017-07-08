@@ -2,7 +2,6 @@
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..learning import GradientBoostingQuantileRegressor
 from ..utils import cook_estimator
 
 
@@ -139,7 +138,8 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     rng = check_random_state(random_state)
 
     if base_estimator is None:
-        base_estimator = cook_estimator("GBRT", random_state=rng, n_jobs=n_jobs)
+        base_estimator = cook_estimator("GBRT", random_state=rng,
+                                        n_jobs=n_jobs)
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,

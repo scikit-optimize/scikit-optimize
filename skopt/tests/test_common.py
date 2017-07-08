@@ -103,7 +103,7 @@ def test_minimizer_api_dummy_minimize(verbose, call):
                             n_calls=n_calls, random_state=1,
                             verbose=verbose, callback=call)
 
-    assert(result.models is None)
+    assert result.models == []
     check_minimizer_api(result, n_calls)
     check_minimizer_bounds(result, n_calls)
     assert_raise_message(ValueError,
