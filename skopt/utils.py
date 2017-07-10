@@ -448,38 +448,23 @@ def normalize_dimensions(dimensions):
 
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
-
-    * `base_estimator` ["GP", "RF", "ET", "GBRT", or sklearn regressor, default="GP"]:
-        optimization estimator to be used.
-        each estimator may use different transformations for dimensions.
     """
-    if isinstance(base_estimator, str):
-        base_estimator = base_estimator.upper()
-        if base_estimator not in ["GP", "ET", "RF", "GBRT"]:
-            raise ValueError("Valid strings for the base_estimator parameter " +
-                             "are: 'RF', 'ET', 'GBRT', or 'GP'.")
-    elif not is_regressor(base_estimator):
-        raise ValueError("base_estimator has to be a regressor.")
-
-    if base_estimator == "GP" or base_estimator == GaussianProcessRegressor:
-        dim_types = [check_dimension(d) for d in dimensions]
-        is_cat = all([isinstance(check_dimension(d), Categorical)
-                      for d in dim_types])
-        if is_cat:
-            transformed_dims = [check_dimension(d, transform="identity")
-                                for d in dimensions]
-        else:
-            transformed_dims = []
-            for dim_type, dim in zip(dim_types, dimensions):
-                if isinstance(dim_type, Categorical):
-                    transformed_dims.append(
-                        check_dimension(dim, transform="onehot")
-                        )
-                # To make sure that GP operates in the [0, 1] space
-                else:
-                    transformed_dims.append(
-                        check_dimension(dim, transform="normalize")
-                        )
+    dim_types = [check_dimension(d) for d in dimensions]
+    is_cat = all([isinstance(check_dimension(d), Categorical)
+                  for d in dim_types])
+    if is_cat:
+        transformed_dims = [check_dimension(d, transform="identity")
+                            for d in dimensions]
     else:
-        transformed_dims = dimensions
+        transformed_dims = []
+        for dim_type, dim in zip(dim_types, dimensions):
+            if isinstance(dim_type, Categorical):
+                transformed_dims.append(
+                    check_dimension(dim, transform="onehot")
+                    )
+            # To make sure that GP operates in the [0, 1] space
+            else:
+                transformed_dims.append(
+                    check_dimension(dim, transform="normalize")
+                    )
     return transformed_dims

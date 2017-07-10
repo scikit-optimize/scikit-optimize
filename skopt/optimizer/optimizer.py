@@ -174,7 +174,7 @@ class Optimizer(object):
         self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
         self.n_jobs = n_jobs
 
-        if base_estimator == "GP":
+        if base_estimator == "gp":
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
         self.models = []
