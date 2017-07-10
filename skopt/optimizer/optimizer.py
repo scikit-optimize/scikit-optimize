@@ -81,11 +81,13 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
-        - ``"EIps"`` for negated expected improvement per second to take into
+        - `"EIps" for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
-          the second being the time taken.
-        - `"PIps"` for negated probability of improvement per second.
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model

@@ -78,8 +78,10 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         - `"EIps" for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
-          the second being the time taken.
-        - `"PIps"` for negated probability of improvement per second.
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps"`
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.

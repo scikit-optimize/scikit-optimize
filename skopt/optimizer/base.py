@@ -63,11 +63,13 @@ def base_minimize(func, dimensions, base_estimator,
         - `"LCB"` for lower confidence bound,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
-        - ``"EIps"`` for negated expected improvement per second to take into
-          account the function compute time. Then the objective function is
+        - `"EIps" for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
-          the second being the time taken.
-        - `"PIps"` for negated probability of improvement per second.
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model

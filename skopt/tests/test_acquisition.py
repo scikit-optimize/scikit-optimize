@@ -28,6 +28,12 @@ class ConstSurrogate:
         return np.zeros(X.shape[0]), np.ones(X.shape[0])
 
 
+# This is used to test that given constant acquisition values at
+# different points, acquisition functions "EIps" and "PIps"
+# prefer candidate points that take lesser time.
+# The second estimator mimics the GP regressor that is fit on
+# the log of the input.
+
 class ConstantGPRSurrogate(object):
     def __init__(self, space):
         self.space = space
@@ -41,7 +47,7 @@ class ConstantGPRSurrogate(object):
         X = np.array(X)
         y = np.array(y)
         gpr = cook_estimator("GP", self.space, random_state=0)
-        gpr.fit(X, y[:, 1])
+        gpr.fit(X, np.log(np.ravel(X)))
         self.estimators_ = []
         self.estimators_.append(ConstSurrogate())
         self.estimators_.append(gpr)
@@ -122,6 +128,12 @@ def test_acquisition_per_second(acq_func):
     vals = _gaussian_acquisition(X_pred, cgpr, y_opt=1.0, acq_func=acq_func)
     for fast, slow in zip(indices[:-1], indices[1:]):
         assert_greater(vals[slow], vals[fast])
+
+    acq_wo_time = _gaussian_acquisition(
+        X, cgpr.estimators_[0], y_opt=1.2, acq_func=acq_func[:2])
+    acq_with_time = _gaussian_acquisition(
+        X, cgpr, y_opt=1.2, acq_func=acq_func)
+    assert_array_almost_equal(acq_wo_time / acq_with_time, np.ravel(X), 2)
 
 
 @pytest.mark.fast_test
