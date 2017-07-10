@@ -63,6 +63,13 @@ def base_minimize(func, dimensions, base_estimator,
         - `"LCB"` for lower confidence bound,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
+        - `"EIps" for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -127,7 +134,7 @@ def base_minimize(func, dimensions, base_estimator,
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `n_jobs` [int, default=1]
+    * `n_jobs` [int, default=1]:
         Number of cores to run in parallel while running the lbfgs
         optimizations over the acquisition function. Valid only when
         `acq_optimizer` is set to "lbfgs."
@@ -226,9 +233,6 @@ def base_minimize(func, dimensions, base_estimator,
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
 
-        if not all(map(np.isscalar, y0)):
-            raise ValueError(
-                "`y0` elements should be scalars")
 
         result = optimizer.tell(x0, y0)
         result.specs = specs
@@ -243,9 +247,6 @@ def base_minimize(func, dimensions, base_estimator,
         # no need to fit a model on the last iteration
         fit_model = n < n_calls - 1
         next_y = func(next_x)
-        if not np.isscalar(next_y):
-            raise ValueError("`func` should return a scalar")
-
         result = optimizer.tell(next_x, next_y, fit=fit_model)
         result.specs = specs
 

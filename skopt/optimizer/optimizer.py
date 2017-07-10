@@ -1,5 +1,5 @@
 import warnings
-from collections import Iterable
+from math import log
 from numbers import Number
 
 import numpy as np
@@ -9,15 +9,19 @@ from scipy.optimize import fmin_l_bfgs_b
 from sklearn.base import clone
 from sklearn.base import is_regressor
 from sklearn.externals.joblib import Parallel, delayed
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..space import Categorical
 from ..space import Space
-from ..utils import create_result
+from ..utils import check_x_in_space
 from ..utils import cook_estimator
+from ..utils import create_result
 from ..utils import has_gradients
+from ..utils import is_listlike
+from ..utils import is_2Dlistlike
 
 
 class Optimizer(object):
@@ -77,6 +81,13 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
+        - `"EIps" for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
@@ -131,6 +142,10 @@ class Optimizer(object):
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
 
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        if self.acq_func not in allowed_acq_funcs:
+            raise ValueError("expected acq_func to be in %s, got %s" %
+                             (",".join(allowed_acq_funcs), self.acq_func))
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
             self.gains_ = np.zeros(3)
@@ -185,9 +200,15 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=self.space, random_state=self.rng)
+
         if not is_regressor(base_estimator) and base_estimator is not None:
-            raise ValueError("%s has to be a regressor." % base_estimator)
-        self.base_estimator_ = base_estimator
+            raise ValueError(
+                "%s has to be a regressor." % base_estimator)
+
+        if "ps" in self.acq_func:
+            self.base_estimator_ = MultiOutputRegressor(base_estimator)
+        else:
+            self.base_estimator_ = base_estimator
 
         if n_initial_points < 0:
             raise ValueError(
@@ -367,24 +388,40 @@ class Optimizer(object):
             only be fitted after `n_initial_points` points have been told to
             the optimizer irrespective of the value of `fit`.
         """
+        check_x_in_space(x, self.space)
+
+        if "ps" in self.acq_func:
+            if is_2Dlistlike(x):
+                if np.ndim(y) == 2 and np.shape(y)[1] == 2:
+                    y = [[val, log(t)] for (val, t) in y]
+                    self.Xi.extend(x)
+                    self.yi.extend(y)
+                else:
+                    raise TypeError("expcted y to be a list of (func_val, t)")
+                self._n_initial_points -= len(y)
+            elif is_listlike(x):
+                if np.ndim(y) == 1 and len(y) == 2:
+                    y = list(y)
+                    y[1] = log(y[1])
+                    self.Xi.append(x)
+                    self.yi.append(y)
+                else:
+                    raise TypeError("expected y to be (func_val, t)")
+                self._n_initial_points -= 1
+
         # if y isn't a scalar it means we have been handed a batch of points
-        if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
-                                            for point in x)):
-            if not np.all([p in self.space for p in x]):
-                raise ValueError("Not all points are within the bounds of"
-                                 " the space.")
+        elif is_listlike(y) and is_2Dlistlike(x):
             self.Xi.extend(x)
             self.yi.extend(y)
             self._n_initial_points -= len(y)
 
-        elif isinstance(x, Iterable) and isinstance(y, Number):
-            if x not in self.space:
-                raise ValueError("Point (%s) is not within the bounds of"
-                                 " the space (%s)."
-                                 % (x, self.space.bounds))
-            self.Xi.append(x)
-            self.yi.append(y)
-            self._n_initial_points -= 1
+        elif is_listlike(x):
+            if isinstance(y, Number):
+                self.Xi.append(x)
+                self.yi.append(y)
+                self._n_initial_points -= 1
+            else:
+                raise ValueError("`func` should return a scalar")
 
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "

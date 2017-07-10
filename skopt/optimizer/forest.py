@@ -6,6 +6,7 @@ from .base import base_minimize
 from ..utils import cook_estimator
 
 
+
 def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
                     n_random_starts=10, acq_func="EI",
                     x0=None, y0=None, random_state=None, verbose=False,
@@ -74,6 +75,13 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
+        - `"EIps" for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps"`
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
