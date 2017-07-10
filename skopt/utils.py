@@ -329,7 +329,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
     base_estimator.set_params(**kwargs)
     return base_estimator
-
+    
 
 def dimensions_aslist(search_space):
     """Convert a dict representation of a search space into a list of
