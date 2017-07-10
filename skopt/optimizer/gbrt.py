@@ -1,9 +1,8 @@
 
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..learning import GradientBoostingQuantileRegressor
+from ..utils import cook_estimator
 
 
 def gbrt_minimize(func, dimensions, base_estimator=None,
@@ -63,6 +62,11 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
+        - ``"EIps"`` for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken.
+        - `"PIps"` for negated probability of improvement per second.
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
@@ -133,13 +137,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     # Check params
     rng = check_random_state(random_state)
 
-    # Default estimator
     if base_estimator is None:
-        gbrt = GradientBoostingRegressor(n_estimators=30, loss="quantile")
-        base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt,
-                                                           n_jobs=n_jobs,
-                                                           random_state=rng)
-
+        base_estimator = cook_estimator("GBRT", random_state=rng,
+                                        n_jobs=n_jobs)
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,

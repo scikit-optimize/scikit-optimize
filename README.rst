@@ -37,6 +37,7 @@ Install
 
 ::
 
+    pip install numpy # install numpy explicitly first
     pip install scikit-optimize
 
 Getting started

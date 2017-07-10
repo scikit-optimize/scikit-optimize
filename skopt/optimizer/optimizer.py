@@ -1,5 +1,5 @@
 import warnings
-from collections import Iterable
+from math import log
 from numbers import Number
 
 import numpy as np
@@ -9,15 +9,19 @@ from scipy.optimize import fmin_l_bfgs_b
 from sklearn.base import clone
 from sklearn.base import is_regressor
 from sklearn.externals.joblib import Parallel, delayed
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
-from ..learning import RandomForestRegressor, ExtraTreesRegressor
-from ..learning import GradientBoostingQuantileRegressor
 from ..space import Categorical
 from ..space import Space
+from ..utils import check_x_in_space
+from ..utils import cook_estimator
 from ..utils import create_result
+from ..utils import has_gradients
+from ..utils import is_listlike
+from ..utils import is_2Dlistlike
 
 
 class Optimizer(object):
@@ -44,10 +48,13 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` [sklearn regressor]:
+    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+        If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
+        surrogate model of the corresponding type is used corresponding to what
+        is used in the minimize functions.
 
     * `n_random_starts` [int, default=10]:
         DEPRECATED, use `n_initial_points` instead.
@@ -74,12 +81,23 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
+        - `"EIps" for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
+    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
+        - If set to `"auto"`, then `acq_optimizer` is configured on the
+          basis of the base_estimator and the space searched over.
+          If the space is Categorical or if the estimator provided based on
+          tree-models then this is set to be "sampling"`.
         - If set to `"sampling"`, then `acq_func` is optimized by computing
           `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
@@ -113,10 +131,10 @@ class Optimizer(object):
         to sample points, bounds, and type of parameters.
 
     """
-    def __init__(self, dimensions, base_estimator,
+    def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
-                 acq_optimizer="lbfgs",
+                 acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
@@ -124,6 +142,10 @@ class Optimizer(object):
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
 
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        if self.acq_func not in allowed_acq_funcs:
+            raise ValueError("expected acq_func to be in %s, got %s" %
+                             (",".join(allowed_acq_funcs), self.acq_func))
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
             self.gains_ = np.zeros(3)
@@ -163,7 +185,6 @@ class Optimizer(object):
             n_initial_points = n_random_starts
 
         self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
-
         self.n_jobs = n_jobs
 
         # The cache of responses of `ask` method for n_points not None.
@@ -175,10 +196,19 @@ class Optimizer(object):
     def _check_arguments(self, base_estimator, n_initial_points,
                          acq_optimizer):
         """Check arguments for sanity."""
-        if not is_regressor(base_estimator):
+
+        if isinstance(base_estimator, str):
+            base_estimator = cook_estimator(
+                base_estimator, space=self.space, random_state=self.rng)
+
+        if not is_regressor(base_estimator) and base_estimator is not None:
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
-        self.base_estimator = base_estimator
+
+        if "ps" in self.acq_func:
+            self.base_estimator_ = MultiOutputRegressor(base_estimator)
+        else:
+            self.base_estimator_ = base_estimator
 
         if n_initial_points < 0:
             raise ValueError(
@@ -186,17 +216,21 @@ class Optimizer(object):
         self._n_initial_points = n_initial_points
         self.n_initial_points_ = n_initial_points
 
-        if (isinstance(base_estimator, (ExtraTreesRegressor,
-                                        RandomForestRegressor,
-                                        GradientBoostingQuantileRegressor)) and
-                not acq_optimizer == "sampling"):
-            raise ValueError(
-                "The tree-based regressor {0} should run with "
-                "acq_optimizer='sampling'".format(type(base_estimator)))
+        if acq_optimizer == "auto":
+            if has_gradients(self.base_estimator_):
+                acq_optimizer = "sampling"
+            else:
+                acq_optimizer = "lbfgs"
 
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
+
+        if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
+            raise ValueError("The regressor {0} should run with "
+                             "acq_optimizer"
+                             "='sampling'.".format(type(base_estimator)))
+
         self.acq_optimizer = acq_optimizer
 
     def copy(self, random_state=None):
@@ -210,7 +244,7 @@ class Optimizer(object):
 
         optimizer = Optimizer(
             dimensions=self.space.dimensions,
-            base_estimator=self.base_estimator,
+            base_estimator=self.base_estimator_,
             n_initial_points=self.n_initial_points_,
             acq_func=self.acq_func,
             acq_optimizer=self.acq_optimizer,
@@ -291,7 +325,7 @@ class Optimizer(object):
             if strategy == "cl_min":
                 y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
             elif strategy == "cl_mean":
-                y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-max lie
+                y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
             opt.tell(x, y_lie)  # lie to the optimizer
@@ -307,7 +341,7 @@ class Optimizer(object):
         observations have been `tell`ed, after that `base_estimator` is used
         to determine the next point.
         """
-        if self._n_initial_points > 0:
+        if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
             return self.space.rvs(random_state=self.rng)[0]
@@ -351,27 +385,43 @@ class Optimizer(object):
 
         * `fit` [bool, default=True]
             Fit a model to observed evaluations of the objective. A model will
-            only be fitted after `n_initial_points` points have been told to the
-            optimizer irrespective of the value of `fit`.
+            only be fitted after `n_initial_points` points have been told to
+            the optimizer irrespective of the value of `fit`.
         """
+        check_x_in_space(x, self.space)
+
+        if "ps" in self.acq_func:
+            if is_2Dlistlike(x):
+                if np.ndim(y) == 2 and np.shape(y)[1] == 2:
+                    y = [[val, log(t)] for (val, t) in y]
+                    self.Xi.extend(x)
+                    self.yi.extend(y)
+                else:
+                    raise TypeError("expcted y to be a list of (func_val, t)")
+                self._n_initial_points -= len(y)
+            elif is_listlike(x):
+                if np.ndim(y) == 1 and len(y) == 2:
+                    y = list(y)
+                    y[1] = log(y[1])
+                    self.Xi.append(x)
+                    self.yi.append(y)
+                else:
+                    raise TypeError("expected y to be (func_val, t)")
+                self._n_initial_points -= 1
+
         # if y isn't a scalar it means we have been handed a batch of points
-        if (isinstance(y, Iterable) and all(isinstance(point, Iterable)
-                                            for point in x)):
-            if not np.all([p in self.space for p in x]):
-                raise ValueError("Not all points are within the bounds of"
-                                 " the space.")
+        elif is_listlike(y) and is_2Dlistlike(x):
             self.Xi.extend(x)
             self.yi.extend(y)
             self._n_initial_points -= len(y)
 
-        elif isinstance(x, Iterable) and isinstance(y, Number):
-            if x not in self.space:
-                raise ValueError("Point (%s) is not within the bounds of"
-                                 " the space (%s)."
-                                 % (x, self.space.bounds))
-            self.Xi.append(x)
-            self.yi.append(y)
-            self._n_initial_points -= 1
+        elif is_listlike(x):
+            if isinstance(y, Number):
+                self.Xi.append(x)
+                self.yi.append(y)
+                self._n_initial_points -= 1
+            else:
+                raise ValueError("`func` should return a scalar")
 
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
@@ -382,9 +432,10 @@ class Optimizer(object):
 
         # after being "told" n_initial_points we switch from sampling
         # random points to using a surrogate model
-        if fit and self._n_initial_points <= 0:
+        if (fit and self._n_initial_points <= 0 and
+           self.base_estimator_ is not None):
             transformed_bounds = np.array(self.space.transformed_bounds)
-            est = clone(self.base_estimator)
+            est = clone(self.base_estimator_)
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")

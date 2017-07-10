@@ -3,8 +3,8 @@
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..learning import ExtraTreesRegressor
-from ..learning import RandomForestRegressor
+from ..utils import cook_estimator
+
 
 
 def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
@@ -75,6 +75,13 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
+        - `"EIps" for negated expected improvement per second to take into
+          account the function compute time. Then, the objective function is
+          assumed to return two values, the first being the objective value and
+          the second being the time taken in seconds.
+        - `"PIps"` for negated probability of improvement per second. The
+          return type of the objective function is assumed to be similar to
+          that of `"EIps"`
 
     * `x0` [list, list of lists or `None`]:
         Initial input points.
@@ -142,24 +149,9 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
     """
     rng = check_random_state(random_state)
 
-    # Default estimator
     if isinstance(base_estimator, str):
-        if base_estimator not in ("RF", "ET"):
-            raise ValueError(
-                "Valid strings for the base_estimator parameter"
-                " are: 'RF' or 'ET', not '%s'" % base_estimator)
-
-        if base_estimator == "RF":
-            base_estimator = RandomForestRegressor(n_estimators=100,
-                                                   min_samples_leaf=3,
-                                                   n_jobs=n_jobs,
-                                                   random_state=rng)
-
-        elif base_estimator == "ET":
-            base_estimator = ExtraTreesRegressor(n_estimators=100,
-                                                 min_samples_leaf=3,
-                                                 n_jobs=n_jobs,
-                                                 random_state=rng)
+        base_estimator = cook_estimator(base_estimator, n_jobs=n_jobs,
+                                        random_state=rng)
 
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,

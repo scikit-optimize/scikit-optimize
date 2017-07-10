@@ -58,12 +58,12 @@ from .optimizer import forest_minimize
 from .optimizer import gbrt_minimize
 from .optimizer import gp_minimize
 from .optimizer import Optimizer
-from .utils import load
+from .searchcv import BayesSearchCV
 from .utils import dump
 from .utils import expected_minimum
+from .utils import load
 
-
-__version__ = "0.3"
+__version__ = "0.4-dev"
 
 
 __all__ = (
@@ -81,5 +81,6 @@ __all__ = (
     "Optimizer",
     "dump",
     "load",
-    "expected_minimum"
+    "expected_minimum",
+    "BayesSearchCV"
 )

@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
 
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 from skopt.benchmarks import bench1
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
@@ -14,6 +16,9 @@ from scipy.optimize import OptimizeResult
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
+ACQ_FUNCS_PS = ["EIps", "PIps"]
+ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "DUMMY",
+                     "gp", "rf", "et", "gbrt", "dummy"]
 
 
 @pytest.mark.fast_test
@@ -21,7 +26,7 @@ def test_multiple_asks():
     # calling ask() multiple times without a tell() inbetween should
     # be a "no op"
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
                     acq_optimizer="sampling")
 
     opt.run(bench1, n_iter=3)
@@ -38,7 +43,7 @@ def test_multiple_asks():
 @pytest.mark.fast_test
 def test_invalid_tell_arguments():
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
                     acq_optimizer="sampling")
 
     # can't have single point and multiple values for y
@@ -50,7 +55,7 @@ def test_bounds_checking_1D():
     low = -2.
     high = 2.
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(low, high)], base_estimator, n_random_starts=1,
+    opt = Optimizer([(low, high)], base_estimator, n_initial_points=1,
                     acq_optimizer="sampling")
 
     assert_raises(ValueError, opt.tell, [high + 0.5], 2.)
@@ -66,7 +71,7 @@ def test_bounds_checking_2D():
     high = 2.
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(low, high), (low+4, high+4)], base_estimator,
-                    n_random_starts=1, acq_optimizer="sampling")
+                    n_initial_points=1, acq_optimizer="sampling")
 
     assert_raises(ValueError, opt.tell, [high + 0.5, high + 4.5], 2.)
     assert_raises(ValueError, opt.tell, [low - 0.5, low - 4.5], 2.)
@@ -82,7 +87,7 @@ def test_bounds_checking_2D_multiple_points():
     high = 2.
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(low, high), (low+4, high+4)], base_estimator,
-                    n_random_starts=1, acq_optimizer="sampling")
+                    n_initial_points=1, acq_optimizer="sampling")
 
     # first component out, second in
     assert_raises(ValueError, opt.tell,
@@ -96,7 +101,7 @@ def test_bounds_checking_2D_multiple_points():
 @pytest.mark.fast_test
 def test_returns_result_object():
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
                     acq_optimizer="sampling")
     result = opt.tell([1.5], 2.)
 
@@ -109,15 +114,39 @@ def test_returns_result_object():
 @pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
 def test_acq_optimizer(base_estimator):
     with pytest.raises(ValueError) as e:
-        opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
-                        n_random_starts=1, acq_optimizer='lbfgs')
-    assert 'The tree-based regressor' in str(e.value)
+        Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
+                  n_initial_points=1, acq_optimizer='lbfgs')
+    assert "should run with acq_optimizer='sampling'" in str(e.value)
 
 
-def test_exhaust_initial_calls():
+@pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
+@pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
+def test_acq_optimizer_with_time_api(base_estimator, acq_func):
+    opt = Optimizer([(-2.0, 2.0),], base_estimator=base_estimator,
+                    acq_func=acq_func,
+                    acq_optimizer="sampling", n_initial_points=2)
+    x1 = opt.ask()
+    opt.tell(x1, (bench1(x1), 1.0))
+    x2 = opt.ask()
+    res = opt.tell(x2, (bench1(x2), 2.0))
+
+    # x1 and x2 are random.
+    assert_true(x1 != x2)
+
+    assert_true(len(res.models) == 1)
+    assert_array_equal(res.func_vals.shape, (2,))
+    assert_array_equal(res.log_time.shape, (2,))
+
+    # x3 = opt.ask()
+
+    with pytest.raises(TypeError) as e:
+        opt.tell(x2, bench1(x2))
+
+
+@pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
+def test_exhaust_initial_calls(base_estimator):
     # check a model is fitted and used to make suggestions after we added
     # at least n_initial_points via tell()
-    base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=2,
                     acq_optimizer="sampling", random_state=1)
 
@@ -131,12 +160,37 @@ def test_exhaust_initial_calls():
     assert x1 != x2
     # second call to tell()
     r2 = opt.tell(x2, 4.)
-    assert len(r2.models) == 1
+    if base_estimator.lower() == 'dummy':
+        assert len(r2.models) == 0
+    else:
+        assert len(r2.models) == 1
     # this is the first non-random point
     x3 = opt.ask()
     assert x2 != x3
     x4 = opt.ask()
-    # no new information was added so should be the same
-    assert x3 == x4
     r3 = opt.tell(x3, 1.)
-    assert len(r3.models) == 2
+    # no new information was added so should be the same, unless we are using
+    # the dummy estimator which will forever return random points and never
+    # fits any models
+    if base_estimator.lower() == 'dummy':
+        assert x3 != x4
+        assert len(r3.models) == 0
+    else:
+        assert x3 == x4
+        assert len(r3.models) == 2
+
+
+@pytest.mark.fast_test
+def test_optimizer_base_estimator_string_invalid():
+    with pytest.raises(ValueError) as e:
+        Optimizer([(-2.0, 2.0)], base_estimator="rtr",
+                  n_initial_points=1)
+    assert "'RF', 'ET', 'GP', 'GBRT' or 'DUMMY'" in str(e.value)
+
+
+@pytest.mark.fast_test
+@pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
+def test_optimizer_base_estimator_string_smoke(base_estimator):
+    opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
+                    n_initial_points=1, acq_func="EI")
+    opt.run(func=lambda x: x[0]**2, n_iter=3)

@@ -1,4 +1,3 @@
-
 """
 This code implements benchmark for the black box optimization algorithms,
 applied to a task of optimizing parameters of ML algorithms for the task

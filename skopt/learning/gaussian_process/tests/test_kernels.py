@@ -101,11 +101,11 @@ def test_distance_string():
     a = np.array(['eggs', 'spam', 'spam', 'eggs', 'spam', 'spam', 'spam',
                   'spam', 'spam', 'spam', 'spam', 'eggs', 'eggs', 'spam',
                   'eggs', 'eggs', 'eggs', 'eggs', 'eggs', 'spam'],
-                  dtype='|S4')
+                 dtype='|S4')
     b = np.array(['eggs', 'spam', 'spam', 'eggs', 'eggs', 'spam', 'spam',
                   'spam', 'spam', 'eggs', 'spam', 'eggs', 'spam', 'eggs',
                   'spam', 'spam', 'eggs', 'spam', 'spam', 'eggs'],
-                  dtype='|S4')
+                 dtype='|S4')
     true_values = np.array([[0, 0.45], [0.45, 0]])
     X = np.vstack((a, b))
     hm = HammingKernel()
