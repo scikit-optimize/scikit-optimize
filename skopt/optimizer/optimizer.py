@@ -22,6 +22,7 @@ from ..utils import create_result
 from ..utils import has_gradients
 from ..utils import is_listlike
 from ..utils import is_2Dlistlike
+from ..utils import normalize_dimensions
 
 
 class Optimizer(object):
@@ -165,6 +166,15 @@ class Optimizer(object):
         n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
+        if n_random_starts is not None:
+            warnings.warn(("n_random_starts will be removed in favour of "
+                           "n_initial_points."),
+                          DeprecationWarning)
+            n_initial_points = n_random_starts
+
+        if base_estimator == "GP":
+            dimensions = normalize_dimensions(dimensions)
+
         self.space = Space(dimensions)
         self.models = []
         self.Xi = []
@@ -177,12 +187,6 @@ class Optimizer(object):
                 self._cat_inds.append(ind)
             else:
                 self._non_cat_inds.append(ind)
-
-        if n_random_starts is not None:
-            warnings.warn(("n_random_starts will be removed in favour of "
-                           "n_initial_points."),
-                          DeprecationWarning)
-            n_initial_points = n_random_starts
 
         self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
         self.n_jobs = n_jobs
