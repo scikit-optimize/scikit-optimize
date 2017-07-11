@@ -172,7 +172,7 @@ class Optimizer(object):
                           DeprecationWarning)
             n_initial_points = n_random_starts
 
-        if base_estimator == "GP":
+        if base_estimator.upper() == "GP":
             dimensions = normalize_dimensions(dimensions)
 
         self.space = Space(dimensions)

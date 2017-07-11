@@ -1,5 +1,4 @@
 from copy import deepcopy
-from collections import Iterable
 
 import numpy as np
 from scipy.optimize import OptimizeResult
@@ -430,8 +429,8 @@ def normalize_dimensions(dimensions):
     """
     Normalize all dimensions.
 
-    This is particularly useful for Gaussian process based regressors and is used
-    internally by `gp_minimize.`
+    This is particularly useful for Gaussian process based regressors and is
+    used internally by `gp_minimize.`
 
     Parameters
     ----------
