@@ -8,6 +8,7 @@ dist/
 *.egg-info/
 .idea/
 .cache/
+docs/_build
 
 # mac OS users
 .DS_Store
