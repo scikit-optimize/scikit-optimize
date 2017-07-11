@@ -360,6 +360,7 @@ def point_asdict(search_space, point_as_list):
     """Convert the list representation of a point from a search space
     to the dictionary representation, where keys are dimension names
     and values are corresponding to the values of dimensions in the list.
+
     Counterpart to parameters_aslist.
 
     Parameters
