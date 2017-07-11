@@ -1,3 +1,4 @@
+"""Generally useful functions"""
 from copy import deepcopy
 from functools import wraps
 
