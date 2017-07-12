@@ -8,7 +8,6 @@ test:
   override:
     - bash ./build_tools/circle/execute.sh:
         timeout: 3600
-    - if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
 
 deployment:
  push:
