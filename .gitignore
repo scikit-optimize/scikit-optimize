@@ -9,5 +9,8 @@ dist/
 .idea/
 .cache/
 
+# mac OS users
+.DS_Store
+
 # vim users
 .*.swp
