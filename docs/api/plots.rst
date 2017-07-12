@@ -1,7 +1,7 @@
 .. _plotting-functions:
 
-Plotting
-========
+``skopt.plots``, plotting tools
+===============================
 
 Overview
 --------

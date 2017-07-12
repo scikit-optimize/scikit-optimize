@@ -1,7 +1,7 @@
 .. _utility-functions:
 
-Utilities
-=========
+``skopt.utils``, utility functions
+==================================
 
 Overview
 --------
