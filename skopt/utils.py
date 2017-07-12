@@ -1,4 +1,6 @@
-"""Generally useful functions"""
+"""
+The :mod:`skopt.utils` module includes various utilities.
+"""
 from copy import deepcopy
 from functools import wraps
 
@@ -19,11 +21,6 @@ from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
 from .space import Space, Categorical, Integer, Real, Dimension
-
-__all__ = (
-    "load",
-    "dump",
-)
 
 
 def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
