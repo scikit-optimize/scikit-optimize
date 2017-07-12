@@ -2,9 +2,11 @@
 API Reference
 =============
 
-Look at :ref:`minimize-functions`. Check :ref:`utility-functions`
+Details on the complete API of scikit-optimize.
 
 .. toctree::
 
     minimize_functions
+    optimizer
+    plots
     utils

@@ -37,7 +37,7 @@ class Optimizer(object):
 
     Parameters
     ----------
-    * `dimensions` [list, shape=(n_dims,)]:
+    ``dimensions`` [list, shape=(n_dims,)]:
         List of search space dimensions.
         Each search dimension can be defined either as
 
@@ -49,86 +49,86 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
-        Should inherit from `sklearn.base.RegressorMixin`.
-        In addition the `predict` method, should have an optional `return_std`
-        argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+    ``base_estimator`` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
+        Should inherit from ``sklearn.base.RegressorMixin``.
+        In addition the ``predict`` method, should have an optional ``return_std``
+        argument, which returns ``std(Y | x)`` along with ``E[Y | x]``.
         If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
         surrogate model of the corresponding type is used corresponding to what
         is used in the minimize functions.
 
-    * `n_random_starts` [int, default=10]:
-        DEPRECATED, use `n_initial_points` instead.
+    ``n_random_starts`` [int, default=10]:
+        DEPRECATED, use ``n_initial_points`` instead.
 
-    * `n_initial_points` [int, default=10]:
-        Number of evaluations of `func` with initialization points
-        before approximating it with `base_estimator`. Points provided as
-        `x0` count as initialization points. If len(x0) < n_initial_points
+    ``n_initial_points`` [int, default=10]:
+        Number of evaluations of ``func`` with initialization points
+        before approximating it with ``base_estimator``. Points provided as
+        ``x0`` count as initialization points. If len(x0) < n_initial_points
         additional points are sampled at random.
 
-    * `acq_func` [string, default=`"EI"`]:
+    ``acq_func`` [string, default=``"EI"``]:
         Function to minimize over the posterior distribution. Can be either
 
-        - `"LCB"` for lower confidence bound.
-        - `"EI"` for negative expected improvement.
-        - `"PI"` for negative probability of improvement.
-        - `"gp_hedge"` Probabilistically choose one of the above three
+        - ``"LCB"`` for lower confidence bound.
+        - ``"EI"`` for negative expected improvement.
+        - ``"PI"`` for negative probability of improvement.
+        - ``"gp_hedge"`` Probabilistically choose one of the above three
           acquisition functions at every iteration.
-            - The gains `g_i` are initialized to zero.
+            - The gains ``g_i`` are initialized to zero.
             - At every iteration,
                 - Each acquisition function is optimised independently to
-                  propose an candidate point `X_i`.
-                - Out of all these candidate points, the next point `X_best` is
+                  propose an candidate point ``X_i``.
+                - Out of all these candidate points, the next point ``X_best`` is
                   chosen by $softmax(\eta g_i)$
-                - After fitting the surrogate model with `(X_best, y_best)`,
+                - After fitting the surrogate model with ``(X_best, y_best)``,
                   the gains are updated such that $g_i -= \mu(X_i)$
-        - `"EIps" for negated expected improvement per second to take into
+        - ``"EIps"`` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
-        - `"PIps"` for negated probability of improvement per second. The
+        - ``"PIps"`` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of ``"EIps"``.
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+    ``acq_optimizer`` [string, ``"sampling"`` or ``"lbfgs"``, default=``"auto"``]:
         Method to minimize the acquistion function. The fit model
-        is updated with the optimal value obtained by optimizing `acq_func`
-        with `acq_optimizer`.
+        is updated with the optimal value obtained by optimizing ``acq_func``
+        with ``acq_optimizer``.
 
-        - If set to `"auto"`, then `acq_optimizer` is configured on the
+        - If set to ``"auto"``, then ``acq_optimizer`` is configured on the
           basis of the base_estimator and the space searched over.
           If the space is Categorical or if the estimator provided based on
-          tree-models then this is set to be "sampling"`.
-        - If set to `"sampling"`, then `acq_func` is optimized by computing
-          `acq_func` at `n_points` randomly sampled points.
-        - If set to `"lbfgs"`, then `acq_func` is optimized by
-              - Sampling `n_restarts_optimizer` points randomly.
-              - `"lbfgs"` is run for 20 iterations with these points as initial
+          tree-models then this is set to be ``"sampling"``.
+        - If set to ``"sampling"``, then ``acq_func`` is optimized by computing
+          ``acq_func`` at ``n_points`` randomly sampled points.
+        - If set to ``"lbfgs"``, then ``acq_func`` is optimized by
+              - Sampling ``n_restarts_optimizer`` points randomly.
+              - ``"lbfgs"`` is run for 20 iterations with these points as initial
                 points to find local minima.
               - The optimal of these local minima is used to update the prior.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    ``random_state`` [int, RandomState instance, or None (default)]:
         Set random state to something other than None for reproducible
         results.
 
-    * `acq_func_kwargs` [dict]:
+    ``acq_func_kwargs`` [dict]:
         Additional arguments to be passed to the acquistion function.
 
-    * `acq_optimizer_kwargs` [dict]:
+    ``acq_optimizer_kwargs`` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
 
     Attributes
     ----------
-    * `Xi` [list]:
+    * ``Xi`` [list]:
         Points at which objective has been evaluated.
-    * `yi` [scalar]:
-        Values of objective at corresponding points in `Xi`.
-    * `models` [list]:
+    * ``yi`` [scalar]:
+        Values of objective at corresponding points in ``Xi``.
+    * ``models`` [list]:
         Regression models used to fit observations and compute acquisition
         function.
-    * `space`
-        An instance of `skopt.space.Space`. Stores parameter search space used
+    * ``space``
+        An instance of ``skopt.space.Space``. Stores parameter search space used
         to sample points, bounds, and type of parameters.
 
     """
@@ -269,6 +269,8 @@ class Optimizer(object):
     def ask(self, n_points=None, strategy="cl_min"):
         """Query point or multiple points at which objective should be evaluated.
 
+        Parameters
+        ----------
         * `n_points` [int or None, default=None]:
             Number of points returned by the ask method.
             If the value is None, a single point to evaluate is returned.
@@ -369,11 +371,11 @@ class Optimizer(object):
     def tell(self, x, y, fit=True):
         """Record an observation (or several) of the objective function.
 
-        Provide values of the objective function at points suggested by `ask()`
+        Provide values of the objective function at points suggested by ``ask()``
         or other points. By default a new model will be fit to all
         observations. The new model is used to suggest the next point at
         which to evaluate the objective. This point can be retrieved by calling
-        `ask()`.
+        ``ask()``.
 
         To add observations without fitting a new model set `fit` to False.
 
