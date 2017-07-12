@@ -8,4 +8,6 @@ python -c "import scipy; print('scipy %s' % scipy.__version__)"
 
 cd ${SKOPT_HOME}/docs
 make html
-cp -r ./_build/html ${CIRCLE_ARTIFACTS}
+cp -r ./_build/html/* ${CIRCLE_ARTIFACTS}
+mkdir ~/doc/
+cp -r ./_build/html/* ~/doc/

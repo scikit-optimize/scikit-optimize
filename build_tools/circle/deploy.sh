@@ -14,7 +14,7 @@ git clone -b master "git@github.com:scikit-optimize/scikit-optimize.github.io" d
 cd deploy
 git rm -r notebooks/*
 cd ..
-cp -r ${HOME}/doc/skopt/* deploy
+cp -r ${HOME}/doc/* deploy
 
 # Move into deployment directory
 cd deploy
