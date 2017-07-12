@@ -99,10 +99,10 @@ class Dimension(object):
 
         Parameters
         ----------
-        * `n_samples` [int or None]:
+        n_samples : int or None, optional (default=1)
             The number of samples to be drawn.
 
-        * `random_state` [int, RandomState instance, or None (default)]:
+        random_state : int, RandomState instance or None, optional (default=None)
             Set random state to something other than None for reproducible
             results.
         """
@@ -150,25 +150,25 @@ class Real(Dimension):
 
         Parameters
         ----------
-        * `low` [float]:
+        low : float
             Lower bound (inclusive).
 
-        * `high` [float]:
+        high : float
             Upper bound (inclusive).
 
-        * `prior` ["uniform" or "log-uniform", default="uniform"]:
+        prior : 'uniform' or 'log-uniform', optional, (default='uniform')
             Distribution to use when sampling random points for this dimension.
-            - If `"uniform"`, points are sampled uniformly between the lower
+            - If ``uniform``, points are sampled uniformly between the lower
               and upper bounds.
-            - If `"log-uniform"`, points are sampled uniformly between
-              `log10(lower)` and `log10(upper)`.`
+            - If ``log-uniform``, points are sampled uniformly between
+              ``log10(lower)`` and ``log10(upper)``.
 
-        * `transform` ["identity", "normalize", optional]:
+        transform : 'identity' or 'normalize', optional (default='identity')
             The following transformations are supported.
 
-            - "identity", (default) the transformed space is the same as the
+            - 'identity', the transformed space is the same as the
               original space.
-            - "normalize", the transformed space is scaled to be between
+            - 'normalize', the transformed space is scaled to be between
               0 and 1.
         """
         self.low = low
@@ -244,14 +244,14 @@ class Real(Dimension):
                 return np.log10(self.low), np.log10(self.high)
 
     def distance(self, a, b):
-        """Compute distance between point `a` and `b`.
+        """Compute distance between point ``a`` and ``b``.
 
         Parameters
         ----------
-        * `a` [float]
+        a : float
             First point.
 
-        * `b` [float]
+        b : float
             Second point.
         """
         if not (a in self and b in self):
@@ -266,16 +266,16 @@ class Integer(Dimension):
 
         Parameters
         ----------
-        * `low` [int]:
+        low : int
             Lower bound (inclusive).
 
-        * `high` [int]:
+        high : int
             Upper bound (inclusive).
 
-        * `transform` ["identity", "normalize", optional]:
+        transform : 'identity' or 'normalize', optional (default='identity')
             The following transformations are supported.
 
-            - "identity", (default) the transformed space is the same as the
+            - "identity", the transformed space is the same as the
               original space.
             - "normalize", the transformed space is scaled to be between
               0 and 1.
@@ -329,14 +329,14 @@ class Integer(Dimension):
             return (self.low, self.high)
 
     def distance(self, a, b):
-        """Compute distance between point `a` and `b`.
+        """Compute distance between point ``a`` and ``b``.
 
         Parameters
         ----------
-        * `a` [int]
+        a : float
             First point.
 
-        * `b` [int]
+        b : float
             Second point.
         """
         if not (a in self and b in self):
@@ -351,17 +351,17 @@ class Categorical(Dimension):
 
         Parameters
         ----------
-        * `categories` [list, shape=(n_categories,)]:
+        categories : list, shape=[n_categories]
             Sequence of possible categories.
 
-        * `prior` [list, shape=(categories,), default=None]:
+        prior : list, shape=[categories], optional (default=None)
             Prior probabilities for each category. By default all categories
             are equally likely.
 
-        * `transform` ["onehot", "identity", default="onehot"] :
-            - "identity", the transformed space is the same as the original
+        transform : 'onehot' or 'identity', optional (default='onehot')
+            - 'identity', the transformed space is the same as the original
               space.
-            - "onehot", the transformed space is a one-hot encoded
+            - 'onehot', the transformed space is a one-hot encoded
               representation of the original space.
         """
         self.categories = tuple(categories)
@@ -440,17 +440,17 @@ class Categorical(Dimension):
             return [(0.0, 1.0) for i in range(self.transformed_size)]
 
     def distance(self, a, b):
-        """Compute distance between category `a` and `b`.
+        """Compute distance between category ``a`` and ``b``.
 
         As categories have no order the distance between two points is one
         if a != b and zero otherwise.
 
         Parameters
         ----------
-        * `a` [category]
+        a : category
             First category.
 
-        * `b` [category]
+        b : category
             Second category.
         """
         if not (a in self and b in self):
@@ -460,28 +460,27 @@ class Categorical(Dimension):
 
 
 class Space(object):
-    """Search space."""
+    """Search space
+
+    Parameters
+    ----------
+    dimensions : list, shape=[n_dims]
+        List of search space dimensions.
+        Each search dimension can be defined either as
+
+        - a ``(lower_bound, upper_bound)`` tuple (for ``Real`` or ``Integer``
+          dimensions),
+        - a ``(lower_bound, upper_bound, 'prior')`` tuple (for ``Real``
+          dimensions),
+        - as a list of categories (for ``Categorical`` dimensions), or
+        - an instance of a ``Dimension`` object (``Real``, ``Integer`` or
+          ``Categorical``).
+
+        NOTE: The upper and lower bounds are inclusive for ``Integer``
+        dimensions.
+    """
 
     def __init__(self, dimensions):
-        """Initialize a search space from given specifications.
-
-        Parameters
-        ----------
-        * `dimensions` [list, shape=(n_dims,)]:
-            List of search space dimensions.
-            Each search dimension can be defined either as
-
-            - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
-              dimensions),
-            - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
-              dimensions),
-            - as a list of categories (for `Categorical` dimensions), or
-            - an instance of a `Dimension` object (`Real`, `Integer` or
-              `Categorical`).
-
-            NOTE: The upper and lower bounds are inclusive for `Integer`
-            dimensions.
-        """
         self.dimensions = [check_dimension(dim) for dim in dimensions]
 
     def __eq__(self, other):
@@ -508,20 +507,20 @@ class Space(object):
         """Draw random samples.
 
         The samples are in the original space. They need to be transformed
-        before being passed to a model or minimizer by `space.transform()`.
+        before being passed to a model or minimizer by ``space.transform()``.
 
         Parameters
         ----------
-        * `n_samples` [int, default=1]:
+        n_samples : int, optional (default=1)
             Number of samples to be drawn from the space.
 
-        * `random_state` [int, RandomState instance, or None (default)]:
+        random_state : int, RandomState instance or None, optional (default=None)
             Set random state to something other than None for reproducible
             results.
 
         Returns
         -------
-        * `points`: [list of lists, shape=(n_points, n_dims)]
+        points : list of lists, shape=[n_points, n_dims]
            Points sampled from the space.
         """
         rng = check_random_state(random_state)
@@ -555,12 +554,12 @@ class Space(object):
 
         Parameters
         ----------
-        * `X` [list of lists, shape=(n_samples, n_dims)]:
+        X : list of lists, shape=[n_samples, n_dims]
             The samples to transform.
 
         Returns
         -------
-        * `Xt` [array of floats, shape=(n_samples, transformed_n_dims)]
+        Xt : array of floats, shape=[n_samples, transformed_n_dims]
             The transformed samples.
         """
         # Pack by dimension
@@ -587,12 +586,12 @@ class Space(object):
 
         Parameters
         ----------
-        * `Xt` [array of floats, shape=(n_samples, transformed_n_dims)]:
+        Xt : array of floats, shape=[n_samples, transformed_n_dims]
             The samples to inverse transform.
 
         Returns
         -------
-        * `X` [list of lists, shape=(n_samples, n_dims)]
+        X : list of lists, shape=[n_samples, n_dims]
             The original samples.
         """
         # Inverse transform
@@ -647,7 +646,7 @@ class Space(object):
         return b
 
     def __contains__(self, point):
-        """Check that `point` is within the bounds of the space."""
+        """Check that ``point`` is within the bounds of the space."""
         for component, dim in zip(point, self.dimensions):
             if component not in dim:
                 return False
@@ -675,10 +674,10 @@ class Space(object):
 
         Parameters
         ----------
-        * `a` [array]
+        a : array
             First point.
 
-        * `b` [array]
+        `b : array
             Second point.
         """
         distance = 0.
