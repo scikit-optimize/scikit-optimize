@@ -6,25 +6,20 @@
 Overview
 --------
 
-.. currentmodule:: skopt
+.. currentmodule:: skopt.space
 
 .. autosummary::
 
-   space.check_dimension
-   space.Dimension
-   space.Categorical
-   space.Integer
-   space.Real
-   space.Pipeline
-   space.Normalize
-   space.Identity
-   space.Log10
-   space.Pipeline
-   space.Space
+   check_dimension
+   Dimension
+   Categorical
+   Integer
+   Real
+   Space
 
 
 Details
 -------
 
-.. automodule:: skopt.utils
+.. automodule:: skopt.space
    :members:

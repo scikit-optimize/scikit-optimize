@@ -6,21 +6,18 @@
 Overview
 --------
 
+This is a list of public utility functions. Other functions in this module
+are meant for internal use.
+
 .. currentmodule:: skopt
 
 .. autosummary::
 
    utils.check_x_in_space
    utils.cook_estimator
-   utils.create_result
    utils.dimensions_aslist
-   utils.dump
-   utils.eval_callbacks
    utils.expected_minimum
-   utils.has_gradients
-   utils.is_2Dlistlike
-   utils.is_listlike
-   utils.is_regressor
+   utils.dump
    utils.load
    utils.point_asdict
    utils.point_aslist

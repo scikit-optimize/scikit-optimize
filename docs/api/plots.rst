@@ -6,14 +6,14 @@
 Overview
 --------
 
-.. currentmodule:: skopt
+.. currentmodule:: skopt.plots
 
 .. autosummary::
 
-   plots.partial_dependence
-   plots.plot_convergence
-   plots.plot_evaluations
-   plots.plot_objective
+   partial_dependence
+   plot_convergence
+   plot_evaluations
+   plot_objective
 
 
 Details

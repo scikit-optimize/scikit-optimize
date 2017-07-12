@@ -109,7 +109,7 @@ html_theme_options = {
     'logo': 'logo.png',
     'github_user': 'scikit-optimize',
     'github_repo': 'scikit-optimize',
-    'fixed_sidebar': True,
+    'fixed_sidebar': False,
     'github_button': False,
     'github_banner': True,
     }
