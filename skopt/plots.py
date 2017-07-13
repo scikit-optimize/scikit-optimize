@@ -15,28 +15,29 @@ def plot_convergence(*args, **kwargs):
 
     Parameters
     ----------
-    * `args[i]` [`OptimizeResult`, list of `OptimizeResult`, or tuple]:
+    args[i] : ``OptimizeResult``, list of ``OptimizeResult``, or tuple
         The result(s) for which to plot the convergence trace.
 
-        - if `OptimizeResult`, then draw the corresponding single trace;
-        - if list of `OptimizeResult`, then draw the corresponding convergence
-          traces in transparency, along with the average convergence trace;
-        - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
-          an `OptimizeResult` or a list of `OptimizeResult`.
+        - if ``OptimizeResult``, then draw the corresponding single trace;
+        - if list of ``OptimizeResult``, then draw the corresponding
+          convergence traces in transparency, along with the average
+          convergence trace;
+        - if tuple, then ``args[i][0]`` should be a string label and
+          ``args[i][1]`` an ``OptimizeResult`` or a list of ``OptimizeResult``.
 
-    * `ax` [`Axes`, optional]:
+    ax : `Axes`, optional (default=None)
         The matplotlib axes on which to draw the plot, or `None` to create
         a new one.
 
-    * `true_minimum` [float, optional]:
+    true_minimum : float, optional (default=None)
         The true minimum value of the function, if known.
 
-    * `yscale` [None or string, optional]:
+    yscale : None or string, optional (default=None)
         The scale for the y-axis.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : ``Axes``
         The matplotlib axes.
     """
     # <3 legacy python
@@ -147,58 +148,58 @@ def _format_scatter_plot_axes(ax, space, ylabel):
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
                        n_samples=250, n_points=40):
-    """Calculate the partial dependence for dimensions `i` and `j` with
-    respect to the objective value, as approximated by `model`.
+    """Calculate the partial dependence for dimensions ``i`` and ``j`` with
+    respect to the objective value, as approximated by ``model``.
 
     The partial dependence plot shows how the value of the dimensions
-    `i` and `j` influence the `model` predictions after "averaging out"
+    ``i`` and ``j`` influence the ``model`` predictions after "averaging out"
     the influence of all other dimensions.
 
     Parameters
     ----------
-    * `space` [`Space`]
+    space : ``Space``
         The parameter space over which the minimization was performed.
 
-    * `model`
+    model : skopt regressor
         Surrogate model for the objective function.
 
-    * `i` [int]
+    i : int
         The first dimension for which to calculate the partial dependence.
 
-    * `j` [int, default=None]
+    j : int, optional (default=None)
         The second dimension for which to calculate the partial dependence.
-        To calculate the 1D partial dependence on `i` alone set `j=None`.
+        To calculate the 1D partial dependence on ``i`` alone set ``j=None``.
 
-    * `sample_points` [np.array, shape=(n_points, n_dims), default=None]
+    sample_points : np.array, shape=[n_points, n_dims], optional (default=None)
         Randomly sampled and transformed points to use when averaging
-        the model function at each of the `n_points`.
+        the model function at each of the ``n_points``.
 
-    * `n_samples` [int, default=100]
+    n_samples : int, optional (default=100)
         Number of random samples to use for averaging the model function
-        at each of the `n_points`. Only used when `sample_points=None`.
+        at each of the ``n_points``. Only used when ``sample_points=None``.
 
-    * `n_points` [int, default=40]
+    n_points : int, optional (default=40)
         Number of points at which to evaluate the partial dependence
-        along each dimension `i` and `j`.
+        along each dimension ``i`` and ``j``.
 
     Returns
     -------
     For 1D partial dependence:
 
-    * `xi`: [np.array]:
+    xi : np.array
         The points at which the partial dependence was evaluated.
 
-    * `yi`: [np.array]:
-        The value of the model at each point `xi`.
+    yi : np.array
+        The value of the model at each point ``xi``.
 
     For 2D partial dependence:
 
-    * `xi`: [np.array, shape=n_points]:
+    xi : np.array, shape=[n_points]
         The points at which the partial dependence was evaluated.
-    * `yi`: [np.array, shape=n_points]:
+    yi : np.array, shape=[n_points]
         The points at which the partial dependence was evaluated.
-    * `zi`: [np.array, shape=(n_points, n_points)]:
-        The value of the model at each point `(xi, yi)`.
+    zi : np.array, shape=[n_points, n_points]
+        The value of the model at each point ``(xi, yi)``.
     """
     if sample_points is None:
         sample_points = space.transform(space.rvs(n_samples=n_samples))
@@ -243,43 +244,43 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
                    zscale='linear'):
     """Pairwise partial dependence plot of the objective function.
 
-    The diagonal shows the partial dependence for dimension `i` with
+    The diagonal shows the partial dependence for dimension ``i`` with
     respect to the objective function. The off-diagonal shows the
-    partial dependence for dimensions `i` and `j` with
+    partial dependence for dimensions ``i`` and ``j`` with
     respect to the objective function. The objective function is
-    approximated by `result.model.`
+    approximated by ``result.model``.
 
     Pairwise scatter plots of the points at which the objective
     function was directly evaluated are shown on the off-diagonal.
     A red point indicates the found minimum.
 
-    Note: search spaces that contain `Categorical` dimensions are
+    Note: search spaces that contain ``Categorical`` dimensions are
           currently not supported by this function.
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : `OptimizeResult``
         The result for which to create the scatter plot matrix.
 
-    * `levels` [int, default=10]
+    levels : int, optional (default=10)
         Number of levels to draw on the contour plot, passed directly
-        to `plt.contour()`.
+        to ``plt.contour()``.
 
-    * `n_points` [int, default=40]
+    n_points : int, optional (default=40)
         Number of points at which to evaluate the partial dependence
         along each dimension.
 
-    * `n_samples` [int, default=250]
+    n_samples : int, optional (default=250)
         Number of random samples to use for averaging the model function
-        at each of the `n_points`.
+        at each of the ``n_points``.
 
-    * `zscale` [str, default='linear']
+    zscale : str, optional (default='linear')
         Scale to use for the z axis of the contour plots. Either 'linear'
         or 'log'.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : ``Axes``
         The matplotlib axes.
     """
     space = result.space
@@ -337,20 +338,20 @@ def plot_evaluations(result, bins=20):
     The diagonal shows a histogram of sampled values for each
     dimension. A red point indicates the found minimum.
 
-    Note: search spaces that contain `Categorical` dimensions are
+    Note: search spaces that contain ``Categorical`` dimensions are
           currently not supported by this function.
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : ``OptimizeResult``
         The result for which to create the scatter plot matrix.
 
-    * `bins` [int, bins=20]:
+    bins : int, optional (default=20)
         Number of bins to use for histograms on the diagonal.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : ``Axes``
         The matplotlib axes.
     """
     space = result.space

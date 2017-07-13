@@ -10,6 +10,7 @@ Details on the complete API of scikit-optimize.
     minimize_functions
     optimizer
     bayessearchcv
+    acquisition
     plots
     space
     utils
