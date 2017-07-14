@@ -71,7 +71,7 @@ def check_dimension(dimension, transform=None):
             return Categorical(dimension, transform=transform)
         elif all([isinstance(dim, numbers.Integral) for dim in dimension]):
             return Integer(*dimension, transform=transform)
-        elif all([isinstance(dim, numbers.Real) for dim in dimension]):
+        elif any([isinstance(dim, numbers.Real) for dim in dimension]):
             return Real(*dimension, transform=transform)
         else:
             raise ValueError("Invalid dimension {}. Read the documentation for"
