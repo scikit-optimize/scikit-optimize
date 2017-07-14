@@ -69,7 +69,7 @@ def check_dimension(dimension, transform=None):
     if len(dimension) == 2:
         if any([isinstance(d, str) for d in dimension]):
             return Categorical(dimension, transform=transform)
-        elif any([isinstance(dim, numbers.Integral) for dim in dimension]):
+        elif all([isinstance(dim, numbers.Integral) for dim in dimension]):
             return Integer(*dimension, transform=transform)
         elif all([isinstance(dim, numbers.Real) for dim in dimension]):
             return Real(*dimension, transform=transform)
