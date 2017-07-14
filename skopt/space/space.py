@@ -66,16 +66,13 @@ def check_dimension(dimension, transform=None):
     if not isinstance(dimension, (list, tuple, np.ndarray)):
         raise ValueError("Dimension has to be a list or tuple.")
 
-    int_types = (int, np.int32, np.int64)
-    float_types = (float, np.float32, np.float64)
-
     if len(dimension) == 2:
         if any([isinstance(d, str) for d in dimension]):
             return Categorical(dimension, transform=transform)
-        elif any([isinstance(dim, float_types) for dim in dimension]):
-            return Real(*dimension, transform=transform)
-        elif all([isinstance(dim, int_types) for dim in dimension]):
+        elif any([isinstance(dim, numbers.Integral) for dim in dimension]):
             return Integer(*dimension, transform=transform)
+        elif all([isinstance(dim, numbers.Real) for dim in dimension]):
+            return Real(*dimension, transform=transform)
         else:
             raise ValueError("Invalid dimension {}. Read the documentation for"
                              " supported types.".format(dimension))
