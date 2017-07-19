@@ -71,6 +71,14 @@ def test_acquisition_pi_correctness():
 
 
 @pytest.mark.fast_test
+def test_acquisition_a_opt_correctness():
+    # check that it works with a vector as well
+    X = 10 * np.ones((4, 2))
+    aopt = gaussian_lcb(X, ConstSurrogate(), kappa='Aopt')
+    assert_array_almost_equal(aopt, [-1.0] * 4)
+
+
+@pytest.mark.fast_test
 def test_acquisition_lcb_correctness():
     # check that it works with a vector as well
     X = 10 * np.ones((4, 2))
