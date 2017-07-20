@@ -142,6 +142,7 @@ class TimerCallback(object):
         elapsed_time = time() - self._time
         self.iter_time.append(elapsed_time)
         self._time = time()
+        print("I am from TimerCallback!")
 
 
 class EarlyStopper(object):
@@ -156,6 +157,7 @@ class EarlyStopper(object):
         * `result` [`OptimizeResult`, scipy object]:
             The optimization as a OptimizeResult object.
         """
+        print("You will have a criterion!")
         return self._criterion(result)
 
     def _criterion(self, result):
@@ -220,3 +222,37 @@ class DeltaYStopper(EarlyStopper):
 
         else:
             return None
+
+
+class DeadlineStopper(EarlyStopper):
+    """
+    Stop the optimization before running out of a fixed budget of time.
+
+    Attributes
+    ----------
+    * `iter_time`: [list, shape=(n_iter,)]:
+        `iter_time[i-1]` gives the time taken to complete iteration `i`
+
+    Parameters
+    ----------
+    * `total_time`: fixed budget of time (seconds) that the optimization must
+        finish within.
+    """
+    def __init__(self, total_time):
+        super(DeadlineStopper, self).__init__()
+        self._time = time()
+        self.iter_time = []
+        self.total_time = total_time
+
+    def __call__(self, result):
+        elapsed_time = time() - self._time
+        self.iter_time.append(elapsed_time)
+        self._time = time()
+        return self._criterion(result)
+
+    def _criterion(self, result):
+        if len(result.x_iters) >= 1:
+            time_remaining = self.total_time - np.sum(self.iter_time)
+            return time_remaining <= np.max(self.iter_time)
+        else:
+            None
