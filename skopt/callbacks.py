@@ -142,7 +142,6 @@ class TimerCallback(object):
         elapsed_time = time() - self._time
         self.iter_time.append(elapsed_time)
         self._time = time()
-        print("I am from TimerCallback!")
 
 
 class EarlyStopper(object):
@@ -157,7 +156,6 @@ class EarlyStopper(object):
         * `result` [`OptimizeResult`, scipy object]:
             The optimization as a OptimizeResult object.
         """
-        print("You will have a criterion!")
         return self._criterion(result)
 
     def _criterion(self, result):
