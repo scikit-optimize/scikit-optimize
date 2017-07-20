@@ -26,3 +26,4 @@ Plot made using ``skopt.plots.plot_objective``.
 
     intro
     api/index
+    ask-and-tell.ipynb
