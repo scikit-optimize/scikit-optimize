@@ -82,13 +82,16 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
-        - `"EIps" for negated expected improvement per second to take into
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of `"EIps"`.
+        - `"EIMCMC"` for negated expected improvement using Markov chain Monte
+          Carlo samples. The detailed sampling algorithm is the surrogate data
+          slice sampler.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
@@ -143,7 +146,8 @@ class Optimizer(object):
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
 
-        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"
+                             "EIMCMC"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
@@ -295,6 +299,8 @@ class Optimizer(object):
                objective and so on. The type of lie defines different
                flavours of `cl_x` strategies.
 
+        Q: Add spearmint within `"ask"` function?
+
         """
         if n_points is None:
             return self._ask()
@@ -319,7 +325,7 @@ class Optimizer(object):
 
         # Copy of the optimizer is made in order to manage the
         # deletion of points with "lie" objective (the copy of
-        # oiptimizer is simply discarded)
+        # optimizer is simply discarded)
         opt = self.copy()
 
         X = []
@@ -333,7 +339,6 @@ class Optimizer(object):
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
             opt.tell(x, y_lie)  # lie to the optimizer
-
         self.cache_ = {(n_points, strategy): X}  # cache_ the result
 
         return X

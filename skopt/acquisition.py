@@ -45,8 +45,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             acq_vals = func_and_grad
 
-    elif acq_func in ["EI", "PI", "EIps", "PIps"]:
-        if acq_func in ["EI", "EIps"]:
+    elif acq_func in ["EI", "PI", "EIps", "PIps", "EIMCMC"]:
+        if acq_func in ["EI", "EIps", "EIMCMC"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
         else:
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
@@ -77,6 +77,9 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
             if return_grad:
                 acq_grad *= inv_t
                 acq_grad += acq_vals * (-mu_grad + std*std_grad)
+
+        if acq_func == "EIMCMC":
+            pass
 
     else:
         raise ValueError("Acquisition function not implemented.")
@@ -223,7 +226,7 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
 
     The EI condition is derived by computing ``E[u(f(x))]``
     where ``u(f(x)) = 0``, if ``f(x) > y_opt`` and ``u(f(x)) = y_opt - f(x)``,
-    if``f(x) < y_opt``.
+    if ``f(x) < y_opt``.
 
     This solves one of the issues of the PI condition by giving a reward
     proportional to the amount of improvement got.
