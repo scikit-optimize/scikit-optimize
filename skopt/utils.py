@@ -241,7 +241,7 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
 
 def has_gradients(estimator):
     """
-    Check if an estimators predict method can provide gradients.
+    Check if an estimator's ``predict`` method provides gradients.
 
     Parameters
     ----------
@@ -251,15 +251,23 @@ def has_gradients(estimator):
             ExtraTreesRegressor, RandomForestRegressor,
             GradientBoostingQuantileRegressor
     )
-    cat_gp = False
+
+    # cook_estimator() returns None for "dummy minimize" aka random values only
+    if estimator is None:
+        return False
+
+    if isinstance(estimator, tree_estimators):
+        return False
+
+    categorical_gp = False
     if hasattr(estimator, "kernel"):
         params = estimator.get_params()
-        cat_gp = (
+        categorical_gp = (
             isinstance(estimator.kernel, HammingKernel) or
             any([isinstance(params[p], HammingKernel) for p in params])
         )
 
-    return isinstance(estimator, tree_estimators) or cat_gp
+    return not categorical_gp
 
 
 def cook_estimator(base_estimator, space=None, **kwargs):
@@ -288,9 +296,6 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     * `kwargs` [dict]:
         Extra parameters provided to the base_estimator at init time.
     """
-    if space is not None:
-        n_dims = space.transformed_n_dims
-        is_cat = space.is_categorical
     if isinstance(base_estimator, str):
         base_estimator = base_estimator.upper()
         if base_estimator not in ["GP", "ET", "RF", "GBRT", "DUMMY"]:
@@ -301,7 +306,12 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         raise ValueError("base_estimator has to be a regressor.")
 
     if base_estimator == "GP":
+        if space is not None:
+            n_dims = space.transformed_n_dims
+            is_cat = space.is_categorical
+
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
+        # only special if *all* dimensions are categorical
         if is_cat:
             other_kernel = HammingKernel(length_scale=np.ones(n_dims))
         else:
@@ -430,7 +440,7 @@ def normalize_dimensions(dimensions):
     Normalize all dimensions.
 
     This is particularly useful for Gaussian process based regressors and is
-    used internally by `gp_minimize.`
+    used internally by ``gp_minimize``.
 
     Parameters
     ----------
@@ -450,8 +460,7 @@ def normalize_dimensions(dimensions):
          dimensions.
     """
     dim_types = [check_dimension(d) for d in dimensions]
-    is_cat = all([isinstance(check_dimension(d), Categorical)
-                  for d in dim_types])
+    is_cat = all([isinstance(d, Categorical) for d in dim_types])
     if is_cat:
         transformed_dims = [check_dimension(d, transform="identity")
                             for d in dimensions]

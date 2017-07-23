@@ -76,8 +76,9 @@ def base_minimize(func, dimensions, base_estimator,
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
-        - If set to `"sampling"`, then the point among these `n_points`
-          where the `acq_func` is minimum is the next candidate minimum.
+        - If set to `"sampling"`, then `acq_func` is optimized by computing
+          `acq_func` at `n_points` randomly sampled points and the smallest
+          value found is used.
         - If set to `"lbfgs"`, then
               - The `n_restarts_optimizer` no. of points which the acquisition
                 function is least are taken as start points.

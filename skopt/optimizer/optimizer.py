@@ -222,15 +222,16 @@ class Optimizer(object):
 
         if acq_optimizer == "auto":
             if has_gradients(self.base_estimator_):
-                acq_optimizer = "sampling"
-            else:
                 acq_optimizer = "lbfgs"
+            else:
+                acq_optimizer = "sampling"
 
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
 
-        if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
+        if (not has_gradients(self.base_estimator_) and
+            acq_optimizer != "sampling"):
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
