@@ -105,11 +105,11 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
         It should have a ``return_std`` parameter that returns the standard
         deviation.
 
-    * `kappa`: [float, default 1.96 or 'Aopt']:
+    * `kappa`: [float, default 1.96 or 'inf']:
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
-        If set to 'Aopt', the acquisition function will only use the variance
+        If set to 'inf', the acquisition function will only use the variance
         which is useful in a pure exploration setting.
         Useless if ``method`` is set to "LCB".
 
@@ -134,13 +134,13 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
                 X, return_std=True, return_mean_grad=True,
                 return_std_grad=True)
 
-            if kappa == "Aopt":
+            if kappa == "inf":
                 return -std, -std_grad
             return mu - kappa * std, mu_grad - kappa * std_grad
 
         else:
             mu, std = model.predict(X, return_std=True)
-            if kappa == "Aopt":
+            if kappa == "inf":
                 return -std
             return mu - kappa * std
 
