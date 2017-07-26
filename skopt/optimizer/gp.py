@@ -94,7 +94,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
                   chosen by `softmax(\eta g_i)`
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that `g_i -= \mu(X_i)`
-        - `"EIps" for negated expected improvement per second to take into
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
