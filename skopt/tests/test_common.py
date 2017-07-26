@@ -157,8 +157,8 @@ def test_minimizer_api_random_only(minimizer):
 def test_fixed_random_states(minimizer):
     # check that two runs produce exactly same results, if not there is a
     # random state somewhere that is not reproducible
-    n_calls = 7
-    n_random_starts = 4
+    n_calls = 4
+    n_random_starts = 2
 
     space = [(-5.0, 10.0), (0.0, 15.0)]
     result1 = minimizer(branin, space, n_calls=n_calls,
@@ -177,8 +177,8 @@ def test_fixed_random_states(minimizer):
 def test_minimizer_with_space(minimizer):
     # check we can pass a Space instance as dimensions argument and get same
     # result
-    n_calls = 7
-    n_random_starts = 4
+    n_calls = 4
+    n_random_starts = 2
 
     space = Space([(-5.0, 10.0), (0.0, 15.0)])
     space_result = minimizer(branin, space, n_calls=n_calls,
@@ -197,7 +197,7 @@ def test_minimizer_with_space(minimizer):
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 1, 2, 3, 4, 5],
+                         product([0, 1, 2, 3, 4],
                                  [gp_minimize,
                                   forest_minimize,
                                   gbrt_minimize]))
@@ -218,7 +218,7 @@ def test_init_vals_and_models(n_random_starts, optimizer_func):
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 1, 2, 3, 4, 5],
+                         product([0, 1, 2, 3, 4],
                                  [gp_minimize,
                                   forest_minimize,
                                   gbrt_minimize]))
@@ -227,7 +227,7 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
     # starts (no y0 in this case)
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
-    n_calls = 8
+    n_calls = 7
 
     optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     res = optimizer(branin, space, x0=x0, random_state=0,
@@ -244,7 +244,7 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
 def test_init_vals(n_random_starts, optimizer_func):
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
-    n_calls = 10
+    n_calls = len(x0) + n_random_starts
 
     optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     check_init_vals(optimizer, branin, space, x0, n_calls)
@@ -267,7 +267,7 @@ def test_init_vals_dummy_minimize():
 def test_categorical_init_vals(optimizer):
     space = [("-2", "-1", "0", "1", "2")]
     x0 = [["0"], ["1"], ["2"]]
-    n_calls = 5
+    n_calls = 4
     check_init_vals(optimizer, bench4, space, x0, n_calls)
 
 
@@ -280,7 +280,7 @@ def test_categorical_init_vals(optimizer):
 def test_mixed_spaces(optimizer):
     space = [("-2", "-1", "0", "1", "2"), (-2.0, 2.0)]
     x0 = [["0", 2.0], ["1", 1.0], ["2", 1.0]]
-    n_calls = 10
+    n_calls = 4
     check_init_vals(optimizer, bench5, space, x0, n_calls)
 
 
@@ -415,9 +415,10 @@ def test_consistent_x_iter_dimensions(minimizer):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("minimizer", MINIMIZERS)
+@pytest.mark.parametrize("minimizer",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_early_stopping_delta_x(minimizer):
-    n_calls = 15
+    n_calls = 10
     res = minimizer(bench1,
                     callback=DeltaXStopper(0.1),
                     dimensions=[(-1., 1.)],
@@ -428,7 +429,8 @@ def test_early_stopping_delta_x(minimizer):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("minimizer", MINIMIZERS)
+@pytest.mark.parametrize("minimizer",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_early_stopping_delta_x_empty_result_object(minimizer):
     # check that the callback handles the case of being passed an empty
     # results object, e.g. at the start of the optimization loop
@@ -441,14 +443,16 @@ def test_early_stopping_delta_x_empty_result_object(minimizer):
     assert len(res.x_iters) < n_calls
 
 
-@pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
-def test_per_second_api(acq_func):
+@pytest.mark.parametrize("acq_func, minimizer", product(ACQ_FUNCS_PS,
+                                                        [gp_minimize,
+                                                         forest_minimize,
+                                                         gbrt_minimize]))
+def test_per_second_api(acq_func, minimizer):
     def bench1_with_time(x):
         return bench1(x), np.abs(x[0])
 
-    n_calls = 5
-    for minimizer in [gp_minimize, forest_minimize, gbrt_minimize]:
-        res = gp_minimize(bench1_with_time, [(-2.0, 2.0)],
-                          acq_func=acq_func, n_calls=n_calls, n_random_starts=1,
-                          random_state=1)
-        assert len(res.log_time) == n_calls
+    n_calls = 3
+    res = minimizer(bench1_with_time, [(-2.0, 2.0)],
+                    acq_func=acq_func, n_calls=n_calls, n_random_starts=1,
+                    random_state=1)
+    assert len(res.log_time) == n_calls
