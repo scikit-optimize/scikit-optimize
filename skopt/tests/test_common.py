@@ -244,7 +244,7 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
 def test_init_vals(n_random_starts, optimizer_func):
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
-    n_calls = len(x0) + n_random_starts
+    n_calls = len(x0) + n_random_starts + 1
 
     optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     check_init_vals(optimizer, branin, space, x0, n_calls)
