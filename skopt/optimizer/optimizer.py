@@ -137,13 +137,14 @@ class Optimizer(object):
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None):
+                 acq_optimizer_kwargs=None,
+                 noisyEI_N_variants=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
 
-        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps", "noisyEI"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
@@ -152,6 +153,11 @@ class Optimizer(object):
             self.gains_ = np.zeros(3)
         else:
             self.cand_acq_funcs_ = [self.acq_func]
+
+        if self.acq_func == "noisyEI":
+            if noisyEI_N_variants is None:
+                noisyEI_N_variants = 10
+            self.noisyEI_N_variants = noisyEI_N_variants
 
         if acq_func_kwargs is None:
             acq_func_kwargs = dict()
@@ -445,6 +451,28 @@ class Optimizer(object):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 est.fit(self.space.transform(self.Xi), self.yi)
+
+            # if we are using noisy expected improvement generate variants of 
+            # the dataset and compute a GP for each variant
+            if self.acq_func == "noisyEI":
+                means, stds = est.predict(self.Xi, return_std=True)
+                stds = np.diag(stds)
+
+                noisy_estimators = list()
+                for variant in range(self.noisyEI_N_variants):
+                    Xi = self.Xi
+                    yi = np.random.multivariate_normal(means, stds)
+
+                    # fit a new estimator
+                    noisy_est = clone(self.base_estimator_)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        noisy_est.fit(self.space.transform(Xi), yi)
+                    noisy_estimators.append(noisy_est)
+
+                # use this list as estimator, it will be handled by the 
+                # acquisition function
+                est = noisy_estimators
 
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
