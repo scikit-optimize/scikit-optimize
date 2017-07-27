@@ -249,8 +249,8 @@ class DeadlineStopper(EarlyStopper):
         return self._criterion(result)
 
     def _criterion(self, result):
-        if len(result.x_iters) >= 1:
+        if result.x_iters:
             time_remaining = self.total_time - np.sum(self.iter_time)
             return time_remaining <= np.max(self.iter_time)
         else:
-            None
+            return None
