@@ -12,6 +12,9 @@ from sklearn.externals.joblib import Parallel, delayed
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils import check_random_state
 
+from scipy.stats import norm
+from SALib.sample.sobol_sequence import sample as sobol_sample
+
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..space import Categorical
@@ -452,25 +455,28 @@ class Optimizer(object):
                 warnings.simplefilter("ignore")
                 est.fit(self.space.transform(self.Xi), self.yi)
 
-            # if we are using noisy expected improvement generate variants of 
-            # the dataset and compute a GP for each variant
+            # if we are using noisy expected improvement generate N variants
+            # of the observed data and compute a GP for each variant
+            # the variable names reflect the notation used in the original 
+            # paper (Algorithm 1)
             if self.acq_func == "noisyEI":
-                means, stds = est.predict(self.Xi, return_std=True)
-                stds = np.diag(stds)
+                mu, sigma = est.predict(self.Xi, return_cov=True)
+                A = np.linalg.cholesky(sigma + np.eye(len(self.Xi)) * 1e-10)
+                # skip the first sobol (all zeros) or we obtain inf and nans
+                t = sobol_sample(self.noisyEI_N_variants+1, len(self.Xi))[1:]
+                yis = norm.ppf(t).dot(A.T) + mu
 
                 noisy_estimators = list()
                 for variant in range(self.noisyEI_N_variants):
-                    Xi = self.Xi
-                    yi = np.random.multivariate_normal(means, stds)
-
                     # fit a new estimator
                     noisy_est = clone(self.base_estimator_)
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
-                        noisy_est.fit(self.space.transform(Xi), yi)
+                        noisy_est.fit(self.space.transform(self.Xi),
+                                      yis[variant])
                     noisy_estimators.append(noisy_est)
 
-                # use this list as estimator, it will be handled by the 
+                # use this list as estimator, it will be handled by the
                 # acquisition function
                 est = noisy_estimators
 
