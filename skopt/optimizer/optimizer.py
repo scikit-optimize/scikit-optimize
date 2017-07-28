@@ -450,8 +450,12 @@ class Optimizer(object):
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
             self.models.append(est)
 
-            X = self.space.transform(self.space.rvs(
-                n_samples=self.n_points, random_state=self.rng))
+            if self.acq_optimizer == "sampling":
+                X = self.space.transform(self.space.rvs(
+                    n_samples=self.n_points, random_state=self.rng))
+            elif self.acq_optimizer == "lbfgs":
+                X = self.space.transform(self.space.rvs(
+                    n_samples=self.n_restarts_optimizer, random_state=self.rng))
             self.next_xs_ = []
             for cand_acq_func in self.cand_acq_funcs_:
                 values = _gaussian_acquisition(
@@ -467,7 +471,7 @@ class Optimizer(object):
                 # minimization starts from `n_restarts_optimizer` different
                 # points and the best minimum is used
                 elif self.acq_optimizer == "lbfgs":
-                    x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
+                    x0 = X[np.argsort(values)]
 
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
