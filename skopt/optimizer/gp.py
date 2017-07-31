@@ -15,7 +15,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
                 acq_func="gp_hedge", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
                 n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
-                noise="gaussian", n_jobs=1, noisyEI_N_variants=None):
+                noise="gaussian", n_jobs=1, noisyEI_N_variants=10):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -101,6 +101,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
           that of `"EIps
+        - `"noisyEI"` for the noisy expected improvement.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -184,6 +185,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
         when `acq_optimizer` is set to "lbfgs."
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
+
+    * `noisyEI_N_variants` [int, default=10]
+        Number of GPs to fit when using noisy EI.
 
     Returns
     -------

@@ -92,6 +92,7 @@ class Optimizer(object):
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
           that of `"EIps
+        - `"noisyEI"` for the noisy expected improvement.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
@@ -120,7 +121,6 @@ class Optimizer(object):
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
-
     Attributes
     ----------
     * `Xi` [list]:
@@ -140,8 +140,7 @@ class Optimizer(object):
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None,
-                 noisyEI_N_variants=None):
+                 acq_optimizer_kwargs=None):
         # Arguments that are just stored not checked
         self.acq_func = acq_func
         self.rng = check_random_state(random_state)
@@ -158,13 +157,12 @@ class Optimizer(object):
             self.cand_acq_funcs_ = [self.acq_func]
 
         if self.acq_func == "noisyEI":
-            if noisyEI_N_variants is None:
-                noisyEI_N_variants = 10
             self.noisyEI_N_variants = noisyEI_N_variants
 
         if acq_func_kwargs is None:
             acq_func_kwargs = dict()
         self.eta = acq_func_kwargs.get("eta", 1.0)
+        self.noisyEI_N_variants = acq_func_kwargs.get("noisyEI_N_variants", 10)
 
         if acq_optimizer_kwargs is None:
             acq_optimizer_kwargs = dict()
@@ -456,8 +454,8 @@ class Optimizer(object):
                 est.fit(self.space.transform(self.Xi), self.yi)
 
             # if we are using noisy expected improvement generate N variants
-            # of the observed data and compute a GP for each variant
-            # the variable names reflect the notation used in the original 
+            # of the observed data and compute a GP for each variant.
+            # The variable names reflect the notation used in the original 
             # paper (Algorithm 1)
             if self.acq_func == "noisyEI":
                 mu, sigma = est.predict(self.Xi, return_cov=True)
