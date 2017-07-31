@@ -156,9 +156,6 @@ class Optimizer(object):
         else:
             self.cand_acq_funcs_ = [self.acq_func]
 
-        if self.acq_func == "noisyEI":
-            self.noisyEI_N_variants = noisyEI_N_variants
-
         if acq_func_kwargs is None:
             acq_func_kwargs = dict()
         self.eta = acq_func_kwargs.get("eta", 1.0)
