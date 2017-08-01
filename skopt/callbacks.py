@@ -11,6 +11,7 @@ Monitoring callbacks
 
 Early stopping callbacks
 ------------------------
+* DeadlineStopper
 * DeltaXStopper
 * DeltaYStopper
 * TimerCallback
@@ -224,7 +225,7 @@ class DeltaYStopper(_EarlyStopper):
             return None
 
 
-class DeadlineStopper(EarlyStopper):
+class DeadlineStopper(_EarlyStopper):
     """
     Stop the optimization before running out of a fixed budget of time.
 
