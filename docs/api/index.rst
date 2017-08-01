@@ -11,6 +11,7 @@ Details on the complete API of scikit-optimize.
     optimizer
     bayessearchcv
     acquisition
+    callbacks
     plots
     space
     utils

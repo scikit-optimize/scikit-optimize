@@ -21,5 +21,9 @@ Overview
 Details
 -------
 
-.. automodule:: skopt.space
-   :members:
+.. autofunction:: skopt.space.check_dimension
+.. autoclass:: skopt.space.Space
+.. autoclass:: skopt.space.Categorical
+.. autoclass:: skopt.space.Integer
+.. autoclass:: skopt.space.Real
+.. autoclass:: skopt.space.Dimension

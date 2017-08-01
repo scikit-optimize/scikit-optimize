@@ -12,6 +12,8 @@ Monitoring callbacks
 Early stopping callbacks
 ------------------------
 * DeltaXStopper
+* DeltaYStopper
+* TimerCallback
 """
 from collections import Callable
 from time import time
@@ -144,7 +146,7 @@ class TimerCallback(object):
         self._time = time()
 
 
-class EarlyStopper(object):
+class _EarlyStopper(object):
     """Decide to continue or not given the results so far.
 
     The optimization procedure will be stopped if the callback returns True.
@@ -179,14 +181,14 @@ class EarlyStopper(object):
                                   " by subclasses of EarlyStopper.")
 
 
-class DeltaXStopper(EarlyStopper):
+class DeltaXStopper(_EarlyStopper):
     """Stop the optimization when |x1 - x2| < `delta`
 
     If the last two positions at which the objective has been evaluated
     are less than `delta` apart stop the optimization procedure.
     """
     def __init__(self, delta):
-        super(EarlyStopper, self).__init__()
+        super(_EarlyStopper, self).__init__()
         self.delta = delta
 
     def _criterion(self, result):
@@ -198,14 +200,14 @@ class DeltaXStopper(EarlyStopper):
             return None
 
 
-class DeltaYStopper(EarlyStopper):
+class DeltaYStopper(_EarlyStopper):
     """Stop the optimization if the `n_best` minima are within `delta`
 
     Stop the optimizer if the absolute difference between the `n_best`
     objective values is less than `delta`.
     """
     def __init__(self, delta, n_best=5):
-        super(EarlyStopper, self).__init__()
+        super(_EarlyStopper, self).__init__()
         self.delta = delta
         self.n_best = n_best
 

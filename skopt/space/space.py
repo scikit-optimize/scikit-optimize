@@ -145,32 +145,32 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 
 class Real(Dimension):
+    """Search space dimension that can take on any real value.
+
+    Parameters
+    ----------
+    low : float
+        Lower bound (inclusive).
+
+    high : float
+        Upper bound (inclusive).
+
+    prior : 'uniform' or 'log-uniform', optional, (default='uniform')
+        Distribution to use when sampling random points for this dimension.
+        - If ``uniform``, points are sampled uniformly between the lower
+          and upper bounds.
+        - If ``log-uniform``, points are sampled uniformly between
+          ``log10(lower)`` and ``log10(upper)``.
+
+    transform : 'identity' or 'normalize', optional (default='identity')
+        The following transformations are supported.
+
+        - 'identity', the transformed space is the same as the
+          original space.
+        - 'normalize', the transformed space is scaled to be between
+          0 and 1.
+    """
     def __init__(self, low, high, prior="uniform", transform=None):
-        """Search space dimension that can take on any real value.
-
-        Parameters
-        ----------
-        low : float
-            Lower bound (inclusive).
-
-        high : float
-            Upper bound (inclusive).
-
-        prior : 'uniform' or 'log-uniform', optional, (default='uniform')
-            Distribution to use when sampling random points for this dimension.
-            - If ``uniform``, points are sampled uniformly between the lower
-              and upper bounds.
-            - If ``log-uniform``, points are sampled uniformly between
-              ``log10(lower)`` and ``log10(upper)``.
-
-        transform : 'identity' or 'normalize', optional (default='identity')
-            The following transformations are supported.
-
-            - 'identity', the transformed space is the same as the
-              original space.
-            - 'normalize', the transformed space is scaled to be between
-              0 and 1.
-        """
         self.low = low
         self.high = high
         self.prior = prior
@@ -261,25 +261,25 @@ class Real(Dimension):
 
 
 class Integer(Dimension):
+    """Search space dimension that can take on integer values.
+
+    Parameters
+    ----------
+    low : int
+        Lower bound (inclusive).
+
+    high : int
+        Upper bound (inclusive).
+
+    transform : 'identity' or 'normalize', optional (default='identity')
+        The following transformations are supported.
+
+        - "identity", the transformed space is the same as the
+          original space.
+        - "normalize", the transformed space is scaled to be between
+          0 and 1.
+    """
     def __init__(self, low, high, transform=None):
-        """Search space dimension that can take on integer values.
-
-        Parameters
-        ----------
-        low : int
-            Lower bound (inclusive).
-
-        high : int
-            Upper bound (inclusive).
-
-        transform : 'identity' or 'normalize', optional (default='identity')
-            The following transformations are supported.
-
-            - "identity", the transformed space is the same as the
-              original space.
-            - "normalize", the transformed space is scaled to be between
-              0 and 1.
-        """
         self.low = low
         self.high = high
 
@@ -346,24 +346,24 @@ class Integer(Dimension):
 
 
 class Categorical(Dimension):
+    """Search space dimension that can take on categorical values.
+
+    Parameters
+    ----------
+    categories : list, shape=[n_categories]
+        Sequence of possible categories.
+
+    prior : list, shape=[categories], optional (default=None)
+        Prior probabilities for each category. By default all categories
+        are equally likely.
+
+    transform : 'onehot' or 'identity', optional (default='onehot')
+        - 'identity', the transformed space is the same as the original
+          space.
+        - 'onehot', the transformed space is a one-hot encoded
+          representation of the original space.
+    """
     def __init__(self, categories, prior=None, transform=None):
-        """Search space dimension that can take on categorical values.
-
-        Parameters
-        ----------
-        categories : list, shape=[n_categories]
-            Sequence of possible categories.
-
-        prior : list, shape=[categories], optional (default=None)
-            Prior probabilities for each category. By default all categories
-            are equally likely.
-
-        transform : 'onehot' or 'identity', optional (default='onehot')
-            - 'identity', the transformed space is the same as the original
-              space.
-            - 'onehot', the transformed space is a one-hot encoded
-              representation of the original space.
-        """
         self.categories = tuple(categories)
 
         if transform is None:
