@@ -57,10 +57,28 @@ Find the minimum of the noisy function ``f(x)`` over the range
 
     res = gp_minimize(f, [(-2.0, 2.0)])
 
-For more read our `introduction to bayesian
+
+For more control over the optimization loop you can use the ``skopt.Optimizer``
+class:
+
+.. code:: python
+
+    from skopt import Optimizer
+
+    opt = Optimizer([(-2.0, 2.0)])
+
+    for i in range(20):
+        suggested = opt.ask()
+        y = f(suggested)
+        opt.tell(suggested, y)
+        print('iteration:', i, suggested, y)
+
+
+Read our `introduction to bayesian
 optimization <https://scikit-optimize.github.io/notebooks/bayesian-optimization.html>`__
 and the other
 `examples <https://github.com/scikit-optimize/scikit-optimize/tree/master/examples>`__.
+
 
 Development
 -----------

@@ -18,6 +18,7 @@ from .learning.gaussian_process.kernels import Matern
 
 from .space import check_dimension
 from .space import Categorical
+from .space import Space
 
 __all__ = (
     "load",
@@ -307,8 +308,12 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
     if base_estimator == "GP":
         if space is not None:
+            space = Space(space)
             n_dims = space.transformed_n_dims
             is_cat = space.is_categorical
+
+        else:
+            raise ValueError("Expected a Space instance, not None.")
 
         cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
         # only special if *all* dimensions are categorical

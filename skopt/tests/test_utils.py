@@ -21,7 +21,6 @@ from skopt.utils import has_gradients
 from skopt.utils import cook_estimator
 
 
-
 def check_optimization_results_equality(res_1, res_2):
     # Check if the results objects have the same keys
     assert_equal(sorted(res_1.keys()), sorted(res_2.keys()))
