@@ -143,7 +143,7 @@ class Optimizer(object):
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
 
-        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps", "MI"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
@@ -156,6 +156,8 @@ class Optimizer(object):
         if acq_func_kwargs is None:
             acq_func_kwargs = dict()
         self.eta = acq_func_kwargs.get("eta", 1.0)
+        self.alpha = acq_func_kwargs.get("alpha", 0.5)
+        self.gamma = acq_func_kwargs.get("gamma", 0.0)
 
         if acq_optimizer_kwargs is None:
             acq_optimizer_kwargs = dict()
