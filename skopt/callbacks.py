@@ -2,7 +2,7 @@
 
 Callbacks are callables which are invoked after each iteration of the optimizer
 and are passed the results "so far". Callbacks can monitor progress, or stop
-the optimization early by returning `True`.
+the optimization early by returning ``True``.
 
 Monitoring callbacks
 --------------------
@@ -47,19 +47,19 @@ class VerboseCallback(object):
 
     Parameters
     ----------
-    * `n_init` [int, optional]:
+    n_total : int
+        Total number of func calls.
+
+    n_init : int, optional (default=0)
         Number of points provided by the user which are yet to be
         evaluated. This is equal to `len(x0)` when `y0` is None
 
-    * `n_random` [int, optional]:
+    n_random : int, optional (default=0)
         Number of points randomly chosen.
-
-    * `n_total` [int]:
-        Total number of func calls.
 
     Attributes
     ----------
-    * `iter_no`: [int]:
+    iter_no : int
         Number of iterations of the optimization routine.
     """
 
@@ -100,7 +100,7 @@ class VerboseCallback(object):
         """
         Parameters
         ----------
-        * `res` [`OptimizeResult`, scipy object]:
+        res : ``OptimizeResult``, scipy object
             The optimization as a OptimizeResult object.
         """
         time_taken = time() - self._start_time
@@ -123,13 +123,13 @@ class TimerCallback(object):
     """
     Log the elapsed time between each iteration of the minimization loop.
 
-    The time for each iteration is stored in the `iter_time` attribute which
+    The time for each iteration is stored in the ``iter_time`` attribute which
     you can inspect after the minimization has completed.
 
     Attributes
     ----------
-    * `iter_time`: [list, shape=(n_iter,)]:
-        `iter_time[i-1]` gives the time taken to complete iteration `i`
+    iter_time : list, shape=(n_iter,)
+        ``iter_time[i-1]`` gives the time taken to complete iteration ``i``
     """
     def __init__(self):
         self._time = time()
@@ -139,7 +139,7 @@ class TimerCallback(object):
         """
         Parameters
         ----------
-        * `res` [`OptimizeResult`, scipy object]:
+        res : ``OptimizeResult``, scipy object
             The optimization as a OptimizeResult object.
         """
         elapsed_time = time() - self._time
@@ -156,7 +156,7 @@ class _EarlyStopper(object):
         """
         Parameters
         ----------
-        * `result` [`OptimizeResult`, scipy object]:
+        res : ``OptimizeResult``, scipy object
             The optimization as a OptimizeResult object.
         """
         return self._criterion(result)
@@ -183,10 +183,10 @@ class _EarlyStopper(object):
 
 
 class DeltaXStopper(_EarlyStopper):
-    """Stop the optimization when |x1 - x2| < `delta`
+    """Stop the optimization when |x1 - x2| < ``delta``
 
     If the last two positions at which the objective has been evaluated
-    are less than `delta` apart stop the optimization procedure.
+    are less than ``delta`` apart stop the optimization procedure.
     """
     def __init__(self, delta):
         super(_EarlyStopper, self).__init__()
@@ -202,10 +202,10 @@ class DeltaXStopper(_EarlyStopper):
 
 
 class DeltaYStopper(_EarlyStopper):
-    """Stop the optimization if the `n_best` minima are within `delta`
+    """Stop the optimization if the ``n_best`` minima are within ``delta``
 
-    Stop the optimizer if the absolute difference between the `n_best`
-    objective values is less than `delta`.
+    Stop the optimizer if the absolute difference between the ``n_best``
+    objective values is less than ``delta``.
     """
     def __init__(self, delta, n_best=5):
         super(_EarlyStopper, self).__init__()
@@ -226,18 +226,18 @@ class DeltaYStopper(_EarlyStopper):
 
 
 class DeadlineStopper(_EarlyStopper):
-    """
-    Stop the optimization before running out of a fixed budget of time.
-
-    Attributes
-    ----------
-    * `iter_time`: [list, shape=(n_iter,)]:
-        `iter_time[i-1]` gives the time taken to complete iteration `i`
+    """Stop the optimization before running out of a fixed budget of time.
 
     Parameters
     ----------
-    * `total_time`: fixed budget of time (seconds) that the optimization must
-        finish within.
+    total_time : float
+        Time (in seconds) that the optimization must finish within.
+
+    Attributes
+    ----------
+    iter_time : list, shape=(n_iter,)
+        ``iter_time[i-1]`` gives the time taken to complete iteration ``i``
+
     """
     def __init__(self, total_time):
         super(DeadlineStopper, self).__init__()
