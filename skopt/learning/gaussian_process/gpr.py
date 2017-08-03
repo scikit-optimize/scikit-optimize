@@ -4,6 +4,7 @@ import warnings
 from scipy.linalg import cho_solve
 from scipy.linalg import solve_triangular
 
+import sklearn
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 from sklearn.utils import check_array
 
@@ -222,6 +223,12 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
         self.K_inv_ = L_inv.dot(L_inv.T)
 
+        # Fix deprecation warning #462
+        if int(sklearn.__version__[2:4]) >= 19:
+            self.y_train_mean_ = self._y_train_mean
+        else:
+            self.y_train_mean_ = self.y_train_mean
+
         return self
 
     def predict(self, X, return_std=False, return_cov=False,
@@ -302,7 +309,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)    # Line 4 (y_mean = f_star)
-            y_mean = self.y_train_mean + y_mean  # undo normal.
+            y_mean = self.y_train_mean_ + y_mean  # undo normal.
 
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
