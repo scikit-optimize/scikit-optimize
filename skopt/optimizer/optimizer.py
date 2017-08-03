@@ -156,7 +156,7 @@ class Optimizer(object):
         if acq_func_kwargs is None:
             acq_func_kwargs = dict()
         self.eta = acq_func_kwargs.get("eta", 1.0)
-        self.alpha = acq_func_kwargs.get("alpha", 0.5)
+        self.alpha = acq_func_kwargs.get("alpha", 1.6)
         self.gamma = acq_func_kwargs.get("gamma", 0.0)
 
         if acq_optimizer_kwargs is None:

@@ -307,7 +307,7 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     return values
 
 
-def gaussian_mi(X, model, y_opt=0.0, alpha=0.5, gamma=0.0, return_grad=False):
+def gaussian_mi(X, model, y_opt=0.0, alpha=1.6, gamma=0.0, return_grad=False):
     """
     Use mutual information to calculate the acquisition values
 
@@ -328,8 +328,11 @@ def gaussian_mi(X, model, y_opt=0.0, alpha=0.5, gamma=0.0, return_grad=False):
     * `gamma`: [float, default=0.0]:
         Controls the exploration of the algorithm.
 
-    * `alpha`: [float, default=]:
+    * `alpha`: [float, default=1.6]:
         Governs the trade-off between precision and confidence.
+        Defined as alpha = log(1/delta) for 0 < delta < 1.
+        Bounds the cumulative regret with confidence 1-delta.
+        Must fall within the interval [0.30, 2.30].
 
     Returns
     -------
