@@ -25,6 +25,18 @@ from ..utils import is_2Dlistlike
 from ..utils import normalize_dimensions
 
 
+def thompson_sampling(model, n_rep_points, n_trial_points, space,
+                      random_state=None):
+    n_total = n_rep_points * n_trial_points
+
+    rep_points = []
+    for i in range(n_rep_points):
+        rep_cands = space.transform(
+            space.rvs(n_samples=n_trial_points, random_state=random_state))
+        vals = model.sample_y(rep_cands, 1, random_state=random_state)
+        rep_points.append(rep_cands[np.argmin(vals)])
+    return np.array(rep_points)
+
 class Optimizer(object):
     """Run bayesian optimisation loop.
 
@@ -450,8 +462,18 @@ class Optimizer(object):
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
             self.models.append(est)
 
+            if self.acq_func == "entropy_search":
+                n_rep_points = self.acq_func_kwargs.get("n_rep_points", 50)
+                n_trial_points = self.acq_func_kwargs.get(
+                    "n_trial_points", 200)
+                rep_points = thompson_sampling(
+                    est, n_rep_points, n_trial_points, self.space,
+                    random_state=self.rng)
+                self.acq_func_kwargs["rep_points"] = rep_points
+
             X = self.space.transform(self.space.rvs(
                 n_samples=self.n_points, random_state=self.rng))
+
             self.next_xs_ = []
             for cand_acq_func in self.cand_acq_funcs_:
                 values = _gaussian_acquisition(
@@ -469,6 +491,9 @@ class Optimizer(object):
                 elif self.acq_optimizer == "lbfgs":
                     x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
 
+                    approx_grad = False
+                    if self.acq_func == "entropy_search":
+                        approx_grad = True
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")
                         results = Parallel(n_jobs=self.n_jobs)(
@@ -477,7 +502,7 @@ class Optimizer(object):
                                 args=(est, np.min(self.yi), cand_acq_func,
                                       self.acq_func_kwargs),
                                 bounds=self.space.transformed_bounds,
-                                approx_grad=False,
+                                approx_grad=approx_grad,
                                 maxiter=20)
                             for x in x0)
 
