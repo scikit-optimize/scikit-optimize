@@ -222,12 +222,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         # Precompute arrays needed at prediction
         L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
         self.K_inv_ = L_inv.dot(L_inv.T)
-
-        # Fix deprecation warning #462
-        if int(sklearn.__version__[2:4]) >= 19:
-            self.y_train_mean_ = self._y_train_mean
-        else:
-            self.y_train_mean_ = self.y_train_mean
+        self.y_train_mean_ = self.y_train_.mean(axis=0)
 
         return self
 
