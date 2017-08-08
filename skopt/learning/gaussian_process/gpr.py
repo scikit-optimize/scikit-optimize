@@ -135,6 +135,9 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
     * `y_train_` [array-like, shape = (n_samples, [n_output_dims])]:
         Target values in training data (also required for prediction)
 
+    * `y_train_mean_` [array-like, shape = ([n_output_dims])]:
+        Mean y value from training, or 0 if normalize_y is False
+
     * `kernel_` [kernel object]:
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
@@ -222,7 +225,10 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         # Precompute arrays needed at prediction
         L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
         self.K_inv_ = L_inv.dot(L_inv.T)
-        self.y_train_mean_ = self.y_train_.mean(axis=0)
+        if self.normalize_y:
+            self.y_train_mean_ = self.y_train_.mean(axis=0)
+        else:
+            self.y_train_mean_ = np.zeros(1)
 
         return self
 
