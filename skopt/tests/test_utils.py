@@ -44,6 +44,7 @@ def test_dump_and_load():
     # Test normal dumping and loading
     with tempfile.TemporaryFile() as f:
         dump(res, f)
+        f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
     assert_true("func" in res_loaded.specs["args"])
@@ -51,6 +52,7 @@ def test_dump_and_load():
     # Test dumping without objective function
     with tempfile.TemporaryFile() as f:
         dump(res, f, store_objective=False)
+        f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
     assert_true(not ("func" in res_loaded.specs["args"]))
@@ -59,6 +61,7 @@ def test_dump_and_load():
     del res.specs["args"]["func"]
     with tempfile.TemporaryFile() as f:
         dump(res, f, store_objective=False)
+        f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
     assert_true(not ("func" in res_loaded.specs["args"]))
@@ -74,6 +77,7 @@ def test_dump_and_load_optimizer():
 
     with tempfile.TemporaryFile() as f:
         dump(opt, f)
+        f.seek(0)
         load(f)
 
 
