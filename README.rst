@@ -1,4 +1,4 @@
-|Build Status| |Build Status|
+|Travis Status| |CircleCI Status|
 
 Scikit-Optimize
 ===============
@@ -106,7 +106,7 @@ This is implemented using pytest `attributes <https://docs.pytest.org/en/latest/
 
 All contributors are welcome!
 
-.. |Build Status| image:: https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master
+.. |Travis Status| image:: https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master
    :target: https://travis-ci.org/scikit-optimize/scikit-optimize
-.. |Build Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token
+.. |CircleCI Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token
    :target: https://circleci.com/gh/scikit-optimize/scikit-optimize
