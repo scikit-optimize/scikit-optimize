@@ -89,9 +89,7 @@ class Optimizer(object):
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
           that of `"EIps"`.
-        - `"EIMCMC"` for negated expected improvement using Markov chain Monte
-          Carlo samples. The detailed sampling algorithm is the surrogate data
-          slice sampler.
+        - `"EIOpt"` for negated expected improvement with fantasized outcomes.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
@@ -147,7 +145,7 @@ class Optimizer(object):
         self.acq_func_kwargs = acq_func_kwargs
 
         allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps",
-                             "EIMCMC"]
+                             "EIOpt"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
@@ -284,7 +282,8 @@ class Optimizer(object):
         * `strategy` [string, default=`"cl_min"`]:
             Method to use to sample multiple points (see also `n_points`
             description). This parameter is ignored if n_points = None.
-            Supported options are `"cl_min"`, `"cl_mean"` or `"cl_max"`.
+            Supported options are `"cl_min"`, `"cl_mean"`, `"cl_max"` or
+            `"fantasy"`.
 
             - If set to `"cl_min"`, then constant liar strtategy is used
                with lie objective value being minimum of observed objective
@@ -306,7 +305,7 @@ class Optimizer(object):
         if n_points is None:
             return self._ask()
 
-        supported_strategies = ["cl_min", "cl_mean", "cl_max"]
+        supported_strategies = ["cl_min", "cl_mean", "cl_max", "fantasy"]
 
         if not (isinstance(n_points, int) and n_points > 0):
             raise ValueError(

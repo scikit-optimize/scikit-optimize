@@ -45,8 +45,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             acq_vals = func_and_grad
 
-    elif acq_func in ["EI", "PI", "EIps", "PIps", "EIMCMC"]:
-        if acq_func in ["EI", "EIps", "EIMCMC"]:
+    elif acq_func in ["EI", "PI", "EIps", "PIps", "EIOpt"]:
+        if acq_func in ["EI", "EIps", "EIOpt"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
         else:
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
@@ -78,7 +78,7 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
                 acq_grad *= inv_t
                 acq_grad += acq_vals * (-mu_grad + std*std_grad)
 
-        if acq_func == "EIMCMC":
+        if acq_func == "EIOpt":
             pass
 
     else:
@@ -223,7 +223,7 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     return values
 
 
-def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
+def gaussian_ei(X, model, y_opt=0.0, xi=0.01, fantasize=False, return_grad=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
@@ -258,6 +258,10 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         Controls how much improvement one wants over the previous best
         values. Useful only when ``method`` is set to "EI"
 
+    * `fantasize`: [boolean, optional]:
+        Whether or not fantasize over samples from the full GP posterior
+        predictive distribution.
+
     * `return_grad`: [boolean, optional]:
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
@@ -270,38 +274,74 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
-        if return_grad:
-            mu, std, mu_grad, std_grad = model.predict(
-                X, return_std=True, return_mean_grad=True,
-                return_std_grad=True)
+        if fantasize:
+            if return_grad:
+                mu, std, mu_grad, std_grad = model.fant_predict(
+                    X, X_pend=X_pend, n_pend=n_pend, return_std=True,
+                    return_mean_grad=True, return_std_grad=True)
+            else:
+                mu, std = model.fant_predict(X, X_pend=X_pend, n_pend=n_pend,
+                    return_std=True)
 
+        elif return_grad:
+            mu, std, mu_grad, std_grad = model.predict(
+                X, return_std=True, return_mean_grad=True, return_std_grad=True)
         else:
             mu, std = model.predict(X, return_std=True)
 
-    values = np.zeros_like(mu)
-    mask = std > 0
-    improve = y_opt - xi - mu[mask]
-    scaled = improve / std[mask]
-    cdf = norm.cdf(scaled)
-    pdf = norm.pdf(scaled)
-    exploit = improve * cdf
-    explore = std[mask] * pdf
-    values[mask] = exploit + explore
+    if fantasize == False:
+        values = np.zeros_like(mu)
+        mask = std > 0
+        improve = y_opt - xi - mu[mask]
+        scaled = improve / std[mask]
+        cdf = norm.cdf(scaled)
+        pdf = norm.pdf(scaled)
+        exploit = improve * cdf
+        explore = std[mask] * pdf
+        values[mask] = exploit + explore
 
-    if return_grad:
-        if not np.all(mask):
-            return values, np.zeros_like(std_grad)
+        if return_grad:
+            if not np.all(mask):
+                return values, np.zeros_like(std_grad)
 
-        # Substitute (y_opt - xi - mu) / sigma = t and apply chain rule.
-        # improve_grad is the gradient of t wrt x.
-        improve_grad = -mu_grad * std - std_grad * improve
-        improve_grad /= std ** 2
-        cdf_grad = improve_grad * pdf
-        pdf_grad = -improve * cdf_grad
-        exploit_grad = -mu_grad * cdf - pdf_grad
-        explore_grad = std_grad * pdf + pdf_grad
+            # Substitute (y_opt - xi - mu) / sigma = t and apply chain rule.
+            # improve_grad is the gradient of t wrt x.
+            improve_grad = -mu_grad * std - std_grad * improve
+            improve_grad /= std ** 2
+            cdf_grad = improve_grad * pdf
+            pdf_grad = -improve * cdf_grad
+            exploit_grad = -mu_grad * cdf - pdf_grad
+            explore_grad = std_grad * pdf + pdf_grad
 
-        grad = exploit_grad + explore_grad
-        return values, grad
+            grad = exploit_grad + explore_grad
+            return values, grad
 
-    return values
+        return values
+
+    else:
+        if return_grad:
+            mu, std, mu_grad, std_grad = model.fant_predict(
+                X, X_pend=X_pend, n_pend=n_pend, return_std=True,
+                return_mean_grad=True, return_std_grad=True)
+        else:
+            mu, std = model.fant_predict(X, X_pend=X_pend, n_pend=n_pend,
+                return_std=True)
+
+        values = np.zeros_like(mu)
+        mask = std > 0
+        y_opt_aug = y_opt[np.newaxis, :]
+        improve = y_opt_aug - xi - mu[mask]
+        scaled = improve / std[mask]
+        cdf = norm.cdf(scaled)
+        pdf = norm.pdf(scaled)
+        exploit = improve * cdf
+        explore = std[mask] * pdf
+        values[mask] = exploit + explore
+
+        if return_grad:
+            if not np.all(mask):
+                return np.mean(values, axis=1), np.zeros_like(std_grad)
+            # TODO: add gradient calculation
+            return np.mean(values, axis=1)
+
+        return np.mean(values, axis=1)
