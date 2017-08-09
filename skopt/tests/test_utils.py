@@ -12,8 +12,13 @@ from skopt import expected_minimum
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
 from skopt.learning import ExtraTreesRegressor
-from skopt.optimizer import Optimizer
-from skopt.utils import point_asdict, point_aslist, dimensions_aslist
+from skopt import Optimizer
+from skopt import Space
+from skopt.utils import point_asdict
+from skopt.utils import point_aslist
+from skopt.utils import dimensions_aslist
+from skopt.utils import has_gradients
+from skopt.utils import cook_estimator
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -39,6 +44,7 @@ def test_dump_and_load():
     # Test normal dumping and loading
     with tempfile.TemporaryFile() as f:
         dump(res, f)
+        f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
     assert_true("func" in res_loaded.specs["args"])
@@ -46,6 +52,7 @@ def test_dump_and_load():
     # Test dumping without objective function
     with tempfile.TemporaryFile() as f:
         dump(res, f, store_objective=False)
+        f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
     assert_true(not ("func" in res_loaded.specs["args"]))
@@ -54,6 +61,7 @@ def test_dump_and_load():
     del res.specs["args"]["func"]
     with tempfile.TemporaryFile() as f:
         dump(res, f, store_objective=False)
+        f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
     assert_true(not ("func" in res_loaded.specs["args"]))
@@ -69,6 +77,7 @@ def test_dump_and_load_optimizer():
 
     with tempfile.TemporaryFile() as f:
         dump(opt, f)
+        f.seek(0)
         load(f)
 
 
@@ -115,3 +124,20 @@ def test_dict_list_space_representation():
         point,
         point_aslist(chef_space, point_asdict(chef_space, point))
     )
+
+
+@pytest.mark.fast_test
+@pytest.mark.parametrize("estimator, gradients",
+                         zip(["GP", "RF", "ET", "GBRT", "DUMMY"],
+                             [True, False, False, False, False]))
+def test_has_gradients(estimator, gradients):
+    space = Space([(-2.0, 2.0)])
+
+    assert has_gradients(cook_estimator(estimator, space=space)) == gradients
+
+
+@pytest.mark.fast_test
+def test_categorical_gp_has_gradients():
+    space = Space([('a', 'b')])
+
+    assert not has_gradients(cook_estimator('GP', space=space))

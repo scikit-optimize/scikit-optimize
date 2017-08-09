@@ -59,6 +59,7 @@ from .optimizer import gbrt_minimize
 from .optimizer import gp_minimize
 from .optimizer import Optimizer
 from .searchcv import BayesSearchCV
+from .space import Space
 from .utils import dump
 from .utils import expected_minimum
 from .utils import load
@@ -82,5 +83,6 @@ __all__ = (
     "dump",
     "load",
     "expected_minimum",
-    "BayesSearchCV"
+    "BayesSearchCV",
+    "Space"
 )

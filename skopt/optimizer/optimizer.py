@@ -226,15 +226,16 @@ class Optimizer(object):
 
         if acq_optimizer == "auto":
             if has_gradients(self.base_estimator_):
-                acq_optimizer = "sampling"
-            else:
                 acq_optimizer = "lbfgs"
+            else:
+                acq_optimizer = "sampling"
 
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
 
-        if has_gradients(self.base_estimator_) and acq_optimizer != "sampling":
+        if (not has_gradients(self.base_estimator_) and
+            acq_optimizer != "sampling"):
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
@@ -454,8 +455,11 @@ class Optimizer(object):
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
             self.models.append(est)
 
+            # even with BFGS as optimizer we want to sample a large number
+            # of points and then pick the best ones as starting points
             X = self.space.transform(self.space.rvs(
                 n_samples=self.n_points, random_state=self.rng))
+
             self.next_xs_ = []
             for cand_acq_func in self.cand_acq_funcs_:
                 values = _gaussian_acquisition(

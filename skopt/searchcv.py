@@ -262,7 +262,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
     """
 
     def __init__(self, estimator, search_spaces=None, optimizer_kwargs=None,
-                 n_iter=256, scoring=None, fit_params=None, n_jobs=1,
+                 n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):

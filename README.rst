@@ -1,4 +1,4 @@
-|Build Status| |Build Status|
+|Travis Status| |CircleCI Status|
 
 Scikit-Optimize
 ===============
@@ -57,10 +57,28 @@ Find the minimum of the noisy function ``f(x)`` over the range
 
     res = gp_minimize(f, [(-2.0, 2.0)])
 
-For more read our `introduction to bayesian
+
+For more control over the optimization loop you can use the ``skopt.Optimizer``
+class:
+
+.. code:: python
+
+    from skopt import Optimizer
+
+    opt = Optimizer([(-2.0, 2.0)])
+
+    for i in range(20):
+        suggested = opt.ask()
+        y = f(suggested)
+        opt.tell(suggested, y)
+        print('iteration:', i, suggested, y)
+
+
+Read our `introduction to bayesian
 optimization <https://scikit-optimize.github.io/notebooks/bayesian-optimization.html>`__
 and the other
 `examples <https://github.com/scikit-optimize/scikit-optimize/tree/master/examples>`__.
+
 
 Development
 -----------
@@ -88,7 +106,7 @@ This is implemented using pytest `attributes <https://docs.pytest.org/en/latest/
 
 All contributors are welcome!
 
-.. |Build Status| image:: https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master
+.. |Travis Status| image:: https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master
    :target: https://travis-ci.org/scikit-optimize/scikit-optimize
-.. |Build Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token
+.. |CircleCI Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token
    :target: https://circleci.com/gh/scikit-optimize/scikit-optimize

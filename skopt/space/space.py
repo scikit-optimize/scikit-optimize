@@ -33,9 +33,9 @@ def check_dimension(dimension, transform=None):
         Search space Dimension.
         Each search dimension can be defined either as
 
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+        - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
@@ -69,10 +69,10 @@ def check_dimension(dimension, transform=None):
     if len(dimension) == 2:
         if any([isinstance(d, str) for d in dimension]):
             return Categorical(dimension, transform=transform)
-        elif any([isinstance(dim, float) for dim in dimension]):
-            return Real(*dimension, transform=transform)
-        elif all([isinstance(dim, int) for dim in dimension]):
+        elif all([isinstance(dim, numbers.Integral) for dim in dimension]):
             return Integer(*dimension, transform=transform)
+        elif any([isinstance(dim, numbers.Real) for dim in dimension]):
+            return Real(*dimension, transform=transform)
         else:
             raise ValueError("Invalid dimension {}. Read the documentation for"
                              " supported types.".format(dimension))
@@ -471,9 +471,9 @@ class Space(object):
             List of search space dimensions.
             Each search dimension can be defined either as
 
-            - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+            - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
               dimensions),
-            - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+            - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
               dimensions),
             - as a list of categories (for `Categorical` dimensions), or
             - an instance of a `Dimension` object (`Real`, `Integer` or

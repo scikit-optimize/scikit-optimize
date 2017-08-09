@@ -10,13 +10,12 @@ from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import bench4
 from skopt.benchmarks import branin
-from skopt.learning import GaussianProcessRegressor
 
 
 def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
-                   margin, n_calls):
+                   margin, n_calls, n_random_starts=10):
     r = gp_minimize(func, bounds, acq_optimizer=acq_optimizer,
-                    acq_func=acq_func,
+                    acq_func=acq_func, n_random_starts=n_random_starts,
                     n_calls=n_calls, random_state=1,
                     noise=1e-10)
     assert_less(r.fun, y_opt + margin)
@@ -29,21 +28,21 @@ SEARCH_AND_ACQ = list(product(["sampling", "lbfgs"], ["LCB", "EI"]))
 @pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
 def test_gp_minimize_bench1(search, acq):
     check_minimize(bench1, 0.,
-                   [(-2.0, 2.0)], search, acq, 0.05, 50)
+                   [(-2.0, 2.0)], search, acq, 0.05, 20)
 
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
 def test_gp_minimize_bench2(search, acq):
     check_minimize(bench2, -5,
-                   [(-6.0, 6.0)], search, acq, 0.05, 75)
+                   [(-6.0, 6.0)], search, acq, 0.05, 20)
 
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
 def test_gp_minimize_bench3(search, acq):
     check_minimize(bench3, -0.9,
-                   [(-2.0, 2.0)], search, acq, 0.05, 50)
+                   [(-2.0, 2.0)], search, acq, 0.05, 20)
 
 
 @pytest.mark.fast_test
@@ -51,7 +50,7 @@ def test_gp_minimize_bench3(search, acq):
                          list(product(["sampling"], ["LCB", "EI"])))
 def test_gp_minimize_bench4(search, acq):
     check_minimize(bench4, 0.0,
-                   [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 10)
+                   [("-2", "-1", "0", "1", "2")], search, acq, 0.05, 5, 2)
 
 
 @pytest.mark.fast_test

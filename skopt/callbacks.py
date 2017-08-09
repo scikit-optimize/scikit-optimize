@@ -220,3 +220,35 @@ class DeltaYStopper(EarlyStopper):
 
         else:
             return None
+
+
+class DeadlineStopper(EarlyStopper):
+    """
+    Stop the optimization before running out of a fixed budget of time.
+
+    Attributes
+    ----------
+    * `iter_time`: [list, shape=(n_iter,)]:
+        `iter_time[i-1]` gives the time taken to complete iteration `i`
+
+    Parameters
+    ----------
+    * `total_time`: fixed budget of time (seconds) that the optimization must
+        finish within.
+    """
+    def __init__(self, total_time):
+        super(DeadlineStopper, self).__init__()
+        self._time = time()
+        self.iter_time = []
+        self.total_time = total_time
+
+    def _criterion(self, result):
+        elapsed_time = time() - self._time
+        self.iter_time.append(elapsed_time)
+        self._time = time()
+
+        if result.x_iters:
+            time_remaining = self.total_time - np.sum(self.iter_time)
+            return time_remaining <= np.max(self.iter_time)
+        else:
+            return None
