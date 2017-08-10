@@ -67,7 +67,7 @@ def check_dimension(dimension, transform=None):
         raise ValueError("Dimension has to be a list or tuple.")
 
     if len(dimension) == 2:
-        if any([isinstance(d, str) for d in dimension]):
+        if any([isinstance(d, (str, bool)) for d in dimension]):
             return Categorical(dimension, transform=transform)
         elif all([isinstance(dim, numbers.Integral) for dim in dimension]):
             return Integer(*dimension, transform=transform)
@@ -364,7 +364,7 @@ class Categorical(Dimension):
             - "onehot", the transformed space is a one-hot encoded
               representation of the original space.
         """
-        self.categories = categories
+        self.categories = tuple(categories)
 
         if transform is None:
             transform = "onehot"
