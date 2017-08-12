@@ -115,15 +115,12 @@ def test_searchcv_runs_multiple_subspaces():
 
     opt = BayesSearchCV(
         pipe,
-        [(lin_search, 11), (dtc_search, 11), svc_search],
-        n_iter=10
+        [(lin_search, 1), (dtc_search, 1), svc_search],
+        n_iter=2
     )
 
     opt.fit(X_train, y_train)
 
     # test if all subspaces are explored
     total_evaluations = len(opt.cv_results_['mean_test_score'])
-    assert_equal(
-        total_evaluations, 10+11+11,
-        "Not all spaces were explored!"
-    )
+    assert total_evaluations == 1+1+2, "Not all spaces were explored!"
