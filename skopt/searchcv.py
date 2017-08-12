@@ -398,6 +398,11 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         for space, name in zip(search_spaces, names):
             self.search_spaces_[name] = space
 
+    @property
+    def best_params_(self):
+        sk_model_sel.check_is_fitted(self, 'cv_results_')
+        return self.cv_results_['params'][self.best_index_]
+
     def _fit(self, X, y, groups, parameter_iterable):
         """
         Actual fitting,  performing the search over parameters.
