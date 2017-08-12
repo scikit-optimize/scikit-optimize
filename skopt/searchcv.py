@@ -295,6 +295,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         self.cv_results_ = defaultdict(list)
 
         self.best_index_ = None
+        self.multimetric_ = False
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring, fit_params=fit_params,
