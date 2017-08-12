@@ -6,9 +6,12 @@ import pytest
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_equal
 from sklearn.datasets import load_iris
-from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC, LinearSVC
+from sklearn.tree import DecisionTreeClassifier
 
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
@@ -85,19 +88,42 @@ def test_searchcv_runs_multiple_subspaces():
         X, y, train_size=0.75, random_state=0
     )
 
+    # used to try different model classes
+    pipe = Pipeline([
+        ('model', SVC())
+    ])
+
+    # single categorical value of 'model' parameter sets the model class
+    lin_search = {
+        'model': Categorical([LinearSVC()]),
+        'model__C': Real(1e-6, 1e+6, prior='log-uniform'),
+    }
+
+    dtc_search = {
+        'model': Categorical([DecisionTreeClassifier()]),
+        'model__max_depth': Integer(1, 32),
+        'model__min_samples_split': Real(1e-3, 1.0, prior='log-uniform'),
+    }
+
+    svc_search = {
+        'model': Categorical([SVC()]),
+        'model__C': Real(1e-6, 1e+6, prior='log-uniform'),
+        'model__gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+        'model__degree': Integer(1, 8),
+        'model__kernel': Categorical(['linear', 'poly', 'rbf']),
+    }
+
     opt = BayesSearchCV(
-        SVC(),
-        [
-            ({
-                'C': Real(1e-6, 1e+6, prior='log-uniform'),
-                'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            }, 10),
-            {
-                'degree': Integer(1, 8),
-                'kernel': Categorical(['linear', 'poly', 'rbf']),
-            }
-        ],
+        pipe,
+        [(lin_search, 11), (dtc_search, 11), svc_search],
         n_iter=10
     )
 
     opt.fit(X_train, y_train)
+
+    # test if all subspaces are explored
+    total_evaluations = len(opt.cv_results_['mean_test_score'])
+    assert_equal(
+        total_evaluations, 10+11+11,
+        "Not all spaces were explored!"
+    )

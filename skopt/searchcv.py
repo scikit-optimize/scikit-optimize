@@ -282,7 +282,7 @@ class BayesSearchCV(sklearn.model_selection._search.BaseSearchCV):
             # account for the case when search space is a dict
             if isinstance(search_spaces, dict):
                 search_spaces = [search_spaces]
-            self.add_spaces(range(len(search_spaces)), search_spaces)
+            self.add_spaces(list(range(len(search_spaces))), search_spaces)
 
         self.n_iter = n_iter
         self.random_state = random_state
