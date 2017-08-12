@@ -399,11 +399,19 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         for space, name in zip(search_spaces, names):
             self.search_spaces_[name] = space
 
+    # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
+    @property
+    def best_score_(self):
+        sk_model_sel.check_is_fitted(self, 'cv_results_')
+        return self.cv_results_['mean_test_score'][self.best_index_]
+
+    # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     @property
     def best_params_(self):
         sk_model_sel.check_is_fitted(self, 'cv_results_')
         return self.cv_results_['params'][self.best_index_]
 
+    # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     def _fit(self, X, y, groups, parameter_iterable):
         """
         Actual fitting,  performing the search over parameters.
