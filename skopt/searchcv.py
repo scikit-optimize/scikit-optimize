@@ -393,7 +393,9 @@ class BayesSearchCV(sklearn.model_selection._search.BaseSearchCV):
 
         if not isinstance(search_spaces, list):
             search_spaces = [search_spaces]
-        if not isinstance(names, Iterable):
+        if isinstance(names, Iterable):
+            names = list(names) # to avoid emptying generator
+        else:
             names = [names]
 
         # first check whether space already exits ...

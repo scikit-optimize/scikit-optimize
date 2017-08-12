@@ -124,3 +124,4 @@ def test_searchcv_runs_multiple_subspaces():
     # test if all subspaces are explored
     total_evaluations = len(opt.cv_results_['mean_test_score'])
     assert total_evaluations == 1+1+2, "Not all spaces were explored!"
+test_searchcv_runs_multiple_subspaces()
