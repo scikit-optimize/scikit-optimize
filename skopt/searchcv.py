@@ -1,17 +1,22 @@
-from collections import defaultdict
+from collections import defaultdict, Sized
+from functools import partial, reduce
 
 import numpy as np
+from scipy.stats import rankdata
 
-from sklearn.base import clone
-from sklearn.externals.joblib import cpu_count
-import sklearn.model_selection._search as sk_model_sel
+import sklearn
+from sklearn.base import is_classifier, clone
+from sklearn.externals.joblib import Parallel, delayed, cpu_count
+from sklearn.utils.fixes import MaskedArray
+from sklearn.utils.validation import indexable, check_is_fitted
+from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist
 from .space import check_dimension
 
 
-class BayesSearchCV(sk_model_sel.BaseSearchCV):
+class BayesSearchCV(sklearn.model_selection._search.BaseSearchCV):
     """Bayesian optimization over hyper parameters.
 
     BayesSearchCV implements a "fit" and a "score" method.
@@ -402,13 +407,13 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     @property
     def best_score_(self):
-        sk_model_sel.check_is_fitted(self, 'cv_results_')
+        check_is_fitted(self, 'cv_results_')
         return self.cv_results_['mean_test_score'][self.best_index_]
 
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     @property
     def best_params_(self):
-        sk_model_sel.check_is_fitted(self, 'cv_results_')
+        check_is_fitted(self, 'cv_results_')
         return self.cv_results_['params'][self.best_index_]
 
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
@@ -420,14 +425,14 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         """
 
         estimator = self.estimator
-        cv = sk_model_sel.check_cv(self.cv, y, classifier=
-            sk_model_sel.is_classifier(estimator))
-        self.scorer_ = sk_model_sel.check_scoring(
+        cv = sklearn.model_selection._validation.check_cv(self.cv, y, classifier=
+            is_classifier(estimator))
+        self.scorer_ = check_scoring(
             self.estimator, scoring=self.scoring)
 
-        X, y, groups = sk_model_sel.indexable(X, y, groups)
+        X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
-        if self.verbose > 0 and isinstance(parameter_iterable, sk_model_sel.Sized):
+        if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
             print("Fitting {0} folds for each of {1} candidates, totalling"
                   " {2} fits".format(n_splits, n_candidates,
@@ -437,10 +442,10 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         pre_dispatch = self.pre_dispatch
 
         cv_iter = list(cv.split(X, y, groups))
-        out = sk_model_sel.Parallel(
+        out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
-        )(sk_model_sel.delayed(sk_model_sel._fit_and_score)(
+        )(delayed(sklearn.model_selection._validation._fit_and_score)(
                 clone(base_estimator),
                 X, y, self.scorer_,
                 train, test, self.verbose, parameters,
@@ -486,7 +491,7 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
 
             if rank:
                 results["rank_%s" % key_name] = np.asarray(
-                    sk_model_sel.rankdata(-array_means, method='min'), dtype=np.int32)
+                    rankdata(-array_means, method='min'), dtype=np.int32)
 
         # Computed the (weighted) mean and std for test scores alone
         # NOTE test_sample counts (weights) remain the same for all candidates
@@ -506,8 +511,8 @@ class BayesSearchCV(sk_model_sel.BaseSearchCV):
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
-        param_results = defaultdict(sk_model_sel.partial(
-                                            sk_model_sel.MaskedArray,
+        param_results = defaultdict(partial(
+                                            MaskedArray,
                                             np.empty(n_candidates,),
                                             mask=True,
                                             dtype=object))
