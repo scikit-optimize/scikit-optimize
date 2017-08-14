@@ -1,4 +1,4 @@
-from collections import defaultdict, Sized
+from collections import defaultdict, Sized, Iterable
 from functools import partial, reduce
 
 import numpy as np
