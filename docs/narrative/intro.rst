@@ -17,5 +17,7 @@ with ``skopt``::
 For more read our `introduction to bayesian optimization`_ and the other
 `examples`_.
 
+
+
 .. _introduction to bayesian optimization: https://scikit-optimize.github.io/notebooks/bayesian-optimization.html
 .. _examples: https://github.com/scikit-optimize/scikit-optimize/tree/master/examples

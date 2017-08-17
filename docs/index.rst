@@ -24,5 +24,5 @@ Plot made using ``skopt.plots.plot_objective``.
     :maxdepth: 2
     :caption: Contents:
 
-    intro
+    narrative/index
     api/index
