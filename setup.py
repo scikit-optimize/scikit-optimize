@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='scikit-optimize',
-      version='0.4-dev',
+      version='0.4',
       description='Sequential model-based optimization toolbox.',
       long_description=open('README.rst').read(),
       url='https://scikit-optimize.github.io/',
