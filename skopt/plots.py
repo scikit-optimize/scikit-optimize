@@ -142,7 +142,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
             ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
             ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
 
-    return ax
+    return ax_
 
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
