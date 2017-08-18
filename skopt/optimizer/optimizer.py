@@ -12,9 +12,6 @@ from sklearn.externals.joblib import Parallel, delayed
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils import check_random_state
 
-from scipy.stats import norm
-from SALib.sample.sobol_sequence import sample as sobol_sample
-
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..space import Categorical
@@ -455,11 +452,19 @@ class Optimizer(object):
             # The variable names reflect the notation used in the original 
             # paper (Algorithm 1)
             if self.acq_func == "noisyEI":
-                mu, sigma = est.predict(self.Xi, return_cov=True)
-                A = np.linalg.cholesky(sigma + np.eye(len(self.Xi)) * 1e-10)
+                # In the paper they use Sobol sampling, however we still need
+                # to decide which library to use (see issue #433)
+                #from scipy.stats import norm
+                #from SALib.sample.sobol_sequence import sample as sobol_sample
+                #mu, sigma = est.predict(self.space.transform(self.Xi), return_cov=True)
+                #A = np.linalg.cholesky(sigma + np.eye(len(self.Xi)) * 1e-10)
                 # skip the first sobol (all zeros) or we obtain inf and nans
-                t = sobol_sample(self.noisyEI_N_variants+1, len(self.Xi))[1:]
-                yis = norm.ppf(t).dot(A.T) + mu
+                #t = sobol_sample(self.noisyEI_N_variants+1, len(self.Xi))[1:]
+                #yis = norm.ppf(t).dot(A.T) + mu
+
+                # for now skip the sobol sampling
+                mu, sigma = est.predict(self.space.transform(self.Xi), return_cov=True)
+                yis = np.random.multivariate_normal(mu, sigma, self.noisyEI_N_variants)
 
                 noisy_estimators = list()
                 for variant in range(self.noisyEI_N_variants):
@@ -471,13 +476,16 @@ class Optimizer(object):
                                       yis[variant])
                     noisy_estimators.append(noisy_est)
 
-                # use this list as estimator, it will be handled by the
-                # acquisition function
+                # Save the real estimator
+                self.models.append(est)
+                # And use the noisy ones instead. They will be handled by the AF.
                 est = noisy_estimators
+
+            else:
+                self.models.append(est)
 
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
-            self.models.append(est)
 
             X = self.space.transform(self.space.rvs(
                 n_samples=self.n_points, random_state=self.rng))
