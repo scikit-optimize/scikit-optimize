@@ -16,8 +16,9 @@ from .learning.gaussian_process.kernels import ConstantKernel
 from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
-from .space import check_dimension
 from .space import Categorical
+from .space import Integer
+from .space import Real
 from .space import Space
 
 __all__ = (
@@ -441,8 +442,7 @@ def point_aslist(search_space, point_as_dict):
 
 
 def normalize_dimensions(dimensions):
-    """
-    Normalize all dimensions.
+    """Create a ``Space`` where all dimensions are normalized to unit range.
 
     This is particularly useful for Gaussian process based regressors and is
     used internally by ``gp_minimize``.
@@ -453,9 +453,9 @@ def normalize_dimensions(dimensions):
         List of search space dimensions.
         Each search dimension can be defined either as
 
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+        - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
@@ -464,21 +464,33 @@ def normalize_dimensions(dimensions):
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
     """
-    dim_types = [check_dimension(d) for d in dimensions]
-    is_cat = all([isinstance(d, Categorical) for d in dim_types])
-    if is_cat:
-        transformed_dims = [check_dimension(d, transform="identity")
-                            for d in dimensions]
+    space = Space(dimensions)
+    transformed_dimensions = []
+    if space.is_categorical:
+        # recreate the space and explicitly set transform to "identity"
+        # this is a special case for GP based regressors
+        for dimension in space:
+            transformed_dimensions.append(Categorical(dimension.categories,
+                                                      dimension.prior,
+                                                      transform="identity"))
+
     else:
-        transformed_dims = []
-        for dim_type, dim in zip(dim_types, dimensions):
-            if isinstance(dim_type, Categorical):
-                transformed_dims.append(
-                    check_dimension(dim, transform="onehot")
-                    )
+        for dimension in space.dimensions:
+            if isinstance(dimension, Categorical):
+                transformed_dimensions.append(dimension)
             # To make sure that GP operates in the [0, 1] space
-            else:
-                transformed_dims.append(
-                    check_dimension(dim, transform="normalize")
+            elif isinstance(dimension, Real):
+                transformed_dimensions.append(
+                    Real(dimension.low, dimension.high, dimension.prior,
+                         transform="normalize")
                     )
-    return transformed_dims
+            elif isinstance(dimension, Integer):
+                transformed_dimensions.append(
+                    Integer(dimension.low, dimension.high,
+                            transform="normalize")
+                    )
+            else:
+                raise RuntimeError("Unknown dimension type "
+                                   "(%s)" % type(dimension))
+
+    return Space(transformed_dimensions)

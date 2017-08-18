@@ -19,6 +19,7 @@ from skopt.utils import point_aslist
 from skopt.utils import dimensions_aslist
 from skopt.utils import has_gradients
 from skopt.utils import cook_estimator
+from skopt.utils import normalize_dimensions
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -141,3 +142,25 @@ def test_categorical_gp_has_gradients():
     space = Space([('a', 'b')])
 
     assert not has_gradients(cook_estimator('GP', space=space))
+
+
+@pytest.mark.fast_test
+def test_normalize_dimensions_all_categorical():
+    dimensions = (['a', 'b', 'c'], ['1', '2', '3'])
+    space = normalize_dimensions(dimensions)
+    assert space.is_categorical
+
+
+@pytest.mark.fast_test
+@pytest.mark.parametrize("dimensions, normalizations",
+                         [(((1, 3), (1., 3.)),
+                           ('normalize', 'normalize')
+                           ),
+                          (((1, 3), ('a', 'b', 'c')),
+                           ('normalize', 'onehot')
+                           ),
+                          ])
+def test_normalize_dimensions(dimensions, normalizations):
+    space = normalize_dimensions(dimensions)
+    for dimension, normalization in zip(space, normalizations):
+        assert dimension.transform_ == normalization
