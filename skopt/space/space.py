@@ -22,10 +22,13 @@ class _Ellipsis:
 
 
 def check_dimension(dimension, transform=None):
-    """
+    """Turn a provided dimension description into a dimension object.
+
     Checks that the provided dimension falls into one of the
     supported types. For a list of supported types, look at
-    the documentation of `dimension` below.
+    the documentation of ``dimension`` below.
+
+    If ``dimension`` is already a ``Dimension`` instance, return it.
 
     Parameters
     ----------
@@ -668,6 +671,7 @@ class Space(object):
 
     @property
     def is_categorical(self):
+        """Space contains exclusively categorical dimensions"""
         return all([isinstance(dim, Categorical) for dim in self.dimensions])
 
     def distance(self, point_a, point_b):

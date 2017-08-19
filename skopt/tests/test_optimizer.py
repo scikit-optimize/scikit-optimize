@@ -6,7 +6,9 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 
+from skopt import gp_minimize
 from skopt.benchmarks import bench1
+from skopt.benchmarks import branin
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
 from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.optimizer import Optimizer
@@ -194,3 +196,21 @@ def test_optimizer_base_estimator_string_smoke(base_estimator):
     opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
                     n_initial_points=1, acq_func="EI")
     opt.run(func=lambda x: x[0]**2, n_iter=3)
+
+
+def test_defaults_are_equivalent():
+    # check that the defaults of Optimizer reproduce the defaults of
+    # gp_minimize
+    space = [(-5., 10.), (0., 15.)]
+    opt = Optimizer(space, random_state=1)
+
+    for n in range(15):
+        x = opt.ask()
+        res_opt = opt.tell(x, branin(x))
+
+    res_min = gp_minimize(branin, space, n_calls=15, random_state=1)
+
+    assert res_min.space == res_opt.space
+    # tolerate small differences in the points sampled
+    assert np.allclose(res_min.x_iters, res_opt.x_iters, atol=1e-5)
+    assert np.allclose(res_min.x, res_opt.x, atol=1e-5)

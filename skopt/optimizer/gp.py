@@ -3,8 +3,6 @@
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..space import check_dimension
-from ..space import Categorical
 from ..space import Space
 from ..utils import cook_estimator
 from ..utils import normalize_dimensions
@@ -207,13 +205,12 @@ def gp_minimize(func, dimensions, base_estimator=None,
     """
     # Check params
     rng = check_random_state(random_state)
-    transformed_dims = normalize_dimensions(dimensions)
-    space = Space(transformed_dims)
+    space = normalize_dimensions(dimensions)
     base_estimator = cook_estimator("GP", space=space, random_state=rng,
                                     noise=noise)
 
     return base_minimize(
-        func, dimensions, base_estimator=base_estimator,
+        func, space, base_estimator=base_estimator,
         acq_func=acq_func,
         xi=xi, kappa=kappa, acq_optimizer=acq_optimizer, n_calls=n_calls,
         n_points=n_points, n_random_starts=n_random_starts,
