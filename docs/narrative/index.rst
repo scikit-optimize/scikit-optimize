@@ -8,3 +8,4 @@ User guide for scikit-optimize.
     :maxdepth: 1
 
     intro
+    examples
