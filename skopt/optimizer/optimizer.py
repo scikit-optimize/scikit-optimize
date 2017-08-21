@@ -14,6 +14,7 @@ from sklearn.utils import check_random_state
 
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
+from ..learning import GaussianProcessRegressor
 from ..space import Categorical
 from ..space import Space
 from ..utils import check_x_in_space
@@ -174,7 +175,10 @@ class Optimizer(object):
                           DeprecationWarning)
             n_initial_points = n_random_starts
 
-        if isinstance(base_estimator, str) and base_estimator.upper() == "GP":
+        self._check_arguments(base_estimator, n_initial_points, acq_optimizer,
+                              dimensions)
+
+        if isinstance(self.base_estimator_, GaussianProcessRegressor):
             dimensions = normalize_dimensions(dimensions)
 
         self.space = Space(dimensions)
@@ -190,7 +194,6 @@ class Optimizer(object):
             else:
                 self._non_cat_inds.append(ind)
 
-        self._check_arguments(base_estimator, n_initial_points, acq_optimizer)
         self.n_jobs = n_jobs
 
         # The cache of responses of `ask` method for n_points not None.
@@ -200,12 +203,12 @@ class Optimizer(object):
         self.cache_ = {}
 
     def _check_arguments(self, base_estimator, n_initial_points,
-                         acq_optimizer):
+                         acq_optimizer, dimensions):
         """Check arguments for sanity."""
 
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
-                base_estimator, space=self.space, random_state=self.rng)
+                base_estimator, space=dimensions, random_state=self.rng)
 
         if not is_regressor(base_estimator) and base_estimator is not None:
             raise ValueError(

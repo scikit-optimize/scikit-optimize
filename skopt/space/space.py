@@ -22,10 +22,13 @@ class _Ellipsis:
 
 
 def check_dimension(dimension, transform=None):
-    """
+    """Turn a provided dimension description into a dimension object.
+
     Checks that the provided dimension falls into one of the
     supported types. For a list of supported types, look at
-    the documentation of `dimension` below.
+    the documentation of ``dimension`` below.
+
+    If ``dimension`` is already a ``Dimension`` instance, return it.
 
     Parameters
     ----------
@@ -67,7 +70,7 @@ def check_dimension(dimension, transform=None):
         raise ValueError("Dimension has to be a list or tuple.")
 
     if len(dimension) == 2:
-        if any([isinstance(d, str) for d in dimension]):
+        if any([isinstance(d, (str, bool)) for d in dimension]):
             return Categorical(dimension, transform=transform)
         elif all([isinstance(dim, numbers.Integral) for dim in dimension]):
             return Integer(*dimension, transform=transform)
@@ -364,7 +367,7 @@ class Categorical(Dimension):
             - "onehot", the transformed space is a one-hot encoded
               representation of the original space.
         """
-        self.categories = categories
+        self.categories = tuple(categories)
 
         if transform is None:
             transform = "onehot"
@@ -668,6 +671,7 @@ class Space(object):
 
     @property
     def is_categorical(self):
+        """Space contains exclusively categorical dimensions"""
         return all([isinstance(dim, Categorical) for dim in self.dimensions])
 
     def distance(self, point_a, point_b):
