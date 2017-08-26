@@ -276,6 +276,8 @@ class BayesSearchCV(sklearn.model_selection._search.BaseSearchCV):
         # to make it easy to add or remove search spaces, in case
         # user wants to use `step` function directly.
         self.search_spaces_ = {}
+        # make sklearn.base.clone work
+        self.search_spaces = search_spaces
 
         # can be None if user intends to provide spaces later manually
         if search_spaces is not None:
