@@ -70,7 +70,7 @@ def base_minimize(func, dimensions, base_estimator,
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
           that of `"EIps"`.
-        - `"EIOpt"` for negated expected improvement with fantasized outcomes.
+        - `"qEI"` for negated expected improvement averaged among multi-points.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model

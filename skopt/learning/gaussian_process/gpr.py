@@ -292,8 +292,9 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                 "the std.")
 
         X = check_array(X)
-        if X.shape[0] != 1 and (return_mean_grad or return_std_grad):
-            raise ValueError("Not implemented for n_samples > 1")
+        # TODO: Write new error function
+        # if X.shape[0] != 1 and (return_mean_grad or return_std_grad):
+        #     raise ValueError("Not implemented for n_samples > 1")
 
         if not hasattr(self, "X_train_"):  # Not fit; predict based on GP prior
             y_mean = np.zeros(X.shape[0])

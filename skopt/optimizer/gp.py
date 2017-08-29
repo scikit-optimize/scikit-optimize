@@ -12,8 +12,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
                 n_calls=100, n_random_starts=10,
                 acq_func="gp_hedge", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
-                n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
-                noise="gaussian", n_jobs=1):
+                n_points=10000, n_sims=10, n_pend=, n_restarts_optimizer=5,
+                xi=0.01, kappa=1.96, noise="gaussian", n_jobs=1):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -98,7 +98,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
           the second being the time taken in seconds.
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of `"EIps"`.
+        - `"qEI"` for negated expected improvement averaged among multi-points.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -151,7 +152,17 @@ def gp_minimize(func, dimensions, base_estimator=None,
 
     * `n_points` [int, default=10000]:
         Number of points to sample to determine the next "best" point.
+        Currently, this is limited to all the constant liar strategies.
         Useless if acq_optimizer is set to `"lbfgs"`.
+
+    * `n_sims` [int, default=10]:
+        Number of simulations to draw batches of points. Currently, this is
+        limited to the q-EI method, where q-points Improvement values are
+        averaged by this number to get q-points Expected Improvement.
+
+    * `n_pend` [int, default=]:
+        Number of points within a batch. Currently, this is limited to the
+        q-EI method. `n_pend` is `q`.
 
     * `n_restarts_optimizer` [int, default=5]:
         The number of restarts of the optimizer when `acq_optimizer`

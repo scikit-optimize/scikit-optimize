@@ -32,6 +32,7 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         acq_func_kwargs = dict()
     xi = acq_func_kwargs.get("xi", 0.01)
     kappa = acq_func_kwargs.get("kappa", 1.96)
+    random_state = acq_func_kwargs.get("random_state", 0)
 
     # Evaluate acquisition function
     per_second = acq_func.endswith("ps")
@@ -45,11 +46,15 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             acq_vals = func_and_grad
 
-    elif acq_func in ["EI", "PI", "EIps", "PIps", "EIOpt"]:
-        if acq_func in ["EI", "EIps", "EIOpt"]:
+    elif acq_func in ["EI", "PI", "EIps", "PIps", "qEI"]:
+        if acq_func in ["EI", "EIps"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
-        else:
+        elif acq_func in ["PI", "PIps"]:
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
+        elif acq_func == "qEI":
+            func_and_grad = gaussian_q_ei(X, model, n_sims, y_opt, xi, random_state)
+        else:
+            pass # For "qEIOpt"
 
         if return_grad:
             acq_vals = -func_and_grad[0]
@@ -77,9 +82,6 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
             if return_grad:
                 acq_grad *= inv_t
                 acq_grad += acq_vals * (-mu_grad + std*std_grad)
-
-        if acq_func == "EIOpt":
-            pass
 
     else:
         raise ValueError("Acquisition function not implemented.")
@@ -223,11 +225,11 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     return values
 
 
-def gaussian_ei(X, model, y_opt=0.0, xi=0.01, fantasize=False, return_grad=False):
+def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
-    The conditional probability `P(y=f(x) | x)`form a gaussian with a certain
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a certain
     mean and standard deviation approximated by the model.
 
     The EI condition is derived by computing ``E[u(f(x))]``
@@ -258,10 +260,6 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, fantasize=False, return_grad=False
         Controls how much improvement one wants over the previous best
         values. Useful only when ``method`` is set to "EI"
 
-    * `fantasize`: [boolean, optional]:
-        Whether or not fantasize over samples from the full GP posterior
-        predictive distribution.
-
     * `return_grad`: [boolean, optional]:
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
@@ -274,74 +272,96 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, fantasize=False, return_grad=False
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
-        if fantasize:
-            if return_grad:
-                mu, std, mu_grad, std_grad = model.fant_predict(
-                    X, X_pend=X_pend, n_pend=n_pend, return_std=True,
-                    return_mean_grad=True, return_std_grad=True)
-            else:
-                mu, std = model.fant_predict(X, X_pend=X_pend, n_pend=n_pend,
-                    return_std=True)
-
-        elif return_grad:
+        if return_grad:
             mu, std, mu_grad, std_grad = model.predict(
-                X, return_std=True, return_mean_grad=True, return_std_grad=True)
+                X, return_std=True, return_mean_grad=True,
+                return_std_grad=True)
+
         else:
             mu, std = model.predict(X, return_std=True)
 
-    if fantasize == False:
-        values = np.zeros_like(mu)
-        mask = std > 0
-        improve = y_opt - xi - mu[mask]
-        scaled = improve / std[mask]
-        cdf = norm.cdf(scaled)
-        pdf = norm.pdf(scaled)
-        exploit = improve * cdf
-        explore = std[mask] * pdf
-        values[mask] = exploit + explore
+    values = np.zeros_like(mu)
+    mask = std > 0
+    improve = y_opt - xi - mu[mask]
+    scaled = improve / std[mask]
+    cdf = norm.cdf(scaled)
+    pdf = norm.pdf(scaled)
+    exploit = improve * cdf
+    explore = std[mask] * pdf
+    values[mask] = exploit + explore
 
-        if return_grad:
-            if not np.all(mask):
-                return values, np.zeros_like(std_grad)
+    if return_grad:
+        if not np.all(mask):
+            return values, np.zeros_like(std_grad)
 
-            # Substitute (y_opt - xi - mu) / sigma = t and apply chain rule.
-            # improve_grad is the gradient of t wrt x.
-            improve_grad = -mu_grad * std - std_grad * improve
-            improve_grad /= std ** 2
-            cdf_grad = improve_grad * pdf
-            pdf_grad = -improve * cdf_grad
-            exploit_grad = -mu_grad * cdf - pdf_grad
-            explore_grad = std_grad * pdf + pdf_grad
+        # Substitute (y_opt - xi - mu) / sigma = t and apply chain rule.
+        # improve_grad is the gradient of t wrt x.
+        improve_grad = -mu_grad * std - std_grad * improve
+        improve_grad /= std ** 2
+        cdf_grad = improve_grad * pdf
+        pdf_grad = -improve * cdf_grad
+        exploit_grad = -mu_grad * cdf - pdf_grad
+        explore_grad = std_grad * pdf + pdf_grad
 
-            grad = exploit_grad + explore_grad
-            return values, grad
+        grad = exploit_grad + explore_grad
+        return values, grad
 
-        return values
+    return values
 
-    else:
-        if return_grad:
-            mu, std, mu_grad, std_grad = model.fant_predict(
-                X, X_pend=X_pend, n_pend=n_pend, return_std=True,
-                return_mean_grad=True, return_std_grad=True)
-        else:
-            mu, std = model.fant_predict(X, X_pend=X_pend, n_pend=n_pend,
-                return_std=True)
 
-        values = np.zeros_like(mu)
-        mask = std > 0
-        y_opt_aug = y_opt[np.newaxis, :]
-        improve = y_opt_aug - xi - mu[mask]
-        scaled = improve / std[mask]
-        cdf = norm.cdf(scaled)
-        pdf = norm.pdf(scaled)
-        exploit = improve * cdf
-        explore = std[mask] * pdf
-        values[mask] = exploit + explore
+def gaussian_q_ei(X, model, n_sims=10, y_opt=0.0, xi=0.01, random_state=0):
+    """
+    Use the multi-points expected improvement to calculate the acquisition values.
 
-        if return_grad:
-            if not np.all(mask):
-                return np.mean(values, axis=1), np.zeros_like(std_grad)
-            # TODO: add gradient calculation
-            return np.mean(values, axis=1)
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a certain
+    mean and standard deviation approximated by the model.
 
-        return np.mean(values, axis=1)
+    The q-EI condition is derived by computing the average of ``E[u(f(x))]`` over
+    simulations, where ``u(f(x)) = 0``, if ``f(x) > y_opt`` and
+    ``u(f(x)) = y_opt - f(x)``, if ``f(x) < y_opt``. Different from sequential EI
+    method, q-EI draws samples directly from posterior predictive distribution.
+
+    This solves one of the issues of the PI condition by giving a reward
+    proportional to the amount of improvement got.
+
+    Note that the value returned by this function should be maximized to
+    obtain the ``X`` with maximum improvement.
+
+    Parameters
+    ----------
+    * `X` [array-like, shape=(n_samples, n_features)]:
+        Values where the acquisition function should be computed.
+
+    * `model` [sklearn estimator that implements predict with ``return_std``]:
+        The fit estimator that approximates the function through the
+        method ``predict``.
+        It should have a ``return_std`` parameter that returns the standard
+        deviation.
+
+    * `n_sims` [int, default 10]:
+        The number of simulations over the posterior predictive distribution.
+
+    * `y_opt` [float, default 0]:
+        Previous minimum value which we would like to improve upon.
+
+    * `xi` [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Useful only when ``method`` is set to "EI"
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    * `values`: [array-like, shape=(X.shape[0],)]:
+        Acquisition function values computed at X.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        y = model.sample_y(X, n_samples=n_sims, random_state=random_state)
+
+    values = y_opt - xi - np.mean(y, axis=1)
+
+    return values
