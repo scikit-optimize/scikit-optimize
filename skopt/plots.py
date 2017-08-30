@@ -239,7 +239,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         return xi, yi, np.array(zi).T
 
 
-def plot_objective(result, levels=10, n_points=40, n_samples=250,
+def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear'):
     """Pairwise partial dependence plot of the objective function.
 
@@ -273,6 +273,9 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
         Number of random samples to use for averaging the model function
         at each of the `n_points`.
 
+    * `size` [float, default=2]
+        Height (in inches) of each facet.
+
     * `zscale` [str, default='linear']
         Scale to use for the z axis of the contour plots. Either 'linear'
         or 'log'.
@@ -295,7 +298,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
                          " not '%s'." % zscale)
 
     fig, ax = plt.subplots(space.n_dims, space.n_dims,
-                           figsize=(2 * space.n_dims, 2 * space.n_dims))
+                           figsize=(size * space.n_dims, size * space.n_dims))
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
