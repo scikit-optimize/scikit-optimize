@@ -9,8 +9,6 @@ import inspect
 import numbers
 from collections import Iterable
 
-import numpy as np
-
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
 from .optimizer import Optimizer
@@ -22,7 +20,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1, args=()):
+                  xi=0.01, kappa=1.96, n_jobs=1, args=None):
     """
     Parameters
     ----------
@@ -142,6 +140,10 @@ def base_minimize(func, dimensions, base_estimator,
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
+    * `args` [list or `None`]:
+        Extra args for the `func`, if given `func` must accept another
+        argument.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -169,6 +171,11 @@ def base_minimize(func, dimensions, base_estimator,
         "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
+
+    if args:
+        opt_func = lambda x_param: func(x_param, args)
+    else:
+        opt_func = func
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
@@ -222,7 +229,7 @@ def base_minimize(func, dimensions, base_estimator,
 
     # User suggested points at which to evaluate the objective first
     if x0 and y0 is None:
-        y0 = list(map(func, x0))
+        y0 = list(map(opt_func, x0))
         n_calls -= len(y0)
 
     # Pass user suggested initialisation points to the optimizer
@@ -247,7 +254,7 @@ def base_minimize(func, dimensions, base_estimator,
 
         # no need to fit a model on the last iteration
         fit_model = n < n_calls - 1
-        next_y = func(next_x)
+        next_y = opt_func(next_x)
         result = optimizer.tell(next_x, next_y, fit=fit_model)
         result.specs = specs
 
