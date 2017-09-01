@@ -120,7 +120,7 @@ def test_dimension_checking_2D():
     with pytest.raises(ValueError) as e:
         opt.tell([low+1, ], 2.)
     assert "Dimensions of point " in str(e.value)
-    # wthin bounds but one dimension to much
+    # within bounds but one dimension too much
     with pytest.raises(ValueError) as e:
         opt.tell([low+1, low+1, low+1], 2.)
     assert "Dimensions of point " in str(e.value)
@@ -135,7 +135,7 @@ def test_dimension_checking_2D_multiple_points():
     with pytest.raises(ValueError) as e:
         opt.tell([[low+1, ], [low+1, low+2], [low+1, low+3]], 2.)
     assert "dimensions as the space" in str(e.value)
-    # wthin bounds but one dimension to much
+    # within bounds but one dimension too much
     with pytest.raises(ValueError) as e:
         opt.tell([[low + 1, low + 1, low + 1], [low + 1, low + 2], [low + 1, low + 3]], 2.)
     assert "dimensions as the space" in str(e.value)
