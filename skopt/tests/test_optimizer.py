@@ -101,6 +101,47 @@ def test_bounds_checking_2D_multiple_points():
 
 
 @pytest.mark.fast_test
+def test_dimension_checking_1D():
+    low = -2
+    high = 2
+    opt = Optimizer([(low, high)])
+    with pytest.raises(ValueError) as e:
+        # within bounds but one dimension too high
+        opt.tell([low+1, low+1], 2.)
+    assert "Dimensions of point " in str(e.value)
+
+
+@pytest.mark.fast_test
+def test_dimension_checking_2D():
+    low = -2
+    high = 2
+    opt = Optimizer([(low, high), (low, high)])
+    # within bounds but one dimension too little
+    with pytest.raises(ValueError) as e:
+        opt.tell([low+1, ], 2.)
+    assert "Dimensions of point " in str(e.value)
+    # wthin bounds but one dimension to much
+    with pytest.raises(ValueError) as e:
+        opt.tell([low+1, low+1, low+1], 2.)
+    assert "Dimensions of point " in str(e.value)
+
+
+@pytest.mark.fast_test
+def test_dimension_checking_2D_multiple_points():
+    low = -2
+    high = 2
+    opt = Optimizer([(low, high), (low, high)])
+    # within bounds but one dimension too little
+    with pytest.raises(ValueError) as e:
+        opt.tell([[low+1, ], [low+1, low+2], [low+1, low+3]], 2.)
+    assert "dimensions as the space" in str(e.value)
+    # wthin bounds but one dimension to much
+    with pytest.raises(ValueError) as e:
+        opt.tell([[low + 1, low + 1, low + 1], [low + 1, low + 2], [low + 1, low + 3]], 2.)
+    assert "dimensions as the space" in str(e.value)
+
+
+@pytest.mark.fast_test
 def test_returns_result_object():
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
