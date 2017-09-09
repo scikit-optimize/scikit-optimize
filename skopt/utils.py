@@ -187,10 +187,16 @@ def check_x_in_space(x, space):
         if not np.all([p in space for p in x]):
             raise ValueError("Not all points are within the bounds of"
                              " the space.")
+        if any([len(p) != len(space.dimensions) for p in x]):
+            raise ValueError("Not all points have the same dimensions as"
+                             " the space.")
     elif is_listlike(x):
         if x not in space:
             raise ValueError("Point (%s) is not within the bounds of"
                              " the space (%s)."
+                             % (x, space.bounds))
+        if len(x) != len(space.dimensions):
+            raise ValueError("Dimensions of point (%s) and space (%s) do not match"
                              % (x, space.bounds))
 
 
