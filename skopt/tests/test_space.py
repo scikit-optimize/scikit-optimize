@@ -424,3 +424,25 @@ def test_dimension_bounds(dimension, bounds):
     with pytest.raises(ValueError) as exc:
         dim = dimension(*bounds)
         assert "has to be less than the upper bound " in exc.value.args[0]
+
+
+@pytest.mark.parametrize("space, name",
+                         [(Real(1, 2, name="learning rate"), "learning rate"),
+                          (Integer(1, 100, name="no of trees"), "no of trees"),
+                          (Categorical(["red, blue"], name="colors"), "colors")])
+def test_dimension_name(space, name):
+    assert space.name == name
+
+
+@pytest.mark.parametrize("space",
+                         [Real(1, 2), Integer(1, 100), Categorical(["red, blue"])])
+def test_dimension_name_none(space):
+    assert space.name is None
+
+
+def test_dimension_name():
+    notnames = [1, 1., True]
+    for n in notnames:
+        with pytest.raises(ValueError) as exc:
+            real = Real(1, 2, name=n)
+            assert("Dimension's name must be either string or None." == exc.value.args[0])
