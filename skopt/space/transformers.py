@@ -108,15 +108,15 @@ class Normalize(Transformer):
         to `True` when applying this transform to integers.
     """
     def __init__(self, low, high, is_int=False):
-        self.low = low
-        self.high = high
+        self.low = float(low)
+        self.high = float(high)
         self.is_int = is_int
 
     def transform(self, X):
         X = np.asarray(X)
-        if np.any(X > self.high):
+        if np.any(X > self.high + 1e-8):
             raise ValueError("All values should be less than %f" % self.high)
-        if np.any(X < self.low):
+        if np.any(X < self.low - 1e-8):
             raise ValueError("All values should be greater than %f" % self.low)
         return (X - self.low) / (self.high - self.low)
 
