@@ -418,11 +418,11 @@ def test_consistent_x_iter_dimensions(minimizer):
 @pytest.mark.parametrize("minimizer",
                          [gp_minimize, forest_minimize, gbrt_minimize])
 def test_early_stopping_delta_x(minimizer):
-    n_calls = 10
+    n_calls = 11
     res = minimizer(bench1,
                     callback=DeltaXStopper(0.1),
                     dimensions=[(-1., 1.)],
-                    x0=[[-0.1], [0.1], [0.9]],
+                    x0=[[-0.1], [0.1], [-0.9]],
                     n_calls=n_calls,
                     n_random_starts=0, random_state=1)
     assert len(res.x_iters) < n_calls
