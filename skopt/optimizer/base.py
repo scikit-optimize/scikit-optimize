@@ -245,10 +245,8 @@ def base_minimize(func, dimensions, base_estimator,
     for n in range(n_calls):
         next_x = optimizer.ask()
 
-        # no need to fit a model on the last iteration
-        fit_model = n < n_calls - 1
         next_y = func(next_x)
-        result = optimizer.tell(next_x, next_y, fit=fit_model)
+        result = optimizer.tell(next_x, next_y)
         result.specs = specs
 
         if eval_callbacks(callbacks, result):
