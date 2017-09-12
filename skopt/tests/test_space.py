@@ -415,3 +415,12 @@ def test_real_distance():
     reals = Real(1, 10)
     for i in range(1, 10+1):
         assert_equal(reals.distance(4.1234, i), abs(4.1234 - i))
+
+
+@pytest.mark.parametrize("dimension, bounds",
+                         [(Real, (2, 1)), (Integer, (2, 1)),
+                          (Real, (2, 2)), (Integer, (2, 2))])
+def test_dimension_bounds(dimension, bounds):
+    with pytest.raises(ValueError) as exc:
+        dim = dimension(*bounds)
+        assert "low >= high" == exc.value.args[0]
