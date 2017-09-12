@@ -222,6 +222,7 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
     """
     def func(x):
         reg = res.models[-1]
+        x = res.space.transform(x.reshape(1, -1))
         return reg.predict(x.reshape(1, -1))[0]
 
     xs = [res.x]
