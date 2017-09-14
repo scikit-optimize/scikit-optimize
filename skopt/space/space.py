@@ -175,7 +175,8 @@ class Real(Dimension):
               0 and 1.
         """
         if high <= low:
-            raise ValueError("low >= high")
+            raise ValueError("the lower bound {} has to be less than the"
+                             " upper bound {}".format(low, high))
         self.low = low
         self.high = high
         self.prior = prior
@@ -286,7 +287,8 @@ class Integer(Dimension):
               0 and 1.
         """
         if high <= low:
-            raise ValueError("low >= high")
+            raise ValueError("the lower bound {} has to be less than the"
+                             " upper bound {}".format(low, high))
         self.low = low
         self.high = high
 
