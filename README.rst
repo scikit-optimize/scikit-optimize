@@ -54,7 +54,7 @@ Find the minimum of the noisy function ``f(x)`` over the range
     from skopt import gp_minimize
 
     def f(x):
-        return (np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) *
+        return (np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) +
                 np.random.randn() * 0.1)
 
     res = gp_minimize(f, [(-2.0, 2.0)])
