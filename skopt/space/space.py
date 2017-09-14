@@ -174,6 +174,9 @@ class Real(Dimension):
             - "normalize", the transformed space is scaled to be between
               0 and 1.
         """
+        if high <= low:
+            raise ValueError("the lower bound {} has to be less than the"
+                             " upper bound {}".format(low, high))
         self.low = low
         self.high = high
         self.prior = prior
@@ -283,6 +286,9 @@ class Integer(Dimension):
             - "normalize", the transformed space is scaled to be between
               0 and 1.
         """
+        if high <= low:
+            raise ValueError("the lower bound {} has to be less than the"
+                             " upper bound {}".format(low, high))
         self.low = low
         self.high = high
 
