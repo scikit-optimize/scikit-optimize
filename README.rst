@@ -1,3 +1,5 @@
+|Logo|
+
 |Travis Status| |CircleCI Status|
 
 Scikit-Optimize
@@ -108,7 +110,30 @@ This is implemented using pytest `attributes <https://docs.pytest.org/en/latest/
 
 All contributors are welcome!
 
+
+Commercial support
+------------------
+
+Feel free to `get in touch <mailto:tim@wildtreetech.com>`_ if you need commercial
+support or would like to sponsor development. Resources go towards paying
+for additional work by seasoned engineers and researchers.
+
+
+Made possible by
+----------------
+
+The scikit-optimize project was made possible with the support of
+
+.. image:: https://avatars1.githubusercontent.com/u/18165687?v=4&s=128
+   :alt: Wild Tree Tech
+   :target: http://wildtreetech.com
+
+If your employer allows you to work on scikit-optimize during the day and would like
+recognition, feel free to add them to the "Made possible by" list.
+
+
 .. |Travis Status| image:: https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master
    :target: https://travis-ci.org/scikit-optimize/scikit-optimize
 .. |CircleCI Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token
    :target: https://circleci.com/gh/scikit-optimize/scikit-optimize
+.. |Logo| image:: https://avatars2.githubusercontent.com/u/18578550?v=4&s=80
