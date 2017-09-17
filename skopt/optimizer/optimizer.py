@@ -27,7 +27,7 @@ from ..utils import normalize_dimensions
 
 
 class Optimizer(object):
-    """Run bayesian optimisation loop.
+    """Run Bayesian optimisation loop.
 
     An `Optimizer` represents the steps of a bayesian optimisation loop. To
     use it you need to provide your own loop mechanism. The various
@@ -83,13 +83,14 @@ class Optimizer(object):
                   chosen by $softmax(\eta g_i)$
                 - After fitting the surrogate model with `(X_best, y_best)`,
                   the gains are updated such that $g_i -= \mu(X_i)$
-        - `"EIps" for negated expected improvement per second to take into
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of `"EIps"`.
+        - `"qEI"` for negated expected improvement averaged among simulations.
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
         Method to minimize the acquistion function. The fit model
@@ -144,7 +145,7 @@ class Optimizer(object):
         self.rng = check_random_state(random_state)
         self.acq_func_kwargs = acq_func_kwargs
 
-        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps", "qEI"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
@@ -283,7 +284,8 @@ class Optimizer(object):
         * `strategy` [string, default=`"cl_min"`]:
             Method to use to sample multiple points (see also `n_points`
             description). This parameter is ignored if n_points = None.
-            Supported options are `"cl_min"`, `"cl_mean"` or `"cl_max"`.
+            Supported options are `"cl_min"`, `"cl_mean"`, `"cl_max"` or
+            `"batch"`.
 
             - If set to `"cl_min"`, then constant liar strtategy is used
                with lie objective value being minimum of observed objective
@@ -292,18 +294,31 @@ class Optimizer(object):
 
                https://hal.archives-ouvertes.fr/hal-00732512/document
 
-               With this strategy a copy of optimizer is created, which is
+               With this strategy, a copy of optimizer is created, which is
                then asked for a point, and the point is told to the copy of
                optimizer with some fake objective (lie), the next point is
                asked from copy, it is also told to the copy with fake
                objective and so on. The type of lie defines different
                flavours of `cl_x` strategies.
 
+            - If set to `"batch"`, then kriging based optimization method
+               is used over a batch of points. Specifically, a set of n_points
+               fantasies are sampled for each unfinished experiment from the
+               full posterior predictive distribution. For details on this
+               strategy see:
+
+               https://link.springer.com/chapter/10.1007/978-3-642-10701-6_6
+
+               With this strategy, a copy of optimizer is created, which is
+               then asked for `n_points` of points...
+
+               # To be fixed...
+
         """
         if n_points is None:
             return self._ask()
 
-        supported_strategies = ["cl_min", "cl_mean", "cl_max"]
+        supported_strategies = ["cl_min", "cl_mean", "cl_max", "batch"]
 
         if not (isinstance(n_points, int) and n_points > 0):
             raise ValueError(
@@ -323,20 +338,30 @@ class Optimizer(object):
 
         # Copy of the optimizer is made in order to manage the
         # deletion of points with "lie" objective (the copy of
-        # oiptimizer is simply discarded)
+        # optimizer is simply discarded)
         opt = self.copy()
 
         X = []
-        for i in range(n_points):
-            x = opt.ask()
-            X.append(x)
-            if strategy == "cl_min":
-                y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
-            elif strategy == "cl_mean":
-                y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
-            else:
-                y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
-            opt.tell(x, y_lie)  # lie to the optimizer
+
+        if "cl" in self.strategy:
+            for i in range(n_points):
+                x = opt.ask()
+                X.append(x)
+                if strategy == "cl_min":
+                    y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
+                elif strategy == "cl_mean":
+                    y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
+                else:
+                    y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
+                opt.tell(x, y_lie)  # lie to the optimizer
+
+        if self.strategy == "batch":
+            for i in range(n_points):
+                x = opt.ask()
+                X.append(x)
+                # sample and get y_lie values
+                # To be fixed...
+            opt.tell(X, y_lie, fit=False)
 
         self.cache_ = {(n_points, strategy): X}  # cache_ the result
 

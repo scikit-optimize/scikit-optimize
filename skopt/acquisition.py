@@ -32,6 +32,7 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         acq_func_kwargs = dict()
     xi = acq_func_kwargs.get("xi", 0.01)
     kappa = acq_func_kwargs.get("kappa", 1.96)
+    random_state = acq_func_kwargs.get("random_state", 0)
 
     # Evaluate acquisition function
     per_second = acq_func.endswith("ps")
@@ -45,11 +46,15 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             acq_vals = func_and_grad
 
-    elif acq_func in ["EI", "PI", "EIps", "PIps"]:
+    elif acq_func in ["EI", "PI", "EIps", "PIps", "qEI"]:
         if acq_func in ["EI", "EIps"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
-        else:
+        elif acq_func in ["PI", "PIps"]:
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
+        elif acq_func == "qEI":
+            func_and_grad = gaussian_q_ei(X, model, n_sims, y_opt, xi, random_state)
+        else:
+            pass # For "qEIOpt"
 
         if return_grad:
             acq_vals = -func_and_grad[0]
@@ -224,12 +229,12 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
-    The conditional probability `P(y=f(x) | x)`form a gaussian with a certain
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a certain
     mean and standard deviation approximated by the model.
 
     The EI condition is derived by computing ``E[u(f(x))]``
     where ``u(f(x)) = 0``, if ``f(x) > y_opt`` and ``u(f(x)) = y_opt - f(x)``,
-    if``f(x) < y_opt``.
+    if ``f(x) < y_opt``.
 
     This solves one of the issues of the PI condition by giving a reward
     proportional to the amount of improvement got.
@@ -300,5 +305,63 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
 
         grad = exploit_grad + explore_grad
         return values, grad
+
+    return values
+
+
+def gaussian_q_ei(X, model, n_sims=10, y_opt=0.0, xi=0.01, random_state=0):
+    """
+    Use the multi-points expected improvement to calculate the acquisition values.
+
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a certain
+    mean and standard deviation approximated by the model.
+
+    The q-EI condition is derived by computing the average of ``E[u(f(x))]`` over
+    simulations, where ``u(f(x)) = 0``, if ``f(x) > y_opt`` and
+    ``u(f(x)) = y_opt - f(x)``, if ``f(x) < y_opt``. Different from sequential EI
+    method, q-EI draws samples directly from posterior predictive distribution.
+
+    This solves one of the issues of the PI condition by giving a reward
+    proportional to the amount of improvement got.
+
+    Note that the value returned by this function should be maximized to
+    obtain the ``X`` with maximum improvement.
+
+    Parameters
+    ----------
+    * `X` [array-like, shape=(n_samples, n_features)]:
+        Values where the acquisition function should be computed.
+
+    * `model` [sklearn estimator that implements predict with ``return_std``]:
+        The fit estimator that approximates the function through the
+        method ``predict``.
+        It should have a ``return_std`` parameter that returns the standard
+        deviation.
+
+    * `n_sims` [int, default 10]:
+        The number of simulations over the posterior predictive distribution.
+
+    * `y_opt` [float, default 0]:
+        Previous minimum value which we would like to improve upon.
+
+    * `xi` [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Useful only when ``method`` is set to "EI"
+
+    * `random_state` [int, RandomState instance, or None (default)]:
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    * `values`: [array-like, shape=(X.shape[0],)]:
+        Acquisition function values computed at X.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        y = model.sample_y(X, n_samples=n_sims, random_state=random_state)
+
+    values = y_opt - xi - np.mean(y, axis=1)
 
     return values
