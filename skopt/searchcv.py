@@ -144,6 +144,18 @@ class BayesSearchCV(BaseSearchCV):
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
+    on_step: None (default) or callable
+        Callable object that will be called after every step of search space
+        exploration. Specifically, this function is called after every
+        model evaluation in single process mode, and after n_jobs evaluations
+        in parallel in parallel mode. Can be used to monitor the progress of
+        the class and store the best parameters so far.
+        The callable should have one positional argument for current
+        iteration.
+        ``def on_step(iter): print(iter)``
+        You can use ``total_iterations`` function to get maximum number of
+        iterations.
+
     Example
     -------
 
@@ -272,7 +284,8 @@ class BayesSearchCV(BaseSearchCV):
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=True):
+                 error_score='raise', return_train_score=True,
+                 on_step=None):
 
         # set of space name: space dict. Stored as a dict, in order
         # to make it easy to add or remove search spaces, in case
@@ -305,6 +318,8 @@ class BayesSearchCV(BaseSearchCV):
 
         self.best_index_ = None
         self.multimetric_ = False
+
+        self.on_step = on_step
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring, fit_params=fit_params,
@@ -406,18 +421,6 @@ class BayesSearchCV(BaseSearchCV):
                 raise ValueError("Search space %s already exists!" % name)
 
         for space, name in zip(search_spaces, names):
-            # here the conversion from short - hand format is done
-            # to instances of Dimension, eg
-            # {'a': (0, 1)} -> {'a': Real(0, 1)}
-            if isinstance(space, tuple):
-                # if space is specified with max iterations it is tuple
-                # eg ({'a': (0, 1)}, 10), where 10 is max iterations for
-                # be used to explore the subspace
-                space = ({k: check_dimension(v) for k,v in space[0].items()}, space[-1])
-            else:
-                # otherwise the space is just a dict
-                space = {k: check_dimension(v) for k,v in space.items()}
-
             self.search_spaces_[name] = space
 
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
@@ -689,6 +692,29 @@ class BayesSearchCV(BaseSearchCV):
         if self.refit:
             self._fit_best_model(X, y)
 
+    def total_iterations(self):
+        """
+        Count total iterations needed to explore all subspaces with
+        `fit` method.
+
+        Returns
+        -------
+        max_iter: int, total number of iterations to explore
+        """
+        total_iter = 0
+
+        for space_id in sorted(self.search_spaces_.keys()):
+            elem = self.search_spaces_[space_id]
+
+            if isinstance(elem, tuple):
+                space, n_iter = elem
+            else:
+                n_iter = self.n_iter
+
+            total_iter += n_iter
+
+        return total_iter
+
     def fit(self, X, y=None, groups=None):
         """Run fit on the estimator with randomly drawn parameters.
 
@@ -721,6 +747,8 @@ class BayesSearchCV(BaseSearchCV):
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
+        finished_iter = 0
+
         for space_id in sorted(self.search_spaces_.keys()):
             elem = self.search_spaces_[space_id]
 
@@ -741,3 +769,10 @@ class BayesSearchCV(BaseSearchCV):
                     groups=groups, n_jobs=n_jobs_adjusted
                 )
                 n_iter -= n_jobs
+
+                # update counter of total finished iterations
+                finished_iter += n_jobs
+
+                # call here the iteration event handler
+                if self.on_step is not None:
+                    self.on_step(finished_iter)

@@ -1,5 +1,14 @@
 # Release history
 
+## Version 0.5
+
+Catchy phrase here :)
+
+## New features
+
+* Support for single element list dimension definition, which is
+considered to be of Category type
+* Add iteration event handler for `BayesSearchCV`
 
 ## Version 0.4
 

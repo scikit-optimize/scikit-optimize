@@ -128,4 +128,67 @@ def test_searchcv_runs_multiple_subspaces():
     total_evaluations = len(opt.cv_results_['mean_test_score'])
     assert total_evaluations == 1+1+2, "Not all spaces were explored!"
 
-test_searchcv_runs_multiple_subspaces()
+
+def test_searchcv_iterations():
+    """
+    Test whether the `on_step` event is called in BayesSearchCV
+    on space exploration with proper values of total number of
+    iterations to explore and current number of iterations
+    """
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    # used to try different model classes
+    pipe = Pipeline([
+        ('model', SVC())
+    ])
+
+    # single categorical value of 'model' parameter sets the model class
+    lin_search = {
+        'model': Categorical([LinearSVC()]),
+        'model__C': Real(1e-6, 1e+6, prior='log-uniform'),
+    }
+
+    # example subspace with short - hand notation
+    dtc_search = {
+        'model': [DecisionTreeClassifier()],
+        'model__max_depth': (1, 32),
+        'model__min_samples_split': (1e-3, 1.0, 'log-uniform'),
+    }
+
+    # mixed short - hand and full notations
+    svc_search = {
+        'model': Categorical([SVC()]),
+        'model__C': Real(1e-6, 1e+6, prior='log-uniform'),
+        'model__gamma': (1e-6, 1e+1, 'log-uniform'),
+        'model__degree': Integer(1, 8),
+        'model__kernel': ['linear', 'poly', 'rbf'],
+    }
+
+    # a few values that should persist among function calls
+    persistent_values = {
+        'calls_counter': 0
+    }
+
+    def on_step(iter):
+        persistent_values['calls_counter'] += 1
+        assert iter == persistent_values['calls_counter']
+
+
+    opt = BayesSearchCV(
+        pipe,
+        [(lin_search, 1), (dtc_search, 1), svc_search],
+        n_iter=2,
+        on_step=on_step,
+    )
+
+    # run the search over subspaces
+    opt.fit(X_train, y_train)
+
+    # test if for all iterations function is called
+    total_evaluations = len(opt.cv_results_['mean_test_score'])
+    assert persistent_values['calls_counter'] == total_evaluations
+    assert persistent_values['calls_counter'] == opt.total_iterations()
