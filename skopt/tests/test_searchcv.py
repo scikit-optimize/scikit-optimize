@@ -99,18 +99,20 @@ def test_searchcv_runs_multiple_subspaces():
         'model__C': Real(1e-6, 1e+6, prior='log-uniform'),
     }
 
+    # example subspace with short - hand notation
     dtc_search = {
-        'model': Categorical([DecisionTreeClassifier()]),
-        'model__max_depth': Integer(1, 32),
-        'model__min_samples_split': Real(1e-3, 1.0, prior='log-uniform'),
+        'model': [DecisionTreeClassifier()],
+        'model__max_depth': (1, 32),
+        'model__min_samples_split': (1e-3, 1.0, 'log-uniform'),
     }
 
+    # mixed short - hand and full notations
     svc_search = {
         'model': Categorical([SVC()]),
         'model__C': Real(1e-6, 1e+6, prior='log-uniform'),
-        'model__gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+        'model__gamma': (1e-6, 1e+1, 'log-uniform'),
         'model__degree': Integer(1, 8),
-        'model__kernel': Categorical(['linear', 'poly', 'rbf']),
+        'model__kernel': ['linear', 'poly', 'rbf'],
     }
 
     opt = BayesSearchCV(
@@ -119,8 +121,11 @@ def test_searchcv_runs_multiple_subspaces():
         n_iter=2
     )
 
+    # run the search over subspaces
     opt.fit(X_train, y_train)
 
     # test if all subspaces are explored
     total_evaluations = len(opt.cv_results_['mean_test_score'])
     assert total_evaluations == 1+1+2, "Not all spaces were explored!"
+
+test_searchcv_runs_multiple_subspaces()

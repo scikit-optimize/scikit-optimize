@@ -400,12 +400,24 @@ class BayesSearchCV(BaseSearchCV):
         if not isinstance(names, list):
             names = [names]
 
-        # first check whether space already exits ...
+        # first check whether space with this name already exits
         for space, name in zip(search_spaces, names):
             if name in self.search_spaces_:
                 raise ValueError("Search space %s already exists!" % name)
 
         for space, name in zip(search_spaces, names):
+            # here the conversion from short - hand format is done
+            # to instances of Dimension, eg
+            # {'a': (0, 1)} -> {'a': Real(0, 1)}
+            if isinstance(space, tuple):
+                # if space is specified with max iterations it is tuple
+                # eg ({'a': (0, 1)}, 10), where 10 is max iterations for
+                # be used to explore the subspace
+                space = ({k: check_dimension(v) for k,v in space[0].items()}, space[-1])
+            else:
+                # otherwise the space is just a dict
+                space = {k: check_dimension(v) for k,v in space.items()}
+
             self.search_spaces_[name] = space
 
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
