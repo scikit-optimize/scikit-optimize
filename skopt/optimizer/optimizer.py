@@ -67,7 +67,7 @@ class Optimizer(object):
         `x0` count as initialization points. If len(x0) < n_initial_points
         additional points are sampled at random.
 
-    * `acq_func` [string, default=`"EI"`]:
+    * `acq_func` [string, default=`"gp_hedge"`]:
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound.
