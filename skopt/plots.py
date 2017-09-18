@@ -334,9 +334,6 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale
                 ax[i, i].plot(xi, yi)
                 ax[i, i].axvline(result.x[i], linestyle="--", color="r", lw=1)
 
-                if 'log-uniform' == space.dimensions[i].prior:
-                    ax[i, i].set_xscale('log')
-
             # lower triangle
             elif i > j:
                 xi, yi, zi = partial_dependence(space, result.models[-1],
@@ -348,13 +345,6 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale
                                  c='k', s=10, lw=0.)
                 ax[i, j].scatter(result.x[j], result.x[i],
                                  c=['r'], s=20, lw=0.)
-
-                xypriors = (space.dimensions[j].prior,
-                        space.dimensions[i].prior)
-                xysetters = (ax[i, j].set_xscale, ax[i, j].set_yscale)
-                for set_scale, prior in zip(xysetters, xypriors):
-                    if 'log-uniform' == prior:
-                        set_scale('log')
 
     return _format_scatter_plot_axes(ax, space, ylabel=objective_name,
             dim_labels=dim_names)
