@@ -130,6 +130,18 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 else:
                     [l.set_rotation(45) for l in ax_.get_xticklabels()]
                     ax_.set_xlabel(dim_labels[j])
+                
+                # configure plot for linear vs log-scale
+                priors = (space.dimensions[j].prior, space.dimensions[i].prior)
+                scale_setters = (ax_.set_xscale, ax_.set_yscale)
+                loc_setters = (ax_.xaxis.set_major_locator,
+                        ax_.yaxis.set_major_locator)
+                for set_major_locator, set_scale, prior in zip(loc_setters,
+                        scale_setters, priors):
+                    if 'log-uniform' == prior:
+                        set_scale('log')
+                    else:
+                        set_major_locator(MaxNLocator(6, prune='both'))
 
             else:
                 ax_.set_ylim(*diagonal_ylim)
@@ -142,8 +154,10 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 ax_.xaxis.set_label_position('top')
                 ax_.set_xlabel(dim_labels[j])
 
-            ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
-            ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
+                if 'log-uniform' == space.dimensions[i].prior:
+                    ax_.set_xscale('log')
+                else:
+                    ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
 
     return ax
 
@@ -383,7 +397,12 @@ def plot_evaluations(result, bins=20, dim_names=None):
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
-                ax[i, i].hist(samples[:, j], bins=bins,
+                if 'log-uniform' == space.dimensions[j].prior:
+                    b = space.bounds[j]
+                    bins_ = np.logspace(np.log10(b[0]), np.log10(b[1]), bins)
+                else:
+                    bins_ = bins
+                ax[i, i].hist(samples[:, j], bins=bins_,
                               range=space.dimensions[j].bounds)
 
             # lower triangle
