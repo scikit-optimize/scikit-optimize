@@ -93,13 +93,16 @@ def plot_convergence(*args, **kwargs):
     return ax
 
 
-def _format_scatter_plot_axes(ax, space, ylabel):
+def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
     # Work out min, max of y axis for the diagonal so we can adjust
     # them all to the same value
     diagonal_ylim = (np.min([ax[i, i].get_ylim()[0]
                              for i in range(space.n_dims)]),
                      np.max([ax[i, i].get_ylim()[1]
                              for i in range(space.n_dims)]))
+
+    if dim_labels is None:
+        dim_labels = ["$X_{%i}$" % i for i in range(space.n_dims)]
 
     # Deal with formatting of the axes
     for i in range(space.n_dims):  # rows
@@ -118,7 +121,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                 if j > 0:
                     ax_.set_yticklabels([])
                 else:
-                    ax_.set_ylabel("$X_{%i}$" % i)
+                    ax_.set_ylabel(dim_labels[i])
 
                 # for all rows except ...
                 if i < space.n_dims - 1:
@@ -126,7 +129,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
                 # ... the bottom row
                 else:
                     [l.set_rotation(45) for l in ax_.get_xticklabels()]
-                    ax_.set_xlabel("$X_{%i}$" % j)
+                    ax_.set_xlabel(dim_labels[j])
 
             else:
                 ax_.set_ylim(*diagonal_ylim)
@@ -137,7 +140,7 @@ def _format_scatter_plot_axes(ax, space, ylabel):
 
                 ax_.xaxis.tick_top()
                 ax_.xaxis.set_label_position('top')
-                ax_.set_xlabel("$X_{%i}$" % j)
+                ax_.set_xlabel(dim_labels[j])
 
             ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
             ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
@@ -239,8 +242,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         return xi, yi, np.array(zi).T
 
 
-def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear'):
+def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale='linear',
+        objective_name="Partial dependence", dim_names=None):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -279,6 +282,13 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     * `zscale` [str, default='linear']
         Scale to use for the z axis of the contour plots. Either 'linear'
         or 'log'.
+
+    * `objective_name` [str, default='Partial dependence']
+        Label of the objective function to show on y-axis.
+
+    * `dim_names` [list of str, default=None]
+        Labels of the dimension variables. `None` defaults to `['X_0', 'X_1',
+        ..]`.
 
     Returns
     -------
@@ -326,10 +336,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                 ax[i, j].scatter(result.x[j], result.x[i],
                                  c=['r'], s=20, lw=0.)
 
-    return _format_scatter_plot_axes(ax, space, "Partial dependence")
+    return _format_scatter_plot_axes(ax, space, ylabel=objective_name,
+            dim_labels=dim_names)
 
 
-def plot_evaluations(result, bins=20):
+def plot_evaluations(result, bins=20, dim_names=None):
     """Visualize the order in which points where sampled.
 
     The scatter plot matrix shows at which points in the search
@@ -350,6 +361,10 @@ def plot_evaluations(result, bins=20):
 
     * `bins` [int, bins=20]:
         Number of bins to use for histograms on the diagonal.
+
+    * `dim_names` [list of str, default=None]
+        Labels of the dimension variables. `None` defaults to `['X_0', 'X_1',
+        ..]`.
 
     Returns
     -------
@@ -378,4 +393,5 @@ def plot_evaluations(result, bins=20):
                 ax[i, j].scatter(result.x[j], result.x[i],
                                  c=['r'], s=20, lw=0.)
 
-    return _format_scatter_plot_axes(ax, space, "Number of samples")
+    return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
+            dim_labels=dim_names)
