@@ -130,6 +130,13 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 else:
                     [l.set_rotation(45) for l in ax_.get_xticklabels()]
                     ax_.set_xlabel(dim_labels[j])
+                
+                xypriors = (space.dimensions[j].prior,
+                        space.dimensions[i].prior)
+                xysetters = (ax_.set_xscale, ax_.set_yscale)
+                for set_scale, prior in zip(xysetters, xypriors):
+                    if 'log-uniform' == prior:
+                        set_scale('log')
 
             else:
                 ax_.set_ylim(*diagonal_ylim)
@@ -142,8 +149,11 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 ax_.xaxis.set_label_position('top')
                 ax_.set_xlabel(dim_labels[j])
 
-            ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
-            ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
+                if 'log-uniform' == space.dimensions[i].prior:
+                    ax_.set_xscale('log')
+
+            # ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
+            # ax_.yaxis.set_major_locator(MaxNLocator(6, prune='both'))
 
     return ax
 
@@ -324,6 +334,9 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale
                 ax[i, i].plot(xi, yi)
                 ax[i, i].axvline(result.x[i], linestyle="--", color="r", lw=1)
 
+                if 'log-uniform' == space.dimensions[i].prior:
+                    ax[i, i].set_xscale('log')
+
             # lower triangle
             elif i > j:
                 xi, yi, zi = partial_dependence(space, result.models[-1],
@@ -335,6 +348,13 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale
                                  c='k', s=10, lw=0.)
                 ax[i, j].scatter(result.x[j], result.x[i],
                                  c=['r'], s=20, lw=0.)
+
+                xypriors = (space.dimensions[j].prior,
+                        space.dimensions[i].prior)
+                xysetters = (ax[i, j].set_xscale, ax[i, j].set_yscale)
+                for set_scale, prior in zip(xysetters, xypriors):
+                    if 'log-uniform' == prior:
+                        set_scale('log')
 
     return _format_scatter_plot_axes(ax, space, ylabel=objective_name,
             dim_labels=dim_names)
