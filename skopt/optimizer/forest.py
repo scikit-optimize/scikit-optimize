@@ -11,7 +11,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
                     n_random_starts=10, acq_func="EI",
                     x0=None, y0=None, random_state=None, verbose=False,
                     callback=None, n_points=10000, xi=0.01, kappa=1.96,
-                    n_jobs=1):
+                    n_jobs=1, args=None):
     """Sequential optimisation using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
@@ -129,6 +129,10 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         The number of jobs to run in parallel for `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
+    * `args` [list or `None`]:
+        Extra args for the `func`, if given `func` must accept another
+        argument.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -159,4 +163,5 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
                          x0=x0, y0=y0, random_state=random_state,
                          acq_func=acq_func,
                          xi=xi, kappa=kappa, verbose=verbose,
-                         callback=callback, acq_optimizer="sampling")
+                         callback=callback, acq_optimizer="sampling",
+                         args=args)

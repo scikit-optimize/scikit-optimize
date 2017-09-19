@@ -8,8 +8,7 @@ import copy
 import inspect
 import numbers
 from collections import Iterable
-
-import numpy as np
+from functools import partial
 
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback
@@ -22,7 +21,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1):
+                  xi=0.01, kappa=1.96, n_jobs=1, args=None):
     """
     Parameters
     ----------
@@ -142,6 +141,10 @@ def base_minimize(func, dimensions, base_estimator,
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
+    * `args` [list or `None`]:
+        Extra args for the `func`, if given `func` must accept another
+        argument.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -169,6 +172,9 @@ def base_minimize(func, dimensions, base_estimator,
         "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
+
+    if args is not None:
+        func = partial(func, *args)
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
