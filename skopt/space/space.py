@@ -139,6 +139,17 @@ class Dimension(object):
     def transformed_bounds(self):
         raise NotImplementedError
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if isinstance(value, str) or value is None:
+            self._name = value
+        else:
+            raise ValueError("Dimension's name must be either string or None.")
+
 
 def _uniform_inclusive(loc=0.0, scale=1.0):
     # like scipy.stats.distributions but inclusive of `high`
@@ -148,7 +159,7 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 
 class Real(Dimension):
-    def __init__(self, low, high, prior="uniform", transform=None):
+    def __init__(self, low, high, prior="uniform", transform=None, name=None):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -173,6 +184,9 @@ class Real(Dimension):
               original space.
             - "normalize", the transformed space is scaled to be between
               0 and 1.
+
+        * `name` [str or None]:
+            Name associated with the dimension, e.g., "learning rate".
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -180,6 +194,7 @@ class Real(Dimension):
         self.low = low
         self.high = high
         self.prior = prior
+        self.name = name
 
         if transform is None:
             transform = "identity"
@@ -267,7 +282,7 @@ class Real(Dimension):
 
 
 class Integer(Dimension):
-    def __init__(self, low, high, transform=None):
+    def __init__(self, low, high, transform=None, name=None):
         """Search space dimension that can take on integer values.
 
         Parameters
@@ -285,12 +300,16 @@ class Integer(Dimension):
               original space.
             - "normalize", the transformed space is scaled to be between
               0 and 1.
+
+        * `name` [str or None]:
+            Name associated with dimension, e.g., "number of trees".
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
                              " upper bound {}".format(low, high))
         self.low = low
         self.high = high
+        self.name = name
 
         if transform is None:
             transform = "identity"
@@ -355,7 +374,7 @@ class Integer(Dimension):
 
 
 class Categorical(Dimension):
-    def __init__(self, categories, prior=None, transform=None):
+    def __init__(self, categories, prior=None, transform=None, name=None):
         """Search space dimension that can take on categorical values.
 
         Parameters
@@ -372,8 +391,12 @@ class Categorical(Dimension):
               space.
             - "onehot", the transformed space is a one-hot encoded
               representation of the original space.
+
+        * `name` [str or None]:
+            Name associated with dimension, e.g., "colors".
         """
         self.categories = tuple(categories)
+        self.name = name
 
         if transform is None:
             transform = "onehot"
