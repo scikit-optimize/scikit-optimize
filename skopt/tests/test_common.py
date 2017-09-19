@@ -121,7 +121,7 @@ def test_minimizer_api_dummy_minimize(verbose, call):
 def test_minimizer_api(verbose, call, minimizer):
     n_calls = 7
     n_random_starts = 3
-    n_models = n_calls - n_random_starts
+    n_models = n_calls - n_random_starts + 1
 
     result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
                        n_random_starts=n_random_starts,
@@ -213,7 +213,7 @@ def test_init_vals_and_models(n_random_starts, optimizer_func):
     res = optimizer(branin, space, x0=x0, y0=y0, random_state=0,
                     n_calls=n_calls)
 
-    assert_equal(len(res.models), n_calls - n_random_starts)
+    assert_equal(len(res.models), n_calls - n_random_starts + 1)
 
 
 @pytest.mark.slow_test
@@ -232,7 +232,7 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
     optimizer = partial(optimizer_func, n_random_starts=n_random_starts)
     res = optimizer(branin, space, x0=x0, random_state=0,
                     n_calls=n_calls)
-    assert_equal(len(res.models), n_calls - len(x0) - n_random_starts)
+    assert_equal(len(res.models), n_calls - len(x0) - n_random_starts + 1)
 
 
 @pytest.mark.slow_test
@@ -418,11 +418,11 @@ def test_consistent_x_iter_dimensions(minimizer):
 @pytest.mark.parametrize("minimizer",
                          [gp_minimize, forest_minimize, gbrt_minimize])
 def test_early_stopping_delta_x(minimizer):
-    n_calls = 10
+    n_calls = 11
     res = minimizer(bench1,
                     callback=DeltaXStopper(0.1),
                     dimensions=[(-1., 1.)],
-                    x0=[[-0.1], [0.9], [0.1]],
+                    x0=[[-0.1], [0.1], [-0.9]],
                     n_calls=n_calls,
                     n_random_starts=0, random_state=1)
     assert len(res.x_iters) < n_calls
