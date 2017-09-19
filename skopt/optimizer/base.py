@@ -22,7 +22,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1):
+                  xi=0.01, kappa=1.96, n_jobs=1, noisyEI_N_variants=10):
     """
     Parameters
     ----------
@@ -69,7 +69,8 @@ def base_minimize(func, dimensions, base_estimator,
           the second being the time taken in seconds.
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of `"EIps,
+        - `"noisyEI"` for the noisy expected improvement
 
     * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
         Method to minimize the acquistion function. The fit model
@@ -142,6 +143,9 @@ def base_minimize(func, dimensions, base_estimator,
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
+    * `noisyEI_N_variants` [int, default=5]:
+        Number of GPs to fit when using noisyEI.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
@@ -168,7 +172,8 @@ def base_minimize(func, dimensions, base_estimator,
     acq_optimizer_kwargs = {
         "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
         "n_jobs": n_jobs}
-    acq_func_kwargs = {"xi": xi, "kappa": kappa}
+    acq_func_kwargs = {"xi": xi, "kappa": kappa,
+                       "noisyEI_N_variants": noisyEI_N_variants}
 
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
@@ -233,7 +238,6 @@ def base_minimize(func, dimensions, base_estimator,
 
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
-
 
         result = optimizer.tell(x0, y0)
         result.specs = specs

@@ -45,9 +45,11 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             acq_vals = func_and_grad
 
-    elif acq_func in ["EI", "PI", "EIps", "PIps"]:
+    elif acq_func in ["EI", "PI", "EIps", "PIps", "noisyEI"]:
         if acq_func in ["EI", "EIps"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
+        elif acq_func in ["noisyEI"]:
+            func_and_grad = gaussian_noisy_ei(X, model, y_opt, xi, return_grad)
         else:
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
 
@@ -302,3 +304,52 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         return values, grad
 
     return values
+
+
+def gaussian_noisy_ei(X, models, y_opt=0.0, xi=0.01, return_grad=False):
+    """
+    Use the noisy expected improvement to calculate the acquisition values.
+
+    The noisy EI is computed by averaging the EI computed over several GP
+    models.
+
+    This allows to easily take into account the measurement noise
+
+    Note that the value returned by this function should be maximized to
+    obtain the ``X`` with maximum improvement.
+
+    Parameters
+    ----------
+    * `X` [array-like, shape=(n_samples, n_features)]:
+        Values where the acquisition function should be computed.
+
+    * `model` [list of sklearn estimators that implement predict with
+               ``return_std``]:
+        The fit estimators that approximate the function through the
+        method ``predict``.
+        They should have a ``return_std`` parameter that returns the standard
+        deviation.
+        The predictions of all the models will be averaged to obtain the
+        final values
+
+    * `y_opt` [float, default 0]:
+        Previous minimum value which we would like to improve upon.
+
+    * `xi`: [float, default=0.01]:
+        Controls how much improvement one wants over the previous best
+        values. Useful only when ``method`` is set to "EI"
+
+    * `return_grad`: [boolean, optional]:
+        Whether or not to return the grad. Implemented only for the case where
+        ``X`` is a single sample.
+
+    Returns
+    -------
+    * `values`: [array-like, shape=(X.shape[0],)]:
+        Acquisition function values computed at X.
+    """
+    returns = list()
+    for model in models:
+        returns.append(gaussian_ei(X, model, y_opt, xi, return_grad))
+
+    return np.average(returns, axis=0)
