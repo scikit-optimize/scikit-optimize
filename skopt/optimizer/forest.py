@@ -38,9 +38,9 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         List of search space dimensions.
         Each search dimension can be defined either as
 
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, prior)` tuple (for `Real`
+        - a `(lower_bound, upper_bound, prior)` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
