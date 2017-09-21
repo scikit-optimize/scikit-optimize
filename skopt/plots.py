@@ -102,7 +102,8 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                              for i in range(space.n_dims)]))
 
     if dim_labels is None:
-        dim_labels = ["$X_{%i}$" % i for i in range(space.n_dims)]
+        dim_labels = ["$X_{%i}$" % i if d.name is None else d.name
+                for i, d in enumerate(space.dimensions)]
 
     # Deal with formatting of the axes
     for i in range(space.n_dims):  # rows
@@ -138,7 +139,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                         ax_.yaxis.set_major_locator)
                 for set_major_locator, set_scale, prior in zip(loc_setters,
                         scale_setters, priors):
-                    if 'log-uniform' == prior:
+                    if prior == 'log-uniform':
                         set_scale('log')
                     else:
                         set_major_locator(MaxNLocator(6, prune='both'))
@@ -154,7 +155,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 ax_.xaxis.set_label_position('top')
                 ax_.set_xlabel(dim_labels[j])
 
-                if 'log-uniform' == space.dimensions[i].prior:
+                if space.dimensions[i].prior == 'log-uniform':
                     ax_.set_xscale('log')
                 else:
                     ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
@@ -256,8 +257,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         return xi, yi, np.array(zi).T
 
 
-def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale='linear',
-        objective_name="Partial dependence", dim_names=None):
+def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
+                   zscale='linear', dimensions=None):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -297,12 +298,9 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale
         Scale to use for the z axis of the contour plots. Either 'linear'
         or 'log'.
 
-    * `objective_name` [str, default='Partial dependence']
-        Label of the objective function to show on y-axis.
-
-    * `dim_names` [list of str, default=None]
-        Labels of the dimension variables. `None` defaults to `['X_0', 'X_1',
-        ..]`.
+    * `dimensions` [list of str, default=None] Labels of the dimension
+        variables. `None` defaults to `space.dimensions[i].name`, or
+        if also `None` to `['X_0', 'X_1', ..]`.
 
     Returns
     -------
@@ -350,11 +348,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2, zscale
                 ax[i, j].scatter(result.x[j], result.x[i],
                                  c=['r'], s=20, lw=0.)
 
-    return _format_scatter_plot_axes(ax, space, ylabel=objective_name,
-            dim_labels=dim_names)
+    return _format_scatter_plot_axes(ax, space, ylabel="Partial dependence",
+            dim_labels=dimensions)
 
 
-def plot_evaluations(result, bins=20, dim_names=None):
+def plot_evaluations(result, bins=20, dimensions=None):
     """Visualize the order in which points where sampled.
 
     The scatter plot matrix shows at which points in the search
@@ -376,9 +374,9 @@ def plot_evaluations(result, bins=20, dim_names=None):
     * `bins` [int, bins=20]:
         Number of bins to use for histograms on the diagonal.
 
-    * `dim_names` [list of str, default=None]
-        Labels of the dimension variables. `None` defaults to `['X_0', 'X_1',
-        ..]`.
+    * `dimensions` [list of str, default=None] Labels of the dimension
+        variables. `None` defaults to `space.dimensions[i].name`, or
+        if also `None` to `['X_0', 'X_1', ..]`.
 
     Returns
     -------
@@ -397,9 +395,9 @@ def plot_evaluations(result, bins=20, dim_names=None):
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
-                if 'log-uniform' == space.dimensions[j].prior:
-                    b = space.bounds[j]
-                    bins_ = np.logspace(np.log10(b[0]), np.log10(b[1]), bins)
+                if space.dimensions[j].prior == 'log-uniform':
+                    low, high = space.bounds[j]
+                    bins_ = np.logspace(np.log10(low), np.log10(high), bins)
                 else:
                     bins_ = bins
                 ax[i, i].hist(samples[:, j], bins=bins_,
@@ -413,4 +411,4 @@ def plot_evaluations(result, bins=20, dim_names=None):
                                  c=['r'], s=20, lw=0.)
 
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
-            dim_labels=dim_names)
+            dim_labels=dimensions)
