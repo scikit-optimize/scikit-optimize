@@ -42,9 +42,9 @@ class Optimizer(object):
         List of search space dimensions.
         Each search dimension can be defined either as
 
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+        - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
@@ -206,7 +206,8 @@ class Optimizer(object):
 
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
-                base_estimator, space=dimensions, random_state=self.rng)
+                base_estimator, space=dimensions,
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
 
         if not is_regressor(base_estimator) and base_estimator is not None:
             raise ValueError(

@@ -46,7 +46,7 @@ def check_minimize(minimizer, func, y_opt, dimensions, margin,
 @pytest.mark.slow_test
 @pytest.mark.parametrize("name, minimizer", MINIMIZERS)
 def test_tree_based_minimize(name, minimizer):
-    check_minimize(minimizer, bench1, 0.,
+    check_minimize(minimizer, bench1, 0.05,
                    [(-2.0, 2.0)], 0.05, 25, 5)
 
     # XXX: We supply points at the edge of the search
@@ -56,9 +56,9 @@ def test_tree_based_minimize(name, minimizer):
     # the minimum, since for a decision tree any point greater than
     # max(sampled_points) would give a constant value.
     X0 = [[-5.6], [-5.8], [5.8], [5.6]]
-    check_minimize(minimizer, bench2, -5,
+    check_minimize(minimizer, bench2, -4.7,
                    [(-6.0, 6.0)], 0.1, 20, 10, X0)
-    check_minimize(minimizer, bench3, -0.9,
+    check_minimize(minimizer, bench3, -0.4,
                    [(-2.0, 2.0)], 0.05, 10, 5)
-    check_minimize(minimizer, bench4, 0.0,
+    check_minimize(minimizer, bench4, 1.,
                    [("-2", "-1", "0", "1", "2")], 0.05, 5, 1)

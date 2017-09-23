@@ -88,7 +88,8 @@ def test_expected_minimum():
                       [(-2.0, 2.0)],
                       x0=[0.],
                       noise=1e-8,
-                      n_calls=20,
+                      n_calls=8,
+                      n_random_starts=3,
                       random_state=1)
 
     x_min, f_min = expected_minimum(res, random_state=1)

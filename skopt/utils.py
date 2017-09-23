@@ -228,6 +228,7 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
     """
     def func(x):
         reg = res.models[-1]
+        x = res.space.transform(x.reshape(1, -1))
         return reg.predict(x.reshape(1, -1))[0]
 
     xs = [res.x]
@@ -333,7 +334,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * other_kernel,
-            normalize_y=True, random_state=None, alpha=0.0, noise="gaussian",
+            normalize_y=True, alpha=0.0, noise="gaussian",
             n_restarts_optimizer=2)
     elif base_estimator == "RF":
         base_estimator = RandomForestRegressor(n_estimators=100,

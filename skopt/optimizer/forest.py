@@ -38,9 +38,9 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         List of search space dimensions.
         Each search dimension can be defined either as
 
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, prior)` tuple (for `Real`
+        - a `(lower_bound, upper_bound, prior)` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
@@ -147,12 +147,6 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    rng = check_random_state(random_state)
-
-    if isinstance(base_estimator, str):
-        base_estimator = cook_estimator(base_estimator, n_jobs=n_jobs,
-                                        random_state=rng)
-
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,

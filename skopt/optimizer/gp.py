@@ -1,9 +1,10 @@
 """Gaussian process-based minimization algorithms."""
 
+import numpy as np
+
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..space import Space
 from ..utils import cook_estimator
 from ..utils import normalize_dimensions
 
@@ -48,9 +49,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
         List of search space dimensions.
         Each search dimension can be defined either as
 
-        - a `(upper_bound, lower_bound)` tuple (for `Real` or `Integer`
+        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(upper_bound, lower_bound, "prior")` tuple (for `Real`
+        - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
@@ -206,8 +207,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
     # Check params
     rng = check_random_state(random_state)
     space = normalize_dimensions(dimensions)
-    base_estimator = cook_estimator("GP", space=space, random_state=rng,
-                                    noise=noise)
+    base_estimator = cook_estimator(
+        "GP", space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
+        noise=noise)
 
     return base_minimize(
         func, space, base_estimator=base_estimator,
@@ -215,5 +217,5 @@ def gp_minimize(func, dimensions, base_estimator=None,
         xi=xi, kappa=kappa, acq_optimizer=acq_optimizer, n_calls=n_calls,
         n_points=n_points, n_random_starts=n_random_starts,
         n_restarts_optimizer=n_restarts_optimizer,
-        x0=x0, y0=y0, random_state=random_state, verbose=verbose,
+        x0=x0, y0=y0, random_state=rng, verbose=verbose,
         callback=callback, n_jobs=n_jobs)
