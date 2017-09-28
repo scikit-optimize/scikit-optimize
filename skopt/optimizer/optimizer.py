@@ -328,16 +328,20 @@ class Optimizer(object):
         opt = self.copy()
 
         X = []
+
         for i in range(n_points):
-            x = opt.ask()
-            X.append(x)
             if strategy == "cl_min":
-                y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
-            elif strategy == "cl_mean":
-                y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
-            else:
-                y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
-            opt.tell(x, y_lie)  # lie to the optimizer
+                x = opt.ask()
+                X.append(x)
+                if strategy == "cl_min":
+                    y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
+                elif strategy == "cl_mean":
+                    y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
+                else:
+                    y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
+                opt.tell(x, y_lie)  # lie to the optimizer
+            elif strategy == "mc":
+                pass
 
         self.cache_ = {(n_points, strategy): X}  # cache_ the result
 
