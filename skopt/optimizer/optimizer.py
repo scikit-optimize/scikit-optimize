@@ -304,7 +304,7 @@ class Optimizer(object):
         if n_points is None:
             return self._ask()
 
-        supported_strategies = ["cl_min", "cl_mean", "cl_max"]
+        supported_strategies = ["cl_min", "cl_mean", "cl_max", "mc"]
 
         if not (isinstance(n_points, int) and n_points > 0):
             raise ValueError(
