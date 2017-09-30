@@ -136,9 +136,9 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 priors = (space.dimensions[j].prior, space.dimensions[i].prior)
                 scale_setters = (ax_.set_xscale, ax_.set_yscale)
                 loc_setters = (ax_.xaxis.set_major_locator,
-                        ax_.yaxis.set_major_locator)
-                for set_major_locator, set_scale, prior in zip(loc_setters,
-                        scale_setters, priors):
+                               ax_.yaxis.set_major_locator)
+                for set_major_locator, set_scale, prior in zip(
+                        loc_setters, scale_setters, priors):
                     if prior == 'log-uniform':
                         set_scale('log')
                     else:
@@ -349,7 +349,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                                  c=['r'], s=20, lw=0.)
 
     return _format_scatter_plot_axes(ax, space, ylabel="Partial dependence",
-            dim_labels=dimensions)
+                                     dim_labels=dimensions)
 
 
 def plot_evaluations(result, bins=20, dimensions=None):
@@ -411,4 +411,4 @@ def plot_evaluations(result, bins=20, dimensions=None):
                                  c=['r'], s=20, lw=0.)
 
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
-            dim_labels=dimensions)
+                                     dim_labels=dimensions)
