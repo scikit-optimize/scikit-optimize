@@ -7,6 +7,7 @@ from scipy.stats import rankdata
 import sklearn
 from sklearn.base import is_classifier, clone
 from sklearn.externals.joblib import Parallel, delayed, cpu_count
+from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
 from sklearn.metrics.scorer import check_scoring
@@ -16,7 +17,7 @@ from .utils import point_asdict, dimensions_aslist
 from .space import check_dimension
 
 
-class BayesSearchCV(sklearn.model_selection._search.BaseSearchCV):
+class BayesSearchCV(BaseSearchCV):
     """Bayesian optimization over hyper parameters.
 
     BayesSearchCV implements a "fit" and a "score" method.
