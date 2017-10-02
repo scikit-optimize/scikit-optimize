@@ -97,6 +97,8 @@ def check_dimension(dimension, transform=None):
 class Dimension(object):
     """Base class for search space dimensions."""
 
+    prior = None
+
     def rvs(self, n_samples=1, random_state=None):
         """Draw random samples.
 
