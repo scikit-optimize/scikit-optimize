@@ -128,6 +128,14 @@ The scikit-optimize project was made possible with the support of
    :alt: Wild Tree Tech
    :target: http://wildtreetech.com
 
+.. image:: https://i.imgur.com/lgxboT5.jpg
+    :alt: NYU Center for Data Science
+    :target: https://cds.nyu.edu/
+
+.. image:: https://i.imgur.com/V1VSIvj.jpg
+    :alt: NSF
+    :target: https://www.nsf.gov
+
 If your employer allows you to work on scikit-optimize during the day and would like
 recognition, feel free to add them to the "Made possible by" list.
 
