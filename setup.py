@@ -12,6 +12,6 @@ setup(name='scikit-optimize',
       author='The scikit-optimize contributors',
       packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
                 'skopt.learning.gaussian_process'],
-      install_requires=["numpy", "scipy", "scikit-learn>=0.18",
+      install_requires=["numpy", "scipy>=0.14.0", "scikit-learn>=0.18",
                         "scikit-garden", "matplotlib"]
       )
