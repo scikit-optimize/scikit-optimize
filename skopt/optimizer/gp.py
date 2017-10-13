@@ -207,9 +207,11 @@ def gp_minimize(func, dimensions, base_estimator=None,
     # Check params
     rng = check_random_state(random_state)
     space = normalize_dimensions(dimensions)
-    base_estimator = cook_estimator(
-        "GP", space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
-        noise=noise)
+
+    if base_estimator is None:
+        base_estimator = cook_estimator(
+            base, space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
+            noise=noise)
 
     return base_minimize(
         func, space, base_estimator=base_estimator,
