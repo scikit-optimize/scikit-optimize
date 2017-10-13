@@ -5,7 +5,7 @@ from scipy.linalg import cho_solve
 from scipy.linalg import solve_triangular
 
 import sklearn
-from gpr_betaWarp import GaussianProcessRegressor as sk_GaussianProcessRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 from sklearn.utils import check_array
 
 from .kernels import ConstantKernel
@@ -292,8 +292,6 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                 "the std.")
 
         X = check_array(X)
-        # transform to warped space
-        X = self.space_warper.forward(X)
 
         if X.shape[0] != 1 and (return_mean_grad or return_std_grad):
             raise ValueError("Not implemented for n_samples > 1")

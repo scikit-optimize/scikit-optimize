@@ -1,111 +1,46 @@
-"""Gaussian processes regression. """
-
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Modified by Stefano Cereda <stefano1.cereda@mail.polimi.it>
-#   Based on "Input Warping for Bayesian Optimization of Non-Stationary Functions"
-#   By Snoek et al.
-#
-# License: BSD 3 clause
-
-import warnings
-from operator import itemgetter
+# THIS IS A VERBATIM COPY OF gpr.py JUST WITHA  DIFFERENT IMPORT FOR THE UNDERLYING GPR
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
-from scipy.optimize import fmin_l_bfgs_b
-import scipy.stats as sps
+import warnings
+
+from scipy.linalg import cho_solve
+from scipy.linalg import solve_triangular
+
+import sklearn
+from .warped_gpr import GaussianProcessRegressor_BW as sk_GaussianProcessRegressor
+from sklearn.utils import check_array
+
+from .kernels import ConstantKernel
+from .kernels import Sum
+from .kernels import RBF
+from .kernels import WhiteKernel
 
 
-from sklearn.base import BaseEstimator, RegressorMixin, clone
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_X_y, check_array
-from sklearn.utils.deprecation import deprecated
-
-
-def truncate_01(func):
-    """Decorator function.
-
-    BetaWarping needs Xs between 0 and 1. They should be already like this, but
-    we must be sure about that.
+def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
     """
-    def inner(cls_instance, inputs, *args):
-        inputs = inputs.copy()
-        if np.any(inputs < 0):
-            warnings.warn('BetaWarp encountered negative values: %s' % inputs[inputs<0])
-            inputs[inputs<0] = 0.0
-        if np.any(inputs > 1):
-            warnings.warn('BetaWarp encountered values above 1: %s' % inputs[inputs>1])
-            inputs[inputs>1] = 1.0
+    Check if a WhiteKernel exists in a Sum Kernel
+    and if it does return the corresponding key in
+    `kernel.get_params()`
+    """
+    if kernel_str != "":
+        kernel_str = kernel_str + "__"
 
-        return func(cls_instance, inputs, *args)
-    return inner
+    if isinstance(kernel, Sum):
+        for param, child in kernel.get_params(deep=False).items():
+            if isinstance(child, WhiteKernel):
+                return True, kernel_str + param
+            else:
+                present, child_str = _param_for_white_kernel_in_Sum(
+                    child, kernel_str + param)
+                if present:
+                    return True, child_str
 
-
-def _approx_fprime(xk, shape, f, epsilon, args=()):
-    f0 = f(*((xk,) + args))
-    grad = np.zeros((shape[0], shape[1], len(xk)), float)
-    ei = np.zeros((len(xk), ), float)
-    for k in range(len(xk)):
-        ei[k] = 1.0
-        d = epsilon * ei
-        grad[:,:,k] = (f(*((xk + d,) + args)) - f0) / d[k]
-        ei[k] = 0.0
-    return grad
+    return False, "_"
 
 
-class BetaWarp(object):
-    def __init__(self, num_dims, alphas=None, betas=None, scale=1.5, mean=0.0):
-        self.num_dims=num_dims
-        self.scale = scale
-        self.mean = 0.0
-
-        self.alphas_default = np.ones(num_dims)
-        self.alphas_bounds = np.array([[0.1, 10.0],]*num_dims)
-        self.alphas = self.alphas_default
-
-        self.betas_default = np.ones(num_dims)
-        self.betas_bounds = np.array([[0.1, 10.0],]*num_dims)
-        self.betas = self.betas_default
-
-        if alphas is not None:
-            self.alphas = alphas
-        if betas is not None:
-            self.betas = betas
-
-    @truncate_01
-    def forward(self, X):
-        X = np.copy(X)
-        #check if X is a list of points
-        if len(X.shape) == 1:
-            X = np.array([X])
-        self._X = list()
-        ret = list()
-        for point in X:
-            self._X.append(point)
-            ret.append(sps.beta.cdf(point, self.alphas, self.betas))
-        return np.array(ret)
-
-    def backward(self, V):
-        raise NotImplemented()
-        dx = sps.beta.pdf(self._inputs, self.alphas, self.betas)
-        dx[np.logical_not(np.isfinite(dx))] = 1.0
-        return dx*V
-
-    def logprob(self):
-        if np.any(self.alphas < self.alphas_bounds[0,0]) \
-           or np.any(self.alphas > self.alphas_bounds[0,1]) \
-           or np.any(self.betas < self.betas_bounds[0,0]) \
-           or np.any(self.betas > self.betas_bounds[0,1]):
-            return -np.inf
-
-        return np.sum(sps.lognorm.logpdf([self.alphas, self.betas], self.scale, loc=self.mean))
-
-
-
-
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
-    """Gaussian process regression (GPR).
+class GaussianProcessRegressor_BetaWarped(sk_GaussianProcessRegressor):
+    """
+    GaussianProcessRegressor that allows noise tunability.
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
     for Machine Learning (GPML) by Rasmussen and Williams.
@@ -113,36 +48,31 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     In addition to standard scikit-learn estimator API,
     GaussianProcessRegressor:
 
-       * allows prediction without prior fitting (based on the GP prior)
+       * allows prediction without prior fitting (based on the GP prior);
        * provides an additional method sample_y(X), which evaluates samples
-         drawn from the GPR (prior or posterior) at given inputs
+         drawn from the GPR (prior or posterior) at given inputs;
        * exposes a method log_marginal_likelihood(theta), which can be used
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
-
-    .. versionadded:: 0.18
-
     Parameters
     ----------
-    kernel : kernel object
+    * `kernel` [kernel object]:
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    alpha : float or array-like, optional (default: 1e-10)
+    * `alpha` [float or array-like, optional (default: 1e-10)]:
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations.
-        This can also prevent a potential numerical issue during fitting, by
-        ensuring that the calculated values form a positive definite matrix.
-        If an array is passed, it must have the same number of entries as the
-        data used for fitting and is used as datapoint-dependent noise level.
-        Note that this is equivalent to adding a WhiteKernel with c=alpha.
-        Allowing to specify the noise level directly as a parameter is mainly
-        for convenience and for consistency with Ridge.
+        Larger values correspond to increased noise level in the observations
+        and reduce potential numerical issue during fitting. If an array is
+        passed, it must have the same number of entries as the data used for
+        fitting and is used as datapoint-dependent noise level. Note that this
+        is equivalent to adding a WhiteKernel with c=alpha. Allowing to specify
+        the noise level directly as a parameter is mainly for convenience and
+        for consistency with Ridge.
 
-    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
+    * `optimizer` [string or callable, optional (default: "fmin_l_bfgs_b")]:
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -167,7 +97,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer : int, optional (default: 0)
+    * `n_restarts_optimizer` [int, optional (default: 0)]:
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -176,7 +106,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    normalize_y : boolean, optional (default: False)
+    * `normalize_y` [boolean, optional (default: False)]:
         Whether the target values y are normalized, i.e., the mean of the
         observed target values become zero. This parameter should be set to
         True if the target values' mean is expected to differ considerable from
@@ -184,280 +114,217 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         prior based on the data, which contradicts the likelihood principle;
         normalization is thus disabled per default.
 
-    copy_X_train : bool, optional (default: True)
+    * `copy_X_train` [bool, optional (default: True)]:
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int, RandomState instance or None, optional (default: None)
-        The generator used to initialize the centers. If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    * `random_state` [integer or numpy.RandomState, optional]:
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
+    * `noise` [string, "gaussian", optional]:
+        If set to "gaussian", then it is assumed that `y` is a noisy
+        estimate of `f(x)` where the noise is gaussian.
 
     Attributes
     ----------
-    X_train_ : array-like, shape = (n_samples, n_features)
+    * `X_train_` [array-like, shape = (n_samples, n_features)]:
         Feature values in training data (also required for prediction)
 
-    y_train_ : array-like, shape = (n_samples, [n_output_dims])
+    * `y_train_` [array-like, shape = (n_samples, [n_output_dims])]:
         Target values in training data (also required for prediction)
 
-    kernel_ : kernel object
+    * `kernel_` [kernel object]:
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_ : array-like, shape = (n_samples, n_samples)
+    * `L_` [array-like, shape = (n_samples, n_samples)]:
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
-    alpha_ : array-like, shape = (n_samples,)
+    * `alpha_` [array-like, shape = (n_samples,)]:
         Dual coefficients of training data points in kernel space
 
-    log_marginal_likelihood_value_ : float
+    * `log_marginal_likelihood_value_` [float]:
         The log-marginal-likelihood of ``self.kernel_.theta``
 
+    * `noise_` [float]:
+        Estimate of the gaussian noise. Useful only when noise is set to
+        "gaussian".
     """
-    def __init__(self, kernel=None, alpha=1e-10,
+    def __init__(self, kernel=None, alpha=0.0,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
-                 normalize_y=False, copy_X_train=True, random_state=None):
-        self.kernel = kernel
-        self.alpha = alpha
-        self.optimizer = optimizer
-        self.n_restarts_optimizer = n_restarts_optimizer
-        self.normalize_y = normalize_y
-        self.copy_X_train = copy_X_train
-        self.random_state = random_state
-        self.space_warper = None # Wait to see the dimension
-
-    @property
-    @deprecated("Attribute rng was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def rng(self):
-        return self._rng
-
-    @property
-    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def y_train_mean(self):
-        return self._y_train_mean
+                 normalize_y=False, copy_X_train=True, random_state=None,
+                 noise=None):
+        self.noise = noise
+        super(GaussianProcessRegressor_BetaWarped, self).__init__(
+            kernel=kernel, alpha=alpha, optimizer=optimizer,
+            n_restarts_optimizer=n_restarts_optimizer,
+            normalize_y=normalize_y, copy_X_train=copy_X_train,
+            random_state=random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model.
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        * `X` [array-like, shape = (n_samples, n_features)]:
             Training data
 
-        y : array-like, shape = (n_samples, [n_output_dims])
+        * `y` [array-like, shape = (n_samples, [n_output_dims])]:
             Target values
 
         Returns
         -------
-        self : returns an instance of self.
+        * `self`:
+            Returns an instance of self.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") \
-                * RBF(1.0, length_scale_bounds="fixed")
-        else:
-            self.kernel_ = clone(self.kernel)
+        if isinstance(self.noise, str) and self.noise != "gaussian":
+            raise ValueError("expected noise to be 'gaussian', got %s"
+                             % self.noise)
 
-        self._rng = check_random_state(self.random_state)
+        if self.kernel is None:
+            self.kernel = ConstantKernel(1.0, constant_value_bounds="fixed") \
+                          * RBF(1.0, length_scale_bounds="fixed")
+        elif self.noise == "gaussian":
+            self.kernel = self.kernel + WhiteKernel()
+        elif self.noise:
+            self.kernel = self.kernel + WhiteKernel(
+                noise_level=self.noise, noise_level_bounds="fixed"
+            )
+        super(GaussianProcessRegressor_BetaWarped, self).fit(X, y)
 
-        if self.space_warper is None:
-            self.space_warper = BetaWarp(X.shape[1])
+        self.noise_ = None
 
-        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
+        if self.noise:
+            # The noise component of this kernel should be set to zero
+            # while estimating K(X_test, X_test)
+            # Note that the term K(X, X) should include the noise but
+            # this (K(X, X))^-1y is precomputed as the attribute `alpha_`.
+            # (Notice the underscore).
+            # This has been described in Eq 2.24 of
+            # http://www.gaussianprocess.org/gpml/chapters/RW2.pdf
+            # Hence this hack
+            if isinstance(self.kernel_, WhiteKernel):
+                self.kernel_.set_params(noise_level=0.0)
 
-        # Normalize target value
-        if self.normalize_y:
-            self._y_train_mean = np.mean(y, axis=0)
-            # demean y
-            y = y - self._y_train_mean
-        else:
-            self._y_train_mean = np.zeros(1)
-
-        if np.iterable(self.alpha) \
-           and self.alpha.shape[0] != y.shape[0]:
-            if self.alpha.shape[0] == 1:
-                self.alpha = self.alpha[0]
             else:
-                raise ValueError("alpha must be a scalar or an array"
-                                 " with same number of entries as y.(%d != %d)"
-                                 % (self.alpha.shape[0], y.shape[0]))
+                white_present, white_param = _param_for_white_kernel_in_Sum(
+                    self.kernel_)
 
-        self.X_train_ = np.copy(X) if self.copy_X_train else X
-        self.y_train_ = np.copy(y) if self.copy_X_train else y
+                # This should always be true. Just in case.
+                if white_present:
+                    noise_kernel = self.kernel_.get_params()[white_param]
+                    self.noise_ = noise_kernel.noise_level
+                    self.kernel_.set_params(
+                        **{white_param: WhiteKernel(noise_level=0.0)})
 
-        if self.optimizer is not None and self.kernel_.n_dims > 0:
-            num_thetas = len(self.kernel_.theta)
-            num_alphas = len(self.space_warper.alphas)
-            num_betas = len(self.space_warper.betas)
-            # Choose hyperparameters based on maximizing the log-marginal
-            # likelihood (potentially starting from several initial values)
-            def obj_func(hyperparameters, eval_gradient=True):
-                theta = hyperparameters[0:num_thetas]
-                alphas = hyperparameters[num_thetas:num_thetas+num_alphas]
-                betas =  hyperparameters[num_thetas+num_alphas:num_thetas+num_alphas+num_betas]
-                if eval_gradient:
-                    lml, grad = self.log_marginal_likelihood(theta, alphas, betas, eval_gradient=True)
-                    return -lml, -grad
-                else:
-                    return -self.log_marginal_likelihood(theta, alphas, betas)
+        # Precompute arrays needed at prediction
+        L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
+        self.K_inv_ = L_inv.dot(L_inv.T)
 
-            # First optimize starting from theta specified in kernel
-            init_point = []
-            init_point.extend(self.kernel_.theta)
-            init_point.extend(self.space_warper.alphas_default)
-            init_point.extend(self.space_warper.betas_default)
-            init_point = np.array(init_point)
-            bounds = []
-            bounds.extend(self.kernel_.bounds)
-            bounds.extend(self.space_warper.alphas_bounds)
-            bounds.extend(self.space_warper.betas_bounds)
-            bounds = np.array(bounds)
-
-            print("Starting HP optimization from:\n%s" % str(init_point))
-            print("\nwith bounds:\n %s" % str(bounds))
-
-            optima = [(self._constrained_optimization(obj_func, init_point,
-                                                      bounds))]
-
-            print("\nand likelihood: %f" % optima[0][1])
-
-            # Additional runs are performed from log-uniform chosen initial
-            # theta
-            if self.n_restarts_optimizer > 0:
-                if not np.isfinite(bounds).all():
-                    raise ValueError(
-                        "Multiple optimizer restarts (n_restarts_optimizer>0) "
-                        "requires that all bounds are finite.")
-                for iteration in range(self.n_restarts_optimizer):
-                    hp_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(self._constrained_optimization(obj_func,
-                                                                 hp_initial,
-                                                                 bounds))
-
-            # Select result from run with minimal (negative) log-marginal
-            # likelihood
-            lml_values = list(map(itemgetter(1), optima))
-            hp_optimal = optima[np.argmin(lml_values)][0]
-            self.log_marginal_likelihood_value_ = -np.min(lml_values)
-            self.kernel_.theta = hp_optimal[0:num_thetas]
-            self.space_warper.alphas = hp_optimal[num_thetas:num_thetas+num_alphas]
-            self.space_warper.betas =  hp_optimal[num_thetas+num_alphas:]
-
-            # Warp the observed values with the optimized warper
-            self.X_train_ = self.space_warper.forward(self.X_train_)
-
-            print("Ended HP optimization at:\n%s" % str(hp_optimal))
-            print("\nwith likelihood: %f" %\
-                  self.log_marginal_likelihood_value_)
-
+        # Fix deprecation warning #462
+        if int(sklearn.__version__[2:4]) >= 19:
+            self.y_train_mean_ = self._y_train_mean
         else:
-            self.log_marginal_likelihood_value_ = \
-                self.log_marginal_likelihood(self.kernel_.theta,
-                                             self.space_warper.alphas,
-                                             self.space_warper.betas)
+            self.y_train_mean_ = self._y_train_mean
 
-        # Precompute quantities required for predictions which are independent
-        # of actual query points
-        K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.alpha
-        try:
-            self.L_ = cholesky(K, lower=True)  # Line 2
-            # self.L_ changed, self._K_inv needs to be recomputed
-            self._K_inv = None
-        except np.linalg.LinAlgError as exc:
-            exc.args = ("The kernel, %s, is not returning a "
-                        "positive definite matrix. Try gradually "
-                        "increasing the 'alpha' parameter of your "
-                        "GaussianProcessRegressor estimator."
-                        % self.kernel_,) + exc.args
-            raise
-        self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
         return self
 
-    def predict(self, X, return_std=False, return_cov=False):
-        """Predict using the Gaussian process regression model
+    def predict(self, X, return_std=False, return_cov=False,
+                return_mean_grad=False, return_std_grad=False):
+        """
+        Predict output for X.
 
-        We can also predict based on an unfitted model by using the GP prior.
         In addition to the mean of the predictive distribution, also its
-        standard deviation (return_std=True) or covariance (return_cov=True).
-        Note that at most one of the two can be requested.
+        standard deviation (return_std=True) or covariance (return_cov=True),
+        the gradient of the mean and the standard-deviation with respect to X
+        can be optionally provided.
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
-            Query points where the GP is evaluated
+        * `X` [array-like, shape = (n_samples, n_features)]:
+            Query points where the GP is evaluated.
 
-        return_std : bool, default: False
+        * `return_std` [bool, default: False]:
             If True, the standard-deviation of the predictive distribution at
             the query points is returned along with the mean.
 
-        return_cov : bool, default: False
+        * `return_cov` [bool, default: False]:
             If True, the covariance of the joint predictive distribution at
-            the query points is returned along with the mean
+            the query points is returned along with the mean.
+
+        * `return_mean_grad` [bool, default: False]:
+            Whether or not to return the gradient of the mean.
+            Only valid when X is a single point.
+
+        * `return_std_grad` [bool, default: False]:
+            Whether or not to return the gradient of the std.
+            Only valid when X is a single point.
 
         Returns
         -------
-        y_mean : array, shape = (n_samples, [n_output_dims])
+        * `y_mean` [array, shape = (n_samples, [n_output_dims]):
             Mean of predictive distribution a query points
 
-        y_std : array, shape = (n_samples,), optional
+        * `y_std` [array, shape = (n_samples,), optional]:
             Standard deviation of predictive distribution at query points.
             Only returned when return_std is True.
 
-        y_cov : array, shape = (n_samples, n_samples), optional
+        * `y_cov` [array, shape = (n_samples, n_samples), optional]:
             Covariance of joint predictive distribution a query points.
             Only returned when return_cov is True.
+
+        * `y_mean_grad` [shape = (n_samples, n_features)]:
+            The gradient of the predicted mean
+
+        * `y_std_grad` [shape = (n_samples, n_features)]:
+            The gradient of the predicted std.
         """
         if return_std and return_cov:
             raise RuntimeError(
                 "Not returning standard deviation of predictions when "
                 "returning full covariance.")
 
-        X = check_array(X)
-        X = self.space_warper.forward(X)
-        import pdb; pdb.set_trace()
+        if return_std_grad and not return_std:
+            raise ValueError(
+                "Not returning std_gradient without returning "
+                "the std.")
 
-        if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
-            if self.kernel is None:
-                kernel = (C(1.0, constant_value_bounds="fixed") *
-                          RBF(1.0, length_scale_bounds="fixed"))
-            else:
-                kernel = self.kernel
+        X = check_array(X)
+
+        if X.shape[0] != 1 and (return_mean_grad or return_std_grad):
+            raise ValueError("Not implemented for n_samples > 1")
+
+        if not hasattr(self, "X_train_"):  # Not fit; predict based on GP prior
             y_mean = np.zeros(X.shape[0])
             if return_cov:
-                y_cov = kernel(X)
+                y_cov = self.kernel(X)
                 return y_mean, y_cov
             elif return_std:
-                y_var = kernel.diag(X)
+                y_var = self.kernel.diag(X)
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
+
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
-            y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self._y_train_mean + y_mean  # undo normal.
+            y_mean = K_trans.dot(self.alpha_)    # Line 4 (y_mean = f_star)
+            y_mean = self.y_train_mean_ + y_mean  # undo normal.
+
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+                y_cov = self.kernel_(X) - K_trans.dot(v)   # Line 6
                 return y_mean, y_cov
+
             elif return_std:
-                # cache result of K_inv computation
-                if self._K_inv is None:
-                    # compute inverse K_inv of K based on its Cholesky
-                    # decomposition L and its inverse L_inv
-                    L_inv = solve_triangular(self.L_.T,
-                                             np.eye(self.L_.shape[0]))
-                    self._K_inv = L_inv.dot(L_inv.T)
+                K_inv = self.K_inv_
 
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ij->i",
-                                   np.dot(K_trans, self._K_inv), K_trans)
+                y_var -= np.einsum("ki,kj,ij->k", K_trans, K_trans, K_inv)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -466,154 +333,26 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                     warnings.warn("Predicted variances smaller than 0. "
                                   "Setting those variances to 0.")
                     y_var[y_var_negative] = 0.0
-                return y_mean, np.sqrt(y_var)
+                y_std = np.sqrt(y_var)
+
+            if return_mean_grad:
+                grad = self.kernel_.gradient_x(X[0], self.X_train_)
+                grad_mean = np.dot(grad.T, self.alpha_)
+
+                if return_std_grad:
+                    grad_std = np.zeros(X.shape[1])
+                    if not np.allclose(y_std, grad_std):
+                        grad_std = -np.dot(K_trans,
+                                           np.dot(K_inv, grad))[0] / y_std
+                    return y_mean, y_std, grad_mean, grad_std
+
+                if return_std:
+                    return y_mean, y_std, grad_mean
+                else:
+                    return y_mean, grad_mean
+
             else:
-                return y_mean
-
-    def sample_y(self, X, n_samples=1, random_state=0):
-        """Draw samples from Gaussian process and evaluate at X.
-
-        Parameters
-        ----------
-        X : array-like, shape = (n_samples_X, n_features)
-            Query points where the GP samples are evaluated
-
-        n_samples : int, default: 1
-            The number of samples drawn from the Gaussian process
-
-        random_state : int, RandomState instance or None, optional (default=0)
-            If int, random_state is the seed used by the random number
-            generator; If RandomState instance, random_state is the
-            random number generator; If None, the random number
-            generator is the RandomState instance used by `np.random`.
-
-        Returns
-        -------
-        y_samples : array, shape = (n_samples_X, [n_output_dims], n_samples)
-            Values of n_samples samples drawn from Gaussian process and
-            evaluated at query points.
-        """
-        rng = check_random_state(random_state)
-
-        y_mean, y_cov = self.predict(X, return_cov=True)
-        if y_mean.ndim == 1:
-            y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
-        else:
-            y_samples = \
-                [rng.multivariate_normal(y_mean[:, i], y_cov,
-                                         n_samples).T[:, np.newaxis]
-                 for i in range(y_mean.shape[1])]
-            y_samples = np.hstack(y_samples)
-        return y_samples
-
-    def log_marginal_likelihood(self, theta=None, alphas=None, betas=None, eval_gradient=False):
-        """Returns log-marginal likelihood of theta for training data.
-
-        Parameters
-        ----------
-        theta : array-like, shape = (n_kernel_params,) or None
-            Kernel hyperparameters for which the log-marginal likelihood is
-            evaluated. If None, the precomputed log_marginal_likelihood
-            of ``self.kernel_.theta`` is returned.
-
-        eval_gradient : bool, default: False
-            If True, the gradient of the log-marginal likelihood with respect
-            to the kernel hyperparameters at position theta is returned
-            additionally. If True, theta must not be None.
-
-        Returns
-        -------
-        log_likelihood : float
-            Log-marginal likelihood of theta for training data.
-
-        log_likelihood_gradient : array, shape = (n_kernel_params,), optional
-            Gradient of the log-marginal likelihood with respect to the kernel
-            hyperparameters at position theta.
-            Only returned when eval_gradient is True.
-        """
-        if theta is None:
-            if eval_gradient:
-                raise ValueError(
-                    "Gradient can only be evaluated for theta!=None")
-            return self.log_marginal_likelihood_value_
-
-        kernel = self.kernel_.clone_with_theta(theta)
-        warper = BetaWarp(self.X_train_.shape[1], alphas, betas)
-        X = warper.forward(self.X_train_)
-
-        if eval_gradient:
-            K, K_gradient = kernel(X, eval_gradient=True)
-        else:
-            K = kernel(X)
-
-        # we need to extend K_gradient with the derivatives for alphas and
-        # betas.
-        if eval_gradient:
-            numalphas = alphas.shape[0]
-            def f(alphasbetas):
-                m_alphas = alphasbetas[0:numalphas]
-                m_betas = alphasbetas[numalphas:]
-                return self.log_marginal_likelihood(theta, m_alphas, m_betas,
-                                                    eval_gradient=None)
-
-            W_gradient = _approx_fprime(np.concatenate([alphas, betas]),
-                                        [X.shape[0], X.shape[0]], f, 1e-10)
-
-#            W_gradient = np.zeros((X.shape[0], X.shape[0],
-#                                   len(alphas)+len(betas)))
-            K_gradient = np.concatenate([K_gradient, W_gradient], axis=2)
-
-
-        K[np.diag_indices_from(K)] += self.alpha
-        try:
-            L = cholesky(K, lower=True)  # Line 2
-        except np.linalg.LinAlgError:
-            return (-np.inf, np.zeros_like(theta)) \
-                if eval_gradient else -np.inf
-
-        # Support multi-dimensional output of self.y_train_
-        y_train = self.y_train_
-        if y_train.ndim == 1:
-            y_train = y_train[:, np.newaxis]
-
-        alpha = cho_solve((L, True), y_train)  # Line 3
-
-        # Compute log-likelihood (compare line 7)
-        log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
-        log_likelihood_dims -= np.log(np.diag(L)).sum()
-        log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
-        log_likelihood = log_likelihood_dims.sum(-1)  # sum over dimensions
-        # Add the likelihood of alphas and betas
-        log_likelihood += warper.logprob()
-
-        if eval_gradient:  # compare Equation 5.9 from GPML
-            tmp = np.einsum("ik,jk->ijk", alpha, alpha)  # k: output-dimension
-            tmp -= cho_solve((L, True), np.eye(K.shape[0]))[:, :, np.newaxis]
-            # Compute "0.5 * trace(tmp.dot(K_gradient))" without
-            # constructing the full matrix tmp.dot(K_gradient) since only
-            # its diagonal is required
-            log_likelihood_gradient_dims = \
-                0.5 * np.einsum("ijl,ijk->kl", tmp, K_gradient)
-            log_likelihood_gradient = log_likelihood_gradient_dims.sum(-1)
-
-
-        if eval_gradient:
-            return log_likelihood, log_likelihood_gradient
-        else:
-            return log_likelihood
-
-    def _constrained_optimization(self, obj_func, initial_theta, bounds):
-        if self.optimizer == "fmin_l_bfgs_b":
-            theta_opt, func_min, convergence_dict = \
-                fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
-            if convergence_dict["warnflag"] != 0:
-                warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict)
-        elif callable(self.optimizer):
-            theta_opt, func_min = \
-                self.optimizer(obj_func, initial_theta, bounds=bounds)
-        else:
-            raise ValueError("Unknown optimizer %s." % self.optimizer)
-
-        return theta_opt, func_min
-
+                if return_std:
+                    return y_mean, y_std
+                else:
+                    return y_mean
