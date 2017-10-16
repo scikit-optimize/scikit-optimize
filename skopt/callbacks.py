@@ -238,8 +238,6 @@ class RepeatedMinStopper(EarlyStopper):
         if result.fun < self.minimum:
             self.minimum = result.fun
             self.count = 0
-        elif result.fun > self.minimum:
-            self.count = 0
         else:
             self.count += 1
 
