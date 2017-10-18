@@ -76,7 +76,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-    * `acq_func` [string, default=`"EI"`]:
+    * `acq_func` [string, default=`"gp_hedge"`]:
         Function to minimize over the gaussian prior. Can be either
 
         - `"LCB"` for lower confidence bound.
