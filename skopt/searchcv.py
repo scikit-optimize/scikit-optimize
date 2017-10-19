@@ -68,9 +68,10 @@ class BayesSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    surrogate : string or skopt surrogate, default='auto'
-        Surrogate to use for optimization of score of estimator.
-        By default skopt.learning.GaussianProcessRegressor() is used.
+    optimizer_kwargs : dict, optional
+        Dict of arguments passed to :class:`Optimizer`.  For example,
+        ``{'base_estimator': 'RF'}`` would use a Random Forest surrogate
+        instead of the default Gaussian Process.
 
     scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
