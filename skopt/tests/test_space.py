@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import pytest
 import numbers
 import numpy as np
@@ -374,6 +376,27 @@ def test_categorical_identity():
     transformed = cat.transform(samples)
     assert_array_equal(transformed, samples)
     assert_array_equal(samples, cat.inverse_transform(transformed))
+
+@pytest.mark.fast_test
+def test_categorical_repr():
+
+    # ensure printing of Categorical objects does not
+    # raise an exception. Hhowever we do not insist
+    # on the exact output format.
+
+    import cStringIO as StringIO
+
+    for categories in (
+        range(3), # short ( < 7 items) list of categories
+        range(8), # long ( >= 7 items) list of categories with ellipsis
+        ):
+
+        categories = list(categories)
+        cat = Categorical(categories, transform="identity")
+
+        out = StringIO.StringIO()
+
+        print(cat, file = out)
 
 
 @pytest.mark.fast_test
