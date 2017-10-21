@@ -384,7 +384,7 @@ class Categorical(Dimension):
         * `categories` [list, shape=(n_categories,)]:
             Sequence of possible categories.
 
-        * `prior` [list, shape=(categories,), default=None]:
+        * `prior` [list, shape=(n_categories,), default=None]:
             Prior probabilities for each category. By default all categories
             are equally likely.
 
