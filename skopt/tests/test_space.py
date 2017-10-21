@@ -378,13 +378,11 @@ def test_categorical_identity():
     assert_array_equal(samples, cat.inverse_transform(transformed))
 
 @pytest.mark.fast_test
-def test_categorical_repr():
+def test_categorical_repr(capsys):
 
     # ensure printing of Categorical objects does not
     # raise an exception. Hhowever we do not insist
     # on the exact output format.
-
-    import cStringIO as StringIO
 
     for categories in (
         range(3), # short ( < 7 items) list of categories
@@ -394,10 +392,7 @@ def test_categorical_repr():
         categories = list(categories)
         cat = Categorical(categories, transform="identity")
 
-        out = StringIO.StringIO()
-
-        print(cat, file = out)
-
+        print(cat)
 
 @pytest.mark.fast_test
 def test_categorical_distance():
