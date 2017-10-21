@@ -1,3 +1,5 @@
+# THIS IS A VERBATIM COPY OF gpr.py JUST WITHA  DIFFERENT IMPORT FOR THE UNDERLYING GPR
+
 import numpy as np
 import warnings
 
@@ -5,7 +7,7 @@ from scipy.linalg import cho_solve
 from scipy.linalg import solve_triangular
 
 import sklearn
-from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
+from .warped_gpr import GaussianProcessRegressor_BW as sk_GaussianProcessRegressor
 from sklearn.utils import check_array
 
 from .kernels import ConstantKernel
@@ -36,7 +38,7 @@ def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
     return False, "_"
 
 
-class GaussianProcessRegressor(sk_GaussianProcessRegressor):
+class GaussianProcessRegressor_BetaWarped(sk_GaussianProcessRegressor):
     """
     GaussianProcessRegressor that allows noise tunability.
 
@@ -157,7 +159,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                  normalize_y=False, copy_X_train=True, random_state=None,
                  noise=None):
         self.noise = noise
-        super(GaussianProcessRegressor, self).__init__(
+        super(GaussianProcessRegressor_BetaWarped, self).__init__(
             kernel=kernel, alpha=alpha, optimizer=optimizer,
             n_restarts_optimizer=n_restarts_optimizer,
             normalize_y=normalize_y, copy_X_train=copy_X_train,
@@ -192,7 +194,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
             self.kernel = self.kernel + WhiteKernel(
                 noise_level=self.noise, noise_level_bounds="fixed"
             )
-        super(GaussianProcessRegressor, self).fit(X, y)
+        super(GaussianProcessRegressor_BetaWarped, self).fit(X, y)
 
         self.noise_ = None
 
@@ -227,7 +229,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         if int(sklearn.__version__[2:4]) >= 19:
             self.y_train_mean_ = self._y_train_mean
         else:
-            self.y_train_mean_ = self.y_train_mean
+            self.y_train_mean_ = self._y_train_mean
 
         return self
 

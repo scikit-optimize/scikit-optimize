@@ -14,7 +14,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
                 acq_func="gp_hedge", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
                 n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
-                noise="gaussian", n_jobs=1):
+                noise="gaussian", n_jobs=1, use_betaWarp=False):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -207,8 +207,13 @@ def gp_minimize(func, dimensions, base_estimator=None,
     # Check params
     rng = check_random_state(random_state)
     space = normalize_dimensions(dimensions)
+
+    if use_betaWarp:
+        base = "GP_BW"
+    else:
+        base = "GP"
     base_estimator = cook_estimator(
-        "GP", space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
+        base, space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
         noise=noise)
 
     return base_minimize(

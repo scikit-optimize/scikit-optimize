@@ -4,10 +4,11 @@ from skgarden import RandomForestRegressor
 from skgarden import ExtraTreesRegressor
 
 from .gbrt import GradientBoostingQuantileRegressor
-from .gaussian_process import GaussianProcessRegressor
+from .gaussian_process import GaussianProcessRegressor, GaussianProcessRegressor_BetaWarped
 
 
 __all__ = ("RandomForestRegressor",
            "ExtraTreesRegressor",
            "GradientBoostingQuantileRegressor",
-           "GaussianProcessRegressor")
+           "GaussianProcessRegressor",
+           "GaussianProcessRegressor_BetaWarped")

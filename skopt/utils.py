@@ -10,6 +10,7 @@ from sklearn.externals.joblib import load as load_
 
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor
+from .learning import GaussianProcessRegressor_BetaWarped
 from .learning import GradientBoostingQuantileRegressor
 from .learning import RandomForestRegressor
 from .learning.gaussian_process.kernels import ConstantKernel
@@ -307,14 +308,14 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     """
     if isinstance(base_estimator, str):
         base_estimator = base_estimator.upper()
-        if base_estimator not in ["GP", "ET", "RF", "GBRT", "DUMMY"]:
+        if base_estimator not in ["GP", "GP_BW", "ET", "RF", "GBRT", "DUMMY"]:
             raise ValueError("Valid strings for the base_estimator parameter "
-                             " are: 'RF', 'ET', 'GP', 'GBRT' or 'DUMMY' not "
+                             " are: 'RF', 'ET', 'GP', 'GP_BW', 'GBRT' or 'DUMMY' not "
                              "%s." % base_estimator)
     elif not is_regressor(base_estimator):
         raise ValueError("base_estimator has to be a regressor.")
 
-    if base_estimator == "GP":
+    if base_estimator == "GP" or base_estimator == 'GP_BW':
         if space is not None:
             space = Space(space)
             n_dims = space.transformed_n_dims
@@ -332,10 +333,17 @@ def cook_estimator(base_estimator, space=None, **kwargs):
                 length_scale=np.ones(n_dims),
                 length_scale_bounds=[(0.01, 100)] * n_dims, nu=2.5)
 
-        base_estimator = GaussianProcessRegressor(
-            kernel=cov_amplitude * other_kernel,
-            normalize_y=True, alpha=0.0, noise="gaussian",
-            n_restarts_optimizer=2)
+        if base_estimator == 'GP':
+            base_estimator = GaussianProcessRegressor(
+                kernel=cov_amplitude * other_kernel,
+                normalize_y=True, alpha=0.0, noise="gaussian",
+                n_restarts_optimizer=2)
+        else:
+            base_estimator = GaussianProcessRegressor_BetaWarped(
+                kernel=cov_amplitude * other_kernel,
+                normalize_y=True, alpha=0.0, noise="gaussian",
+                n_restarts_optimizer=20)
+
     elif base_estimator == "RF":
         base_estimator = RandomForestRegressor(n_estimators=100,
                                                min_samples_leaf=3)
