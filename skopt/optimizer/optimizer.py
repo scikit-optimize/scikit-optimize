@@ -325,7 +325,8 @@ class Optimizer(object):
         # Copy of the optimizer is made in order to manage the
         # deletion of points with "lie" objective (the copy of
         # oiptimizer is simply discarded)
-        opt = self.copy()
+        opt = self.copy(random_state=self.rng.randint(0,
+                                                      np.iinfo(np.int32).max))
 
         X = []
         for i in range(n_points):
