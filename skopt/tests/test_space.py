@@ -381,7 +381,7 @@ def test_categorical_identity():
 def test_categorical_repr(capsys):
 
     # ensure printing of Categorical objects does not
-    # raise an exception. Hhowever we do not insist
+    # raise an exception. However we do not insist
     # on the exact output format.
 
     for categories in (
