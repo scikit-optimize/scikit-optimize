@@ -98,3 +98,26 @@ def test_std_gradient():
     num_grad = optimize.approx_fprime(
         X_new, lambda x: predict_wrapper(x, gpr)[1], 1e-4)
     assert_array_almost_equal(std_grad, num_grad, decimal=3)
+
+
+def test_gpr_handles_similar_points():
+    """
+    This tests whether our implementation of GPR
+    does not crash when the covariance matrix whose
+    inverse is calculated during fitting of the
+    regressor is singular.
+    Singular covariance matrix often indicates
+    that same or very close points are explored
+    during the optimization procedure.
+
+    Essentially checks that the default value of `alpha` is non zero.
+    """
+    X = np.random.rand(8, 3)
+    y = np.random.rand(8)
+
+    X[:3, :] = 0.0
+    y[:3] = 1.0
+
+    model = GaussianProcessRegressor()
+    # this fails if singular matrix is not handled
+    model.fit(X, y)
