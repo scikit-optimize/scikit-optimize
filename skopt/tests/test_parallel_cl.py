@@ -119,3 +119,36 @@ def test_same_set_of_points_ask(strategy, surrogate):
         xb = optimizer.ask(n_points, strategy)
         optimizer.tell(xa, [branin(v) for v in xa])
         assert_equal(xa, xb)  # check if the sets of points generated are equal
+
+
+@pytest.mark.parametrize("strategy", supported_strategies)
+@pytest.mark.parametrize("surrogate", available_surrogates)
+def test_reproducible_runs(strategy, surrogate):
+    # two runs of the optimizer should yield exactly the same results
+
+    optimizer = Optimizer(
+        base_estimator=surrogate(random_state=1),
+        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        acq_optimizer='sampling',
+        random_state=1
+    )
+
+    points = []
+    for i in range(n_steps):
+        x = optimizer.ask(n_points, strategy)
+        points.append(x)
+        optimizer.tell(x, [branin(v) for v in x])
+
+    # the x's should be exaclty as they are in `points`
+    optimizer = Optimizer(
+        base_estimator=surrogate(random_state=1),
+        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        acq_optimizer='sampling',
+        random_state=1
+    )
+    for i in range(n_steps):
+        x = optimizer.ask(n_points, strategy)
+
+        assert points[i] == x
+
+        optimizer.tell(x, [branin(v) for v in x])
