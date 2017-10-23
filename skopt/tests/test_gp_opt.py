@@ -10,6 +10,7 @@ from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import bench4
 from skopt.benchmarks import branin
+from skopt.utils import cook_estimator
 
 
 def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
@@ -71,3 +72,17 @@ def test_gpr_default():
     """Smoke test that gp_minimize does not fail for default values."""
     gp_minimize(branin, ((-5.0, 10.0), (0.0, 15.0)), n_random_starts=1,
                 n_calls=2)
+
+
+@pytest.mark.fast_test
+def test_use_given_estimator():
+    """ Test that gp_minimize does not use default estimator if one is passed
+    in explicitly. """
+    domain = [(1.0, 2.0), (3.0, 4.0)]
+    noise_correct = 1e+5
+    noise_fake = 1e-10
+    estimator = cook_estimator("GP", domain, noise=noise_correct)
+    res = gp_minimize(branin, domain, n_calls=1, n_random_starts=1,
+                      base_estimator=estimator, noise=noise_fake)
+
+    assert res['models'][-1].noise == noise_correct
