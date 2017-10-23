@@ -77,7 +77,9 @@ def test_gpr_default():
 
 @pytest.mark.fast_test
 def test_use_given_estimator():
-    """ Check that gp_minimize use the given estimator. """
+    """ Test that gp_minimize does not use default estimator if one is passed
+    in explicitly. """
+    # domain and space are created just to cook the estimator
     domain = [(1.0, 2.0), (3.0, 4.0)]
     space = normalize_dimensions(domain)
     noise_correct = 1e+5
