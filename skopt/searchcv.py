@@ -144,18 +144,6 @@ class BayesSearchCV(BaseSearchCV):
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
-    on_step: None (default) or callable
-        Callable object that will be called after every step of search space
-        exploration. Specifically, this function is called after every
-        model evaluation in single process mode, and after n_jobs evaluations
-        in parallel in parallel mode. Can be used to monitor the progress of
-        the class and store the best parameters so far.
-        The callable should have one positional argument for current
-        iteration.
-        ``def on_step(iter): print(iter)``
-        You can use ``total_iterations`` function to get maximum number of
-        iterations.
-
     Example
     -------
 
