@@ -596,7 +596,7 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def step(self, X, y, space_id, groups=None, n_jobs=1):
+    def step(self, X, y, space_id, groups=None, n_jobs=1, refit=True):
         """Generate n_jobs parameters and evaluate them in parallel.
 
         Having a separate function for a single step for search allows to
@@ -622,6 +622,10 @@ class BayesSearchCV(BaseSearchCV):
 
         n_jobs : int, default=1
             Number of parameters to evaluate in parallel.
+
+        refit : bool, default=True
+            Whether to refit the best found parameters after a step to the whole
+            dataset.
 
         Returns
         -------
@@ -654,14 +658,14 @@ class BayesSearchCV(BaseSearchCV):
         all_cv_results = self.cv_results_
 
         # record performances with different points
-        refit = self.refit
+        refit_state = self.refit
         self.refit = False  # do not fit yet - will be fit later
 
         # this adds compatibility with different versions of sklearn
 
         self._fit(X, y, groups, params_dict)
 
-        self.refit = refit
+        self.refit = refit_state
 
         # merge existing and new cv_results_
         for k in self.cv_results_:
@@ -672,6 +676,9 @@ class BayesSearchCV(BaseSearchCV):
 
         # feed the point and objective back into optimizer
         local_results = self.cv_results_['mean_test_score'][-len(params):]
+
+        if refit:
+            self._fit_best_model(X, y)
 
         # optimizer minimizes objective, hence provide negative score
         return optimizer.tell(params, [-score for score in local_results])
@@ -761,7 +768,8 @@ class BayesSearchCV(BaseSearchCV):
 
                 optim_result = self.step(
                     X, y, space_id,
-                    groups=groups, n_jobs=n_jobs_adjusted
+                    groups=groups, n_jobs=n_jobs_adjusted,
+                    refit=False
                 )
                 n_iter -= n_jobs
 
