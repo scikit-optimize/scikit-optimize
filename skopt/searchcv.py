@@ -13,9 +13,9 @@ from sklearn.utils.validation import indexable, check_is_fitted
 from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
-from .utils import point_asdict, dimensions_aslist
+from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
-
+from .callbacks import check_callback
 
 class BayesSearchCV(BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -686,11 +686,9 @@ class BayesSearchCV(BaseSearchCV):
         local_results = self.cv_results_['mean_test_score'][-len(params):]
 
         # optimizer minimizes objective, hence provide negative score
-        optimizer.tell(params, [-score for score in local_results])
+        return optimizer.tell(params, [-score for score in local_results])
 
-        # fit the best model if necessary
-        if self.refit:
-            self._fit_best_model(X, y)
+
 
     def total_iterations(self):
         """
@@ -715,7 +713,7 @@ class BayesSearchCV(BaseSearchCV):
 
         return total_iter
 
-    def fit(self, X, y=None, groups=None):
+    def fit(self, X, y=None, groups=None, callback=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -730,6 +728,13 @@ class BayesSearchCV(BaseSearchCV):
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+
+        callback: [callable, list of callables, optional]
+            If callable then `callback(res)` is called after each parameter
+            combination tested. If list of callables, then each callable in
+            the list is called.
+
         """
 
         # check if the list of parameter spaces is provided. If not, then
@@ -740,6 +745,8 @@ class BayesSearchCV(BaseSearchCV):
                 "Please provide search space using `add_spaces` first before"
                 "calling fit method."
             )
+
+        callbacks = check_callback(callback)
 
         n_jobs = self.n_jobs
 
@@ -764,7 +771,7 @@ class BayesSearchCV(BaseSearchCV):
                 # when n_iter < n_jobs points left for evaluation
                 n_jobs_adjusted = min(n_iter, self.n_jobs)
 
-                self.step(
+                optim_result = self.step(
                     X, y, space_id,
                     groups=groups, n_jobs=n_jobs_adjusted
                 )
@@ -773,6 +780,13 @@ class BayesSearchCV(BaseSearchCV):
                 # update counter of total finished iterations
                 finished_iter += n_jobs
 
-                # call here the iteration event handler
-                if self.on_step is not None:
-                    self.on_step(finished_iter)
+                # add information about total number of iterations
+                optim_result.searchcv_iter = finished_iter
+
+                # evaluate callbacks, break if necessary
+                if eval_callbacks(callbacks, optim_result):
+                    break
+
+        # fit the best model if necessary
+        if self.refit:
+            self._fit_best_model(X, y)

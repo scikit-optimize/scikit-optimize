@@ -131,9 +131,9 @@ def test_searchcv_runs_multiple_subspaces():
 
 def test_searchcv_iterations():
     """
-    Test whether the `on_step` event is called in BayesSearchCV
+    Test whether the `monitor` callbacks are called in BayesSearchCV
     on space exploration with proper values of total number of
-    iterations to explore and current number of iterations
+    iterations to explore and current number of iterations.
     """
 
     X, y = load_iris(True)
@@ -173,8 +173,9 @@ def test_searchcv_iterations():
         'calls_counter': 0
     }
 
-    def on_step(iter):
+    def on_step(optim_result):
         persistent_values['calls_counter'] += 1
+        iter = optim_result.searchcv_iter
         assert iter == persistent_values['calls_counter']
 
 
@@ -182,13 +183,52 @@ def test_searchcv_iterations():
         pipe,
         [(lin_search, 1), (dtc_search, 1), svc_search],
         n_iter=2,
-        on_step=on_step,
     )
 
     # run the search over subspaces
-    opt.fit(X_train, y_train)
+    opt.fit(X_train, y_train, callback=on_step)
 
     # test if for all iterations function is called
     total_evaluations = len(opt.cv_results_['mean_test_score'])
     assert persistent_values['calls_counter'] == total_evaluations
     assert persistent_values['calls_counter'] == opt.total_iterations()
+
+
+def test_searchcv_fit_count():
+    """
+    Test whether BayesSearchCV does not do any unnecessary
+    fitting.
+    """
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    # class used to record the number of fittings
+    persistent_values = {'fits_counter':0}
+    n_iter = 2
+
+    class MySVC(LinearSVC):
+        def __init__(self, C=0.1):
+            LinearSVC.__init__(self, C=C)
+
+        def fit(self, X, y, sample_weight=None):
+            persistent_values['fits_counter'] += 1
+            LinearSVC.fit(self, X, y, sample_weight)
+
+    model = BayesSearchCV(
+        estimator=MySVC(),
+        search_spaces={
+            'C': (0.1, 1.0)
+        },
+        n_iter=n_iter,
+        refit=True
+    )
+
+    model.fit(X_train, y_train)
+
+    # 3 cross - validation folds fits for every iteration
+    # + one final fit
+    assert persistent_values['fits_counter']==n_iter*3 + 1
+
