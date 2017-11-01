@@ -41,7 +41,6 @@ The latest released version of scikit-optimize is v0.4, which you can install
 with:
 ::
 
-    pip install numpy # install numpy explicitly first
     pip install scikit-optimize
 
 Getting started

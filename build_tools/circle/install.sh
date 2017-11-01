@@ -29,8 +29,7 @@ popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n testenv --yes python pip pytest nose \
-   numpy
+conda create -n testenv --yes python pip pytest nose
 source activate testenv
 
 pip install -e.

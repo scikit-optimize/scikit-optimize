@@ -1,10 +1,9 @@
 """Machine learning extensions for model-based optimization."""
 
-from skgarden import RandomForestRegressor
-from skgarden import ExtraTreesRegressor
-
-from .gbrt import GradientBoostingQuantileRegressor
+from .forest import RandomForestRegressor
+from .forest import ExtraTreesRegressor
 from .gaussian_process import GaussianProcessRegressor
+from .gbrt import GradientBoostingQuantileRegressor
 
 
 __all__ = ("RandomForestRegressor",

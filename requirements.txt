@@ -1,7 +1,6 @@
 numpy
 scipy
 scikit-learn>=0.18
-scikit-garden
 matplotlib
 pytest
 nose
