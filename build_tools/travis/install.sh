@@ -25,8 +25,7 @@ popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-   numpy
+conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest
 source activate testenv
 
 if [[ "$COVERAGE" == "true" ]]; then
