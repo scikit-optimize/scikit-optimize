@@ -727,3 +727,4 @@ class BayesSearchCV(BaseSearchCV):
                     groups=groups, n_jobs=n_jobs_adjusted
                 )
                 n_iter -= n_jobs
+        return self
