@@ -613,9 +613,6 @@ class BayesSearchCV(BaseSearchCV):
         params_dict: dictionary with parameter values.
         """
 
-        if not hasattr(self, 'search_spaces_'):
-            self.search_spaces_ = {}
-
         # convert n_jobst to int > 0 if necessary
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
@@ -684,7 +681,7 @@ class BayesSearchCV(BaseSearchCV):
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-            
+
         # check if the list of parameter spaces is provided. If not, then
         # only step in manual mode can be used.
         # can be None if user intends to provide spaces manually with add_space before the fit()
