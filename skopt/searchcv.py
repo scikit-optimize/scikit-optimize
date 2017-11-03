@@ -619,6 +619,7 @@ class BayesSearchCV(BaseSearchCV):
         if not hasattr(self, 'search_spaces_') and self.search_spaces is not None:
             search_spaces = [self.search_spaces] if isinstance(self.search_spaces, dict) else self.search_spaces
             self.add_spaces(list(range(len(search_spaces))), search_spaces)
+        self.search_spaces_ = {} if not hasattr(self, 'search_spaces_') else self.search_spaces_
 
         self.cv_results_ = defaultdict(list) if not hasattr(self, 'cv_results_') else self.cv_results_
         self.best_index_ = None if not hasattr(self, 'best_index_') else self.best_index_
@@ -699,6 +700,8 @@ class BayesSearchCV(BaseSearchCV):
         if self.search_spaces is not None:
             search_spaces = [self.search_spaces] if isinstance(self.search_spaces, dict) else self.search_spaces
             self.add_spaces(list(range(len(search_spaces))), search_spaces)
+
+        self.search_spaces_ = {} if not hasattr(self, 'search_spaces_') else self.search_spaces_
 
         self.cv_results_ = defaultdict(list) if not hasattr(self, 'cv_results_') else self.cv_results_
         self.best_index_ = None if not hasattr(self, 'best_index_') else self.best_index_
