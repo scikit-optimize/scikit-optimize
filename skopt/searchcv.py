@@ -616,7 +616,7 @@ class BayesSearchCV(BaseSearchCV):
         # check if the list of parameter spaces is provided. If not, then
         # only step in manual mode can be used.
         # can be None if user intends to provide spaces manually with add_space before the fit()
-        if self.search_spaces is not None:
+        if not hasattr(self, 'search_spaces_') and self.search_spaces is not None:
             search_spaces = [self.search_spaces] if isinstance(self.search_spaces, dict) else self.search_spaces
             self.add_spaces(list(range(len(search_spaces))), search_spaces)
 
