@@ -268,43 +268,16 @@ class BayesSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, search_spaces=None, optimizer_kwargs=None,
+    def __init__(self, estimator, search_spaces=None, optimizer_kwrgs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
 
-        # set of space name: space dict. Stored as a dict, in order
-        # to make it easy to add or remove search spaces, in case
-        # user wants to use `step` function directly.
-        self.search_spaces_ = {}
-        # make sklearn.base.clone work
         self.search_spaces = search_spaces
-
-        # can be None if user intends to provide spaces later manually
-        if search_spaces is not None:
-            # account for the case when search space is a dict
-            if isinstance(search_spaces, dict):
-                search_spaces = [search_spaces]
-            self.add_spaces(list(range(len(search_spaces))), search_spaces)
-
         self.n_iter = n_iter
         self.random_state = random_state
-
-        if optimizer_kwargs is None:
-            self.optimizer_kwargs = {}
-        else:
-            self.optimizer_kwargs = optimizer_kwargs
-
-        # this dict is used in order to keep track of skopt Optimizer
-        # instances for different search spaces. `str(space)` is used as key
-        # as `space` is a dict, which is unhashable. however, str(space)
-        # is fixed and unique if space is not changed.
-        self.optimizer_ = {}
-        self.cv_results_ = defaultdict(list)
-
-        self.best_index_ = None
-        self.multimetric_ = False
+        self.optimizer_kwrgs = optimizer_kwrgs
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring, fit_params=fit_params,
@@ -392,6 +365,20 @@ class BayesSearchCV(BaseSearchCV):
             is a number of iterations that will be spent optimizing over
             this subspace.
         """
+
+        self.search_spaces_ = {} if not hasattr(self, 'search_spaces_') else self.search_spaces_
+
+        # this dict is used in order to keep track of skopt Optimizer
+        # instances for different search spaces. `str(space)` is used as key
+        # as `space` is a dict, which is unhashable. however, str(space)
+        # is fixed and unique if space is not changed.
+        
+        self.optimizer_ = {} if not hasattr(self, 'optimizer_') else self.optimizer_
+
+        if self.optimizer_kwrgs is None:
+            self.optimizer_kwargs = {}
+        else:
+            self.optimizer_kwargs = self.optimizer_kwrgs
 
         self._check_search_space(search_spaces)
 
@@ -625,6 +612,9 @@ class BayesSearchCV(BaseSearchCV):
         params_dict: dictionary with parameter values.
         """
 
+        if not hasattr(self, 'search_spaces_'):
+            self.search_spaces_ = {}
+
         # convert n_jobst to int > 0 if necessary
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
@@ -693,10 +683,20 @@ class BayesSearchCV(BaseSearchCV):
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-
+            
         # check if the list of parameter spaces is provided. If not, then
         # only step in manual mode can be used.
+        # can be None if user intends to provide spaces manually with add_space before the fit()
+        if self.search_spaces is not None:
+            # account for the case when search space is a dict
+            if isinstance(self.search_spaces, dict):
+                search_spaces = [self.search_spaces]
+            self.add_spaces(list(range(len(search_spaces))), search_spaces)
 
+        self.cv_results_ = defaultdict(list) if not hasattr(self, 'cv_results_') else self.cv_results_
+        self.best_index_ = None if not hasattr(self, 'best_index_') else self.best_index_
+        self.multimetric_ = False if not hasattr(self, 'multimetric_') else self.multimetric_
+            
         if len(self.search_spaces_) == 0:
             raise ValueError(
                 "Please provide search space using `add_spaces` first before"
