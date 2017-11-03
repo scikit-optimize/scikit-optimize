@@ -375,10 +375,11 @@ class BayesSearchCV(BaseSearchCV):
         
         self.optimizer_ = {} if not hasattr(self, 'optimizer_') else self.optimizer_
 
-        if self.optimizer_kwrgs is None:
-            self.optimizer_kwargs = {}
-        else:
-            self.optimizer_kwargs = self.optimizer_kwrgs
+        if not hasattr(self, 'optimizer_kwargs'):
+            if self.optimizer_kwrgs is None:
+                self.optimizer_kwargs = {}
+            else:
+                self.optimizer_kwargs = self.optimizer_kwrgs
 
         self._check_search_space(search_spaces)
 
