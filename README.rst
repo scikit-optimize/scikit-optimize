@@ -99,7 +99,7 @@ Development
 
 The library is still experimental and under heavy development. Checkout
 the `next
-milestone <https://github.com/scikit-optimize/scikit-optimize/milestone/4>`__
+milestone <https://github.com/scikit-optimize/scikit-optimize/milestone/5>`__
 for the plans for the next release or look at some `easy
 issues <https://github.com/scikit-optimize/scikit-optimize/issues?q=is%3Aissue+is%3Aopen+label%3AEasy>`__
 to get started contributing.
@@ -114,7 +114,7 @@ The development version can be installed through:
 
 Run all tests by executing ``pytest`` in the top level directory.
 
-To only run the subset of tests with low run time, you can use ``pytest -m 'fast_test'``. On the other hand ``pytest -m 'slow_test'`` is also possible. To exclude all slow running tests try ``pytest -m 'not slow_test'``.
+To only run the subset of tests with short run time, you can use ``pytest -m 'fast_test'`` (``pytest -m 'slow_test'`` is also possible). To exclude all slow running tests try ``pytest -m 'not slow_test'``.
 
 This is implemented using pytest `attributes <https://docs.pytest.org/en/latest/mark.html>`__. If a tests runs longer than 1 second, it is marked as slow, else as fast.
 
