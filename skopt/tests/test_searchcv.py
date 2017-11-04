@@ -6,7 +6,6 @@ import pytest
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_equal
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -42,7 +41,7 @@ def test_searchcv_runs(surrogate, n_jobs):
         X, y, train_size=0.75, random_state=0
     )
 
-    # None search space is only supported when only `step` function is used
+    # None search space is not supported
     assert_raises(ValueError, BayesSearchCV(SVC(), None).fit, (X, y))
 
     # check if invalid dimensions are raising errors
