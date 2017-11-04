@@ -44,7 +44,7 @@ class BayesSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     search_spaces : dict, list of dict or list of tuple containing
-        (dict, int), or None.
+        (dict, int).
         One of 4 following cases:
         1. dictionary, where keys are parameter names (strings)
         and values are skopt.space.Dimension instances (Real, Integer
@@ -61,8 +61,6 @@ class BayesSearchCV(BaseSearchCV):
         some search subspace, similarly as in case 2, and second element
         is a number of iterations that will be spent optimizing over
         this subspace.
-        4. None, in which case it is assumed that a user will provide
-        search space via the `add_spaces` function.
 
     n_iter : int, default=128
         Number of parameter settings that are sampled. n_iter trades
