@@ -268,7 +268,7 @@ class BayesSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, search_spaces=None, optimizer_kwrgs=None,
+    def __init__(self, estimator, search_spaces=None, optimizer_kwargs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
@@ -277,7 +277,7 @@ class BayesSearchCV(BaseSearchCV):
         self.search_spaces = search_spaces
         self.n_iter = n_iter
         self.random_state = random_state
-        self.optimizer_kwrgs = optimizer_kwrgs
+        self.optimizer_kwargs = optimizer_kwargs
         if self.search_spaces is not None:
             self._check_search_space(self.search_spaces)
 
@@ -377,11 +377,11 @@ class BayesSearchCV(BaseSearchCV):
         
         self.optimizer_ = {} if not hasattr(self, 'optimizer_') else self.optimizer_
 
-        if not hasattr(self, 'optimizer_kwargs'):
-            if self.optimizer_kwrgs is None:
-                self.optimizer_kwargs = {}
+        if not hasattr(self, 'optimizer_kwargs_'):
+            if self.optimizer_kwargs is None:
+                self.optimizer_kwargs_ = {}
             else:
-                self.optimizer_kwargs = self.optimizer_kwrgs
+                self.optimizer_kwargs_ = self.optimizer_kwargs
 
         self._check_search_space(search_spaces)
 
@@ -577,7 +577,7 @@ class BayesSearchCV(BaseSearchCV):
 
         """
 
-        kwargs = self.optimizer_kwargs.copy()
+        kwargs = self.optimizer_kwargs_.copy()
         kwargs['dimensions'] = dimensions_aslist(params_space)
         optimizer = Optimizer(**kwargs)
 
@@ -619,14 +619,19 @@ class BayesSearchCV(BaseSearchCV):
         # only step in manual mode can be used.
         # can be None if user intends to provide spaces manually with add_space before the fit()
         if not hasattr(self, 'search_spaces_') and self.search_spaces is not None:
-            search_spaces = [self.search_spaces] if isinstance(self.search_spaces, dict) else self.search_spaces
+            search_spaces = [self.search_spaces] if isinstance(
+                self.search_spaces, dict) else self.search_spaces
             self.add_spaces(list(range(len(search_spaces))), search_spaces)
-        self.search_spaces_ = {} if not hasattr(self, 'search_spaces_') else self.search_spaces_
+        self.search_spaces_ = {} if not hasattr(
+            self, 'search_spaces_') else self.search_spaces_
 
-        self.cv_results_ = defaultdict(list) if not hasattr(self, 'cv_results_') else self.cv_results_
-        self.best_index_ = None if not hasattr(self, 'best_index_') else self.best_index_
-        self.multimetric_ = False if not hasattr(self, 'multimetric_') else self.multimetric_
-        
+        self.cv_results_ = defaultdict(list) if not hasattr(
+                self, 'cv_results_') else self.cv_results_
+        self.best_index_ = None if not hasattr(
+            self, 'best_index_') else self.best_index_
+        self.multimetric_ = False if not hasattr(
+            self, 'multimetric_') else self.multimetric_
+
         # convert n_jobst to int > 0 if necessary
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
@@ -699,16 +704,19 @@ class BayesSearchCV(BaseSearchCV):
         # check if the list of parameter spaces is provided. If not, then
         # only step in manual mode can be used.
         # can be None if user intends to provide spaces manually with add_space before the fit()
+        search_spaces = [self.search_spaces] if isinstance(
+            self.search_spaces, dict) else self.search_spaces
+
         if self.search_spaces is not None:
-            search_spaces = [self.search_spaces] if isinstance(self.search_spaces, dict) else self.search_spaces
             self.add_spaces(list(range(len(search_spaces))), search_spaces)
 
-        self.search_spaces_ = {} if not hasattr(self, 'search_spaces_') else self.search_spaces_
+        self.search_spaces_ = {} if not hasattr(
+            self, 'search_spaces_') else self.search_spaces_
 
-        self.cv_results_ = defaultdict(list) if not hasattr(self, 'cv_results_') else self.cv_results_
-        self.best_index_ = None if not hasattr(self, 'best_index_') else self.best_index_
-        self.multimetric_ = False if not hasattr(self, 'multimetric_') else self.multimetric_
-            
+        self.cv_results_ = defaultdict(list)
+        self.best_index_ = None
+        self.multimetric_ = False
+
         if len(self.search_spaces_) == 0:
             raise ValueError(
                 "Please provide search space using `add_spaces` first before"
