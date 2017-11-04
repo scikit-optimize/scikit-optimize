@@ -2,7 +2,7 @@
 
 ## Version 0.5
 
-Catchy phrase here :)
+High five!
 
 ## New features
 
