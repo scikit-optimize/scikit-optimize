@@ -1,5 +1,5 @@
-from collections import defaultdict, Sized, Iterable
-from functools import partial, reduce
+from collections import defaultdict, Sized
+from functools import partial
 
 import numpy as np
 from scipy.stats import rankdata
@@ -328,70 +328,6 @@ class BayesSearchCV(BaseSearchCV):
                 "Search space should be provided as a dict or list of dict,"
                 "got %s" % search_space)
 
-    def add_spaces(self, names, search_spaces):
-        """
-        Add a parameter search space over which to search for parameter
-        values. Naming of search subspaces is necessary in order to specify
-        for the `step` function over which subspace to perform search step.
-
-        names: str or list of str
-            Define names for the parameter search subspaces.
-            if search_spaces is a single dict, then names should be str
-            representing name of the single search subspace.
-            if search_spaces is a list of dicts, defines names for every
-            search subspace in the list.
-
-        search_spaces : dict, list of dict or list of tuple (dict, int)
-            Define search subspaces over which to search for parameters
-            of the model.
-            One of 3 following cases:
-            1. dictionary, where keys are parameter names (strings)
-            and values are skopt.space.Dimension instances (Real, Integer
-            or Categorical) or any other valid value that defines skopt
-            dimension (see skopt.Optimizer docs). Represents search space
-            over parameters of the provided estimator.
-            2. list of dictionaries: a list of dictionaries, where every
-            dictionary fits the description given in case 1 above.
-            If a list of dictionary objects is given, then the search is
-            performed sequentially for every parameter space with maximum
-            number of evaluations set to self.n_iter.
-            3. list of (dict, int > 0): an extension of case 2 above,
-            where first element of every tuple is a dictionary representing
-            some search subspace, similarly as in case 2, and second element
-            is a number of iterations that will be spent optimizing over
-            this subspace.
-        """
-
-        self.search_spaces_ = {} if not hasattr(self, 'search_spaces_') else self.search_spaces_
-
-        # this dict is used in order to keep track of skopt Optimizer
-        # instances for different search spaces. `str(space)` is used as key
-        # as `space` is a dict, which is unhashable. however, str(space)
-        # is fixed and unique if space is not changed.
-        
-        self.optimizer_ = {} if not hasattr(self, 'optimizer_') else self.optimizer_
-
-        if not hasattr(self, 'optimizer_kwargs_'):
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs_ = {}
-            else:
-                self.optimizer_kwargs_ = self.optimizer_kwargs
-
-        self._check_search_space(search_spaces)
-
-        if not isinstance(search_spaces, list):
-            search_spaces = [search_spaces]
-        if not isinstance(names, list):
-            names = [names]
-
-        # first check whether space already exits ...
-        for space, name in zip(search_spaces, names):
-            if name in self.search_spaces_:
-                raise ValueError("Search space %s already exists!" % name)
-
-        for space, name in zip(search_spaces, names):
-            self.search_spaces_[name] = space
-
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     @property
     def best_score_(self):
@@ -444,8 +380,7 @@ class BayesSearchCV(BaseSearchCV):
                 error_score=self.error_score
             )
             for parameters in parameter_iterable
-            for train, test in cv_iter
-        )
+            for train, test in cv_iter)
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -577,88 +512,31 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def step(self, X, y, space_id, groups=None, n_jobs=1):
+    def _step(self, X, y, space_id, groups=None, n_jobs=1):
         """Generate n_jobs parameters and evaluate them in parallel.
 
         Having a separate function for a single step for search allows to
         save easily checkpoints for the parameter search and restore from
         possible failures.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels) as integers or strings.
-
-        space_id : hashable
-            Identifier of parameter search space. Add search spaces with
-
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
-
-        n_jobs : int, default=1
-            Number of parameters to evaluate in parallel.
-
-        Returns
-        -------
-        params_dict: dictionary with parameter values.
         """
-
-        # check if the list of parameter spaces is provided. If not, then
-        # only step in manual mode can be used.
-        # can be None if user intends to provide spaces manually with add_space before the fit()
-        if not hasattr(self, 'search_spaces_') and self.search_spaces is not None:
-            search_spaces = [self.search_spaces] if isinstance(
-                self.search_spaces, dict) else self.search_spaces
-            self.add_spaces(list(range(len(search_spaces))), search_spaces)
-        self.search_spaces_ = {} if not hasattr(
-            self, 'search_spaces_') else self.search_spaces_
-
-        self.cv_results_ = defaultdict(list) if not hasattr(
-                self, 'cv_results_') else self.cv_results_
-        self.best_index_ = None if not hasattr(
-            self, 'best_index_') else self.best_index_
-        self.multimetric_ = False if not hasattr(
-            self, 'multimetric_') else self.multimetric_
-
-        # convert n_jobst to int > 0 if necessary
-        if n_jobs < 0:
-            n_jobs = max(1, cpu_count() + n_jobs + 1)
-
-        # use the cached optimizer for particular parameter space
-        if space_id not in self.search_spaces_:
-            raise ValueError("Unknown space %s" % space_id)
 
         # get the search space for a step
         search_space = self.search_spaces_[space_id]
         if isinstance(search_space, tuple):
             search_space, _ = search_space
 
-        # create optimizer if not created already
-        if space_id not in self.optimizer_:
-            self.optimizer_[space_id] = self._make_optimizer(search_space)
-        optimizer = self.optimizer_[space_id]
-
         # get parameter values to evaluate
+        optimizer = self.optimizer_[space_id]
         params = optimizer.ask(n_points=n_jobs)
         params_dict = [point_asdict(search_space, p) for p in params]
 
-        # self.cv_results_ is reset at every call to _fit, keep current
+        # HACK: self.cv_results_ is reset at every call to _fit, keep current
         all_cv_results = self.cv_results_
 
-        # record performances with different points
+        # HACK: this adds compatibility with different versions of sklearn
         refit = self.refit
-        self.refit = False  # do not fit yet - will be fit later
-
-        # this adds compatibility with different versions of sklearn
-
+        self.refit = False
         self._fit(X, y, groups, params_dict)
-
         self.refit = refit
 
         # merge existing and new cv_results_
@@ -674,48 +552,43 @@ class BayesSearchCV(BaseSearchCV):
         # optimizer minimizes objective, hence provide negative score
         optimizer.tell(params, [-score for score in local_results])
 
-        # fit the best model if necessary
-        if self.refit:
-            self._fit_best_model(X, y)
-
     def fit(self, X, y=None, groups=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output]
-            Target relative to X for classification or regression;
+            Target relative to X for classification or regression (class
+            labels, as integers or strings).
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
 
-        # check if the list of parameter spaces is provided. If not, then
-        # only step in manual mode can be used.
-        # can be None if user intends to provide spaces manually with add_space before the fit()
         search_spaces = [self.search_spaces] if isinstance(
-            self.search_spaces, dict) else self.search_spaces
+                self.search_spaces, dict) else self.search_spaces
 
-        if self.search_spaces is not None:
-            self.add_spaces(list(range(len(search_spaces))), search_spaces)
+        self.search_spaces_ = {}
+        for space, name in zip(search_spaces, list(range(len(search_spaces)))):
+            self.search_spaces_[name] = space
 
-        self.search_spaces_ = {} if not hasattr(
-            self, 'search_spaces_') else self.search_spaces_
+        # Instanciate optimizers for all the search spaces.
+        self.optimizer_ = {}
+        for space_id in self.search_spaces_.keys():
+            self.optimizer_[space_id] = self._make_optimizer(search_spaces)
+
+        self.optimizer_kwargs_ = {} if self.optimizer_kwargs is None else\
+            self.optimizer_kwargs
 
         self.cv_results_ = defaultdict(list)
         self.best_index_ = None
         self.multimetric_ = False
-
-        if len(self.search_spaces_) == 0:
-            raise ValueError(
-                "Please provide search space using `add_spaces` first before"
-                "calling fit method."
-            )
 
         n_jobs = self.n_jobs
 
@@ -738,9 +611,14 @@ class BayesSearchCV(BaseSearchCV):
                 # when n_iter < n_jobs points left for evaluation
                 n_jobs_adjusted = min(n_iter, self.n_jobs)
 
-                self.step(
+                self._step(
                     X, y, space_id,
                     groups=groups, n_jobs=n_jobs_adjusted
                 )
                 n_iter -= n_jobs
+
+        # fit the best model if necessary
+        if self.refit:
+            self._fit_best_model(X, y)
+
         return self
