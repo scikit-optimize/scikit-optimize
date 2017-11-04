@@ -272,8 +272,7 @@ class BayesSearchCV(BaseSearchCV):
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=True,
-                 on_step=None):
+                 error_score='raise', return_train_score=True):
 
         # set of space name: space dict. Stored as a dict, in order
         # to make it easy to add or remove search spaces, in case
@@ -307,7 +306,6 @@ class BayesSearchCV(BaseSearchCV):
         self.best_index_ = None
         self.multimetric_ = False
 
-        self.on_step = on_step
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring, fit_params=fit_params,
@@ -683,8 +681,7 @@ class BayesSearchCV(BaseSearchCV):
         # optimizer minimizes objective, hence provide negative score
         return optimizer.tell(params, [-score for score in local_results])
 
-
-
+    @property
     def total_iterations(self):
         """
         Count total iterations needed to explore all subspaces with

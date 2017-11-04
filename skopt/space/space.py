@@ -36,6 +36,8 @@ def check_dimension(dimension, transform=None):
         Search space Dimension.
         Each search dimension can be defined either as
 
+        - a `(value,)` tuple or list (for `Categorical`
+          dimensions, single values used to fix dimension value),
         - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
         - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
