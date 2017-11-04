@@ -41,9 +41,6 @@ def test_searchcv_runs(surrogate, n_jobs):
         X, y, train_size=0.75, random_state=0
     )
 
-    # None search space is not supported
-    assert_raises(ValueError, BayesSearchCV(SVC(), None).fit, (X, y))
-
     # check if invalid dimensions are raising errors
     with pytest.raises(ValueError):
         BayesSearchCV(SVC(), {'C': '1 ... 100.0'})
