@@ -276,8 +276,7 @@ class BayesSearchCV(BaseSearchCV):
         self.n_iter = n_iter
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
-        if self.search_spaces is not None:
-            self._check_search_space(self.search_spaces)
+        self._check_search_space(self.search_spaces)
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring, fit_params=fit_params,
@@ -288,8 +287,9 @@ class BayesSearchCV(BaseSearchCV):
     def _check_search_space(self, search_space):
         """Checks whether the search space argument is correct"""
 
-        search_spaces = [self.search_spaces] if isinstance(
-                self.search_spaces, dict) else self.search_spaces
+        # check if space is a single dict, convert to list if so
+        if isinstance(search_space, dict):
+            search_space = [search_space]
 
         # check if the structure of the space is proper
         if isinstance(search_space, list):
@@ -574,8 +574,9 @@ class BayesSearchCV(BaseSearchCV):
             train/test set.
         """
 
-        search_spaces = [self.search_spaces] if isinstance(
-                self.search_spaces, dict) else self.search_spaces
+        # check if space is a single dict, convert to list if so
+        if isinstance(search_space, dict):
+            search_space = [search_space]
 
         self.search_spaces_ = {}
         for space, name in zip(search_spaces, list(range(len(search_spaces)))):
