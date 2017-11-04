@@ -288,6 +288,9 @@ class BayesSearchCV(BaseSearchCV):
     def _check_search_space(self, search_space):
         """Checks whether the search space argument is correct"""
 
+        search_spaces = [self.search_spaces] if isinstance(
+                self.search_spaces, dict) else self.search_spaces
+
         # check if the structure of the space is proper
         if isinstance(search_space, list):
             # convert to just a list of dicts
