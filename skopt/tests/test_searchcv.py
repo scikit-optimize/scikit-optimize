@@ -191,7 +191,7 @@ def test_searchcv_iterations():
     # test if for all iterations function is called
     total_evaluations = len(opt.cv_results_['mean_test_score'])
     assert persistent_values['calls_counter'] == total_evaluations
-    assert persistent_values['calls_counter'] == opt.total_iterations()
+    assert persistent_values['calls_counter'] == opt.total_iterations
 
 
 def test_searchcv_fit_count():
