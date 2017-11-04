@@ -41,7 +41,18 @@ The latest released version of scikit-optimize is v0.4, which you can install
 with:
 ::
 
+    pip install numpy # explicitly install this first
     pip install scikit-optimize
+
+In addition there is a `conda-forge <https://conda-forge.org/>`_ package for
+version 0.3 of scikit-optimize:
+::
+
+    conda install -c conda-forge scikit-optimize
+
+Using conda-forge is probably the easiest way to install scikit-optimize on
+Windows.
+
 
 Getting started
 ---------------
