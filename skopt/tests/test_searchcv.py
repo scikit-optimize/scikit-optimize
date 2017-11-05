@@ -4,7 +4,6 @@ search with interface similar to those of GridSearchCV
 
 import pytest
 
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split

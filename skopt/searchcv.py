@@ -601,7 +601,6 @@ class BayesSearchCV(BaseSearchCV):
             # if not provided with search subspace, n_iter is taken as
             # self.n_iter
 
-            n_iter = self.n_iter
             if isinstance(search_space, tuple):
                 search_space, n_iter = search_space
             else:
