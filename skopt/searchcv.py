@@ -515,17 +515,11 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def _step(self, X, y, space_id, groups=None, n_jobs=1):
+    def _step(self, X, y, search_space, optimizer, groups=None, n_jobs=1):
         """Generate n_jobs parameters and evaluate them in parallel.
         """
 
-        # get the search space for a step
-        search_space = self.search_spaces_[space_id]
-        if isinstance(search_space, tuple):
-            search_space, _ = search_space
-
         # get parameter values to evaluate
-        optimizer = self.optimizer_[space_id]
         params = optimizer.ask(n_points=n_jobs)
         params_dict = [point_asdict(search_space, p) for p in params]
 
@@ -574,19 +568,19 @@ class BayesSearchCV(BaseSearchCV):
         search_spaces = self.search_spaces
         if isinstance(search_spaces, dict):
             search_spaces = [search_spaces]
-        self.search_spaces_ = search_spaces
 
         if self.optimizer_kwargs is None:
             self.optimizer_kwargs_ = {}
         else:
             self.optimizer_kwargs_ = self.optimizer_kwargs
 
-        # Instanciate optimizers for all the search spaces.
-        self.optimizer_ = []
+        # Instantiate optimizers for all the search spaces.
+        optimizers = []
         for search_space in search_spaces:
             if isinstance(search_space, tuple):
                 search_space = search_space[0]
-            self.optimizer_.append(self._make_optimizer(search_space))
+            optimizers.append(self._make_optimizer(search_space))
+        self.optimizers_ = optimizers  # will save the states of the optimizers
 
         self.cv_results_ = defaultdict(list)
         self.best_index_ = None
@@ -598,13 +592,13 @@ class BayesSearchCV(BaseSearchCV):
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
-        for space_id in range(len(self.search_spaces_)):
-            elem = self.search_spaces_[space_id]
-
+        for search_space, optimizer in zip(search_spaces, optimizers):
             # if not provided with search subspace, n_iter is taken as
             # self.n_iter
-            if isinstance(elem, tuple):
-                space, n_iter = elem
+
+            n_iter = self.n_iter
+            if isinstance(search_space, tuple):
+                search_space, n_iter = search_space
             else:
                 n_iter = self.n_iter
 
@@ -614,7 +608,7 @@ class BayesSearchCV(BaseSearchCV):
                 n_jobs_adjusted = min(n_iter, n_jobs)
 
                 self._step(
-                    X, y, space_id,
+                    X, y, search_space, optimizer,
                     groups=groups, n_jobs=n_jobs_adjusted
                 )
                 n_iter -= n_jobs
