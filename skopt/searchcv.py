@@ -574,17 +574,16 @@ class BayesSearchCV(BaseSearchCV):
         search_spaces = self.search_spaces
         if isinstance(search_spaces, dict):
             search_spaces = [search_spaces]
+        self.search_spaces_ = search_spaces
 
-        self.search_spaces_ = {}
-        for space, name in zip(search_spaces, list(range(len(search_spaces)))):
-            self.search_spaces_[name] = space
-
-        self.optimizer_kwargs_ = {} if self.optimizer_kwargs is None else\
-            self.optimizer_kwargs
+        if self.optimizer_kwargs is None:
+            self.optimizer_kwargs_ = {}
+        else:
+            self.optimizer_kwargs_ = self.optimizer_kwargs
 
         # Instanciate optimizers for all the search spaces.
         self.optimizer_ = {}
-        for space_id, search_space in self.search_spaces_.items():
+        for space_id, search_space in enumerate(search_spaces):
             if isinstance(search_space, tuple):
                 search_space = search_space[0]
             self.optimizer_[space_id] = self._make_optimizer(search_space)
@@ -599,7 +598,7 @@ class BayesSearchCV(BaseSearchCV):
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
 
-        for space_id in sorted(self.search_spaces_.keys()):
+        for space_id in range(len(self.search_spaces_)):
             elem = self.search_spaces_[space_id]
 
             # if not provided with search subspace, n_iter is taken as
