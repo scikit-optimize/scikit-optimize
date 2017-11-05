@@ -517,10 +517,6 @@ class BayesSearchCV(BaseSearchCV):
 
     def _step(self, X, y, space_id, groups=None, n_jobs=1):
         """Generate n_jobs parameters and evaluate them in parallel.
-
-        Having a separate function for a single step for search allows to
-        save easily checkpoints for the parameter search and restore from
-        possible failures.
         """
 
         # get the search space for a step
