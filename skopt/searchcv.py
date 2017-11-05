@@ -582,11 +582,11 @@ class BayesSearchCV(BaseSearchCV):
             self.optimizer_kwargs_ = self.optimizer_kwargs
 
         # Instanciate optimizers for all the search spaces.
-        self.optimizer_ = {}
-        for space_id, search_space in enumerate(search_spaces):
+        self.optimizer_ = []
+        for search_space in search_spaces:
             if isinstance(search_space, tuple):
                 search_space = search_space[0]
-            self.optimizer_[space_id] = self._make_optimizer(search_space)
+            self.optimizer_.append(self._make_optimizer(search_space))
 
         self.cv_results_ = defaultdict(list)
         self.best_index_ = None
