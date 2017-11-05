@@ -291,7 +291,7 @@ class BayesSearchCV(BaseSearchCV):
         if isinstance(search_space, dict):
             search_space = [search_space]
 
-        if len(self.search_spaces_) == 0:
+        if len(self.search_spaces) == 0:
             raise ValueError(
                 "Please provide at least one search space"
             )
@@ -618,7 +618,7 @@ class BayesSearchCV(BaseSearchCV):
                 )
                 n_iter -= n_jobs
 
-        # fit the best model if necessary
+        # Refit the best model on the the whole dataset
         if self.refit:
             self._fit_best_model(X, y)
 
