@@ -291,6 +291,11 @@ class BayesSearchCV(BaseSearchCV):
         if isinstance(search_space, dict):
             search_space = [search_space]
 
+        if len(self.search_spaces_) == 0:
+            raise ValueError(
+                "Please provide at least one search space"
+            )
+
         # check if the structure of the space is proper
         if isinstance(search_space, list):
             # convert to just a list of dicts
