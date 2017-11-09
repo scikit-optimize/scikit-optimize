@@ -36,6 +36,8 @@ def check_dimension(dimension, transform=None):
         Search space Dimension.
         Each search dimension can be defined either as
 
+        - a `(value,)` tuple or list (for `Categorical`
+          dimensions, single values used to fix dimension value),
         - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
         - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
@@ -68,6 +70,12 @@ def check_dimension(dimension, transform=None):
 
     if not isinstance(dimension, (list, tuple, np.ndarray)):
         raise ValueError("Dimension has to be a list or tuple.")
+
+    # Dimension description with single value is assumed to be used
+    # in order to fix dimension value. Is useful for BayesSearchCV,
+    # when you for example want to fix what model is used in Pipeline.
+    if len(dimension) == 1:
+        return Categorical(dimension, transform=transform)
 
     if len(dimension) == 2:
         if any([isinstance(d, (str, bool)) for d in dimension]):

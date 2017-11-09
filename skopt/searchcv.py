@@ -13,9 +13,9 @@ from sklearn.utils.validation import indexable, check_is_fitted
 from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
-from .utils import point_asdict, dimensions_aslist
+from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
-
+from .callbacks import check_callback
 
 class BayesSearchCV(BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -306,6 +306,7 @@ class BayesSearchCV(BaseSearchCV):
         self.best_index_ = None
         self.multimetric_ = False
 
+
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring, fit_params=fit_params,
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -400,7 +401,7 @@ class BayesSearchCV(BaseSearchCV):
         if not isinstance(names, list):
             names = [names]
 
-        # first check whether space already exits ...
+        # first check whether space with this name already exits
         for space, name in zip(search_spaces, names):
             if name in self.search_spaces_:
                 raise ValueError("Search space %s already exists!" % name)
@@ -593,7 +594,7 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def step(self, X, y, space_id, groups=None, n_jobs=1):
+    def step(self, X, y, space_id, groups=None, n_jobs=1, refit=True):
         """Generate n_jobs parameters and evaluate them in parallel.
 
         Having a separate function for a single step for search allows to
@@ -619,6 +620,10 @@ class BayesSearchCV(BaseSearchCV):
 
         n_jobs : int, default=1
             Number of parameters to evaluate in parallel.
+
+        refit : bool, default=True
+            Whether to refit the best found parameters after a step to the whole
+            dataset.
 
         Returns
         -------
@@ -651,14 +656,14 @@ class BayesSearchCV(BaseSearchCV):
         all_cv_results = self.cv_results_
 
         # record performances with different points
-        refit = self.refit
+        refit_state = self.refit
         self.refit = False  # do not fit yet - will be fit later
 
         # this adds compatibility with different versions of sklearn
 
         self._fit(X, y, groups, params_dict)
 
-        self.refit = refit
+        self.refit = refit_state
 
         # merge existing and new cv_results_
         for k in self.cv_results_:
@@ -670,14 +675,37 @@ class BayesSearchCV(BaseSearchCV):
         # feed the point and objective back into optimizer
         local_results = self.cv_results_['mean_test_score'][-len(params):]
 
-        # optimizer minimizes objective, hence provide negative score
-        optimizer.tell(params, [-score for score in local_results])
-
-        # fit the best model if necessary
-        if self.refit:
+        if refit:
             self._fit_best_model(X, y)
 
-    def fit(self, X, y=None, groups=None):
+        # optimizer minimizes objective, hence provide negative score
+        return optimizer.tell(params, [-score for score in local_results])
+
+    @property
+    def total_iterations(self):
+        """
+        Count total iterations needed to explore all subspaces with
+        `fit` method.
+
+        Returns
+        -------
+        max_iter: int, total number of iterations to explore
+        """
+        total_iter = 0
+
+        for space_id in sorted(self.search_spaces_.keys()):
+            elem = self.search_spaces_[space_id]
+
+            if isinstance(elem, tuple):
+                space, n_iter = elem
+            else:
+                n_iter = self.n_iter
+
+            total_iter += n_iter
+
+        return total_iter
+
+    def fit(self, X, y=None, groups=None, callback=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -692,6 +720,13 @@ class BayesSearchCV(BaseSearchCV):
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+
+        callback: [callable, list of callables, optional]
+            If callable then `callback(res)` is called after each parameter
+            combination tested. If list of callables, then each callable in
+            the list is called.
+
         """
 
         # check if the list of parameter spaces is provided. If not, then
@@ -703,11 +738,15 @@ class BayesSearchCV(BaseSearchCV):
                 "calling fit method."
             )
 
+        callbacks = check_callback(callback)
+
         n_jobs = self.n_jobs
 
         # account for case n_jobs < 0
         if n_jobs < 0:
             n_jobs = max(1, cpu_count() + n_jobs + 1)
+
+        finished_iter = 0
 
         for space_id in sorted(self.search_spaces_.keys()):
             elem = self.search_spaces_[space_id]
@@ -724,8 +763,23 @@ class BayesSearchCV(BaseSearchCV):
                 # when n_iter < n_jobs points left for evaluation
                 n_jobs_adjusted = min(n_iter, self.n_jobs)
 
-                self.step(
+                optim_result = self.step(
                     X, y, space_id,
-                    groups=groups, n_jobs=n_jobs_adjusted
+                    groups=groups, n_jobs=n_jobs_adjusted,
+                    refit=False
                 )
                 n_iter -= n_jobs
+
+                # update counter of total finished iterations
+                finished_iter += n_jobs
+
+                # add information about total number of iterations
+                optim_result.searchcv_iter = finished_iter
+
+                # evaluate callbacks, break if necessary
+                if eval_callbacks(callbacks, optim_result):
+                    break
+
+        # fit the best model if necessary
+        if self.refit:
+            self._fit_best_model(X, y)

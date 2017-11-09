@@ -1,5 +1,15 @@
 # Release history
 
+## Version 0.5
+
+High five!
+
+## New features
+
+* Support for single element list dimension definition, which is
+considered to be of Category type. It can be used to fix the value 
+for some dimension during optimization.
+* Add iteration event handler for `BayesSearchCV`
 
 ## Version 0.4
 

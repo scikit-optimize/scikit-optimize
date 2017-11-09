@@ -361,9 +361,14 @@ def test_valid_transformation():
 def test_invalid_dimension():
     assert_raises_regex(ValueError, "has to be a list or tuple",
                         space_check_dimension, "23")
+    """
+    Single value dimensions are ok - they fix a dimension value
+    This is useful for example when looking for subspaces in
+    BayesSearchCV, and you want to fix an estimator for subspace
+    
     assert_raises_regex(ValueError, "Invalid dimension",
                         space_check_dimension, (23,))
-
+    """
 
 @pytest.mark.fast_test
 def test_categorical_identity():
