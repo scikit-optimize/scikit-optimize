@@ -41,6 +41,10 @@ def test_searchcv_runs(surrogate, n_jobs):
         X, y, train_size=0.75, random_state=0
     )
 
+    # check if empty search space is raising errors
+    with pytest.raises(ValueError):
+        BayesSearchCV(SVC(), {})
+
     # check if invalid dimensions are raising errors
     with pytest.raises(ValueError):
         BayesSearchCV(SVC(), {'C': '1 ... 100.0'})

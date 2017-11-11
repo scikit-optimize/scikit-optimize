@@ -556,13 +556,11 @@ class BayesSearchCV(BaseSearchCV):
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
+            The training input samples.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output]
             Target relative to X for classification or regression (class
-            labels, as integers or strings).
+            labels should be integers or strings).
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
