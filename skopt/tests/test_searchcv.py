@@ -200,16 +200,18 @@ def test_searchcv_sklearn_compatibility():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
+    
+    random_state = 42
 
     opt = BayesSearchCV(
-        SVC(),
+        SVC(random_state=random_state),
         {
             'C': Real(1e-6, 1e+6, prior='log-uniform'),
             'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
             'degree': Integer(1, 8),
             'kernel': Categorical(['linear', 'poly', 'rbf']),
         },
-        n_jobs=1, n_iter=11, random_state=42
+        n_jobs=1, n_iter=11, random_state=random_state
     )
 
     opt.fit(X_train, y_train)
