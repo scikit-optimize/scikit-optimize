@@ -45,7 +45,7 @@ class BayesSearchCV(BaseSearchCV):
 
     search_spaces : dict, list of dict or list of tuple containing
         (dict, int).
-        One of 4 following cases:
+        One of these cases:
         1. dictionary, where keys are parameter names (strings)
         and values are skopt.space.Dimension instances (Real, Integer
         or Categorical) or any other valid value that defines skopt
