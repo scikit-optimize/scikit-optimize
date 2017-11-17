@@ -603,11 +603,11 @@ class BayesSearchCV(BaseSearchCV):
         for search_space, optimizer in zip(search_spaces, optimizers):
             # if not provided with search subspace, n_iter is taken as
             # self.n_iter
-
             if isinstance(search_space, tuple):
                 search_space, n_iter = search_space
             else:
                 n_iter = self.n_iter
+
             # do the optimization for particular search space
             while n_iter > 0:
                 # when n_iter < n_jobs points left for evaluation
