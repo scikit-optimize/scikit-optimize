@@ -4,7 +4,7 @@ search with interface similar to those of GridSearchCV
 
 import pytest
 
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater, assert_equal
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -126,7 +126,7 @@ def test_searchcv_runs_multiple_subspaces():
     assert total_evaluations == 1+1+2, "Not all spaces were explored!"
 
 
-def test_searchcv_sklearn_compatibility():
+def test_searchcv_sklearn_reproducibility():
     """
     Test whether the BayesSearchCV is compatible with base sklearn methods
     such as clone, set_params, get_params.
@@ -188,3 +188,32 @@ def test_searchcv_sklearn_compatibility():
     # test if expected number of subspaces is explored
     assert total_evaluations == 1
     assert total_evaluations_clone == 1+2
+
+
+def test_searchcv_sklearn_compatibility():
+    """
+    Test whether results of BayesSearchCV can be reproduced with a fixed
+    random state.
+    """
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    opt = BayesSearchCV(
+        SVC(),
+        {
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
+        },
+        n_jobs=1, n_iter=11, random_state=42
+    )
+
+    opt.fit(X_train, y_train)
+
+    opt2 = clone(opt).fit(X_train, y_train)
+
+    assert_equal(opt.score(X_test, y_test), opt2.score(X_test, y_test))
