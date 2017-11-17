@@ -200,7 +200,7 @@ def test_searchcv_sklearn_compatibility():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
-    
+
     random_state = 42
 
     opt = BayesSearchCV(
