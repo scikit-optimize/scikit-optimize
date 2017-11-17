@@ -8,6 +8,7 @@ import sklearn
 from sklearn.base import is_classifier, clone
 from sklearn.externals.joblib import Parallel, delayed, cpu_count
 from sklearn.model_selection._search import BaseSearchCV
+from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
 from sklearn.metrics.scorer import check_scoring
@@ -154,7 +155,8 @@ class BayesSearchCV(BaseSearchCV):
     from sklearn.model_selection import train_test_split
 
     X, y = load_iris(True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75,
+                                                        random_state=0)
 
     # log-uniform: understand as search over p = exp(x) by varying x
     opt = BayesSearchCV(
@@ -289,7 +291,8 @@ class BayesSearchCV(BaseSearchCV):
 
         if len(search_space) == 0:
             raise ValueError(
-                "Please provide at least one non-empty search space"
+                "The search_spaces parameter should contain at least one"
+                "non-empty search space, got %s" % search_space
             )
 
         # check if space is a single dict, convert to list if so
@@ -576,6 +579,8 @@ class BayesSearchCV(BaseSearchCV):
             self.optimizer_kwargs_ = {}
         else:
             self.optimizer_kwargs_ = self.optimizer_kwargs
+        random_state = check_random_state(self.random_state)
+        self.optimizer_kwargs_['random_state'] = random_state
 
         # Instantiate optimizers for all the search spaces.
         optimizers = []
@@ -603,7 +608,6 @@ class BayesSearchCV(BaseSearchCV):
                 search_space, n_iter = search_space
             else:
                 n_iter = self.n_iter
-
             # do the optimization for particular search space
             while n_iter > 0:
                 # when n_iter < n_jobs points left for evaluation
