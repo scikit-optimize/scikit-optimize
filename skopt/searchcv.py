@@ -287,14 +287,14 @@ class BayesSearchCV(BaseSearchCV):
     def _check_search_space(self, search_space):
         """Checks whether the search space argument is correct"""
 
+        if len(search_space) == 0:
+            raise ValueError(
+                "Please provide at least one non-empty search space"
+            )
+
         # check if space is a single dict, convert to list if so
         if isinstance(search_space, dict):
             search_space = [search_space]
-
-        if len(self.search_spaces) == 0:
-            raise ValueError(
-                "Please provide at least one search space"
-            )
 
         # check if the structure of the space is proper
         if isinstance(search_space, list):
