@@ -9,7 +9,6 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 
@@ -191,7 +190,7 @@ def test_searchcv_sklearn_compatibility():
     assert total_evaluations_clone == 1+2
 
 
-def test_searchcv_sklearn_reproducibility():
+def test_searchcv_reproducibility():
     """
     Test whether results of BayesSearchCV can be reproduced with a fixed
     random state.
@@ -205,16 +204,22 @@ def test_searchcv_sklearn_reproducibility():
     random_state = 42
 
     opt = BayesSearchCV(
-        RandomForestClassifier(random_state=random_state),
+        SVC(random_state=random_state),
         {
-            'min_weight_fraction_leaf': Real(0, 0.5, prior='uniform'),
-            'min_impurity_decrease': Real(0, 1, prior='uniform'),
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
         },
-        n_jobs=1, n_iter=11, random_state=random_state
+        n_iter=11, random_state=random_state
     )
 
     opt.fit(X_train, y_train)
+    best_estimator = opt.best_estimator_
 
     opt2 = clone(opt).fit(X_train, y_train)
+    best_estimator2 = opt2.best_estimator_
 
-    assert_equal(opt.score(X_test, y_test), opt2.score(X_test, y_test))
+    for attr in ('C', 'gamma', 'degree', 'kernel'):
+        assert_equal(getattr(best_estimator, attr),
+                     getattr(best_estimator2, attr))
