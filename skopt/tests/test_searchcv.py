@@ -9,6 +9,7 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 
@@ -126,7 +127,7 @@ def test_searchcv_runs_multiple_subspaces():
     assert total_evaluations == 1+1+2, "Not all spaces were explored!"
 
 
-def test_searchcv_sklearn_reproducibility():
+def test_searchcv_sklearn_compatibility():
     """
     Test whether the BayesSearchCV is compatible with base sklearn methods
     such as clone, set_params, get_params.
@@ -190,7 +191,7 @@ def test_searchcv_sklearn_reproducibility():
     assert total_evaluations_clone == 1+2
 
 
-def test_searchcv_sklearn_compatibility():
+def test_searchcv_sklearn_reproducibility():
     """
     Test whether results of BayesSearchCV can be reproduced with a fixed
     random state.
@@ -204,12 +205,10 @@ def test_searchcv_sklearn_compatibility():
     random_state = 42
 
     opt = BayesSearchCV(
-        SVC(random_state=random_state),
+        RandomForestClassifier(random_state=random_state),
         {
-            'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            'degree': Integer(1, 8),
-            'kernel': Categorical(['linear', 'poly', 'rbf']),
+            'min_weight_fraction_leaf': Real(0, 0.5, prior='uniform'),
+            'min_impurity_decrease': Real(0, 1, prior='uniform'),
         },
         n_jobs=1, n_iter=11, random_state=random_state
     )
