@@ -578,7 +578,7 @@ class BayesSearchCV(BaseSearchCV):
         if self.optimizer_kwargs is None:
             self.optimizer_kwargs_ = {}
         else:
-            self.optimizer_kwargs_ = self.optimizer_kwargs
+            self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
         random_state = check_random_state(self.random_state)
         self.optimizer_kwargs_['random_state'] = random_state
 
