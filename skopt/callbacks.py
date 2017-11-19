@@ -222,6 +222,28 @@ class DeltaYStopper(EarlyStopper):
             return None
 
 
+class RepeatedMinStopper(EarlyStopper):
+    """Stop the optimization when there is no improvement in the minimum.
+
+    Stop the optimization when there is no improvement in the minimum
+    achieved function evaluation after `n_best` iterations.
+    """
+    def __init__(self, n_best=50):
+        super(EarlyStopper, self).__init__()
+        self.n_best = n_best
+        self.count = 0
+        self.minimum = np.finfo(np.float).max
+
+    def _criterion(self, result):
+        if result.fun < self.minimum:
+            self.minimum = result.fun
+            self.count = 0
+        else:
+            self.count += 1
+
+        return self.count >= self.n_best
+
+
 class DeadlineStopper(EarlyStopper):
     """
     Stop the optimization before running out of a fixed budget of time.

@@ -12,6 +12,7 @@ from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
 from skopt.callbacks import TimerCallback
 from skopt.callbacks import DeltaYStopper
+from skopt.callbacks import RepeatedMinStopper
 from skopt.callbacks import DeadlineStopper
 
 
@@ -32,6 +33,23 @@ def test_deltay_stopper():
     assert deltay(Result([0, 1, 2, 3, 4, 0.1, 0.19]))
     assert not deltay(Result([0, 1, 2, 3, 4, 0.1]))
     assert deltay(Result([0, 1])) is None
+
+
+@pytest.mark.fast_test
+def test_repeatedmin_stopper():
+    repeatedmin = RepeatedMinStopper(3)
+
+    Result = namedtuple('Result', ['fun'])
+
+    func_vals = [1, 2, 3, 4]
+    for vals in (func_vals[:ii + 1] for ii in range(len(func_vals))):
+        stop = repeatedmin._criterion(Result(min(vals)))
+    assert stop
+
+    func_vals = [1, 2, 0, 4]
+    for vals in (func_vals[:ii + 1] for ii in range(len(func_vals))):
+        stop = repeatedmin._criterion(Result(min(vals)))
+    assert not stop
 
 
 @pytest.mark.fast_test
