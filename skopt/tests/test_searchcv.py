@@ -215,11 +215,12 @@ def test_searchcv_reproducibility():
     )
 
     opt.fit(X_train, y_train)
-    best_estimator = opt.best_estimator_
+    best_est = opt.best_estimator_
 
     opt2 = clone(opt).fit(X_train, y_train)
-    best_estimator2 = opt2.best_estimator_
+    best_est2 = opt2.best_estimator_
 
-    for attr in ('C', 'gamma', 'degree', 'kernel'):
-        assert_equal(getattr(best_estimator, attr),
-                     getattr(best_estimator2, attr))
+    assert getattr(best_est, 'C') == getattr(best_est2, 'C')
+    assert getattr(best_est, 'gamma') == getattr(best_est2, 'gamma')
+    assert getattr(best_est, 'degree') == getattr(best_est2, 'degree')
+    assert getattr(best_est, 'kernel') == getattr(best_est2, 'kernel')
