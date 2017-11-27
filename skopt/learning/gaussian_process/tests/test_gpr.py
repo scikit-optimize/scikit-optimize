@@ -122,7 +122,7 @@ def test_gpr_handles_similar_points():
     # this fails if singular matrix is not handled
     model.fit(X, y)
 
-    
+
 @pytest.mark.fast_test
 def test_gpr_uses_noise():
     """ Test that gpr is using WhiteKernel by default"""
