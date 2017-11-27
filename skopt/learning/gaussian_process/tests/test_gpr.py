@@ -80,7 +80,6 @@ def test_mean_gradient():
         X_new, lambda x: predict_wrapper(x, gpr)[0], 1e-4)
     assert_array_almost_equal(mean_grad, num_grad, decimal=3)
 
-
 @pytest.mark.fast_test
 def test_std_gradient():
     length_scale = np.arange(1, 6)
@@ -91,8 +90,7 @@ def test_std_gradient():
     rbf = RBF(length_scale=length_scale, length_scale_bounds="fixed")
     gpr = GaussianProcessRegressor(rbf, random_state=0).fit(X, y)
 
-    _, _, _, std_grad = gpr.predict(
-        np.expand_dims(X_new, axis=0),
+    _, _, _, std_grad = gpr.predict(        np.expand_dims(X_new, axis=0),
         return_std=True, return_cov=False, return_mean_grad=True,
         return_std_grad=True)
     num_grad = optimize.approx_fprime(
@@ -121,3 +119,16 @@ def test_gpr_handles_similar_points():
     model = GaussianProcessRegressor()
     # this fails if singular matrix is not handled
     model.fit(X, y)
+
+    
+@pytest.mark.fast_test
+def test_gpr_uses_noise():
+    """ Test that gpr is using WhiteKernel by default"""
+    X = np.random.normal(size=[100, 2])
+    Y = np.random.normal(size=[100])
+
+    g_gaussian = GaussianProcessRegressor()
+    g_gaussian.fit(X, Y)
+    m, sigma = g_gaussian.predict(X[0:1], return_cov=True)
+
+    assert sigma > 0
