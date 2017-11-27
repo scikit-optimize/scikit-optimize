@@ -155,7 +155,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None,
-                 noise=None):
+                 noise="gaussian"):
         self.noise = noise
         super(GaussianProcessRegressor, self).__init__(
             kernel=kernel, alpha=alpha, optimizer=optimizer,
