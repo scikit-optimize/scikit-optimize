@@ -80,7 +80,7 @@ def test_mean_gradient():
         X_new, lambda x: predict_wrapper(x, gpr)[0], 1e-4)
     assert_array_almost_equal(mean_grad, num_grad, decimal=3)
 
-    
+
 @pytest.mark.fast_test
 def test_std_gradient():
     length_scale = np.arange(1, 6)
@@ -91,7 +91,7 @@ def test_std_gradient():
     rbf = RBF(length_scale=length_scale, length_scale_bounds="fixed")
     gpr = GaussianProcessRegressor(rbf, random_state=0).fit(X, y)
 
-    _, _, _, std_grad = gpr.predict(        
+    _, _, _, std_grad = gpr.predict(
         np.expand_dims(X_new, axis=0),
         return_std=True, return_cov=False, return_mean_grad=True,
         return_std_grad=True)
