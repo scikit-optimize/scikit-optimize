@@ -1,6 +1,6 @@
 |Logo|
 
-|Travis Status| |CircleCI Status|
+|Travis Status| |CircleCI Status| |binder|
 
 Scikit-Optimize
 ===============
@@ -155,3 +155,5 @@ recognition, feel free to add them to the "Made possible by" list.
 .. |CircleCI Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token
    :target: https://circleci.com/gh/scikit-optimize/scikit-optimize
 .. |Logo| image:: https://avatars2.githubusercontent.com/u/18578550?v=4&s=80
+.. |binder| image:: https://mybinder.org/badge.svg
+   :target: https://mybinder.org/v2/gh/scikit-optimize/scikit-optimize/master?filepath=examples

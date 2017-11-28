@@ -1,0 +1,2 @@
+# This file is only used for mybinder.org
+python setup.py install
