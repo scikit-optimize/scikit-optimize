@@ -196,13 +196,14 @@ def test_optimizer_copy(acq_func):
     opt = Optimizer([(-2.0, 2.0)], acq_func=acq_func)
     opt_copy = opt.copy()
 
+    base_est = opt_copy.base_estimator_
+
     if "ps" in acq_func:
-        base_est = opt_copy.base_estimator_
         assert_true(isinstance(base_est, MultiOutputRegressor))
         # check that the base_estimator is not wrapped multiple times
         assert_false(isinstance(base_est.estimator, MultiOutputRegressor))
     else:
-        assert not isinstance(opt_copy.base_estimator_, MultiOutputRegressor)
+        assert_false(isinstance(base_est, MultiOutputRegressor))
 
 
 @pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
