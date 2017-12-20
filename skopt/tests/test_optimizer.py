@@ -1,10 +1,12 @@
 import numpy as np
 import pytest
 
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 
 from skopt import gp_minimize
 from skopt import forest_minimize
@@ -20,6 +22,7 @@ TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
                    GradientBoostingQuantileRegressor(random_state=2))
 ACQ_FUNCS_PS = ["EIps", "PIps"]
+ACQ_FUNCS_MIXED = ["EI", "EIps"]
 ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "DUMMY",
                      "gp", "rf", "et", "gbrt", "dummy"]
 
@@ -185,6 +188,22 @@ def test_acq_optimizer_with_time_api(base_estimator, acq_func):
 
     with pytest.raises(TypeError) as e:
         opt.tell(x2, bench1(x2))
+
+
+@pytest.mark.fast_test
+@pytest.mark.parametrize("acq_func", ACQ_FUNCS_MIXED)
+def test_optimizer_copy(acq_func):
+    opt = Optimizer([(-2.0, 2.0)], acq_func=acq_func)
+    opt_copy = opt.copy()
+
+    base_est = opt_copy.base_estimator_
+
+    if "ps" in acq_func:
+        assert_true(isinstance(base_est, MultiOutputRegressor))
+        # check that the base_estimator is not wrapped multiple times
+        assert_false(isinstance(base_est.estimator, MultiOutputRegressor))
+    else:
+        assert_false(isinstance(base_est, MultiOutputRegressor))
 
 
 @pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)

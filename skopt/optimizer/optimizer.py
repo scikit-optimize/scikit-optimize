@@ -213,7 +213,8 @@ class Optimizer(object):
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
 
-        if "ps" in self.acq_func:
+        is_multi_regressor = isinstance(base_estimator, MultiOutputRegressor)
+        if "ps" in self.acq_func and not is_multi_regressor:
             self.base_estimator_ = MultiOutputRegressor(base_estimator)
         else:
             self.base_estimator_ = base_estimator
