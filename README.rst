@@ -157,5 +157,5 @@ recognition, feel free to add them to the "Made possible by" list.
 .. |Logo| image:: https://avatars2.githubusercontent.com/u/18578550?v=4&s=80
 .. |binder| image:: https://mybinder.org/badge.svg
    :target: https://mybinder.org/v2/gh/scikit-optimize/scikit-optimize/master?filepath=examples
-.. |gitter| image:: https://badges.gitter.im/scikit-optimize/scikit-optimize.png
+.. |gitter| image:: https://badges.gitter.im/scikit-optimize/scikit-optimize.svg
    :target: https://gitter.im/scikit-optimize/Lobby
