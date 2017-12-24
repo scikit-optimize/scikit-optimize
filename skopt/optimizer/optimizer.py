@@ -467,9 +467,10 @@ class Optimizer(object):
         Parameters
         ----------
         * `mask` [None or list]
-            A mask to be applied to fix specific dimensions to the masked value.
-            For example, let's say the search space is [Real(0,1), Real(0,1), Real(0,1)]
-            and to fix the 2nd dimenions to .5, set mask=[None, .5, None].
+            A mask to be applied to fix specific dimensions to the masked
+            value. For example, if the search space is
+            [Real(0,1), Real(0,1), Real(0,1)],
+            to fix the 2nd dimenions to .5, set mask=[None, .5, None].
         """
 
         transformed_bounds = np.array(self.space.transformed_bounds)
