@@ -51,6 +51,20 @@ def test_dimensions():
 
 
 @pytest.mark.fast_test
+def test_real_log_sampling_in_bounds():
+    dim = Real(low=1, high=32, prior='log-uniform', transform='normalize')
+
+    # round trip a value that is within the bounds of the space
+    #
+    # x = dim.inverse_transform(dim.transform(31.999999999999999))
+    for n in (32., 31.999999999999999):
+        round_tripped = dim.inverse_transform(dim.transform([n]))
+        assert np.allclose([n], round_tripped)
+        assert n in dim
+        assert round_tripped in dim
+
+
+@pytest.mark.fast_test
 def test_real():
     a = Real(1, 25)
     for i in range(50):
