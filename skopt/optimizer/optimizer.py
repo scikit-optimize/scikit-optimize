@@ -236,7 +236,8 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
 
         if (not has_gradients(self.base_estimator_) and
-            acq_optimizer != "sampling"):
+                acq_optimizer != "sampling"):
+
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
@@ -445,76 +446,7 @@ class Optimizer(object):
         # random points to using a surrogate model
         if (fit and self._n_initial_points <= 0 and
            self.base_estimator_ is not None):
-            transformed_bounds = np.array(self.space.transformed_bounds)
-            est = clone(self.base_estimator_)
-
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                est.fit(self.space.transform(self.Xi), self.yi)
-
-            if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
-                self.gains_ -= est.predict(np.vstack(self.next_xs_))
-            self.models.append(est)
-
-            # even with BFGS as optimizer we want to sample a large number
-            # of points and then pick the best ones as starting points
-            X = self.space.transform(self.space.rvs(
-                n_samples=self.n_points, random_state=self.rng))
-
-            self.next_xs_ = []
-            for cand_acq_func in self.cand_acq_funcs_:
-                values = _gaussian_acquisition(
-                    X=X, model=est, y_opt=np.min(self.yi),
-                    acq_func=cand_acq_func,
-                    acq_func_kwargs=self.acq_func_kwargs)
-                # Find the minimum of the acquisition function by randomly
-                # sampling points from the space
-                if self.acq_optimizer == "sampling":
-                    next_x = X[np.argmin(values)]
-
-                # Use BFGS to find the mimimum of the acquisition function, the
-                # minimization starts from `n_restarts_optimizer` different
-                # points and the best minimum is used
-                elif self.acq_optimizer == "lbfgs":
-                    x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
-
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        results = Parallel(n_jobs=self.n_jobs)(
-                            delayed(fmin_l_bfgs_b)(
-                                gaussian_acquisition_1D, x,
-                                args=(est, np.min(self.yi), cand_acq_func,
-                                      self.acq_func_kwargs),
-                                bounds=self.space.transformed_bounds,
-                                approx_grad=False,
-                                maxiter=20)
-                            for x in x0)
-
-                    cand_xs = np.array([r[0] for r in results])
-                    cand_acqs = np.array([r[1] for r in results])
-                    next_x = cand_xs[np.argmin(cand_acqs)]
-
-                # lbfgs should handle this but just in case there are
-                # precision errors.
-                if not self.space.is_categorical:
-                    next_x = np.clip(
-                        next_x, transformed_bounds[:, 0],
-                        transformed_bounds[:, 1])
-                self.next_xs_.append(next_x)
-
-            if self.acq_func == "gp_hedge":
-                logits = np.array(self.gains_)
-                logits -= np.max(logits)
-                exp_logits = np.exp(self.eta * logits)
-                probs = exp_logits / np.sum(exp_logits)
-                next_x = self.next_xs_[np.argmax(self.rng.multinomial(1,
-                                                                      probs))]
-            else:
-                next_x = self.next_xs_[0]
-
-            # note the need for [0] at the end
-            self._next_x = self.space.inverse_transform(
-                next_x.reshape((1, -1)))[0]
+            self.fit()
 
         # Pack results
         return create_result(self.Xi, self.yi, self.space, self.rng,
@@ -528,3 +460,94 @@ class Optimizer(object):
 
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+
+    def fit(self, mask=None):
+        """Fit a model to observed evaluations of the objective.
+
+        Parameters
+        ----------
+        * `mask` [None or list]
+            A mask to be applied to fix specific dimensions to the masked value.
+            For example, let's say the search space is [Real(0,1), Real(0,1), Real(0,1)]
+            and to fix the 2nd dimenions to .5, set mask=[None, .5, None].
+        """
+
+        transformed_bounds = np.array(self.space.transformed_bounds)
+        est = clone(self.base_estimator_)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            est.fit(self.space.transform(self.Xi), self.yi)
+
+        if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
+            self.gains_ -= est.predict(np.vstack(self.next_xs_))
+        self.models.append(est)
+
+        # even with BFGS as optimizer we want to sample a large number
+        # of points and then pick the best ones as starting points
+        X_raw = self.space.rvs(n_samples=self.n_points, random_state=self.rng)
+        if mask is not None:
+            if len(mask) != self.space.n_dims:
+                raise ValueError("Len of mask (%s) DNE number of "
+                                 "dimensions (%s)"
+                                 % (len(mask, self.space.n_dims)))
+
+            X_raw = [[m if m else x for x, m in zip(x_raw, mask)]
+                     for x_raw in X_raw]
+
+        X = self.space.transform(X_raw)
+
+        self.next_xs_ = []
+        for cand_acq_func in self.cand_acq_funcs_:
+            values = _gaussian_acquisition(
+                X=X, model=est, y_opt=np.min(self.yi),
+                acq_func=cand_acq_func,
+                acq_func_kwargs=self.acq_func_kwargs)
+            # Find the minimum of the acquisition function by randomly
+            # sampling points from the space
+            if self.acq_optimizer == "sampling":
+                next_x = X[np.argmin(values)]
+
+            # Use BFGS to find the mimimum of the acquisition function, the
+            # minimization starts from `n_restarts_optimizer` different
+            # points and the best minimum is used
+            elif self.acq_optimizer == "lbfgs":
+                x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    results = Parallel(n_jobs=self.n_jobs)(
+                        delayed(fmin_l_bfgs_b)(
+                            gaussian_acquisition_1D, x,
+                            args=(est, np.min(self.yi), cand_acq_func,
+                                  self.acq_func_kwargs),
+                            bounds=self.space.transformed_bounds,
+                            approx_grad=False,
+                            maxiter=20)
+                        for x in x0)
+
+                cand_xs = np.array([r[0] for r in results])
+                cand_acqs = np.array([r[1] for r in results])
+                next_x = cand_xs[np.argmin(cand_acqs)]
+
+            # lbfgs should handle this but just in case there are
+            # precision errors.
+            if not self.space.is_categorical:
+                next_x = np.clip(
+                    next_x, transformed_bounds[:, 0],
+                    transformed_bounds[:, 1])
+            self.next_xs_.append(next_x)
+
+        if self.acq_func == "gp_hedge":
+            logits = np.array(self.gains_)
+            logits -= np.max(logits)
+            exp_logits = np.exp(self.eta * logits)
+            probs = exp_logits / np.sum(exp_logits)
+            next_x = self.next_xs_[np.argmax(self.rng.multinomial(1,
+                                                                  probs))]
+        else:
+            next_x = self.next_xs_[0]
+
+        # note the need for [0] at the end
+        self._next_x = self.space.inverse_transform(
+            next_x.reshape((1, -1)))[0]
