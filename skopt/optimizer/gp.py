@@ -9,7 +9,7 @@ from ..utils import cook_estimator
 from ..utils import normalize_dimensions
 
 
-def gp_minimize(func, dimensions, base_estimator=None,
+def gp_minimize(func, dimensions, use_arg_names=False, base_estimator=None,
                 n_calls=100, n_random_starts=10,
                 acq_func="gp_hedge", acq_optimizer="auto", x0=None, y0=None,
                 random_state=None, verbose=False, callback=None,
@@ -59,6 +59,13 @@ def gp_minimize(func, dimensions, base_estimator=None,
 
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
+
+    * `use_arg_names` [bool, default=False]:
+        Whether to use use names for the search-space dimensions
+        when calling `func()`.
+        For example, instead of calling `func([123, 3.0, 'hello'])`,
+        it calls `func(foo=123, bar=3.0, baz='hello')` for a search-space
+        with dimensions named `['foo', 'bar', 'baz']`
 
     * `base_estimator` [a Gaussian process estimator]:
         The Gaussian process estimator to use for optimization.
@@ -214,7 +221,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
             noise=noise)
 
     return base_minimize(
-        func, space, base_estimator=base_estimator,
+        func=func, dimensions=space,
+        base_estimator=base_estimator,
+        use_arg_names=use_arg_names,
         acq_func=acq_func,
         xi=xi, kappa=kappa, acq_optimizer=acq_optimizer, n_calls=n_calls,
         n_points=n_points, n_random_starts=n_random_starts,
