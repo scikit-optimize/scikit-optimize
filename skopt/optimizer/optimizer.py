@@ -493,7 +493,7 @@ class Optimizer(object):
                                  "dimensions (%s)"
                                  % (len(mask, self.space.n_dims)))
 
-            X_raw = [[m if m else x for x, m in zip(x_raw, mask)]
+            X_raw = [[x if ((m is None) or np.isnan(m)) else m for x, m in zip(x_raw, mask)]
                      for x_raw in X_raw]
 
         X = self.space.transform(X_raw)
