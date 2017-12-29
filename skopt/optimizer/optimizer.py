@@ -272,7 +272,7 @@ class Optimizer(object):
 
         return optimizer
 
-    def ask(self, n_points=None, strategy="cl_min"):
+    def ask(self, n_points=None, strategy="cl_min", fix_dimensions=None):
         """Query point or multiple points at which objective should be evaluated.
 
         * `n_points` [int or None, default=None]:
@@ -302,7 +302,16 @@ class Optimizer(object):
                objective and so on. The type of lie defines different
                flavours of `cl_x` strategies.
 
+        * `fix_dimensions` [None or list]
+            A set of values to be applied to fix specific dimensions to specific
+            value. For example, if the search space is
+            [Real(0,1), Real(0,1), Real(0,1)],
+            to fix the 2nd dimenions to .5, set fix_dimensions=[None, .5, None].
+
         """
+
+        self._fit(fix_dimensions=fix_dimensions)
+
         if n_points is None:
             return self._ask()
 
@@ -394,11 +403,6 @@ class Optimizer(object):
 
         * `y` [scalar or list]:
             Value of objective at `x`.
-
-        * `fit` [bool, default=True]
-            Fit a model to observed evaluations of the objective. A model will
-            only be fitted after `n_initial_points` points have been told to
-            the optimizer irrespective of the value of `fit`.
         """
         check_x_in_space(x, self.space)
 
@@ -442,12 +446,6 @@ class Optimizer(object):
         # optimizer learned somethnig new - discard cache
         self.cache_ = {}
 
-        # after being "told" n_initial_points we switch from sampling
-        # random points to using a surrogate model
-        if (fit and self._n_initial_points <= 0 and
-           self.base_estimator_ is not None):
-            self.fit()
-
         # Pack results
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
@@ -461,17 +459,7 @@ class Optimizer(object):
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
 
-    def fit(self, mask=None):
-        """Fit a model to observed evaluations of the objective.
-
-        Parameters
-        ----------
-        * `mask` [None or list]
-            A mask to be applied to fix specific dimensions to the masked
-            value. For example, if the search space is
-            [Real(0,1), Real(0,1), Real(0,1)],
-            to fix the 2nd dimenions to .5, set mask=[None, .5, None].
-        """
+    def _fit(self, fix_dimensions=None):
 
         transformed_bounds = np.array(self.space.transformed_bounds)
         est = clone(self.base_estimator_)
@@ -487,13 +475,13 @@ class Optimizer(object):
         # even with BFGS as optimizer we want to sample a large number
         # of points and then pick the best ones as starting points
         X_raw = self.space.rvs(n_samples=self.n_points, random_state=self.rng)
-        if mask is not None:
-            if len(mask) != self.space.n_dims:
-                raise ValueError("Len of mask (%s) DNE number of "
+        if fix_dimensions is not None:
+            if len(fix_dimensions) != self.space.n_dims:
+                raise ValueError("Len of fix_dimensions (%s) DNE number of "
                                  "dimensions (%s)"
-                                 % (len(mask, self.space.n_dims)))
+                                 % (len(fix_dimensions, self.space.n_dims)))
 
-            X_raw = [[x if ((m is None) or np.isnan(m)) else m for x, m in zip(x_raw, mask)]
+            X_raw = [[x if ((m is None) or np.isnan(m)) else m for x, m in zip(x_raw, fix_dimensions)]
                      for x_raw in X_raw]
 
         X = self.space.transform(X_raw)
