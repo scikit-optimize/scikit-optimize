@@ -1,5 +1,21 @@
 # Release history
 
+## Version 0.5
+
+High five!
+
+## New features
+
+* Single element dimension definition, which can be used to 
+fix the value of a dimension during optimization.
+* `total_iterations` function of `BayesSearchCV` that 
+counts total iterations needed to explore all subspaces. 
+* Add iteration event handler for `BayesSearchCV`, useful 
+for early stopping inside `BayesSearchCV` search loop.
+
+### Bug fixes
+
+* Removed redundant estimator fitting inside `BayesSearchCV`
 
 ## Version 0.4
 

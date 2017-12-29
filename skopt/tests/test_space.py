@@ -375,8 +375,8 @@ def test_valid_transformation():
 def test_invalid_dimension():
     assert_raises_regex(ValueError, "has to be a list or tuple",
                         space_check_dimension, "23")
-    assert_raises_regex(ValueError, "Invalid dimension",
-                        space_check_dimension, (23,))
+    # single value fixes dimension of space
+    space_check_dimension((23,))
 
 
 @pytest.mark.fast_test

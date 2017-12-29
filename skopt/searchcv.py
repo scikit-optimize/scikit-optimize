@@ -14,8 +14,9 @@ from sklearn.utils.validation import indexable, check_is_fitted
 from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
-from .utils import point_asdict, dimensions_aslist
+from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
+from .callbacks import check_callback
 
 
 class BayesSearchCV(BaseSearchCV):
@@ -360,8 +361,8 @@ class BayesSearchCV(BaseSearchCV):
         """
 
         estimator = self.estimator
-        cv = sklearn.model_selection._validation.check_cv(self.cv, y, classifier=
-            is_classifier(estimator))
+        cv = sklearn.model_selection._validation.check_cv(
+            self.cv, y, classifier=is_classifier(estimator))
         self.scorer_ = check_scoring(
             self.estimator, scoring=self.scoring)
 
@@ -551,9 +552,33 @@ class BayesSearchCV(BaseSearchCV):
         local_results = self.cv_results_['mean_test_score'][-len(params):]
 
         # optimizer minimizes objective, hence provide negative score
-        optimizer.tell(params, [-score for score in local_results])
+        return optimizer.tell(params, [-score for score in local_results])
 
-    def fit(self, X, y=None, groups=None):
+    @property
+    def total_iterations(self):
+        """
+        Count total iterations that will be taken to explore
+        all subspaces with `fit` method.
+
+        Returns
+        -------
+        max_iter: int, total number of iterations to explore
+        """
+        total_iter = 0
+
+        for space_id in sorted(self.search_spaces.keys()):
+            elem = self.search_spaces[space_id]
+
+            if isinstance(elem, tuple):
+                space, n_iter = elem
+            else:
+                n_iter = self.n_iter
+
+            total_iter += n_iter
+
+        return total_iter
+
+    def fit(self, X, y=None, groups=None, callback=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -568,12 +593,19 @@ class BayesSearchCV(BaseSearchCV):
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+        callback: [callable, list of callables, optional]
+            If callable then `callback(res)` is called after each parameter
+            combination tested. If list of callables, then each callable in
+            the list is called.
         """
 
         # check if space is a single dict, convert to list if so
         search_spaces = self.search_spaces
         if isinstance(search_spaces, dict):
             search_spaces = [search_spaces]
+
+        callbacks = check_callback(callback)
 
         if self.optimizer_kwargs is None:
             self.optimizer_kwargs_ = {}
@@ -613,11 +645,14 @@ class BayesSearchCV(BaseSearchCV):
                 # when n_iter < n_jobs points left for evaluation
                 n_jobs_adjusted = min(n_iter, n_jobs)
 
-                self._step(
+                optim_result = self._step(
                     X, y, search_space, optimizer,
                     groups=groups, n_jobs=n_jobs_adjusted
                 )
                 n_iter -= n_jobs
+
+                if eval_callbacks(callbacks, optim_result):
+                    break
 
         # Refit the best model on the the whole dataset
         if self.refit:
