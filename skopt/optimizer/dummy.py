@@ -3,7 +3,8 @@
 from .base import base_minimize
 
 
-def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
+def dummy_minimize(func, dimensions, use_arg_names=False,
+                   n_calls=100, x0=None, y0=None,
                    random_state=None, verbose=False, callback=None):
     """Random search by uniform sampling within the given bounds.
 
@@ -24,6 +25,13 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
+
+    * `use_arg_names` [bool, default=False]:
+        Whether to use use names for the search-space dimensions
+        when calling `func()`.
+        For example, instead of calling `func([123, 3.0, 'hello'])`,
+        it calls `func(foo=123, bar=3.0, baz='hello')` for a search-space
+        with dimensions named `['foo', 'bar', 'baz']`
 
     * `n_calls` [int, default=100]:
         Number of calls to `func` to find the minimum.
@@ -84,9 +92,12 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
     else:
         n_random_calls = n_calls
 
-    return base_minimize(func, dimensions, base_estimator="dummy",
-                         # explicitly set optimizer to sampling as "dummy"
-                         # minimizer does not provide gradients.
+    # TODO: I don't understand this comment.
+    # explicitly set optimizer to sampling as "dummy"
+    # minimizer does not provide gradients.
+    return base_minimize(func=func, dimensions=dimensions,
+                         base_estimator="dummy",
+                         use_arg_names=use_arg_names,
                          acq_optimizer="sampling",
                          n_calls=n_calls, n_random_starts=n_random_calls,
                          x0=x0, y0=y0, random_state=random_state,

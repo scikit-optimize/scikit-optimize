@@ -1,10 +1,11 @@
+# TODO: This doc-string is way too short and quite meaningless.
 """
 Abstraction for optimizers.
 
 It is sufficient that one re-implements the base estimator.
 """
 
-import copy
+from copy import copy
 import inspect
 import numbers
 from collections import Iterable
@@ -17,7 +18,67 @@ from .optimizer import Optimizer
 from ..utils import eval_callbacks
 
 
+class _WrapFuncNamedArgs:
+    """
+    Wrapper for the objective function. This calls the objective
+    function `func()` with named arguments instead of a list of parameters.
+
+    For example, instead of calling `func([123, 3.0, 'hello'])`,
+    it calls `func(foo=123, bar=3.0, baz='hello')` for a search-space
+    with dimensions named `['foo', 'bar', 'baz']`
+    """
+
+    def __init__(self, func, dimensions):
+        """Create a callable object instance that wraps an objective function.
+
+        Parameters
+        ----------
+        * `func` [callable]:
+            Function to minimize. Takes a list of parameters and
+            returns the objective or fitness value.
+
+        * `dimensions` [list of Dimension instances]:
+            List of search-space dimensions. These must all be named.
+            Use a list of instances of `Real`, `Categorical` or `Integer`
+            from `skopt.space`.
+        """
+
+        # Set the objective function.
+        self.func = func
+
+        # Get the names of all search-space dimensions.
+        self.dim_names = [dim.name for dim in dimensions]
+
+        # Ensure all dimension names exist.
+        if None in self.dim_names:
+            raise ValueError("All dimensions must have names when `use_arg_names=True`.")
+
+    def __call__(self, x):
+        """This makes the object callable so it seamlessly wraps `func(x)`.
+
+        Parameters
+        ----------
+        * `x` [list]:
+            Parameters for a location in the search-space.
+            
+        Returns
+        -------
+        * `fitness` [float]:
+            Fitness of the objective function at the given location `x`.
+        """
+
+        # Create a dictionary with the named parameters.
+        x_dict = {name: value for name, value in zip(self.dim_names, x)}
+
+        # Call the objective function with these named arguments.
+        fitness = self.func(**x_dict)
+
+        return fitness
+
+
+# TODO: There is no doc-string here! What does this function do?!
 def base_minimize(func, dimensions, base_estimator,
+                  use_arg_names=False,
                   n_calls=100, n_random_starts=10,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
@@ -44,6 +105,13 @@ def base_minimize(func, dimensions, base_estimator,
 
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
+
+    * `use_arg_names` [bool, default=False]:
+        Whether to use use names for the search-space dimensions
+        when calling `func()`, so instead of calling `func(x)` 
+        with a single list `x`, it calls e.g.
+        `func(foo=123, bar=3.0, baz='hello')` for a search-space
+         with dimensions named `['foo', 'bar', 'baz']`
 
     * `base_estimator` [sklearn regressor]:
         Should inherit from `sklearn.base.RegressorMixin`.
@@ -159,10 +227,20 @@ def base_minimize(func, dimensions, base_estimator,
         - `rng` [RandomState instance]: State of the random state
            at the end of minimization.
 
-        For more details related to the OptimizeResult object, refer
+        For more details related to the OptimizeResult object, refer to:
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    specs = {"args": copy.copy(inspect.currentframe().f_locals),
+
+    # TODO: Please clean up and comment the rest of this code.
+    # TODO: It is VERY hard to understand and there appears to be tautologies,
+    # TODO: which indicates that several people have worked on this and they
+    # TODO: also don't understand it and just keep adding code to fix bugs etc.
+
+    # Wrap the objective function if it uses dimension-names as arguments.
+    if use_arg_names:
+        func = _WrapFuncNamedArgs(func=func, dimensions=dimensions)
+
+    specs = {"args": copy(inspect.currentframe().f_locals),
              "function": inspect.currentframe().f_code.co_name}
 
     acq_optimizer_kwargs = {
@@ -170,6 +248,9 @@ def base_minimize(func, dimensions, base_estimator,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
 
+    # TODO: These manipulations to x0 and y0 are VERY confusing!
+    # TODO: And further below there is a check: "if x0 is not None"
+    # TODO: but that is apparently always True after this.
     # Initialize with provided points (x0 and y0) and/or random points
     if x0 is None:
         x0 = []
@@ -188,16 +269,18 @@ def base_minimize(func, dimensions, base_estimator,
     elif isinstance(y0, numbers.Number):
         y0 = [y0]
 
-    # is the budget for calling `func` large enough?
+    # Is the budget for calling `func` large enough?
     required_calls = n_random_starts + (len(x0) if not y0 else 0)
     if n_calls < required_calls:
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
 
-    # Number of points the user wants to evaluate before it makes sense to
-    # fit a surrogate model
+    # Number of points the user wants to evaluate
+    # before it makes sense to fit a surrogate model.
     n_initial_points = n_random_starts + len(x0)
-    optimizer = Optimizer(dimensions, base_estimator,
+
+    optimizer = Optimizer(dimensions=dimensions,
+                          base_estimator=base_estimator,
                           n_initial_points=n_initial_points,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
                           random_state=random_state,
@@ -220,13 +303,17 @@ def base_minimize(func, dimensions, base_estimator,
     # setting the scope for these variables
     result = None
 
-    # User suggested points at which to evaluate the objective first
-    if x0 and y0 is None:
-        y0 = list(map(func, x0))
-        n_calls -= len(y0)
+    # TODO: I tried to clean this up a little, but it is VERY confusing.
+    # Pass user suggested initialisation points to the optimizer.
+    if x0 is not None:
+        # If objective values are not given for these points, calculate them.
+        if y0 is None:
+            # Calculate the objective function for each point in x0.
+            y0 = list(map(func, x0))
 
-    # Pass user suggested initialisation points to the optimizer
-    if x0:
+            # Decrease the required number of function calls.
+            n_calls -= len(y0)
+
         if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
             raise ValueError(
                 "`y0` should be an iterable or a scalar, got %s" % type(y0))
@@ -234,19 +321,24 @@ def base_minimize(func, dimensions, base_estimator,
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
 
-
         result = optimizer.tell(x0, y0)
         result.specs = specs
 
         if eval_callbacks(callbacks, result):
             return result
 
-    # Bayesian optimization loop
+    # Bayesian optimization loop.
     for n in range(n_calls):
+        # Get next point in the search-space.
         next_x = optimizer.ask()
 
+        # Call the objective function with this point.
         next_y = func(next_x)
+
+        # Report the value of the objective function at this point.
         result = optimizer.tell(next_x, next_y)
+
+        # TODO: What is this? Please doc this and everything else.
         result.specs = specs
 
         if eval_callbacks(callbacks, result):

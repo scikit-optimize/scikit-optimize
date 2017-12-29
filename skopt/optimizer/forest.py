@@ -7,7 +7,8 @@ from ..utils import cook_estimator
 
 
 
-def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
+def forest_minimize(func, dimensions, use_arg_names=False,
+                    base_estimator="ET", n_calls=100,
                     n_random_starts=10, acq_func="EI",
                     x0=None, y0=None, random_state=None, verbose=False,
                     callback=None, n_points=10000, xi=0.01, kappa=1.96,
@@ -48,6 +49,13 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
 
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
+
+    * `use_arg_names` [bool, default=False]:
+        Whether to use use names for the search-space dimensions
+        when calling `func()`.
+        For example, instead of calling `func([123, 3.0, 'hello'])`,
+        it calls `func(foo=123, bar=3.0, baz='hello')` for a search-space
+        with dimensions named `['foo', 'bar', 'baz']`
 
     * `base_estimator` [string or `Regressor`, default=`"ET"`]:
         The regressor to use as surrogate model. Can be either
@@ -147,7 +155,9 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    return base_minimize(func, dimensions, base_estimator,
+    return base_minimize(func=func, dimensions=dimensions,
+                         base_estimator=base_estimator,
+                         use_arg_names=use_arg_names,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,
                          x0=x0, y0=y0, random_state=random_state,
