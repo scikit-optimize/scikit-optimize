@@ -16,6 +16,10 @@ import pytest
 
 # list of all strategies for parallelization
 supported_strategies = ["cl_min", "cl_mean", "cl_max"]
+
+# test one acq function that incorporates the runtime, and one that does not
+supported_acq_functions = ["EI", "EIps"]
+
 # Extract available surrogates, so that new ones are used automatically
 available_surrogates = [
     getattr(sol, name) for name in sol.__all__
@@ -29,7 +33,8 @@ n_points = 4  # number of points to evaluate at a single step
 
 @pytest.mark.parametrize("strategy", supported_strategies)
 @pytest.mark.parametrize("surrogate", available_surrogates)
-def test_constant_liar_runs(strategy, surrogate):
+@pytest.mark.parametrize("acq_func", supported_acq_functions)
+def test_constant_liar_runs(strategy, surrogate, acq_func):
     """
     Tests whether the optimizer runs properly during the random
     initialization phase and beyond
@@ -58,7 +63,11 @@ def test_constant_liar_runs(strategy, surrogate):
         x = optimizer.ask(n_points=n_points, strategy=strategy)
         # check if actually n_points was generated
         assert_equal(len(x), n_points)
-        optimizer.tell(x, [branin(v) for v in x])
+
+        if "ps" in acq_func:
+            optimizer.tell(x, [[branin(v), 1.1] for v in x])
+        else:
+            optimizer.tell(x, [branin(v) for v in x])
 
 
 @pytest.mark.parametrize("strategy", supported_strategies)
