@@ -310,7 +310,8 @@ class Optimizer(object):
 
         """
 
-        self._fit(fix_dimensions=fix_dimensions)
+        if len(self.Xi) > 0:
+            self._fit(fix_dimensions=fix_dimensions)
 
         if n_points is None:
             return self._ask()
