@@ -10,7 +10,7 @@ from sklearn.utils.testing import assert_false
 
 from skopt import gp_minimize
 from skopt import forest_minimize
-from skopt.benchmarks import bench1
+from skopt.benchmarks import bench1, bench1_with_time
 from skopt.benchmarks import branin
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
 from skopt.learning import GradientBoostingQuantileRegressor
@@ -193,17 +193,34 @@ def test_acq_optimizer_with_time_api(base_estimator, acq_func):
 @pytest.mark.fast_test
 @pytest.mark.parametrize("acq_func", ACQ_FUNCS_MIXED)
 def test_optimizer_copy(acq_func):
-    opt = Optimizer([(-2.0, 2.0)], acq_func=acq_func)
+    # Checks that the base estimator, the objective and target values
+    # are copied correctly.
+
+    base_estimator = ExtraTreesRegressor(random_state=2)
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, acq_func=acq_func,
+                    n_initial_points=1, acq_optimizer="sampling")
+
+    # run three iterations so that we have some points and objective values
+    if "ps" in acq_func:
+        opt.run(bench1_with_time, n_iter=3)
+    else:
+        opt.run(bench1, n_iter=3)
+
     opt_copy = opt.copy()
 
-    base_est = opt_copy.base_estimator_
+    copied_estimator = opt_copy.base_estimator_
 
     if "ps" in acq_func:
-        assert_true(isinstance(base_est, MultiOutputRegressor))
+        assert_true(isinstance(copied_estimator, MultiOutputRegressor))
         # check that the base_estimator is not wrapped multiple times
-        assert_false(isinstance(base_est.estimator, MultiOutputRegressor))
+        is_multi = isinstance(copied_estimator.estimator,
+                              MultiOutputRegressor)
+        assert_false(is_multi)
     else:
-        assert_false(isinstance(base_est, MultiOutputRegressor))
+        assert_false(isinstance(copied_estimator, MultiOutputRegressor))
+
+    assert_array_equal(opt_copy.Xi, opt.Xi)
+    assert_array_equal(opt_copy.yi, opt.yi)
 
 
 @pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)

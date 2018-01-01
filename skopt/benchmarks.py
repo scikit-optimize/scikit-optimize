@@ -14,6 +14,11 @@ def bench1(x):
     return x[0] ** 2
 
 
+def bench1_with_time(x):
+    """Same as bench1 but returns the computation time (constant)."""
+    return x[0] ** 2, 2.22
+
+
 def bench2(x):
     """A benchmark function for test purposes.
 
