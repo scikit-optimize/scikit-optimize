@@ -57,6 +57,15 @@ def test_invalid_tell_arguments():
 
 
 @pytest.mark.fast_test
+def test_invalid_tell_arguments_list():
+    base_estimator = ExtraTreesRegressor(random_state=2)
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
+                    acq_optimizer="sampling")
+
+    assert_raises(ValueError, opt.tell, [[1.], [2.]], [1., None])
+
+
+@pytest.mark.fast_test
 def test_bounds_checking_1D():
     low = -2.
     high = 2.

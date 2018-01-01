@@ -402,6 +402,7 @@ class Optimizer(object):
         check_x_in_space(x, self.space)
         self._check_y_is_valid(x, y)
 
+        # take the logarithm of the computation times
         if "ps" in self.acq_func:
             if is_2Dlistlike(x):
                 y = [[val, log(t)] for (val, t) in y]
@@ -523,24 +524,22 @@ class Optimizer(object):
 
         if "ps" in self.acq_func:
             if is_2Dlistlike(x):
-                if np.ndim(y) == 2 and np.shape(y)[1] == 2:
-                    # TODO: refactor
-                    pass
-                else:
+                if not (np.ndim(y) == 2 and np.shape(y)[1] == 2):
                     raise TypeError("expcted y to be a list of (func_val, t)")
             elif is_listlike(x):
-                if np.ndim(y) == 1 and len(y) == 2:
-                    # TODO: refactor
-                    pass
-                else:
+                if not (np.ndim(y) == 1 and len(y) == 2):
                     raise TypeError("expected y to be (func_val, t)")
+
         # if y isn't a scalar it means we have been handed a batch of points
         elif is_listlike(y) and is_2Dlistlike(x):
-            # TODO: why no check here?
-            pass
+            for y_value in y:
+                if not isinstance(y_value, Number):
+                    raise ValueError("expected y to be a list a scalars")
+
         elif is_listlike(x):
             if not isinstance(y, Number):
                 raise ValueError("`func` should return a scalar")
+
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
