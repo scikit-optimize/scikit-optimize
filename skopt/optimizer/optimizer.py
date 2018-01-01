@@ -267,7 +267,7 @@ class Optimizer(object):
             optimizer.gains_ = np.copy(self.gains_)
 
         if self.Xi:
-            optimizer.tell(self.Xi, self.yi)
+            optimizer._tell(self.Xi, self.yi)
 
         return optimizer
 
@@ -400,40 +400,31 @@ class Optimizer(object):
             the optimizer irrespective of the value of `fit`.
         """
         check_x_in_space(x, self.space)
+        self._check_y_is_valid(x, y)
+
+        return self._tell(x, y, fit=fit)
+
+    def _tell(self, x, y, fit=True):
+        """Same as `tell()` but without checks and without modification of x or y."""
 
         if "ps" in self.acq_func:
             if is_2Dlistlike(x):
-                if np.ndim(y) == 2 and np.shape(y)[1] == 2:
-                    y = [[val, log(t)] for (val, t) in y]
-                    self.Xi.extend(x)
-                    self.yi.extend(y)
-                else:
-                    raise TypeError("expcted y to be a list of (func_val, t)")
+                self.Xi.extend(x)
+                self.yi.extend(y)
                 self._n_initial_points -= len(y)
             elif is_listlike(x):
-                if np.ndim(y) == 1 and len(y) == 2:
-                    y = list(y)
-                    y[1] = log(y[1])
-                    self.Xi.append(x)
-                    self.yi.append(y)
-                else:
-                    raise TypeError("expected y to be (func_val, t)")
+                self.Xi.append(x)
+                self.yi.append(y)
                 self._n_initial_points -= 1
-
         # if y isn't a scalar it means we have been handed a batch of points
         elif is_listlike(y) and is_2Dlistlike(x):
             self.Xi.extend(x)
             self.yi.extend(y)
             self._n_initial_points -= len(y)
-
         elif is_listlike(x):
-            if isinstance(y, Number):
-                self.Xi.append(x)
-                self.yi.append(y)
-                self._n_initial_points -= 1
-            else:
-                raise ValueError("`func` should return a scalar")
-
+            self.Xi.append(x)
+            self.yi.append(y)
+            self._n_initial_points -= 1
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
@@ -519,6 +510,32 @@ class Optimizer(object):
         # Pack results
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+
+    def _check_y_is_valid(self, x, y):
+        """Checks if y is valid (with respect to x in some cases)."""
+
+        if "ps" in self.acq_func:
+            if is_2Dlistlike(x):
+                if np.ndim(y) == 2 and np.shape(y)[1] == 2:
+                    # TODO: refactor
+                    pass
+                else:
+                    raise TypeError("expcted y to be a list of (func_val, t)")
+            elif is_listlike(x):
+                if np.ndim(y) == 1 and len(y) == 2:
+                    # TODO: refactor
+                    pass
+                else:
+                    raise TypeError("expected y to be (func_val, t)")
+        # if y isn't a scalar it means we have been handed a batch of points
+        elif is_listlike(y) and is_2Dlistlike(x):
+            # TODO: why no check here?
+        elif is_listlike(x):
+            if not isinstance(y, Number):
+                raise ValueError("`func` should return a scalar")
+        else:
+            raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
+                             "not compatible." % (type(x), type(y)))
 
     def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
