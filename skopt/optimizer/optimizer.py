@@ -413,7 +413,8 @@ class Optimizer(object):
         return self._tell(x, y, fit=fit)
 
     def _tell(self, x, y, fit=True):
-        """Same as `tell()` but without checks and without modification of x or y."""
+        """Same as `tell()` but without checks and without any modification
+        of x or y."""
 
         if "ps" in self.acq_func:
             if is_2Dlistlike(x):
