@@ -402,6 +402,13 @@ class Optimizer(object):
         check_x_in_space(x, self.space)
         self._check_y_is_valid(x, y)
 
+        if "ps" in self.acq_func:
+            if is_2Dlistlike(x):
+                y = [[val, log(t)] for (val, t) in y]
+            elif is_listlike(x):
+                y = list(y)
+                y[1] = log(y[1])
+
         return self._tell(x, y, fit=fit)
 
     def _tell(self, x, y, fit=True):
@@ -530,6 +537,7 @@ class Optimizer(object):
         # if y isn't a scalar it means we have been handed a batch of points
         elif is_listlike(y) and is_2Dlistlike(x):
             # TODO: why no check here?
+            pass
         elif is_listlike(x):
             if not isinstance(y, Number):
                 raise ValueError("`func` should return a scalar")
