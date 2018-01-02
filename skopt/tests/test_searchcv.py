@@ -257,3 +257,18 @@ def test_searchcv_callback():
 
     # test whether final model was fit
     opt.score(X, y)
+
+
+def test_searchcv_total_iterations():
+    # Test the total iterations counting property of BayesSearchCV
+
+    opt = BayesSearchCV(
+        DecisionTreeClassifier(),
+        [
+            ({'max_depth': (1, 32)}, 10),  # 10 iterations here
+            {'min_samples_split': Real(0.1, 0.9)}  # 5 (default) iters here
+        ],
+        n_iter=5
+    )
+
+    assert opt.total_iterations == 10 + 5

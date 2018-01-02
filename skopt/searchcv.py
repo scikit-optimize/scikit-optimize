@@ -566,8 +566,7 @@ class BayesSearchCV(BaseSearchCV):
         """
         total_iter = 0
 
-        for space_id in sorted(self.search_spaces.keys()):
-            elem = self.search_spaces[space_id]
+        for elem in self.search_spaces:
 
             if isinstance(elem, tuple):
                 space, n_iter = elem

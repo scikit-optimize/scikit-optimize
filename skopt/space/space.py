@@ -69,9 +69,11 @@ def check_dimension(dimension, transform=None):
     if not isinstance(dimension, (list, tuple, np.ndarray)):
         raise ValueError("Dimension has to be a list or tuple.")
 
-    # Dimension description with single value is assumed to be used
-    # in order to fix dimension value. Is useful for BayesSearchCV,
-    # when you for example want to fix what model is used in Pipeline.
+    # A `Dimension` described by a single value is assumed to be
+    # a `Categorical` dimension. This can be used in `BayesSearchCV`
+    # to define subspaces that fix one value, e.g. to choose the
+    # model type, see "sklearn-gridsearchcv-replacement.ipynb"
+    # for examples.
     if len(dimension) == 1:
         return Categorical(dimension, transform=transform)
 
