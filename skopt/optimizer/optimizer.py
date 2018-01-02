@@ -413,8 +413,11 @@ class Optimizer(object):
         return self._tell(x, y, fit=fit)
 
     def _tell(self, x, y, fit=True):
-        """Same as `tell()` but without checks and without any modification
-        of x or y."""
+        """Perform the actual work of incorporating one or more new points.
+        See `tell()` for the full description.
+
+        This method exists to give access to the internals of adding points
+        by side stepping all input validation and transformation."""
 
         if "ps" in self.acq_func:
             if is_2Dlistlike(x):
@@ -438,7 +441,7 @@ class Optimizer(object):
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
 
-        # optimizer learned somethnig new - discard cache
+        # optimizer learned something new - discard cache
         self.cache_ = {}
 
         # after being "told" n_initial_points we switch from sampling
@@ -521,12 +524,12 @@ class Optimizer(object):
                              models=self.models)
 
     def _check_y_is_valid(self, x, y):
-        """Checks if y is valid (with respect to x in some cases)."""
+        """Check if the shape and types of x and y are consistent."""
 
         if "ps" in self.acq_func:
             if is_2Dlistlike(x):
                 if not (np.ndim(y) == 2 and np.shape(y)[1] == 2):
-                    raise TypeError("expcted y to be a list of (func_val, t)")
+                    raise TypeError("expected y to be a list of (func_val, t)")
             elif is_listlike(x):
                 if not (np.ndim(y) == 1 and len(y) == 2):
                     raise TypeError("expected y to be (func_val, t)")
@@ -535,7 +538,7 @@ class Optimizer(object):
         elif is_listlike(y) and is_2Dlistlike(x):
             for y_value in y:
                 if not isinstance(y_value, Number):
-                    raise ValueError("expected y to be a list a scalars")
+                    raise ValueError("expected y to be a list of scalars")
 
         elif is_listlike(x):
             if not isinstance(y, Number):
