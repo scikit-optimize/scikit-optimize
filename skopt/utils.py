@@ -501,10 +501,10 @@ def normalize_dimensions(dimensions):
     return Space(transformed_dimensions)
 
 
-def wrap_named_args(dimensions):
+def use_named_args(dimensions):
     """
-    Wrapper for an objective function that uses named arguments to make it
-    compatible with optimizers that use a single list of parameters.
+    Wrapper / decorator for an objective function that uses named arguments
+    to make it compatible with optimizers that use a single list of parameters.
 
     Your objective function can be defined as being callable using named
     arguments: `func(foo=123, bar=3.0, baz='hello')` for a search-space
@@ -531,7 +531,7 @@ def wrap_named_args(dimensions):
 
     # Define the objective function with named arguments
     # and use this function-decorator to specify the search-space dimensions.
-    @wrap_named_args(dimensions=dimensions)
+    @use_named_args(dimensions=dimensions)
     def my_objective_function(foo, bar, baz):
         return foo ** 2 + bar ** 4 + baz ** 8
 

@@ -5,6 +5,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 
+import numpy as np
+
 from skopt import gp_minimize
 from skopt import load
 from skopt import dump
@@ -20,6 +22,8 @@ from skopt.utils import dimensions_aslist
 from skopt.utils import has_gradients
 from skopt.utils import cook_estimator
 from skopt.utils import normalize_dimensions
+from skopt.utils import use_named_args
+from skopt.space import Real
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -165,3 +169,59 @@ def test_normalize_dimensions(dimensions, normalizations):
     space = normalize_dimensions(dimensions)
     for dimension, normalization in zip(space, normalizations):
         assert dimension.transform_ == normalization
+
+
+@pytest.mark.fast_test
+def test_use_named_args():
+    """
+    Test the function wrapper @use_named_args which is used
+    for wrapping an objective function with named args so it
+    can be called by the optimizers which only pass a single
+    list as the arg.
+    
+    This test does not actually use the optimizers but merely
+    simulates how they would call the function.
+    """
+
+    # Define the search-space dimensions. They must all have names!
+    dim1 = Real(name='foo', low=0.0, high=1.0)
+    dim2 = Real(name='bar', low=0.0, high=1.0)
+    dim3 = Real(name='baz', low=0.0, high=1.0)
+
+    # Gather the search-space dimensions in a list.
+    dimensions = [dim1, dim2, dim3]
+
+    # Parameters that will be passed to the objective function.
+    default_parameters = [0.5, 0.6, 0.8]
+
+    # Define the objective function with named arguments
+    # and use this function-decorator to specify the search-space dimensions.
+    @use_named_args(dimensions=dimensions)
+    def func(foo, bar, baz):
+        # Assert that all the named args are indeed correct.
+        assert foo == default_parameters[0]
+        assert bar == default_parameters[1]
+        assert baz == default_parameters[2]
+
+        # Return some objective value.
+        return foo ** 2 + bar ** 4 + baz ** 8
+
+    # Ensure the objective function can be called with a single
+    # argument named x.
+    res = func(x=default_parameters)
+    assert (isinstance(res, float))
+
+    # Ensure the objective function can be called with a single
+    # argument that is unnamed.
+    res = func(default_parameters)
+    assert (isinstance(res, float))
+
+    # Ensure the objective function can be called with a single
+    # argument that is a numpy array named x.
+    res = func(x=np.array(default_parameters))
+    assert (isinstance(res, float))
+
+    # Ensure the objective function can be called with a single
+    # argument that is an unnamed numpy array.
+    res = func(np.array(default_parameters))
+    assert (isinstance(res, float))
