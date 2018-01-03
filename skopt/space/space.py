@@ -240,8 +240,8 @@ class Real(Dimension):
                 self.transform_ == other.transform_)
 
     def __repr__(self):
-        return "Real(low={}, high={}, prior='{}', transform='{}', name='{}')".format(
-            self.low, self.high, self.prior, self.transform_, self.name)
+        return "Real(low={}, high={}, prior='{}', transform='{}')".format(
+            self.low, self.high, self.prior, self.transform_)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
