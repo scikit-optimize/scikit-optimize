@@ -10,8 +10,13 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
     Parameters
     ----------
     * `func` [callable]:
-        Function to minimize. Should take a array of parameters and
-        return the function values.
+        Function to minimize. Should take a single list of parameters
+        and return the objective value as a scalar of type `float`.
+    
+        If you have a search-space where all dimensions have names,
+        then you can use `skopt.utils.use_named_args` as a decorator
+        on your objective function, in order to call it directly
+        with the named arguments. See `use_named_args` for an example.
 
     * `dimensions` [list, shape=(n_dims,)]:
         List of search space dimensions.
