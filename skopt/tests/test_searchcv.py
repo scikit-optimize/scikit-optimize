@@ -224,3 +224,51 @@ def test_searchcv_reproducibility():
     assert getattr(best_est, 'gamma') == getattr(best_est2, 'gamma')
     assert getattr(best_est, 'degree') == getattr(best_est2, 'degree')
     assert getattr(best_est, 'kernel') == getattr(best_est2, 'kernel')
+
+
+def test_searchcv_callback():
+    # Test whether callback is used in BayesSearchCV and
+    # whether is can be used to interrupt the search loop
+
+    X, y = load_iris(True)
+    opt = BayesSearchCV(
+        DecisionTreeClassifier(),
+        {
+            'max_depth': [3],  # additional test for single dimension
+            'min_samples_split': Real(0.1, 0.9),
+        },
+        n_iter=5
+    )
+    total_iterations = [0]
+
+    def callback(opt_result):
+        # this simply counts iterations
+        total_iterations[0] += 1
+
+        # break the optimization loop at some point
+        if total_iterations[0] > 2:
+            return True  # True == stop optimization
+
+        return False
+
+    opt.fit(X, y, callback=callback)
+
+    assert total_iterations[0] == 3
+
+    # test whether final model was fit
+    opt.score(X, y)
+
+
+def test_searchcv_total_iterations():
+    # Test the total iterations counting property of BayesSearchCV
+
+    opt = BayesSearchCV(
+        DecisionTreeClassifier(),
+        [
+            ({'max_depth': (1, 32)}, 10),  # 10 iterations here
+            {'min_samples_split': Real(0.1, 0.9)}  # 5 (default) iters here
+        ],
+        n_iter=5
+    )
+
+    assert opt.total_iterations == 10 + 5
