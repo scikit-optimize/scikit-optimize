@@ -565,21 +565,61 @@ def use_named_args(dimensions):
     def decorator(func):
         """
         This uses more advanced Python features to wrap `func` using a
-        function-decorator. To get explanations of how this works in Python,
-        please do an internet search for e.g.:
-        Python function decorator with additional arguments.
+        function-decorator, which are not explained so well in the
+        official Python documentation.
+
+        A good video tutorial explaining how this works is found here:
+        https://www.youtube.com/watch?v=KlBPCzcQNU8
+
+        Parameters
+        ----------
+        * `func` [callable]:
+            Function to minimize. Should take *named arguments*
+            and return the objective value.
         """
 
         # Ensure all dimensions are correctly typed.
         if not all(isinstance(dim, Dimension) for dim in dimensions):
-            raise ValueError("All dimensions must be instances of the Dimension-class.")
+            # List of the dimensions that are incorrectly typed.
+            err_dims = list(filter(lambda dim: not isinstance(dim, Dimension),
+                                   dimensions))
+
+            # Error message.
+            msg = "All dimensions must be instances of the Dimension-class, but found: {}"
+            msg = msg.format(err_dims)
+            raise ValueError(msg)
 
         # Ensure all dimensions have names.
         if any(dim.name is None for dim in dimensions):
-            raise ValueError("All dimensions must have names.")
+            # List of the dimensions that have no names.
+            err_dims = list(filter(lambda dim: dim.name is None, dimensions))
+
+            # Error message.
+            msg = "All dimensions must have names, but found: {}"
+            msg = msg.format(err_dims)
+            raise ValueError(msg)
 
         @wraps(func)
         def wrapper(x):
+            """
+            This is the code that will be executed every time the
+            wrapped / decorated `func` is being called.
+            It takes `x` as a single list of parameters and
+            converts them to named arguments and calls `func` with them.
+            
+            Parameters
+            ----------
+            * `x` [list]:
+                A single list of parameters e.g. `[123, 3.0, 'linear']`
+                which will be converted to named arguments and passed
+                to `func`.
+        
+            Returns
+            -------
+            * `objective_value` 
+                The objective value returned by `func`.
+            """
+
             # Ensure the number of dimensions match
             # the number of parameters in the list x.
             if len(x) != len(dimensions):
