@@ -31,8 +31,13 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
     Parameters
     ----------
     * `func` [callable]:
-        Function to minimize. Should take a array of parameters and
-        return the function values.
+        Function to minimize. Should take a single list of parameters
+        and return the objective value.
+    
+        If you have a search-space where all dimensions have names,
+        then you can use `skopt.utils.use_named_args` as a decorator
+        on your objective function, in order to call it directly
+        with the named arguments. See `use_named_args` for an example.
 
     * `dimensions` [list, shape=(n_dims,)]:
         List of search space dimensions.
