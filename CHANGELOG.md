@@ -6,16 +6,20 @@ High five!
 
 ## New features
 
-* Single element dimension definition, which can be used to 
+* Single element dimension definition, which can be used to
 fix the value of a dimension during optimization.
-* `total_iterations` function of `BayesSearchCV` that 
-counts total iterations needed to explore all subspaces. 
-* Add iteration event handler for `BayesSearchCV`, useful 
+* `total_iterations` property of `BayesSearchCV` that
+counts total iterations needed to explore all subspaces.
+* Add iteration event handler for `BayesSearchCV`, useful
 for early stopping inside `BayesSearchCV` search loop.
+* added `utils.use_named_args` decorator to help with unpacking named dimensions
+when calling an objective function.
 
 ### Bug fixes
 
-* Removed redundant estimator fitting inside `BayesSearchCV`
+* Removed redundant estimator fitting inside `BayesSearchCV`.
+* Fixed the log10 transform for Real dimensions that would lead to values being
+  out of bounds.
 
 ## Version 0.4
 
