@@ -311,10 +311,10 @@ class Optimizer(object):
         """
 
         if len(self.Xi) > 0:
-            self._fit(fix_dimensions=fix_dimensions)
+            self.fit(fix_dimensions=fix_dimensions)
 
         if n_points is None:
-            return self._ask()
+            return self._ask(fix_dimensions=fix_dimensions)
 
         supported_strategies = ["cl_min", "cl_mean", "cl_max"]
 
@@ -356,7 +356,7 @@ class Optimizer(object):
 
         return X
 
-    def _ask(self):
+    def _ask(self, fix_dimensions=None):
         """Suggest next point at which to evaluate the objective.
 
         Return a random point while not at least `n_initial_points`
@@ -366,7 +366,13 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
-            return self.space.rvs(random_state=self.rng)[0]
+
+            next_x = self.space.rvs(random_state=self.rng)[0]
+
+            if fix_dimensions is not None:
+                next_x = self._apply_fix_dimensions(next_x, fix_dimensions)
+
+            return next_x
 
         else:
             if not self.models:
@@ -448,8 +454,7 @@ class Optimizer(object):
         self.cache_ = {}
 
         # Pack results
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        return self.create_result()
 
     def run(self, func, n_iter=1):
         """Execute ask() + tell() `n_iter` times"""
@@ -457,10 +462,13 @@ class Optimizer(object):
             x = self.ask()
             self.tell(x, func(x))
 
+        return self.create_result()
+
+    def create_result(self):
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
 
-    def _fit(self, fix_dimensions=None):
+    def fit(self, fix_dimensions=None):
 
         transformed_bounds = np.array(self.space.transformed_bounds)
         est = clone(self.base_estimator_)
@@ -482,7 +490,7 @@ class Optimizer(object):
                                  "dimensions (%s)"
                                  % (len(fix_dimensions, self.space.n_dims)))
 
-            X_raw = [[x if ((m is None) or np.isnan(m)) else m for x, m in zip(x_raw, fix_dimensions)]
+            X_raw = [self._apply_fix_dimensions(x_raw, fix_dimensions)
                      for x_raw in X_raw]
 
         X = self.space.transform(X_raw)
@@ -541,3 +549,23 @@ class Optimizer(object):
         # note the need for [0] at the end
         self._next_x = self.space.inverse_transform(
             next_x.reshape((1, -1)))[0]
+
+        return self.create_result()
+
+    def _apply_fix_dimensions(self, x, fix_dimensions):
+
+        def _use_fix(fix):
+            if isinstance(fix, str):
+                return True
+            else:
+                if fix is None:
+                    return False
+                elif np.isnan(fix):
+                    return False
+                else:
+                    return True
+
+        return [fix if _use_fix(fix) else v
+                for v, fix
+                in zip(x, fix_dimensions)]
+
