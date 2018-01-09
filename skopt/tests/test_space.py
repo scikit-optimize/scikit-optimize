@@ -4,6 +4,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_not_equal
@@ -278,7 +279,13 @@ def test_space_api():
     samples_transformed = space.transform(samples)
     assert_equal(samples_transformed.shape[0], len(samples))
     assert_equal(samples_transformed.shape[1], 1 + 1 + 3 + 1 + 1)
-    assert_array_equal(samples, space.inverse_transform(samples_transformed))
+
+    # our space contains mixed types, this means we can't use
+    # `array_allclose` or similar to check points are close after a round-trip
+    # of transformations
+    for orig, round_trip in zip(samples,
+                                space.inverse_transform(samples_transformed)):
+        assert space.distance(orig, round_trip) < 1.e-8
 
     samples = space.inverse_transform(samples_transformed)
     assert_true(isinstance(samples[0][0], numbers.Real))
