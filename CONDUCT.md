@@ -32,7 +32,7 @@ you don't feel comfortable speaking in public, etc.  For these or other
 reasons, structured follow-up may be necessary and here we provide the means
 for that: we welcome reports by emailing
 [*tim@wildtreetech.com*](mailto:tim@wildtreetech.com) (a maintainer of
-scikit-optimize) or XXX or YYY (who are independent authorities).
+scikit-optimize) or [Kyle Kelly](rgbkrk@gmail.com) or YYY (who are independent authorities).
 
 This code applies equally to founders, developers, mentors and new community
 members, in all spaces managed by scikit-optimize. This
