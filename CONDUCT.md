@@ -84,7 +84,7 @@ participate within them.
    expectations is preferable to demands for another person's time.
 
 7. **When we disagree, try to understand why**. Disagreements, both social and
-   technical, happen all the time and Jupyter is no exception.  Try to
+   technical, happen all the time and scikit-optimize is no exception.  Try to
    understand where others are coming from, as seeing a question from their
    viewpoint may help find a new path forward.  And don’t forget that it is
    human to err: blaming each other doesn’t get us anywhere, while we can learn
