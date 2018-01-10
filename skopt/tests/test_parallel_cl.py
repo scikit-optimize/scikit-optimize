@@ -50,6 +50,7 @@ def test_constant_liar_runs(strategy, surrogate, acq_func):
     optimizer = Optimizer(
         base_estimator=surrogate(),
         dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        acq_func=acq_func,
         acq_optimizer='sampling',
         random_state=0
     )
