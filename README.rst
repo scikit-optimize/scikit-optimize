@@ -146,6 +146,10 @@ The scikit-optimize project was made possible with the support of
     :alt: NSF
     :target: https://www.nsf.gov
 
+.. image:: https://i.imgur.com/3enQ6S8.jpg
+    :alt: Northrop Grumman
+    :target: http://www.northropgrumman.com/Pages/default.aspx
+
 If your employer allows you to work on scikit-optimize during the day and would like
 recognition, feel free to add them to the "Made possible by" list.
 
