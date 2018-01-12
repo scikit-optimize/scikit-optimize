@@ -57,7 +57,9 @@ participate within them.
    and colleagues, and you should take those consequences into account when
    making decisions. Remember that we're a world-wide community. You may be
    communicating with someone with a different primary language or cultural
-   background.
+   background. For example some miscommunications might happen simply because
+   of these cultural or language differences, not because there is an actual
+   difference of opinion.
 
 4. **Be respectful**. Not all of us will agree all the time, but disagreement is
    no excuse for poor behavior or poor manners. We might all experience some
