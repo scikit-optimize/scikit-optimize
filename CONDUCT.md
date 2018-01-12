@@ -2,11 +2,9 @@
 
 Scikit-Optimize is an engaged and respectful community made up of people
 from all over the world. Your involvement helps us to further our
-mission and to create an open platform that serves a broad range of
-communities, from research and education, to journalism, industry and
-beyond.
+mission.
 
-The goal of scikit-optimize is to become the go to software for black box
+The goal of scikit-optimize is to become the go to project for black box
 optimization, freely available to the reader and everyone else. As any other
 open source project, it requires a community of people who maintain and
 contribute to it. The quality of the project depends on the engagement and
