@@ -6,6 +6,19 @@ mission and to create an open platform that serves a broad range of
 communities, from research and education, to journalism, industry and
 beyond.
 
+The goal of scikit-optimize is to become the go to software for black box
+optimization, freely available to the reader and everyone else. As any other
+open source project, it requires a community of people who maintain and
+contribute to it. The quality of the project depends on the engagement and
+size of the community; thus you as a user of skopt directly benefit from
+creating positive environment that encourages people to contribute to the
+project.
+
+To ensure that we build the best possible environment for our community, we
+introduced this code of conduct. When these guidelines are not followed, it
+can be detrimental to the community, and in turn not beneficial to the users of
+scikit-optimize.
+
 Naturally, this implies diversity of ideas and perspectives on often complex
 problems. Disagreement and healthy discussion of conflicting viewpoints is
 welcome: the best solutions to hard problems rarely come from a single angle.
