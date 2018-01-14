@@ -140,8 +140,8 @@ class BayesSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
-    return_train_score : boolean, default=True
-        If ``'False'``, the ``cv_results_`` attribute will not include training
+    return_train_score : boolean, default=False
+        If ``'True'``, the ``cv_results_`` attribute will include training
         scores.
 
     Example
@@ -272,7 +272,7 @@ class BayesSearchCV(BaseSearchCV):
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=True):
+                 error_score='raise', return_train_score=False):
 
         # set of space name: space dict. Stored as a dict, in order
         # to make it easy to add or remove search spaces, in case
