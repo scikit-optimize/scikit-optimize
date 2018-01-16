@@ -442,7 +442,7 @@ class Categorical(Dimension):
 
     def __repr__(self):
         if len(self.categories) > 7:
-            cats = self.categories[:3] + [_Ellipsis()] + self.categories[-3:]
+            cats = list(self.categories[:3]) + [_Ellipsis()] + list(self.categories[-3:])
         else:
             cats = self.categories
 

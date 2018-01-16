@@ -236,7 +236,8 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
 
         if (not has_gradients(self.base_estimator_) and
-            acq_optimizer != "sampling"):
+                acq_optimizer != "sampling"):
+
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
@@ -271,7 +272,7 @@ class Optimizer(object):
 
         return optimizer
 
-    def ask(self, n_points=None, strategy="cl_min"):
+    def ask(self, n_points=None, strategy="cl_min", fix_dimensions=None):
         """Query point or multiple points at which objective should be evaluated.
 
         * `n_points` [int or None, default=None]:
@@ -301,9 +302,19 @@ class Optimizer(object):
                objective and so on. The type of lie defines different
                flavours of `cl_x` strategies.
 
+        * `fix_dimensions` [None or list]
+            A set of values to be applied to fix specific dimensions to specific
+            value. For example, if the search space is
+            [Real(0,1), Real(0,1), Real(0,1)],
+            to fix the 2nd dimenions to .5, set fix_dimensions=[None, .5, None].
+
         """
+
+        if len(self.Xi) > 0:
+            self.fit(fix_dimensions=fix_dimensions)
+
         if n_points is None:
-            return self._ask()
+            return self._ask(fix_dimensions=fix_dimensions)
 
         supported_strategies = ["cl_min", "cl_mean", "cl_max"]
 
@@ -345,7 +356,7 @@ class Optimizer(object):
 
         return X
 
-    def _ask(self):
+    def _ask(self, fix_dimensions=None):
         """Suggest next point at which to evaluate the objective.
 
         Return a random point while not at least `n_initial_points`
@@ -355,7 +366,13 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
-            return self.space.rvs(random_state=self.rng)[0]
+
+            next_x = self.space.rvs(random_state=self.rng)[0]
+
+            if fix_dimensions is not None:
+                next_x = self._apply_fix_dimensions(next_x, fix_dimensions)
+
+            return next_x
 
         else:
             if not self.models:
@@ -393,11 +410,6 @@ class Optimizer(object):
 
         * `y` [scalar or list]:
             Value of objective at `x`.
-
-        * `fit` [bool, default=True]
-            Fit a model to observed evaluations of the objective. A model will
-            only be fitted after `n_initial_points` points have been told to
-            the optimizer irrespective of the value of `fit`.
         """
         check_x_in_space(x, self.space)
         self._check_y_is_valid(x, y)
@@ -444,84 +456,8 @@ class Optimizer(object):
         # optimizer learned something new - discard cache
         self.cache_ = {}
 
-        # after being "told" n_initial_points we switch from sampling
-        # random points to using a surrogate model
-        if (fit and self._n_initial_points <= 0 and
-           self.base_estimator_ is not None):
-            transformed_bounds = np.array(self.space.transformed_bounds)
-            est = clone(self.base_estimator_)
-
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                est.fit(self.space.transform(self.Xi), self.yi)
-
-            if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
-                self.gains_ -= est.predict(np.vstack(self.next_xs_))
-            self.models.append(est)
-
-            # even with BFGS as optimizer we want to sample a large number
-            # of points and then pick the best ones as starting points
-            X = self.space.transform(self.space.rvs(
-                n_samples=self.n_points, random_state=self.rng))
-
-            self.next_xs_ = []
-            for cand_acq_func in self.cand_acq_funcs_:
-                values = _gaussian_acquisition(
-                    X=X, model=est, y_opt=np.min(self.yi),
-                    acq_func=cand_acq_func,
-                    acq_func_kwargs=self.acq_func_kwargs)
-                # Find the minimum of the acquisition function by randomly
-                # sampling points from the space
-                if self.acq_optimizer == "sampling":
-                    next_x = X[np.argmin(values)]
-
-                # Use BFGS to find the mimimum of the acquisition function, the
-                # minimization starts from `n_restarts_optimizer` different
-                # points and the best minimum is used
-                elif self.acq_optimizer == "lbfgs":
-                    x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
-
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        results = Parallel(n_jobs=self.n_jobs)(
-                            delayed(fmin_l_bfgs_b)(
-                                gaussian_acquisition_1D, x,
-                                args=(est, np.min(self.yi), cand_acq_func,
-                                      self.acq_func_kwargs),
-                                bounds=self.space.transformed_bounds,
-                                approx_grad=False,
-                                maxiter=20)
-                            for x in x0)
-
-                    cand_xs = np.array([r[0] for r in results])
-                    cand_acqs = np.array([r[1] for r in results])
-                    next_x = cand_xs[np.argmin(cand_acqs)]
-
-                # lbfgs should handle this but just in case there are
-                # precision errors.
-                if not self.space.is_categorical:
-                    next_x = np.clip(
-                        next_x, transformed_bounds[:, 0],
-                        transformed_bounds[:, 1])
-                self.next_xs_.append(next_x)
-
-            if self.acq_func == "gp_hedge":
-                logits = np.array(self.gains_)
-                logits -= np.max(logits)
-                exp_logits = np.exp(self.eta * logits)
-                probs = exp_logits / np.sum(exp_logits)
-                next_x = self.next_xs_[np.argmax(self.rng.multinomial(1,
-                                                                      probs))]
-            else:
-                next_x = self.next_xs_[0]
-
-            # note the need for [0] at the end
-            self._next_x = self.space.inverse_transform(
-                next_x.reshape((1, -1)))[0]
-
         # Pack results
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        return self.create_result()
 
     def _check_y_is_valid(self, x, y):
         """Check if the shape and types of x and y are consistent."""
@@ -554,5 +490,110 @@ class Optimizer(object):
             x = self.ask()
             self.tell(x, func(x))
 
+        return self.create_result()
+
+    def create_result(self):
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+
+    def fit(self, fix_dimensions=None):
+
+        transformed_bounds = np.array(self.space.transformed_bounds)
+        est = clone(self.base_estimator_)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            est.fit(self.space.transform(self.Xi), self.yi)
+
+        if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
+            self.gains_ -= est.predict(np.vstack(self.next_xs_))
+        self.models.append(est)
+
+        # even with BFGS as optimizer we want to sample a large number
+        # of points and then pick the best ones as starting points
+        X_raw = self.space.rvs(n_samples=self.n_points, random_state=self.rng)
+        if fix_dimensions is not None:
+            if len(fix_dimensions) != self.space.n_dims:
+                raise ValueError("Len of fix_dimensions (%s) DNE number of "
+                                 "dimensions (%s)"
+                                 % (len(fix_dimensions, self.space.n_dims)))
+
+            X_raw = [self._apply_fix_dimensions(x_raw, fix_dimensions)
+                     for x_raw in X_raw]
+
+        X = self.space.transform(X_raw)
+
+        self.next_xs_ = []
+        for cand_acq_func in self.cand_acq_funcs_:
+            values = _gaussian_acquisition(
+                X=X, model=est, y_opt=np.min(self.yi),
+                acq_func=cand_acq_func,
+                acq_func_kwargs=self.acq_func_kwargs)
+            # Find the minimum of the acquisition function by randomly
+            # sampling points from the space
+            if self.acq_optimizer == "sampling":
+                next_x = X[np.argmin(values)]
+
+            # Use BFGS to find the mimimum of the acquisition function, the
+            # minimization starts from `n_restarts_optimizer` different
+            # points and the best minimum is used
+            elif self.acq_optimizer == "lbfgs":
+                x0 = X[np.argsort(values)[:self.n_restarts_optimizer]]
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    results = Parallel(n_jobs=self.n_jobs)(
+                        delayed(fmin_l_bfgs_b)(
+                            gaussian_acquisition_1D, x,
+                            args=(est, np.min(self.yi), cand_acq_func,
+                                  self.acq_func_kwargs),
+                            bounds=self.space.transformed_bounds,
+                            approx_grad=False,
+                            maxiter=20)
+                        for x in x0)
+
+                cand_xs = np.array([r[0] for r in results])
+                cand_acqs = np.array([r[1] for r in results])
+                next_x = cand_xs[np.argmin(cand_acqs)]
+
+            # lbfgs should handle this but just in case there are
+            # precision errors.
+            if not self.space.is_categorical:
+                next_x = np.clip(
+                    next_x, transformed_bounds[:, 0],
+                    transformed_bounds[:, 1])
+            self.next_xs_.append(next_x)
+
+        if self.acq_func == "gp_hedge":
+            logits = np.array(self.gains_)
+            logits -= np.max(logits)
+            exp_logits = np.exp(self.eta * logits)
+            probs = exp_logits / np.sum(exp_logits)
+            next_x = self.next_xs_[np.argmax(self.rng.multinomial(1,
+                                                                  probs))]
+        else:
+            next_x = self.next_xs_[0]
+
+        # note the need for [0] at the end
+        self._next_x = self.space.inverse_transform(
+            next_x.reshape((1, -1)))[0]
+
+        return self.create_result()
+
+    def _apply_fix_dimensions(self, x, fix_dimensions):
+
+        def _use_fix(fix):
+            if isinstance(fix, str):
+                return True
+            else:
+                if fix is None:
+                    return False
+                elif np.isnan(fix):
+                    return False
+                else:
+                    return True
+
+        return [fix if _use_fix(fix) else v
+                for v, fix
+                in zip(x, fix_dimensions)]
+
