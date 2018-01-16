@@ -17,7 +17,8 @@ introduced this code of conduct. When these guidelines are not followed, it
 can be detrimental to the community, and in turn not beneficial to the users of
 scikit-optimize.
 
-Naturally, this implies diversity of ideas and perspectives on often complex
+We receive contributions from people all over the world., this implies
+diversity of ideas and perspectives on often complex
 problems. Disagreement and healthy discussion of conflicting viewpoints is
 welcome: the best solutions to hard problems rarely come from a single angle.
 But disagreement is not an excuse for aggression: humans tend to take
@@ -29,8 +30,11 @@ healthy community in the face of these challenges.
 
 Fundamentally, we are committed to fostering a productive, harassment-free
 environment for everyone. Rather than considering this code an exhaustive list
-of things that you can’t do, take it in the spirit it is intended - a guide to
-make it easier to enrich all of us and the communities in which we participate.
+of things that you can’t do, take it in the spirit it is intended - a guide. We
+encourage you not to read this like a legal text that tries to solve every
+possible event, instead use common sense for the parts where there are gaps. It
+doesn't mean that application of this COC is going to depend on who you are or
+who you are friends with.
 
 Importantly: as a member of our community, *you are also a steward of these
 values*.  Not all problems need to be resolved via formal processes, and often
