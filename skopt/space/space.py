@@ -395,7 +395,7 @@ class Categorical(Dimension):
         * `categories` [list, shape=(n_categories,)]:
             Sequence of possible categories.
 
-        * `prior` [list, shape=(categories,), default=None]:
+        * `prior` [list, shape=(n_categories,), default=None]:
             Prior probabilities for each category. By default all categories
             are equally likely.
 
@@ -442,7 +442,7 @@ class Categorical(Dimension):
 
     def __repr__(self):
         if len(self.categories) > 7:
-            cats = self.categories[:3] + [_Ellipsis()] + self.categories[-3:]
+            cats = self.categories[:3] + (_Ellipsis(),) + self.categories[-3:]
         else:
             cats = self.categories
 

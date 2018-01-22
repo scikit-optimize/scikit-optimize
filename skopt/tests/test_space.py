@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import pytest
 import numbers
 import numpy as np
@@ -396,6 +398,20 @@ def test_categorical_identity():
     assert_array_equal(transformed, samples)
     assert_array_equal(samples, cat.inverse_transform(transformed))
 
+@pytest.mark.fast_test
+@pytest.mark.parametrize("categories",
+                         [range(3), # short ( < 7 items) list of categories
+                          range(8), # long ( >= 7 items) list of categories with ellipsis
+                          ])
+def test_categorical_repr(capsys, categories):
+
+    # ensure printing of Categorical objects does not
+    # raise an exception. However we do not insist
+    # on the exact output format.
+
+    cat = Categorical(categories, transform="identity")
+
+    print(cat)
 
 @pytest.mark.fast_test
 def test_categorical_distance():
