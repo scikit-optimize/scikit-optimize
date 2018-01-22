@@ -339,17 +339,16 @@ class Optimizer(object):
 
             if strategy == "cl_min":
                 y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
-                t_lie = np.min(ti) if ti else sys.float_info.max
+                t_lie = np.min(ti) if ti is not None else log(sys.float_info.max)
             elif strategy == "cl_mean":
                 y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
-                t_lie = np.mean(ti) if ti else sys.float_info.max
+                t_lie = np.mean(ti) if ti is not None else log(sys.float_info.max)
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
-                t_lie = np.max(ti) if ti else sys.float_info.max
+                t_lie = np.max(ti) if ti is not None else log(sys.float_info.max)
 
             # Lie to the optimizer.
             if "ps" in self.acq_func:
-
                 # Use `_tell()` instead of `tell()` to prevent repeated
                 # log transformations of the computation times.
                 opt._tell(x, (y_lie, t_lie))
