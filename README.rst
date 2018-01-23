@@ -1,6 +1,6 @@
 |Logo|
 
-|Travis Status| |CircleCI Status| |binder| |gitter|
+|Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
 
 Scikit-Optimize
 ===============
@@ -163,3 +163,5 @@ recognition, feel free to add them to the "Made possible by" list.
    :target: https://mybinder.org/v2/gh/scikit-optimize/scikit-optimize/master?filepath=examples
 .. |gitter| image:: https://badges.gitter.im/scikit-optimize/scikit-optimize.svg
    :target: https://gitter.im/scikit-optimize/Lobby
+.. |Zenodo DOI| image:: https://zenodo.org/badge/54340642.svg
+   :target: https://zenodo.org/badge/latestdoi/54340642
