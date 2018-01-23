@@ -335,7 +335,8 @@ class Optimizer(object):
             x = opt.ask()
             X.append(x)
 
-            ti = [t for (_, t) in opt.yi] if "ps" in self.acq_func else None
+            ti_available = "ps" in self.acq_func and len(opt.yi) > 0
+            ti = [t for (_, t) in opt.yi] if ti_available else None
 
             if strategy == "cl_min":
                 y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
