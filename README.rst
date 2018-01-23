@@ -1,6 +1,7 @@
 |Logo|
 
 |Travis Status| |CircleCI Status| |binder| |gitter|
+
 .. image:: https://zenodo.org/badge/54340642.svg
    :target: https://zenodo.org/badge/latestdoi/54340642
 
