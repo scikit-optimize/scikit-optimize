@@ -17,7 +17,7 @@ introduced this code of conduct. When these guidelines are not followed, it
 can be detrimental to the community, and in turn not beneficial to the users of
 scikit-optimize.
 
-We receive contributions from people all over the world., this implies
+We receive contributions from people all over the world. This implies
 diversity of ideas and perspectives on often complex
 problems. Disagreement and healthy discussion of conflicting viewpoints is
 welcome: the best solutions to hard problems rarely come from a single angle.
