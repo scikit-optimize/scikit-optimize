@@ -315,6 +315,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     if base_estimator == "GP":
         if space is not None:
             space = Space(space)
+            space = Space(normalize_dimensions(space.dimensions))
             n_dims = space.transformed_n_dims
             is_cat = space.is_categorical
 
@@ -558,7 +559,7 @@ def use_named_args(dimensions):
 
     Returns
     -------
-    * `wrapped_func` [callable] 
+    * `wrapped_func` [callable]
         Wrapped objective function.
     """
 
@@ -606,17 +607,17 @@ def use_named_args(dimensions):
             wrapped / decorated `func` is being called.
             It takes `x` as a single list of parameters and
             converts them to named arguments and calls `func` with them.
-            
+
             Parameters
             ----------
             * `x` [list]:
                 A single list of parameters e.g. `[123, 3.0, 'linear']`
                 which will be converted to named arguments and passed
                 to `func`.
-        
+
             Returns
             -------
-            * `objective_value` 
+            * `objective_value`
                 The objective value returned by `func`.
             """
 
