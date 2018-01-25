@@ -475,14 +475,6 @@ def test_dimension_name_none(dimension):
     assert dimension.name is None
 
 
-def test_dimension_name():
-    notnames = [1, 1., True]
-    for n in notnames:
-        with pytest.raises(ValueError) as exc:
-            real = Real(1, 2, name=n)
-            assert("Dimension's name must be either string or None." == exc.value.args[0])
-
-
 @pytest.mark.fast_test
 def test_space_from_yaml():
     with NamedTemporaryFile() as tmp:
@@ -518,3 +510,11 @@ def test_space_from_yaml():
 
         space2 = Space.from_yaml(tmp.name)
         assert_equal(space, space2)
+
+
+@pytest.mark.parametrize("name", [1, 1., True])
+def test_dimension_with_invalid_names(name):
+    with pytest.raises(ValueError) as exc:
+        Real(1, 2, name=name)
+    assert("Dimension's name must be either string or None." ==
+           exc.value.args[0])
