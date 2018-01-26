@@ -286,7 +286,11 @@ def _map_bins(bins, bounds, prior):
 
     if prior == 'log-uniform':
         # Map the number of bins to a log-space for the dimension bounds.
-        bins_mapped = np.logspace(*np.log10(bounds), bins)
+        bounds_log = np.log10(bounds)
+        bins_mapped = np.logspace(bounds_log[0], bounds_log[1], bins)
+
+        # Note that Python 3.X supports the following, but not Python 2.7
+        # bins_mapped = np.logspace(*np.log10(bounds), bins)
     else:
         # Use the original number of bins.
         bins_mapped = bins
@@ -517,7 +521,7 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 
     # Ensure there are no categorical dimensions.
     # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(type(dim) == Categorical for dim in dimensions):
+    if any(isinstance(dim, Categorical) for dim in dimensions):
         raise ValueError("Categorical dimension is not supported.")
 
     # Number of search-space dimensions we are using.
@@ -590,7 +594,7 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250,
-                          zscale='linear', dimension_names=None):
+                   zscale='linear', dimension_names=None):
     """
     Plot a 2-d matrix with so-called Partial Dependence plots
     of the objective function. This shows the influence of each
@@ -606,10 +610,26 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
     for a number of random samples in the search-space,
     while keeping one or two dimensions fixed at regular intervals. This
     averages out the effect of varying the other dimensions and shows
-    the influence of that dimension(s) on the objective function.
+    the influence of one or two dimensions on the objective function.
 
     Also shown are small black dots for the points that were sampled
     during optimization, and large red stars show the best found points.
+
+    NOTE: The Partial Dependence plot is only an estimation of the surrogate
+          model which in turn is only an estimation of the true objective
+          function that has been optimized. This means the plots show
+          an "estimate of an estimate" and may therefore be quite imprecise,
+          especially if few samples have been collected during the optimization
+          (e.g. less than 100-200 samples), and in regions of the search-space
+          that have been sparsely sampled (e.g. regions away from the optimum).
+          This means that the plots may change each time you run the
+          optimization and they should not be considered completely reliable.
+          These compromises are necessary because we cannot evaluate the
+          expensive objective function in order to plot it, so we have to use
+          the cheaper surrogate model to plot its contour. And in order to
+          show search-spaces with 3 dimensions or more in a 2-dimensional plot,
+          we further need to map those dimensions to only 2-dimensions using
+          the Partial Dependence, which also causes distortions in the plots.
 
     NOTE: Search-spaces with `Categorical` dimensions are not supported.
 
@@ -667,7 +687,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
 
     # Ensure there are no categorical dimensions.
     # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(type(dim) == Categorical for dim in dimensions):
+    if any(isinstance(dim, Categorical) for dim in dimensions):
         raise ValueError("Categorical dimension is not supported.")
 
     # Number of search-space dimensions we are using.
@@ -771,7 +791,8 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
     overlaid with all the samples from the optimization results,
     for the two given dimensions of the search-space.
 
-    This is similar to `plot_objective()` but only for 2 dimensions.
+    This is similar to `plot_objective()` but only for 2 dimensions
+    whose doc-string also has a more extensive explanation.
     
     NOTE: Categorical dimensions are not supported.
 
@@ -821,7 +842,7 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
 
     # Ensure dimensions are not Categorical.
     # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(type(dim) == Categorical for dim in [dimension1, dimension2]):
+    if any(isinstance(dim, Categorical) for dim in [dimension1, dimension2]):
         raise ValueError("Categorical dimension is not supported.")
 
     # Get the indices for the search-space dimensions.
@@ -927,7 +948,7 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
     # Start a new plot.
     fig, ax = plt.subplots(nrows=1, ncols=1)
 
-    if type(dimension) == Categorical:
+    if isinstance(dimension, Categorical):
         # When the search-space dimension is Categorical, it means
         # that the possible values are strings. Matplotlib's histogram
         # does not support this, so we have to make a bar-plot instead.

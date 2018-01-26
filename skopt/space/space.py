@@ -286,7 +286,7 @@ class Real(Dimension):
                 self.transform_ == other.transform_)
 
     def __repr__(self):
-        return "Real(low={}, high={}, prior={}, transform={}, name={})".format(
+        return "Real(low={}, high={}, prior='{}', transform='{}', name='{}')".format(
             self.low, self.high, self.prior, self.transform_, self.name)
 
     def inverse_transform(self, Xt):
@@ -384,7 +384,7 @@ class Integer(Dimension):
                 np.allclose([self.high], [other.high]))
 
     def __repr__(self):
-        return "Integer(low={}, high={}, name={})".format(self.low, self.high, self.name)
+        return "Integer(low={}, high={}, name='{}')".format(self.low, self.high, self.name)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
@@ -491,7 +491,7 @@ class Categorical(Dimension):
         else:
             prior = self.prior
 
-        return "Categorical(categories={}, prior={}, name={})".format(cats, prior, self.name)
+        return "Categorical(categories={}, prior={}, name='{}')".format(cats, prior, self.name)
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
