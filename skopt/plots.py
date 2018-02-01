@@ -1,12 +1,13 @@
 """Plotting functions."""
 
-import numpy as np
+from skopt.space import Categorical
+from skopt.space import Integer
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator
-
 from scipy.optimize import OptimizeResult
 
 
@@ -131,7 +132,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 else:
                     [l.set_rotation(45) for l in ax_.get_xticklabels()]
                     ax_.set_xlabel(dim_labels[j])
-                
+
                 # configure plot for linear vs log-scale
                 priors = (space.dimensions[j].prior, space.dimensions[i].prior)
                 scale_setters = (ax_.set_xscale, ax_.set_yscale)
@@ -164,7 +165,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
 
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
-                       n_samples=250, n_points=40):
+                       n_samples=250, n_points=40, return_std=False):
     """Calculate the partial dependence for dimensions `i` and `j` with
     respect to the objective value, as approximated by `model`.
 
@@ -218,32 +219,47 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     * `zi`: [np.array, shape=(n_points, n_points)]:
         The value of the model at each point `(xi, yi)`.
     """
+
+    def _get_xk_and_transformed(k):
+        bounds = space.dimensions[k].bounds
+
+        if isinstance(space.dimensions[k], Categorical):
+            xk = list(bounds)
+        elif isinstance(space.dimensions[k], Integer):
+            # XXX use linspace(*bounds, n_points) after python2 support ends
+            xk = np.linspace(bounds[0], bounds[1], n_points)
+        else:
+            xk = [space.dimensions[k].inverse_transform(space.dimensions[k]._rvs.ppf(q))
+                  for q
+                  in np.linspace(0, 1, n_points, endpoint=False)] + [bounds[1]]
+
+        xk_transformed = space.dimensions[k].transform(xk)
+
+        return xk, xk_transformed
+
     if sample_points is None:
         sample_points = space.transform(space.rvs(n_samples=n_samples))
 
     if j is None:
-        bounds = space.dimensions[i].bounds
-        # XXX use linspace(*bounds, n_points) after python2 support ends
-        xi = np.linspace(bounds[0], bounds[1], n_points)
-        xi_transformed = space.dimensions[i].transform(xi)
+        xi, xi_transformed = _get_xk_and_transformed(i)
 
         yi = []
+        yi_std = []
         for x_ in xi_transformed:
             rvs_ = np.array(sample_points)
-            rvs_[:, i] = x_
-            yi.append(np.mean(model.predict(rvs_)))
+            rvs_[:, space.transformed_column(i)] = x_
+            predictions = model.predict(rvs_)
+            yi.append(np.mean(predictions))
+            yi_std.append(np.std(predictions))
 
-        return xi, yi
+        if return_std:
+            return xi, yi, yi_std
+        else:
+            return xi, yi
 
     else:
-        # XXX use linspace(*bounds, n_points) after python2 support ends
-        bounds = space.dimensions[j].bounds
-        xi = np.linspace(bounds[0], bounds[1], n_points)
-        xi_transformed = space.dimensions[j].transform(xi)
-
-        bounds = space.dimensions[i].bounds
-        yi = np.linspace(bounds[0], bounds[1], n_points)
-        yi_transformed = space.dimensions[i].transform(yi)
+        xi, xi_transformed = _get_xk_and_transformed(j)
+        yi, yi_transformed = _get_xk_and_transformed(i)
 
         zi = []
         for x_ in xi_transformed:
