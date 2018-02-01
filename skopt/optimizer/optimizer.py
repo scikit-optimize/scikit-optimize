@@ -136,7 +136,7 @@ class Optimizer(object):
     """
     def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
-                 acq_func="gp_hedge",
+                 n_jobs=1, acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
@@ -165,7 +165,7 @@ class Optimizer(object):
         self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
         self.n_restarts_optimizer = acq_optimizer_kwargs.get(
             "n_restarts_optimizer", 5)
-        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
+        self.n_jobs = n_jobs
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
         if n_random_starts is not None:
@@ -193,8 +193,6 @@ class Optimizer(object):
             else:
                 self._non_cat_inds.append(ind)
 
-        self.n_jobs = n_jobs
-
         # The cache of responses of `ask` method for n_points not None.
         # This ensures that multiple calls to `ask` with n_points set
         # return same sets of points.
@@ -208,7 +206,7 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
-                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max), n_jobs=self.n_jobs)
 
         if not is_regressor(base_estimator) and base_estimator is not None:
             raise ValueError(

@@ -347,6 +347,9 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     elif base_estimator == "DUMMY":
         return None
 
+    if ('n_jobs' in kwargs.keys()) and not hasattr(base_estimator, 'n_jobs'):
+        del kwargs['n_jobs']
+
     base_estimator.set_params(**kwargs)
     return base_estimator
 
@@ -558,7 +561,7 @@ def use_named_args(dimensions):
 
     Returns
     -------
-    * `wrapped_func` [callable] 
+    * `wrapped_func` [callable]
         Wrapped objective function.
     """
 
@@ -606,17 +609,17 @@ def use_named_args(dimensions):
             wrapped / decorated `func` is being called.
             It takes `x` as a single list of parameters and
             converts them to named arguments and calls `func` with them.
-            
+
             Parameters
             ----------
             * `x` [list]:
                 A single list of parameters e.g. `[123, 3.0, 'linear']`
                 which will be converted to named arguments and passed
                 to `func`.
-        
+
             Returns
             -------
-            * `objective_value` 
+            * `objective_value`
                 The objective value returned by `func`.
             """
 
