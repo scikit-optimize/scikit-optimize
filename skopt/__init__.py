@@ -9,7 +9,6 @@ in many contexts and accessible.
 ## Install
 
 ```
-pip install numpy
 pip install scikit-optimize
 ```
 
@@ -65,7 +64,7 @@ from .utils import dump
 from .utils import expected_minimum
 from .utils import load
 
-__version__ = "0.4"
+__version__ = "0.5"
 
 
 __all__ = (

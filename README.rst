@@ -37,15 +37,14 @@ Important links
 Install
 -------
 
-The latest released version of scikit-optimize is v0.4, which you can install
+The latest released version of scikit-optimize is v0.5, which you can install
 with:
 ::
 
-    pip install numpy # explicitly install this first
     pip install scikit-optimize
 
-In addition there is a `conda-forge <https://conda-forge.org/>`_ package for
-version 0.3 of scikit-optimize:
+In addition there is a `conda-forge <https://conda-forge.org/>`_ package
+of scikit-optimize:
 ::
 
     conda install -c conda-forge scikit-optimize
@@ -99,7 +98,7 @@ Development
 
 The library is still experimental and under heavy development. Checkout
 the `next
-milestone <https://github.com/scikit-optimize/scikit-optimize/milestone/5>`__
+milestone <https://github.com/scikit-optimize/scikit-optimize/milestone/6>`__
 for the plans for the next release or look at some `easy
 issues <https://github.com/scikit-optimize/scikit-optimize/issues?q=is%3Aissue+is%3Aopen+label%3AEasy>`__
 to get started contributing.
