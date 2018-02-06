@@ -271,12 +271,13 @@ class BayesSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
-                 iid=True, refit=True, cv=None, verbose=0,
+                 n_points=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=False):
 
         self.search_spaces = search_spaces
         self.n_iter = n_iter
+        self.n_points = n_points
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
         self._check_search_space(self.search_spaces)
@@ -524,12 +525,12 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def _step(self, X, y, search_space, optimizer, groups=None, n_jobs=1):
+    def _step(self, X, y, search_space, optimizer, groups=None, n_points=1):
         """Generate n_jobs parameters and evaluate them in parallel.
         """
 
         # get parameter values to evaluate
-        params = optimizer.ask(n_points=n_jobs)
+        params = optimizer.ask(n_points=n_points)
         params_dict = [point_asdict(search_space, p) for p in params]
 
         # HACK: self.cv_results_ is reset at every call to _fit, keep current
@@ -625,11 +626,7 @@ class BayesSearchCV(BaseSearchCV):
         self.best_index_ = None
         self.multimetric_ = False
 
-        n_jobs = self.n_jobs
-
-        # account for case n_jobs < 0
-        if n_jobs < 0:
-            n_jobs = max(1, cpu_count() + n_jobs + 1)
+        n_points = self.n_points
 
         for search_space, optimizer in zip(search_spaces, optimizers):
             # if not provided with search subspace, n_iter is taken as
@@ -642,13 +639,14 @@ class BayesSearchCV(BaseSearchCV):
             # do the optimization for particular search space
             while n_iter > 0:
                 # when n_iter < n_jobs points left for evaluation
-                n_jobs_adjusted = min(n_iter, n_jobs)
+                n_points_adjusted = min(n_iter, n_points)
+                print(n_points_adjusted)
 
                 optim_result = self._step(
                     X, y, search_space, optimizer,
-                    groups=groups, n_jobs=n_jobs_adjusted
+                    groups=groups, n_points=n_points_adjusted
                 )
-                n_iter -= n_jobs
+                n_iter -= n_points
 
                 if eval_callbacks(callbacks, optim_result):
                     break

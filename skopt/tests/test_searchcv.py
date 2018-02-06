@@ -18,7 +18,8 @@ from skopt import BayesSearchCV
 
 @pytest.mark.parametrize("surrogate", ['gp', None])
 @pytest.mark.parametrize("n_jobs", [1, -1])  # test sequential and parallel
-def test_searchcv_runs(surrogate, n_jobs):
+@pytest.mark.parametrize("n_points", [1, 3])  # test query of multiple points
+def test_searchcv_runs(surrogate, n_jobs, n_points):
     """
     Test whether the cross validation search wrapper around sklearn
     models runs properly with available surrogates and with single
@@ -66,7 +67,7 @@ def test_searchcv_runs(surrogate, n_jobs):
             'degree': Integer(1, 8),
             'kernel': Categorical(['linear', 'poly', 'rbf']),
         },
-        n_jobs=n_jobs, n_iter=11,
+        n_jobs=n_jobs, n_iter=11, n_points=n_points,
         optimizer_kwargs=optimizer_kwargs
     )
 
