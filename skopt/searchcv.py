@@ -64,9 +64,11 @@ class BayesSearchCV(BaseSearchCV):
         is a number of iterations that will be spent optimizing over
         this subspace.
 
-    n_iter : int, default=128
+    n_iter : int, default=50
         Number of parameter settings that are sampled. n_iter trades
-        off runtime vs quality of the solution.
+        off runtime vs quality of the solution. Consider increasing
+        ``n_points`` if you want to try more parameter settings in
+        parallel.
 
     optimizer_kwargs : dict, optional
         Dict of arguments passed to :class:`Optimizer`.  For example,
@@ -83,7 +85,13 @@ class BayesSearchCV(BaseSearchCV):
         Parameters to pass to the fit method.
 
     n_jobs : int, default=1
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. At maximum there are
+        ``n_points`` times ``cv`` jobs available during each iteration.
+
+    n_points : int, default=1
+        Number of parameter settings to sample in parallel. If this does
+        not align with ``n_iter``, the last iteration will sample less
+        points. See also :func:`~Optimizer.ask`
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -638,9 +646,8 @@ class BayesSearchCV(BaseSearchCV):
 
             # do the optimization for particular search space
             while n_iter > 0:
-                # when n_iter < n_jobs points left for evaluation
+                # when n_iter < n_points points left for evaluation
                 n_points_adjusted = min(n_iter, n_points)
-                print(n_points_adjusted)
 
                 optim_result = self._step(
                     X, y, search_space, optimizer,
