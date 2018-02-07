@@ -96,7 +96,8 @@ def test_parallel_cv():
     test_searchcv_runs(surrogate='gp', n_jobs=2, n_points=1, cv=10)
     time_two_jobs = start_time - time.time()
 
-    assert_greater(time_one_job, time_two_jobs, 'Two jobs are not faster than one job')
+    assert_greater(time_one_job, time_two_jobs, 'Two jobs are not '
+                                                'faster than one job')
 
 
 def test_searchcv_runs_multiple_subspaces():
