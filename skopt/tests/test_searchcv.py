@@ -6,15 +6,40 @@ import pytest
 import time
 
 from sklearn.utils.testing import assert_greater
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
+from sklearn.externals.joblib import cpu_count
 
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
+
+
+def _fit_svc(n_jobs=1, n_points=1, cv=None):
+    """
+    Utililty function to fit a larger classifcation task with SVC
+    """
+
+    X, y = make_classification(n_samples=3000, n_features=20, n_redundant=0,
+                               n_informative=18, random_state=1,
+                               n_clusters_per_class=1)
+
+    opt = BayesSearchCV(
+        SVC(),
+        {
+            'C': Real(1e-3, 1e+3, prior='log-uniform'),
+            'gamma': Real(1e-3, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 3),
+        },
+        n_jobs=n_jobs, n_iter=11, n_points=n_points, cv=cv
+    )
+
+    opt.fit(X, y)
+
+    assert_greater(opt.score(X, y), 0.9)
 
 
 def test_raise_errors():
@@ -84,20 +109,22 @@ def test_searchcv_runs(surrogate, n_jobs, n_points, cv=None):
 
 
 def test_parallel_cv():
+
     """
     Test whether two parallel jobs acutally work faster than
     one job.
     """
 
-    start_time = time.time()
-    test_searchcv_runs(surrogate='gp', n_jobs=1, n_points=1, cv=10)
-    time_one_job = start_time - time.time()
-    start_time = time.time()
-    test_searchcv_runs(surrogate='gp', n_jobs=2, n_points=1, cv=10)
-    time_two_jobs = start_time - time.time()
+    if cpu_count() <= 1:
+        pytest.skip('Only one CPU available. Skipping parallelization test.')
 
-    assert_greater(time_one_job, time_two_jobs, 'Two jobs are not '
-                                                'faster than one job')
+    start_time = time.time()
+    _fit_svc(n_jobs=1, cv=10)
+    time_one_job = time.time() - start_time
+    start_time = time.time()
+    _fit_svc(n_jobs=-1, cv=10)
+    time_two_jobs = time.time() - start_time
+    assert_greater(time_one_job, time_two_jobs, 'Single-core job is faster than multi-core job.')
 
 
 def test_searchcv_runs_multiple_subspaces():
