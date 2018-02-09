@@ -37,7 +37,7 @@ Important links
 Install
 -------
 
-The latest released version of scikit-optimize is v0.5, which you can install
+The latest released version of scikit-optimize is v0.5.1, which you can install
 with:
 ::
 
@@ -118,6 +118,28 @@ To only run the subset of tests with short run time, you can use ``pytest -m 'fa
 This is implemented using pytest `attributes <https://docs.pytest.org/en/latest/mark.html>`__. If a tests runs longer than 1 second, it is marked as slow, else as fast.
 
 All contributors are welcome!
+
+
+Making a Release
+~~~~~~~~~~~~~~~~
+
+The release procedure is almost completely automated. By tagging a new release
+travis will build all required packages and push them to PyPI. To make a release
+create a new issue and work through the following checklist:
+
+* update the version tag in ``setup.py``
+* update the version tag in ``__init__.py``
+* update the version tag mentioned in the README
+* check if the dependencies in ``setup.py`` are valid or need unpinning
+* check that the ``CHANGELOG.md`` is up to date
+* did the last build of master succeed?
+* create a `new release <https://github.com/scikit-optimize/scikit-optimize/releases>`__
+* ping `conda-forge <https://github.com/conda-forge/scikit-optimize-feedstock>`__
+
+Before making a release we usually create a release candidate. If the next
+release is v0.X then the release candidate should be tagged v0.Xrc1 in
+``setup.py`` and ``__init__.py``. Mark a release candidate as a "pre-release"
+on GitHub when you tag it.
 
 
 Commercial support
