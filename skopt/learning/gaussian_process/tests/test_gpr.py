@@ -121,3 +121,16 @@ def test_gpr_handles_similar_points():
     model = GaussianProcessRegressor()
     # this fails if singular matrix is not handled
     model.fit(X, y)
+
+
+@pytest.mark.fast_test
+def test_gpr_uses_noise():
+    """ Test that gpr is using WhiteKernel by default"""
+    X = np.random.normal(size=[100, 2])
+    Y = np.random.normal(size=[100])
+
+    g_gaussian = GaussianProcessRegressor()
+    g_gaussian.fit(X, Y)
+    m, sigma = g_gaussian.predict(X[0:1], return_cov=True)
+
+    assert sigma > 0
