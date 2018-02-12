@@ -108,6 +108,7 @@ def test_searchcv_runs(surrogate, n_jobs, n_points, cv=None):
     assert_greater(opt.score(X_test, y_test), 0.9)
 
 
+@pytest.mark.slow_test
 def test_parallel_cv():
 
     """
