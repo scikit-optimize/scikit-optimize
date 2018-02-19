@@ -103,7 +103,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
 
     if dim_labels is None:
         dim_labels = ["$X_{%i}$" % i if d.name is None else d.name
-                for i, d in enumerate(space.dimensions)]
+                      for i, d in enumerate(space.dimensions)]
 
     # Deal with formatting of the axes
     for i in range(space.n_dims):  # rows
@@ -131,7 +131,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 else:
                     [l.set_rotation(45) for l in ax_.get_xticklabels()]
                     ax_.set_xlabel(dim_labels[j])
-                
+
                 # configure plot for linear vs log-scale
                 priors = (space.dimensions[j].prior, space.dimensions[i].prior)
                 scale_setters = (ax_.set_xscale, ax_.set_yscale)

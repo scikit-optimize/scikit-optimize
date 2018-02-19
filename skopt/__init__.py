@@ -45,13 +45,23 @@ The development version can be installed through:
 
 Run the tests by executing `pytest` in the top level directory.
 """
+import warnings as _warnings
 
 from . import acquisition
 from . import benchmarks
 from . import callbacks
 from . import learning
 from . import optimizer
-from . import plots
+try:
+    from . import plots
+except RuntimeError as e:
+    if 'Python is not installed as a framework.' in e.message:
+        _warnings.warn("Python is not installed as a framework. "
+                       "scikit-optimize's plotting functionality is not "
+                       "available.")
+    else:
+        raise e
+
 from . import space
 from .optimizer import dummy_minimize
 from .optimizer import forest_minimize
