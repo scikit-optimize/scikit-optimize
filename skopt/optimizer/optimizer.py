@@ -144,14 +144,15 @@ class Optimizer(object):
         self.rng = check_random_state(random_state)
 
         # Configure acquisition function
-        ## Store and creat acquisition function set
+
+        # Store and creat acquisition function set
         self.acq_func = acq_func
         self.acq_func_kwargs = acq_func_kwargs
         allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
-        ## treat hedging method separately
+        # treat hedging method separately
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
             self.gains_ = np.zeros(3)
@@ -162,7 +163,8 @@ class Optimizer(object):
         self.eta = acq_func_kwargs.get("eta", 1.0)
 
         # Configure counters of points
-        ## Check `n_random_starts` deprecation first
+
+        # Check `n_random_starts` deprecation first
         if n_random_starts is not None:
             warnings.warn(("n_random_starts will be removed in favour of "
                            "n_initial_points."),
@@ -175,16 +177,17 @@ class Optimizer(object):
         self.n_initial_points_ = n_initial_points
 
         # Configure estimator
-        ## build base_estimator if doesn't exist
+
+        # build base_estimator if doesn't exist
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
                 random_state=self.rng.randint(0, np.iinfo(np.int32).max))
-        ## check if regressor
+        # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
-        ## treat per second acqusition function specially
+        # treat per second acqusition function specially
         is_multi_regressor = isinstance(base_estimator, MultiOutputRegressor)
         if "ps" in self.acq_func and not is_multi_regressor:
             self.base_estimator_ = MultiOutputRegressor(base_estimator)
@@ -192,7 +195,8 @@ class Optimizer(object):
             self.base_estimator_ = base_estimator
 
         # Configure optimizer
-        ## decide optimizer based on gradient information
+
+        # decide optimizer based on gradient information
         if acq_optimizer == "auto":
             if has_gradients(self.base_estimator_):
                 acq_optimizer = "lbfgs"
@@ -207,7 +211,7 @@ class Optimizer(object):
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
         self.acq_optimizer = acq_optimizer
-        ## record other arguments
+        # record other arguments
         if acq_optimizer_kwargs is None:
             acq_optimizer_kwargs = dict()
         self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
@@ -218,11 +222,12 @@ class Optimizer(object):
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
         # Configure search space
-        ## normalize space if GP regressor
+
+        # normalize space if GP regressor
         if isinstance(self.base_estimator_, GaussianProcessRegressor):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
-        ## record categorical and non-categorical indices
+        # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
         for ind, dim in enumerate(self.space.dimensions):
@@ -237,8 +242,9 @@ class Optimizer(object):
         self.yi = []
 
         # Initialize cache for `ask` method responses
-        ## This ensures that multiple calls to `ask` with n_points set
-        ## return same sets of points. Reset to {} at every call to `tell`.
+
+        # This ensures that multiple calls to `ask` with n_points set
+        # return same sets of points. Reset to {} at every call to `tell`.
         self.cache_ = {}
 
     def copy(self, random_state=None):

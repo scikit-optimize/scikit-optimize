@@ -177,7 +177,8 @@ def base_minimize(func, dimensions, base_estimator,
 
     # Initialize optimization
     # Suppose there are points provided (x0 and y0), record them
-    ## check x0: list-like, requirement of minimal points
+
+    # check x0: list-like, requirement of minimal points
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], (list, tuple)):
@@ -187,7 +188,7 @@ def base_minimize(func, dimensions, base_estimator,
     if n_random_starts <= 0 and not x0:
         raise ValueError("Either set `n_random_starts` > 0,"
                          " or provide `x0`")
-    ## check y0: list-like, requirement of maximal calls
+    # check y0: list-like, requirement of maximal calls
     if isinstance(y0, Iterable):
         y0 = list(y0)
     elif isinstance(y0, numbers.Number):
@@ -196,23 +197,24 @@ def base_minimize(func, dimensions, base_estimator,
     if n_calls < required_calls:
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
-    ## calculate the total number of initial points
+    # calculate the total number of initial points
     n_initial_points = n_random_starts + len(x0)
 
     # Build optimizer
-    ## create optimizer class
+
+    # create optimizer class
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
                           random_state=random_state,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
-    ## check x0: element-wise data type, dimensionality
+    # check x0: element-wise data type, dimensionality
     assert all(isinstance(p, Iterable) for p in x0)
     if not all(len(p) == optimizer.space.n_dims for p in x0):
         raise RuntimeError("Optimization space (%s) and initial points in x0 "
                            "use inconsistent dimensions." % optimizer.space)
-    ## check callback
+    # check callback
     callbacks = check_callback(callback)
     if verbose:
         callbacks.append(VerboseCallback(
@@ -221,13 +223,14 @@ def base_minimize(func, dimensions, base_estimator,
             n_total=n_calls))
 
     # Record provided points
-    ## create return object
+
+    # create return object
     result = None
-    ## evaluate y0 if only x0 is provided
+    # evaluate y0 if only x0 is provided
     if x0 and y0 is None:
         y0 = list(map(func, x0))
         n_calls -= len(y0)
-    ## record through tell function
+    # record through tell function
     if x0:
         if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
             raise ValueError(
