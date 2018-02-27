@@ -14,7 +14,7 @@ optimization algorithms look at
 ``scipy.optimize``
 `here <http://docs.scipy.org/doc/scipy/reference/optimize.html>`_.
 
-.. figure:: https://rawgit.com/scikit-optimize/scikit-optimize/master/media/bo-objective.png
+.. figure:: /_static/bo-objective.png
    :alt: Approximated objective
 
 Approximated objective function after 50 iterations of ``gp_minimize``.
