@@ -106,7 +106,7 @@ html_sidebars = {
 # documentation.
 #
 html_theme_options = {
-    'logo': '../../../../media/logo.png',
+    'logo': 'logo.png',
     'github_user': 'scikit-optimize',
     'github_repo': 'scikit-optimize',
     'fixed_sidebar': True,
