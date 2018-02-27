@@ -175,46 +175,44 @@ def base_minimize(func, dimensions, base_estimator,
         "n_jobs": n_jobs}
     acq_func_kwargs = {"xi": xi, "kappa": kappa}
 
-    # Initialize with provided points (x0 and y0) and/or random points
+    # Initialize optimization
+    # Suppose there are points provided (x0 and y0), record them
+    ## check x0: list-like, requirement of minimal points
     if x0 is None:
         x0 = []
     elif not isinstance(x0[0], (list, tuple)):
         x0 = [x0]
-
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, but got %s" % type(x0))
-
-    if n_random_starts == 0 and not x0:
+    if n_random_starts <= 0 and not x0:
         raise ValueError("Either set `n_random_starts` > 0,"
                          " or provide `x0`")
-
+    ## check y0: list-like, requirement of maximal calls
     if isinstance(y0, Iterable):
         y0 = list(y0)
     elif isinstance(y0, numbers.Number):
         y0 = [y0]
-
-    # is the budget for calling `func` large enough?
     required_calls = n_random_starts + (len(x0) if not y0 else 0)
     if n_calls < required_calls:
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
-
-    # Number of points the user wants to evaluate before it makes sense to
-    # fit a surrogate model
+    ## calculate the total number of initial points
     n_initial_points = n_random_starts + len(x0)
+
+    # Build optimizer
+    ## create optimizer class
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
                           random_state=random_state,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
-
+    ## check x0: element-wise data type, dimensionality
     assert all(isinstance(p, Iterable) for p in x0)
-
     if not all(len(p) == optimizer.space.n_dims for p in x0):
         raise RuntimeError("Optimization space (%s) and initial points in x0 "
                            "use inconsistent dimensions." % optimizer.space)
-
+    ## check callback
     callbacks = check_callback(callback)
     if verbose:
         callbacks.append(VerboseCallback(
@@ -222,38 +220,31 @@ def base_minimize(func, dimensions, base_estimator,
             n_random=n_random_starts,
             n_total=n_calls))
 
-    # setting the scope for these variables
+    # Record provided points
+    ## create return object
     result = None
-
-    # User suggested points at which to evaluate the objective first
+    ## evaluate y0 if only x0 is provided
     if x0 and y0 is None:
         y0 = list(map(func, x0))
         n_calls -= len(y0)
-
-    # Pass user suggested initialisation points to the optimizer
+    ## record through tell function
     if x0:
         if not (isinstance(y0, Iterable) or isinstance(y0, numbers.Number)):
             raise ValueError(
                 "`y0` should be an iterable or a scalar, got %s" % type(y0))
-
         if len(x0) != len(y0):
             raise ValueError("`x0` and `y0` should have the same length")
-
-
         result = optimizer.tell(x0, y0)
         result.specs = specs
-
         if eval_callbacks(callbacks, result):
             return result
 
-    # Bayesian optimization loop
+    # Optimize
     for n in range(n_calls):
         next_x = optimizer.ask()
-
         next_y = func(next_x)
         result = optimizer.tell(next_x, next_y)
         result.specs = specs
-
         if eval_callbacks(callbacks, result):
             break
 
