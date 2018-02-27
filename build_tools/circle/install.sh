@@ -36,7 +36,7 @@ pip install -e.
 export SKOPT_HOME=$(pwd)
 
 conda install --yes jupyter
-pip install sphinx numpydoc
+pip install sphinx
 
 # importing matplotlib once builds the font caches. This avoids
 # having warnings in our example notebooks
