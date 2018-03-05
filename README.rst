@@ -2,8 +2,8 @@
 
 |Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
 
-Scikit-Optimize
-===============
+Budgeted Online Surrogate Modeling
+==================================
 
 Scikit-Optimize, or ``skopt``, is a simple and efficient library to
 minimize (very) expensive and noisy black-box functions. It implements
@@ -158,18 +158,6 @@ The scikit-optimize project was made possible with the support of
 .. image:: https://avatars1.githubusercontent.com/u/18165687?v=4&s=128
    :alt: Wild Tree Tech
    :target: http://wildtreetech.com
-
-.. image:: https://i.imgur.com/lgxboT5.jpg
-    :alt: NYU Center for Data Science
-    :target: https://cds.nyu.edu/
-
-.. image:: https://i.imgur.com/V1VSIvj.jpg
-    :alt: NSF
-    :target: https://www.nsf.gov
-
-.. image:: https://i.imgur.com/3enQ6S8.jpg
-    :alt: Northrop Grumman
-    :target: http://www.northropgrumman.com/Pages/default.aspx
 
 If your employer allows you to work on scikit-optimize during the day and would like
 recognition, feel free to add them to the "Made possible by" list.
