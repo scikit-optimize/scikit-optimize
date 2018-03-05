@@ -2,7 +2,7 @@
 
 |Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
 
-Scikit-Optimize
+Scikit-Optimize advanced!
 ===============
 
 Scikit-Optimize, or ``skopt``, is a simple and efficient library to
