@@ -2,8 +2,8 @@
 
 |Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
 
-Scikit-Optimize
-===============
+Budgeted Online Surrogate Modeling
+==================================
 
 Scikit-Optimize, or ``skopt``, is a simple and efficient library to
 minimize (very) expensive and noisy black-box functions. It implements
