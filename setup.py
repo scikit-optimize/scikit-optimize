@@ -5,7 +5,7 @@ except ImportError:
 
 setup(name='scikit-optimize',
       version='0.5.1',
-      description='Sequential model-based optimization toolbox.',
+      description='Surrogate Model Calibration Toolbox.',
       long_description=open('README.rst').read(),
       url='https://scikit-optimize.github.io/',
       license='BSD',
