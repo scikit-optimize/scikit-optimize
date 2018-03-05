@@ -32,7 +32,7 @@ popd
 conda create -n testenv --yes python pip pytest nose
 source activate testenv
 
-pip install -e.
+pip install -e .[plots]
 export SKOPT_HOME=$(pwd)
 
 conda install --yes jupyter
