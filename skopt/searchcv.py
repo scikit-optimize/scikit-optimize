@@ -6,7 +6,7 @@ from scipy.stats import rankdata
 
 import sklearn
 from sklearn.base import is_classifier, clone
-from sklearn.externals.joblib import Parallel, delayed, cpu_count
+from sklearn.externals.joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
@@ -64,9 +64,11 @@ class BayesSearchCV(BaseSearchCV):
         is a number of iterations that will be spent optimizing over
         this subspace.
 
-    n_iter : int, default=128
+    n_iter : int, default=50
         Number of parameter settings that are sampled. n_iter trades
-        off runtime vs quality of the solution.
+        off runtime vs quality of the solution. Consider increasing
+        ``n_points`` if you want to try more parameter settings in
+        parallel.
 
     optimizer_kwargs : dict, optional
         Dict of arguments passed to :class:`Optimizer`.  For example,
@@ -83,7 +85,13 @@ class BayesSearchCV(BaseSearchCV):
         Parameters to pass to the fit method.
 
     n_jobs : int, default=1
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. At maximum there are
+        ``n_points`` times ``cv`` jobs available during each iteration.
+
+    n_points : int, default=1
+        Number of parameter settings to sample in parallel. If this does
+        not align with ``n_iter``, the last iteration will sample less
+        points. See also :func:`~Optimizer.ask`
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -271,12 +279,13 @@ class BayesSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
-                 iid=True, refit=True, cv=None, verbose=0,
+                 n_points=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=False):
 
         self.search_spaces = search_spaces
         self.n_iter = n_iter
+        self.n_points = n_points
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
         self._check_search_space(self.search_spaces)
@@ -524,12 +533,12 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def _step(self, X, y, search_space, optimizer, groups=None, n_jobs=1):
+    def _step(self, X, y, search_space, optimizer, groups=None, n_points=1):
         """Generate n_jobs parameters and evaluate them in parallel.
         """
 
         # get parameter values to evaluate
-        params = optimizer.ask(n_points=n_jobs)
+        params = optimizer.ask(n_points=n_points)
         params_dict = [point_asdict(search_space, p) for p in params]
 
         # HACK: self.cv_results_ is reset at every call to _fit, keep current
@@ -625,11 +634,7 @@ class BayesSearchCV(BaseSearchCV):
         self.best_index_ = None
         self.multimetric_ = False
 
-        n_jobs = self.n_jobs
-
-        # account for case n_jobs < 0
-        if n_jobs < 0:
-            n_jobs = max(1, cpu_count() + n_jobs + 1)
+        n_points = self.n_points
 
         for search_space, optimizer in zip(search_spaces, optimizers):
             # if not provided with search subspace, n_iter is taken as
@@ -641,14 +646,14 @@ class BayesSearchCV(BaseSearchCV):
 
             # do the optimization for particular search space
             while n_iter > 0:
-                # when n_iter < n_jobs points left for evaluation
-                n_jobs_adjusted = min(n_iter, n_jobs)
+                # when n_iter < n_points points left for evaluation
+                n_points_adjusted = min(n_iter, n_points)
 
                 optim_result = self._step(
                     X, y, search_space, optimizer,
-                    groups=groups, n_jobs=n_jobs_adjusted
+                    groups=groups, n_points=n_points_adjusted
                 )
-                n_iter -= n_jobs
+                n_iter -= n_points
 
                 if eval_callbacks(callbacks, optim_result):
                     break

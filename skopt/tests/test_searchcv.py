@@ -3,26 +3,68 @@ search with interface similar to those of GridSearchCV
 """
 
 import pytest
+import time
 
-from sklearn.utils.testing import assert_greater, assert_equal
-from sklearn.datasets import load_iris
+from sklearn.utils.testing import assert_greater
+from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
+from sklearn.externals.joblib import cpu_count
 
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
 
 
+def _fit_svc(n_jobs=1, n_points=1, cv=None):
+    """
+    Utility function to fit a larger classification task with SVC
+    """
+
+    X, y = make_classification(n_samples=1000, n_features=20, n_redundant=0,
+                               n_informative=18, random_state=1,
+                               n_clusters_per_class=1)
+
+    opt = BayesSearchCV(
+        SVC(),
+        {
+            'C': Real(1e-3, 1e+3, prior='log-uniform'),
+            'gamma': Real(1e-3, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 3),
+        },
+        n_jobs=n_jobs, n_iter=11, n_points=n_points, cv=cv
+    )
+
+    opt.fit(X, y)
+
+    assert_greater(opt.score(X, y), 0.9)
+
+
+def test_raise_errors():
+
+    # check if empty search space is raising errors
+    with pytest.raises(ValueError):
+        BayesSearchCV(SVC(), {})
+
+    # check if invalid dimensions are raising errors
+    with pytest.raises(ValueError):
+        BayesSearchCV(SVC(), {'C': '1 ... 100.0'})
+
+    with pytest.raises(TypeError):
+        BayesSearchCV(SVC(), ['C', (1.0, 1)])
+
+
 @pytest.mark.parametrize("surrogate", ['gp', None])
 @pytest.mark.parametrize("n_jobs", [1, -1])  # test sequential and parallel
-def test_searchcv_runs(surrogate, n_jobs):
+@pytest.mark.parametrize("n_points", [1, 3])  # test query of multiple points
+def test_searchcv_runs(surrogate, n_jobs, n_points, cv=None):
     """
     Test whether the cross validation search wrapper around sklearn
     models runs properly with available surrogates and with single
-    or multiple workers.
+    or multiple workers and different number of parameter settings
+    to ask from the optimizer in parallel.
 
     Parameters
     ----------
@@ -41,17 +83,6 @@ def test_searchcv_runs(surrogate, n_jobs):
         X, y, train_size=0.75, random_state=0
     )
 
-    # check if empty search space is raising errors
-    with pytest.raises(ValueError):
-        BayesSearchCV(SVC(), {})
-
-    # check if invalid dimensions are raising errors
-    with pytest.raises(ValueError):
-        BayesSearchCV(SVC(), {'C': '1 ... 100.0'})
-
-    with pytest.raises(TypeError):
-        BayesSearchCV(SVC(), ['C', (1.0, 1)])
-
     # create an instance of a surrogate if it is not a string
     if surrogate is not None:
         optimizer_kwargs = {'base_estimator': surrogate}
@@ -66,7 +97,7 @@ def test_searchcv_runs(surrogate, n_jobs):
             'degree': Integer(1, 8),
             'kernel': Categorical(['linear', 'poly', 'rbf']),
         },
-        n_jobs=n_jobs, n_iter=11,
+        n_jobs=n_jobs, n_iter=11, n_points=n_points, cv=cv,
         optimizer_kwargs=optimizer_kwargs
     )
 
@@ -75,6 +106,17 @@ def test_searchcv_runs(surrogate, n_jobs):
     # this normally does not hold only if something is wrong
     # with the optimizaiton procedure as such
     assert_greater(opt.score(X_test, y_test), 0.9)
+
+
+@pytest.mark.slow_test
+def test_parallel_cv():
+
+    """
+    Test whether parallel jobs work
+    """
+
+    _fit_svc(n_jobs=1, cv=5)
+    _fit_svc(n_jobs=2, cv=5)
 
 
 def test_searchcv_runs_multiple_subspaces():
