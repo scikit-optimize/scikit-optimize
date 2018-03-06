@@ -148,16 +148,19 @@ class Optimizer(object):
         # Store and creat acquisition function set
         self.acq_func = acq_func
         self.acq_func_kwargs = acq_func_kwargs
+
         allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
+
         # treat hedging method separately
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
             self.gains_ = np.zeros(3)
         else:
             self.cand_acq_funcs_ = [self.acq_func]
+
         if acq_func_kwargs is None:
             acq_func_kwargs = dict()
         self.eta = acq_func_kwargs.get("eta", 1.0)
@@ -170,6 +173,7 @@ class Optimizer(object):
                            "n_initial_points."),
                           DeprecationWarning)
             n_initial_points = n_random_starts
+
         if n_initial_points < 0:
             raise ValueError(
                 "Expected `n_initial_points` >= 0, got %d" % n_initial_points)
@@ -183,10 +187,12 @@ class Optimizer(object):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
                 random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+
         # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
+
         # treat per second acqusition function specially
         is_multi_regressor = isinstance(base_estimator, MultiOutputRegressor)
         if "ps" in self.acq_func and not is_multi_regressor:
@@ -202,18 +208,22 @@ class Optimizer(object):
                 acq_optimizer = "lbfgs"
             else:
                 acq_optimizer = "sampling"
+
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
+
         if (not has_gradients(self.base_estimator_) and
             acq_optimizer != "sampling"):
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
         self.acq_optimizer = acq_optimizer
+
         # record other arguments
         if acq_optimizer_kwargs is None:
             acq_optimizer_kwargs = dict()
+
         self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
         self.n_restarts_optimizer = acq_optimizer_kwargs.get(
             "n_restarts_optimizer", 5)
@@ -227,6 +237,7 @@ class Optimizer(object):
         if isinstance(self.base_estimator_, GaussianProcessRegressor):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
+
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -237,6 +248,7 @@ class Optimizer(object):
                 self._non_cat_inds.append(ind)
 
         # Initialize storage for optimization
+
         self.models = []
         self.Xi = []
         self.yi = []
