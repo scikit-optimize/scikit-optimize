@@ -26,3 +26,12 @@ Plot made using ``skopt.plots.plot_objective``.
 
     intro
     api/index
+    examples/ask-and-tell.ipynb
+    
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
