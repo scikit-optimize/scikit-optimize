@@ -9,7 +9,7 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
 
     Parameters
     ----------
-    * `func` [callable]:
+    func : callable
         Function to minimize. Should take a single list of parameters
         and return the objective value.
     
@@ -18,7 +18,7 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         on your objective function, in order to call it directly
         with the named arguments. See `use_named_args` for an example.
 
-    * `dimensions` [list, shape=(n_dims,)]:
+    dimensions : list, shape=(n_dims,)
         List of search space dimensions.
         Each search dimension can be defined either as
 
@@ -30,18 +30,18 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `n_calls` [int, default=100]:
+    n_calls : int, optional (default=100)
         Number of calls to `func` to find the minimum.
 
-    * `x0` [list, list of lists or `None`]:
+    x0 : list, list of lists or `None`, optional (default=None)
         Initial input points.
 
         - If it is a list of lists, use it as a list of input points.
         - If it is a list, use it as a single initial input point.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list, scalar or `None`]:
-        Evaluation of initial input points.
+    y0 : list, scalar or `None`, optional
+        Evaluation of initial input points (default=None).
 
         - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
@@ -51,33 +51,39 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    random_state : int, RandomState instance, or None
         Set random state to something other than None for reproducible
-        results.
+        results (default=None).
 
-    * `verbose` [boolean, default=False]:
+    verbose : boolean
         Control the verbosity. It is advised to set the verbosity to True
-        for long optimization runs.
+        for long optimization runs (default=False).
 
-    * `callback` [callable, list of callables, optional]
+    callback : callable or list of callables, optional
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
     Returns
     -------
-    * `res` [`OptimizeResult`, scipy object]:
+    res : :obj:`OptimizeResult`
+
         The optimization result returned as a OptimizeResult object.
         Important attributes are:
 
-        - `x` [list]: location of the minimum.
-        - `fun` [float]: function value at the minimum.
-        - `x_iters` [list of lists]: location of function evaluation for each
-           iteration.
-        - `func_vals` [array]: function value for each iteration.
-        - `space` [Space]: the optimisation space.
-        - `specs` [dict]: the call specifications.
-        - `rng` [RandomState instance]: State of the random state
-           at the end of minimization.
+        - x : list
+            Location of the minimum.
+        - fun : float
+            Function value at the minimum.
+        - x_iters : list of lists
+            Location of function evaluation for each iteration.
+        - func_vals : array
+            Function value for each iteration.
+        - space : Space
+            The optimisation space.
+        - specs : dict
+            The call specifications.
+        - rng : RandomState instance
+            State of the random state at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html

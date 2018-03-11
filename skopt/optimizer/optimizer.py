@@ -39,19 +39,19 @@ class Optimizer(object):
 
     Parameters
     ----------
-    * `dimensions` [list, shape=(n_dims,)]:
+    * dimensions : list, shape=(n_dims,):
         List of search space dimensions.
         Each search dimension can be defined either as
 
         - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
-        - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
+        - a `(lower_bound, upper_bound, 'prior')` tuple (for `Real`
           dimensions),
         - as a list of categories (for `Categorical` dimensions), or
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
+    * base_estimator: {'GP', 'RF', 'ET', 'GBRT', sklearn regressor}, optional (default='GP'):
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
