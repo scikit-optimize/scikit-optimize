@@ -51,7 +51,8 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * base_estimator: {'GP', 'RF', 'ET', 'GBRT', sklearn regressor}, optional (default='GP'):
+    * base_estimator: {'GP', 'RF', 'ET', 'GBRT', sklearn regressor},
+      optional (default='GP'):
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
