@@ -1,12 +1,6 @@
 """Plotting functions."""
 
 import numpy as np
-
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import cm
-from matplotlib.ticker import LogLocator
-from matplotlib.ticker import MaxNLocator
-
 from scipy.optimize import OptimizeResult
 
 
@@ -45,6 +39,7 @@ def plot_convergence(*args, **kwargs):
     yscale = kwargs.get("yscale", None)
 
     if ax is None:
+        import matplotlib.pyplot as plt
         ax = plt.gca()
 
     ax.set_title("Convergence plot")
@@ -55,6 +50,7 @@ def plot_convergence(*args, **kwargs):
     if yscale is not None:
         ax.set_yscale(yscale)
 
+    from matplotlib.pyplot import cm
     colors = cm.viridis(np.linspace(0.25, 1.0, len(args)))
 
     for results, color in zip(args, colors):
@@ -142,6 +138,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                     if prior == 'log-uniform':
                         set_scale('log')
                     else:
+                        from matplotlib.ticker import MaxNLocator
                         set_major_locator(MaxNLocator(6, prune='both'))
 
             else:
@@ -158,6 +155,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
                 if space.dimensions[i].prior == 'log-uniform':
                     ax_.set_xscale('log')
                 else:
+                    from matplotlib.ticker import MaxNLocator
                     ax_.xaxis.set_major_locator(MaxNLocator(6, prune='both'))
 
     return ax
@@ -312,6 +310,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
 
     if zscale == 'log':
+        from matplotlib.ticker import LogLocator
         locator = LogLocator()
     elif zscale == 'linear':
         locator = None
@@ -319,6 +318,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
 
+    import matplotlib.pyplot as plt
     fig, ax = plt.subplots(space.n_dims, space.n_dims,
                            figsize=(size * space.n_dims, size * space.n_dims))
 
@@ -386,6 +386,8 @@ def plot_evaluations(result, bins=20, dimensions=None):
     space = result.space
     samples = np.asarray(result.x_iters)
     order = range(samples.shape[0])
+
+    import matplotlib.pyplot as plt
     fig, ax = plt.subplots(space.n_dims, space.n_dims,
                            figsize=(2 * space.n_dims, 2 * space.n_dims))
 
