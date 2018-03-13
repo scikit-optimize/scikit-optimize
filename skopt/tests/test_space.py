@@ -254,7 +254,8 @@ def test_space_consistency():
 
     s1 = Space([(True, False)])
     s2 = Space([Categorical([True, False])])
-    assert s1 == s2
+    s3 = Space([np.array([True, False])])
+    assert s1 == s2 == s3
 
 
 @pytest.mark.fast_test
