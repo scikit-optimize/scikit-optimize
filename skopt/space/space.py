@@ -78,7 +78,8 @@ def check_dimension(dimension, transform=None):
         return Categorical(dimension, transform=transform)
 
     if len(dimension) == 2:
-        if any([isinstance(d, (str, bool)) for d in dimension]):
+        if any([isinstance(d, (str, bool)) or isinstance(d, np.bool_)
+                for d in dimension]):
             return Categorical(dimension, transform=transform)
         elif all([isinstance(dim, numbers.Integral) for dim in dimension]):
             return Integer(*dimension, transform=transform)
