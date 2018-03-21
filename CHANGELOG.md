@@ -1,5 +1,16 @@
 # Release history
 
+## Version 0.5.2
+
+### Bug fixes
+
+* Separated `n_points` from `n_jobs` in `BayesSearchCV`.
+* Dimensions now support boolean np.arrays.
+
+### Maintenance
+
+* `matplotlib` is now an optional requirement (install with `pip install 'scikit-optimize[plots]'`)
+
 ## Version 0.5
 
 High five!
