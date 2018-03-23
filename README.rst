@@ -37,11 +37,19 @@ Important links
 Install
 -------
 
-The latest released version of scikit-optimize is v0.5.1, which you can install
+The latest released version of scikit-optimize is v0.5.2, which you can install
 with:
 ::
 
     pip install scikit-optimize
+
+This installs an essential version of scikit-optimize. To install scikit-optimize
+with plotting functionality, you can instead do:
+::
+
+    pip install 'scikit-optimize[plots]'
+
+This will install matplotlib along with scikit-optimize.
 
 In addition there is a `conda-forge <https://conda-forge.org/>`_ package
 of scikit-optimize:
