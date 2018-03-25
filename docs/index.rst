@@ -29,7 +29,7 @@ Plot made using ``skopt.plots.plot_objective``.
 
 .. toctree::
     :maxdepth: 2
-    :caption: Notebooks:
+    :caption: Example Notebooks:
 
     Ask and tell <examples/ask-and-tell.ipynb>
     Bayesian optimization <examples/bayesian-optimization.ipynb>
