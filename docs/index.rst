@@ -21,15 +21,33 @@ Approximated objective function after 50 iterations of ``gp_minimize``.
 Plot made using ``skopt.plots.plot_objective``.
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
+    :caption: Functions:
+
+    api/minimize_functions
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Classes:
+
+    api/classes
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Sub-modules:
+
+    api/sub_modules
+
+.. toctree::
+    :maxdepth: 1
     :caption: Contents:
 
     intro
     api/index
 
 .. toctree::
-    :maxdepth: 2
-    :caption: Example Notebooks:
+    :maxdepth: 1
+    :caption: Example notebooks:
 
     Ask and tell <examples/ask-and-tell.ipynb>
     Bayesian optimization <examples/bayesian-optimization.ipynb>
@@ -45,5 +63,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
+
 * :ref:`search`
