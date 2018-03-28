@@ -388,7 +388,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin,
         if anisotropic and X.shape[1] != len(length_scale):
             raise ValueError(
                 "Expected X to have %d features, got %d" %
-                (X.shape, len(length_scale)))
+                (len(length_scale), X.shape[1]))
 
         n_samples, n_dim = X.shape
 
