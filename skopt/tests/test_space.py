@@ -1,6 +1,9 @@
+import os
 import pytest
 import numbers
 import numpy as np
+import yaml
+from tempfile import NamedTemporaryFile
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -479,3 +482,40 @@ def test_dimension_name():
         with pytest.raises(ValueError) as exc:
             real = Real(1, 2, name=n)
             assert("Dimension's name must be either string or None." == exc.value.args[0])
+
+
+def test_space_from_yaml():
+    tmp_file = NamedTemporaryFile(delete=False)
+    tmp_file_path = tmp_file.name
+    tmp_file.write(b"""
+      Space:
+        - Real:
+            low: 0.0
+            high: 1.0
+        - Integer:
+            low: -5
+            high: 5
+        - Categorical:
+            categories:
+              - a
+              - b
+              - c
+        - Real:
+            low: 1.0
+            high: 5.0
+            prior: log-uniform
+        - Categorical:
+            categories:
+              - e
+              - f
+    """)
+    tmp_file.close()
+
+    space = Space([(0.0, 1.0), (-5, 5),
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
+    
+    space2 = Space.from_yaml(tmp_file_path)
+    assert_equal(space, space2)
+    
+    os.unlink(tmp_file_path)
+    assert not os.path.exists(tmp_file_path)

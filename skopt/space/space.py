@@ -1,5 +1,7 @@
 import numbers
 import numpy as np
+import yaml
+import sys
 
 from scipy.stats.distributions import randint
 from scipy.stats.distributions import rv_discrete
@@ -549,6 +551,49 @@ class Space(object):
         Returns true if all dimensions are Real
         """
         return all([isinstance(dim, Real) for dim in self.dimensions])
+
+    @classmethod
+    def from_yaml(cls, yml_path, namespace=None):
+        """Create Space from yaml configuration file
+
+        Parameters
+        ----------
+        * `yml_path` [str]:
+           Full path to yaml configuration file
+        * `namespace` [str, default=None]:
+           Namespace within configuration file to use
+
+        Returns
+        -------
+        * `space` [Space]:
+           Instantiated Space object
+        """
+        with open(yml_path, 'rb') as f:
+            cfg = yaml.load(f)
+
+        this_module = sys.modules[__name__]
+        # Dynamically create list of subclass names for Dimension
+        dimension_classes = ['Real', 'Integer', 'Categorical']
+
+        # Extract space options for configuration file
+        options_name = namespace or list(cfg.keys())[0]
+        options = cfg if isinstance(cfg, list) else cfg[options_name]
+
+        # Populate list with Dimension objects
+        dimensions = []
+        for option in options:
+            key = list(option.keys())[0]
+            # Make configuration case insensitive
+            dimension_cls = key.title()
+            values = {k.lower(): v for k, v in option[key].items()}
+            if dimension_cls in dimension_classes:
+                # Instantiate Dimension subclass and add it to the list
+                dimension = getattr(this_module, dimension_cls)(**values)
+                dimensions.append(dimension)
+
+        space = cls(dimensions=dimensions)
+        
+        return space
 
     def rvs(self, n_samples=1, random_state=None):
         """Draw random samples.
