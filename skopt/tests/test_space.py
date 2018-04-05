@@ -484,6 +484,7 @@ def test_dimension_name():
             assert("Dimension's name must be either string or None." == exc.value.args[0])
 
 
+@pytest.mark.fast_test
 def test_space_from_yaml():
     tmp_file = NamedTemporaryFile(delete=False)
     tmp_file_path = tmp_file.name
@@ -513,9 +514,9 @@ def test_space_from_yaml():
 
     space = Space([(0.0, 1.0), (-5, 5),
                    ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
-    
+
     space2 = Space.from_yaml(tmp_file_path)
     assert_equal(space, space2)
-    
+
     os.unlink(tmp_file_path)
     assert not os.path.exists(tmp_file_path)

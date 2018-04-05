@@ -592,7 +592,7 @@ class Space(object):
                 dimensions.append(dimension)
 
         space = cls(dimensions=dimensions)
-        
+
         return space
 
     def rvs(self, n_samples=1, random_state=None):
