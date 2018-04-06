@@ -486,37 +486,36 @@ def test_dimension_name():
 
 @pytest.mark.fast_test
 def test_space_from_yaml():
-    tmp_file = NamedTemporaryFile(delete=False)
-    tmp_file_path = tmp_file.name
-    tmp_file.write(b"""
-      Space:
-        - Real:
-            low: 0.0
-            high: 1.0
-        - Integer:
-            low: -5
-            high: 5
-        - Categorical:
-            categories:
-              - a
-              - b
-              - c
-        - Real:
-            low: 1.0
-            high: 5.0
-            prior: log-uniform
-        - Categorical:
-            categories:
-              - e
-              - f
-    """)
-    tmp_file.close()
+    with NamedTemporaryFile() as tmp:
+        tmp.write(b"""
+        Space:
+            - Real:
+                low: 0.0
+                high: 1.0
+            - Integer:
+                low: -5
+                high: 5
+            - Categorical:
+                categories:
+                - a
+                - b
+                - c
+            - Real:
+                low: 1.0
+                high: 5.0
+                prior: log-uniform
+            - Categorical:
+                categories:
+                - e
+                - f
+        """)
+        tmp.flush()
 
-    space = Space([(0.0, 1.0), (-5, 5),
-                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
+        space = Space([(0.0, 1.0),
+                       (-5, 5),
+                       ("a", "b", "c"),
+                       (1.0, 5.0, "log-uniform"),
+                       ("e", "f")])
 
-    space2 = Space.from_yaml(tmp_file_path)
-    assert_equal(space, space2)
-
-    os.unlink(tmp_file_path)
-    assert not os.path.exists(tmp_file_path)
+        space2 = Space.from_yaml(tmp.name)
+        assert_equal(space, space2)
