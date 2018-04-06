@@ -1,4 +1,3 @@
-import os
 import pytest
 import numbers
 import numpy as np
