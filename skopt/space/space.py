@@ -1,5 +1,6 @@
 import numbers
 import numpy as np
+import yaml
 
 from scipy.stats.distributions import randint
 from scipy.stats.distributions import rv_discrete
@@ -549,6 +550,69 @@ class Space(object):
         Returns true if all dimensions are Real
         """
         return all([isinstance(dim, Real) for dim in self.dimensions])
+
+    @classmethod
+    def from_yaml(cls, yml_path, namespace=None):
+        """Create Space from yaml configuration file
+
+        Parameters
+        ----------
+        * `yml_path` [str]:
+            Full path to yaml configuration file, example YaML below:
+            Space:
+              - Integer:
+                  low: -5
+                  high: 5
+              - Categorical:
+                  categories:
+                  - a
+                  - b
+              - Real:
+                  low: 1.0
+                  high: 5.0
+                  prior: log-uniform
+        * `namespace` [str, default=None]:
+           Namespace within configuration file to use, will use first
+             namespace if not provided
+
+        Returns
+        -------
+        * `space` [Space]:
+           Instantiated Space object
+        """
+        with open(yml_path, 'rb') as f:
+            config = yaml.load(f)
+
+        dimension_classes = {'real': Real,
+                             'integer': Integer,
+                             'categorical': Categorical}
+
+        # Extract space options for configuration file
+        if isinstance(config, dict):
+            if namespace is None:
+                options = next(iter(config.values()))
+            else:
+                options = config[namespace]
+        elif isinstance(config, list):
+            options = config
+        else:
+            raise TypeError('YaML does not specify a list or dictionary')
+
+        # Populate list with Dimension objects
+        dimensions = []
+        for option in options:
+            key = next(iter(option.keys()))
+            # Make configuration case insensitive
+            dimension_class = key.lower()
+            values = {k.lower(): v for k, v in option[key].items()}
+            if dimension_class in dimension_classes:
+                # Instantiate Dimension subclass and add it to the list
+                dimension = dimension_classes[dimension_class](**values)
+                dimensions.append(dimension)
+
+        space = cls(dimensions=dimensions)
+
+        return space
 
     def rvs(self, n_samples=1, random_state=None):
         """Draw random samples.
