@@ -6,7 +6,6 @@ from tempfile import NamedTemporaryFile
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_not_equal
@@ -15,6 +14,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises_regex
 
+from skopt import Optimizer
 from skopt.space import Space
 from skopt.space import Real
 from skopt.space import Integer
@@ -475,14 +475,6 @@ def test_dimension_name_none(dimension):
     assert dimension.name is None
 
 
-def test_dimension_name():
-    notnames = [1, 1., True]
-    for n in notnames:
-        with pytest.raises(ValueError) as exc:
-            real = Real(1, 2, name=n)
-            assert("Dimension's name must be either string or None." == exc.value.args[0])
-
-
 @pytest.mark.fast_test
 def test_space_from_yaml():
     with NamedTemporaryFile() as tmp:
@@ -518,3 +510,22 @@ def test_space_from_yaml():
 
         space2 = Space.from_yaml(tmp.name)
         assert_equal(space, space2)
+
+
+@pytest.mark.parametrize("name", [1, 1., True])
+def test_dimension_with_invalid_names(name):
+    with pytest.raises(ValueError) as exc:
+        Real(1, 2, name=name)
+    assert("Dimension's name must be either string or None." ==
+           exc.value.args[0])
+
+
+@pytest.mark.fast_test
+def test_purely_categorical_space():
+    # Test reproduces the bug in #908, make sure it doesn't come back
+    dims = [Categorical(['a', 'b', 'c']), Categorical(['A', 'B', 'C'])]
+    optimizer = Optimizer(dims, n_initial_points=1, random_state=3)
+
+    x = optimizer.ask()
+    # before the fix this call raised an exception
+    optimizer.tell(x, 1.)
