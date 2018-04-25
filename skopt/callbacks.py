@@ -263,7 +263,7 @@ class CheckpointSaver(object):
     Example usage:
         import skopt
 
-        checkpoint_callback = skopt.callbacks.CheckpointCallback("./result.pkl")
+        checkpoint_callback = skopt.callbacks.CheckpointSaver("./result.pkl")
         skopt.gp_minimize(obj_fun, dims, callback=[checkpoint_callback])
 
     Parameters

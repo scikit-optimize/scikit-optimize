@@ -58,10 +58,13 @@ def test_checkpoint_saver():
         os.remove(checkpoint_path)
 
     checkpoint_saver = CheckpointSaver(checkpoint_path)
-    result = dummy_minimize(bench1, [(-1.0, 1.0)], callback=checkpoint_saver, n_calls=10)
+    result = dummy_minimize(bench1,
+        [(-1.0, 1.0)],
+        callback=checkpoint_saver,
+        n_calls=10)
 
     assert os.path.exists(checkpoint_path)
-    assert load(checkpoint_path).x == result.x, "not able to restore checkpoint"
+    assert load(checkpoint_path).x == result.x
 
     if os.path.isfile(checkpoint_path):
         os.remove(checkpoint_path)
