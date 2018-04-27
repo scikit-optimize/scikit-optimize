@@ -57,7 +57,7 @@ def test_checkpoint_saver():
     if os.path.isfile(checkpoint_path):
         os.remove(checkpoint_path)
 
-    checkpoint_saver = CheckpointSaver(checkpoint_path)
+    checkpoint_saver = CheckpointSaver(checkpoint_path, compress=9)
     result = dummy_minimize(bench1,
         [(-1.0, 1.0)],
         callback=checkpoint_saver,

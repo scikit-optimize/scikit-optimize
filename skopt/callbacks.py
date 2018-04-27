@@ -269,8 +269,9 @@ class CheckpointSaver(object):
     Parameters
     ----------
     * `checkpoint_path`: location where checkpoint will be saved to;
+    * `dump_options`: options to pass on to `skopt.dump`, like `compress=9`
     """
-    def __init__(self, checkpoint_path, dump_options=dict()):
+    def __init__(self, checkpoint_path, **dump_options):
         self.checkpoint_path = checkpoint_path
         self.dump_options = dump_options
 
@@ -281,4 +282,4 @@ class CheckpointSaver(object):
         * `res` [`OptimizeResult`, scipy object]:
             The optimization as a OptimizeResult object.
         """
-        dump(res, self.checkpoint_path, self.dump_options)
+        dump(res, self.checkpoint_path, **self.dump_options)
