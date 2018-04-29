@@ -478,6 +478,7 @@ def normalize_dimensions(dimensions):
         for dimension in space:
             transformed_dimensions.append(Categorical(dimension.categories,
                                                       dimension.prior,
+                                                      name=dimension.name,
                                                       transform="identity"))
 
     else:
@@ -488,11 +489,13 @@ def normalize_dimensions(dimensions):
             elif isinstance(dimension, Real):
                 transformed_dimensions.append(
                     Real(dimension.low, dimension.high, dimension.prior,
+                         name=dimension.name,
                          transform="normalize")
                     )
             elif isinstance(dimension, Integer):
                 transformed_dimensions.append(
                     Integer(dimension.low, dimension.high,
+                            name=dimension.name,
                             transform="normalize")
                     )
             else:
