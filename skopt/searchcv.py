@@ -507,7 +507,7 @@ class BayesSearchCV(BaseSearchCV):
         """
         self.best_estimator_ = clone(self.estimator)
         self.best_estimator_.set_params(**self.best_params_)
-        self.best_estimator_.fit(X, y, **self.fit_params)
+        self.best_estimator_.fit(X, y, **(self.fit_params or {}))
         return self
 
     def _make_optimizer(self, params_space):
