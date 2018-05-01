@@ -9,6 +9,8 @@ from matplotlib.ticker import MaxNLocator
 
 from scipy.optimize import OptimizeResult
 
+from .utils import expected_minimum
+
 
 def plot_convergence(*args, **kwargs):
     """Plot one or several convergence traces.
@@ -289,7 +291,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     * `n_samples` [int, default=250]
         Number of random samples to use for averaging the model function
-        at each of the `n_points`.
+        at each of the `n_points`. If 0, the partial dependence is 
+        evaluated along a cross section containing the expected minimum.
 
     * `size` [float, default=2]
         Height (in inches) of each facet.
@@ -309,7 +312,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     """
     space = result.space
     samples = np.asarray(result.x_iters)
-    rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
+    if n_samples:
+        rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
+    else:
+        exp_min = np.array(expected_minimum(result)[0]).reshape(1, -1)
+        rvs_transformed = space.transform(exp_min)
 
     if zscale == 'log':
         locator = LogLocator()
