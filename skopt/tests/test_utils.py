@@ -23,7 +23,7 @@ from skopt.utils import has_gradients
 from skopt.utils import cook_estimator
 from skopt.utils import normalize_dimensions
 from skopt.utils import use_named_args
-from skopt.space import Real
+from skopt.space import Real, Integer, Categorical
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -172,13 +172,23 @@ def test_normalize_dimensions(dimensions, normalizations):
 
 
 @pytest.mark.fast_test
+@pytest.mark.parametrize("dimension, name",
+                         [(Real(1, 2, name="learning rate"), "learning rate"),
+                          (Integer(1, 100, name="no of trees"), "no of trees"),
+                          (Categorical(["red, blue"], name="colors"), "colors")])
+def test_normalize_dimensions(dimension, name):
+    space = normalize_dimensions([dimension])
+    assert space.dimensions[0].name == name
+
+
+@pytest.mark.fast_test
 def test_use_named_args():
     """
     Test the function wrapper @use_named_args which is used
     for wrapping an objective function with named args so it
     can be called by the optimizers which only pass a single
     list as the arg.
-    
+
     This test does not actually use the optimizers but merely
     simulates how they would call the function.
     """
