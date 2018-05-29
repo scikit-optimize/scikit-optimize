@@ -93,6 +93,97 @@ def plot_convergence(*args, **kwargs):
     return ax
 
 
+def plot_regret(*args, **kwargs):
+    """Plot one or several cumulative regret traces.
+
+    Parameters
+    ----------
+    * `args[i]` [`OptimizeResult`, list of `OptimizeResult`, or tuple]:
+        The result(s) for which to plot the cumulative regret trace.
+
+        - if `OptimizeResult`, then draw the corresponding single trace;
+        - if list of `OptimizeResult`, then draw the corresponding cumulative
+        regret traces in transparency, along with the average cumulative regret
+        trace;
+        - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
+          an `OptimizeResult` or a list of `OptimizeResult`.
+
+    * `ax` [`Axes`, optional]:
+        The matplotlib axes on which to draw the plot, or `None` to create
+        a new one.
+
+    * `true_minimum` [float, optional]:
+        The true minimum value of the function, if known.
+
+    * `yscale` [None or string, optional]:
+        The scale for the y-axis.
+
+    Returns
+    -------
+    * `ax`: [`Axes`]:
+        The matplotlib axes.
+    """
+    # <3 legacy python
+    ax = kwargs.get("ax", None)
+    true_minimum = kwargs.get("true_minimum", None)
+    yscale = kwargs.get("yscale", None)
+
+    if ax is None:
+        ax = plt.gca()
+
+    ax.set_title("Cumulative regret plot")
+    ax.set_xlabel("Number of calls $n$")
+    ax.set_ylabel(r"$\sum_{i=0}^n(f(x_i) - optimum)$ after $n$ calls")
+    ax.grid()
+
+    if yscale is not None:
+        ax.set_yscale(yscale)
+
+    colors = cm.viridis(np.linspace(0.25, 1.0, len(args)))
+
+    if true_minimum is None:
+        results = []
+        for res in args:
+            if isinstance(res, tuple):
+                res = res[1]
+
+            if isinstance(res, OptimizeResult):
+                results.append(res)
+            elif isinstance(res, list):
+                results.extend(res)
+        true_minimum = np.min([np.min(r.func_vals) for r in results])
+
+    for results, color in zip(args, colors):
+        if isinstance(results, tuple):
+            name, results = results
+        else:
+            name = None
+
+        if isinstance(results, OptimizeResult):
+            n_calls = len(results.x_iters)
+            regrets = [np.sum(results.func_vals[:i] - true_minimum)
+                       for i in range(1, n_calls + 1)]
+            ax.plot(range(1, n_calls + 1), regrets, c=color,
+                    marker=".", markersize=12, lw=2, label=name)
+
+        elif isinstance(results, list):
+            n_calls = len(results[0].x_iters)
+            iterations = range(1, n_calls + 1)
+            regrets = [[np.sum(r.func_vals[:i] - true_minimum) for i in
+                        iterations] for r in results]
+
+            for cr in regrets:
+                ax.plot(iterations, cr, c=color, alpha=0.2)
+
+            ax.plot(iterations, np.mean(regrets, axis=0), c=color,
+                    marker=".", markersize=12, lw=2, label=name)
+
+    if name:
+        ax.legend(loc="best")
+
+    return ax
+
+
 def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
     # Work out min, max of y axis for the diagonal so we can adjust
     # them all to the same value
