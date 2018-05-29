@@ -146,8 +146,8 @@ def plot_regret(*args, **kwargs):
         for res in args:
             if isinstance(res, tuple):
                 res = res[1]
-            
-            if isinstance(res, OptimizeResult): 
+
+            if isinstance(res, OptimizeResult):
                 results.append(res)
             elif isinstance(res, list):
                 results.extend(res)
