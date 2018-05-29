@@ -141,6 +141,18 @@ def plot_regret(*args, **kwargs):
 
     colors = cm.viridis(np.linspace(0.25, 1.0, len(args)))
 
+    if true_minimum is None:
+        results = []
+        for res in args:
+            if isinstance(res, tuple):
+                res = res[1]
+            
+            if isinstance(res, OptimizeResult): 
+                results.append(res)
+            elif isinstance(res, list):
+                results.extend(res)
+        true_minimum = np.min([np.min(r.func_vals) for r in results])
+
     for results, color in zip(args, colors):
         if isinstance(results, tuple):
             name, results = results
@@ -148,8 +160,6 @@ def plot_regret(*args, **kwargs):
             name = None
 
         if isinstance(results, OptimizeResult):
-            if true_minimum is None:
-                true_minimum = np.min(results.func_vals)
             n_calls = len(results.x_iters)
             regrets = [np.sum(results.func_vals[:i] - true_minimum)
                        for i in range(1, n_calls + 1)]
@@ -157,8 +167,6 @@ def plot_regret(*args, **kwargs):
                     marker=".", markersize=12, lw=2, label=name)
 
         elif isinstance(results, list):
-            if true_minimum is None:
-                true_minimum = np.min([np.min(r.func_vals)] for r in results)
             n_calls = len(results[0].x_iters)
             iterations = range(1, n_calls + 1)
             regrets = [[np.sum(r.func_vals[:i] - true_minimum) for i in
@@ -170,7 +178,7 @@ def plot_regret(*args, **kwargs):
             ax.plot(iterations, np.mean(regrets, axis=0), c=color,
                     marker=".", markersize=12, lw=2, label=name)
 
-    if true_minimum or name:
+    if name:
         ax.legend(loc="best")
 
     return ax
