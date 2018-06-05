@@ -316,6 +316,7 @@ def test_searchcv_total_iterations():
 
     assert opt.total_iterations == 10 + 5
 
+
 def test_initial_values():
     # Test whether everything is working with providing initial points
     from sklearn.svm import SVC

@@ -304,6 +304,7 @@ def test_defaults_are_equivalent():
     assert np.allclose(res_min.x_iters, res_opt.x_iters)#, atol=1e-5)
     assert np.allclose(res_min.x, res_opt.x)#, atol=1e-5)
 
+
 def test_initial_points():
     space = [Real(0.0, 1.0), Integer(0, 3), Categorical(['a', 'b', 'c'])]
 

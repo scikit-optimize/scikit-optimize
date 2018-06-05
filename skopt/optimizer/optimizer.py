@@ -263,9 +263,6 @@ class Optimizer(object):
             else:
                 self._non_cat_inds.append(ind)
 
-
-        # Configure counters of points
-
         # Check `n_random_starts` deprecation first
         if n_random_starts is not None:
             warnings.warn(("n_random_starts will be removed in favour of "
@@ -300,7 +297,7 @@ class Optimizer(object):
         if not isinstance(x0, list):
             raise ValueError("`xy0` should be a list, but got %s" % type(xy0))
         # check if the list of points are provided or just one point
-        if len(xy0)>0:
+        if len(xy0) > 0:
             if not isinstance(xy0[0][0], (list, tuple)):
                 xy0 = [xy0]
             for v in xy0:
@@ -311,14 +308,11 @@ class Optimizer(object):
                 if not v[0] in self.space:
                     raise ValueError(
                         "Initial point %s in `xy0` input that does not "
-                        "belong to space. %s" %(v, self.space)
+                        "belong to space. %s" % (v, self.space)
                     )
-
+        # Configure counters of points
         # update the size of initialization
-        n_initial_points = n_initial_points + len(x0)
-
-        #
-        n_initial_points = n_initial_points + len(xy0)
+        n_initial_points = n_initial_points + len(x0) + len(xy0)
 
         self._n_initial_points = n_initial_points
         self.n_initial_points_ = n_initial_points
@@ -475,19 +469,20 @@ class Optimizer(object):
         to determine the next point.
         """
 
-        if self.x0 is not None and len(self.x0) > 0 and len(self.Xi) < self._n_initial_points:
-            # if no points have been evaluated - return an initialization one
-            if len(self.Xi) == 0:
-                return self.x0[0]
+        if self.x0 is not None and len(self.x0) > 0:
+            if len(self.Xi) < self._n_initial_points:
+                # if no points have been evaluated - return first from x0
+                if len(self.Xi) == 0:
+                    return self.x0[0]
 
-            Xi = np.array(self.Xi)
+                Xi = np.array(self.Xi)
 
-            # check if all the inital points have been evaluated.
-            # if not, return the ones that are not yet evaluated
-            for x in self.x0:
-                if np.any(np.any(Xi == x, axis=1)):
-                    continue
-                return x
+                # check if all the inital points have been evaluated.
+                # if not, return the ones that are not yet evaluated
+                for x in self.x0:
+                    if np.any(np.any(Xi == x, axis=1)):
+                        continue
+                    return x
 
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
