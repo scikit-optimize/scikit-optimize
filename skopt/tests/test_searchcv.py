@@ -17,6 +17,7 @@ from sklearn.externals.joblib import cpu_count
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
 
+import numpy as np
 
 def _fit_svc(n_jobs=1, n_points=1, cv=None):
     """
@@ -314,3 +315,37 @@ def test_searchcv_total_iterations():
     )
 
     assert opt.total_iterations == 10 + 5
+
+def test_initial_values():
+    # Test whether everything is working with providing initial points
+    from sklearn.svm import SVC
+    from sklearn.datasets import load_iris
+
+    C_v = []
+
+    x0 = [[0.1], [0.2], [0.3]]
+
+    # this class is used to collect values of C
+    class MyModel(SVC):
+        def fit(self, *args, **kwargs):
+            C_v.append([self.C])
+            super(MyModel, self).fit(*args, **kwargs)
+
+    X, y = load_iris(True)
+
+    bcv = BayesSearchCV(
+        estimator=MyModel(),
+        search_spaces={
+            'C': (0.1, 10.0)
+        },
+        n_iter=6,
+        optimizer_kwargs={
+            'x0': x0,
+        },
+        cv=3
+    )
+
+    bcv.fit(X, y)
+    C_v = C_v[1::3]
+    assert np.allclose(x0, C_v[:3])
+    assert not np.allclose(x0, C_v[3:])

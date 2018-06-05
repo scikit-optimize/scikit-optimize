@@ -16,7 +16,7 @@ from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
 from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.optimizer import Optimizer
 from scipy.optimize import OptimizeResult
-
+from skopt.space import Real, Integer, Categorical
 
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
@@ -303,3 +303,82 @@ def test_defaults_are_equivalent():
     # tolerate small differences in the points sampled
     assert np.allclose(res_min.x_iters, res_opt.x_iters)#, atol=1e-5)
     assert np.allclose(res_min.x, res_opt.x)#, atol=1e-5)
+
+def test_initial_points():
+    space = [Real(0.0, 1.0), Integer(0, 3), Categorical(['a', 'b', 'c'])]
+
+    # initialize the points to be evaluated
+
+    # check that testing of initial points works
+    with pytest.raises(ValueError) as e:
+        # The point has too many dimensions
+        Optimizer(space, x0='hello')
+
+    with pytest.raises(ValueError) as e:
+        # The point has too many dimensions
+        Optimizer(space, x0=[0.0, 1, 'c', 'd'])
+
+    # check if it actually works
+    Optimizer(space, x0=[0.0, 3, 'c'])  # boundary
+    Optimizer(space, x0=[0.1, 2, 'b'])  # non boundary point
+    Optimizer(space, x0=[[0.0, 3, 'c'], [0.1, 1, 'a']])  # list of points
+
+    with pytest.raises(ValueError) as e:
+        # The point has wrong value of dimension
+        Optimizer(space, x0=[[2.0, 1, 'a']])
+
+    with pytest.raises(ValueError) as e:
+        # The point has wrong value of dimension
+        Optimizer(space, x0=[[2.0, 1, 'a']])
+
+    # test prior points
+
+    with pytest.raises(ValueError) as e:
+        # The point has too many dimensions
+        Optimizer(space, xy0='hello')
+
+    # proper space
+    Optimizer(space, xy0=([0.1, 1, 'a'], 1.0))
+
+    Optimizer(space, xy0=[
+        ([0.0, 3, 'c'], 0.0),
+        ([0.1, 1, 'a'], 1.0)
+    ])
+
+    with pytest.raises(ValueError) as e:
+        # The point has too many dimensions
+        Optimizer(space, xy0=([0.1, 1, 1, 'a'], 1.0))
+
+    # check if asking works
+    Optimizer(dimensions=[(0.0, 1.0)], x0=[[0.0], [0.5], [1.0]]).ask()
+
+    x0 = [[0.0], [0.5], [1.0]]
+
+    # test parallel interface
+    r = Optimizer(dimensions=[(0.0, 1.0)], x0=x0).ask(3)
+    assert np.allclose(r, x0)
+
+    # assert that both modes can be combined
+    x0 = [
+            [0.5],
+            [0.7]
+        ]
+
+    xy0 = [
+            [[0.0], 0.0],
+            [[1.0], 0.1],
+        ]
+
+    opt = Optimizer(
+        dimensions=[(0.0, 1.0)],
+        xy0=xy0,
+        x0=x0
+    )
+
+    assert opt.n_initial_points_ == 10 + len(x0) + len(xy0)
+    assert np.allclose(opt.ask(2), x0)
+
+    opt.tell(x0, [0.1, 0.2])
+    # make sure that points are not repeated
+    v = opt.ask(2)
+    assert not np.allclose(v, x0)

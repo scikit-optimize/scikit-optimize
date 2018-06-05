@@ -68,6 +68,36 @@ class Optimizer(object):
         `x0` count as initialization points. If len(x0) < n_initial_points
         additional points are sampled at random.
 
+    * `x0` [list, list of lists or `None`]:
+        Initial input points.
+
+        - If it is a list of lists, use it as a list of input points.
+        - If it is a list, use it as a single initial input point.
+        - If it is `None`, no initial input points are used.
+        Note that this does not change the number of points that
+        the algorithm will try at random. To adjust this number,
+        set the n_initial_points accordingly. That is, the total
+        number of initialization iterations is
+        n_initial_points + len(x0) .
+
+    * `xy0` [list, scalar or `None`]
+        Evaluation of initial input points.
+
+        - A list of points for which the objective function is already known.
+          An example in such list is:
+          [
+            ([0, 1], 2.0),
+            ([1, 0], 1.5),
+            ...
+          ]
+          Here the first element in every tuple is a valid input point, and
+          the second element is a value of objective at this point.
+          Note that this does not change the number of points that
+          the algorithm will try at random. To adjust this number,
+          set the n_initial_points accordingly. That is, the total
+          number of initialization iterations is
+          n_initial_points + len(xy0) .
+
     * `acq_func` [string, default=`"gp_hedge"`]:
         Function to minimize over the posterior distribution. Can be either
 
@@ -135,7 +165,8 @@ class Optimizer(object):
 
     """
     def __init__(self, dimensions, base_estimator="gp",
-                 n_random_starts=None, n_initial_points=10,
+                 n_random_starts=None,
+                 n_initial_points=10, x0=None, xy0=None,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
@@ -164,21 +195,6 @@ class Optimizer(object):
         if acq_func_kwargs is None:
             acq_func_kwargs = dict()
         self.eta = acq_func_kwargs.get("eta", 1.0)
-
-        # Configure counters of points
-
-        # Check `n_random_starts` deprecation first
-        if n_random_starts is not None:
-            warnings.warn(("n_random_starts will be removed in favour of "
-                           "n_initial_points."),
-                          DeprecationWarning)
-            n_initial_points = n_random_starts
-
-        if n_initial_points < 0:
-            raise ValueError(
-                "Expected `n_initial_points` >= 0, got %d" % n_initial_points)
-        self._n_initial_points = n_initial_points
-        self.n_initial_points_ = n_initial_points
 
         # Configure estimator
 
@@ -247,8 +263,75 @@ class Optimizer(object):
             else:
                 self._non_cat_inds.append(ind)
 
-        # Initialize storage for optimization
 
+        # Configure counters of points
+
+        # Check `n_random_starts` deprecation first
+        if n_random_starts is not None:
+            warnings.warn(("n_random_starts will be removed in favour of "
+                           "n_initial_points."),
+                          DeprecationWarning)
+            n_initial_points = n_random_starts
+
+        if n_initial_points < 0:
+            raise ValueError(
+                "Expected `n_initial_points` >= 0, got %d" % n_initial_points)
+
+        # check x0: list-like, requirement of minimal points
+        if x0 is None:
+            x0 = []
+        if not isinstance(x0, list):
+            raise ValueError("`x0` should be a list, but got %s" % type(x0))
+        if len(x0) > 0 and not isinstance(x0[0], (list, tuple)):
+            x0 = [x0]
+        if (n_initial_points <= 0) and not x0:
+            raise ValueError("Either set `n_initial_points` > 0,"
+                             " or provide `x0`")
+        # check if point is withing the search space
+        for v in x0:
+            if v not in self.space:
+                raise ValueError(
+                    'Initialization point %s is not within defined space.' % v
+                )
+
+        # check xy0: list of lists
+        if xy0 is None:
+            xy0 = []
+        if not isinstance(x0, list):
+            raise ValueError("`xy0` should be a list, but got %s" % type(xy0))
+        # check if the list of points are provided or just one point
+        if len(xy0)>0:
+            if not isinstance(xy0[0][0], (list, tuple)):
+                xy0 = [xy0]
+            for v in xy0:
+                if len(v) != 2:
+                    raise ValueError(
+                        "`xy0` should contain pairs of x, f(x), got %s" % v
+                    )
+                if not v[0] in self.space:
+                    raise ValueError(
+                        "Initial point %s in `xy0` input that does not "
+                        "belong to space. %s" %(v, self.space)
+                    )
+
+        # update the size of initialization
+        n_initial_points = n_initial_points + len(x0)
+
+        #
+        n_initial_points = n_initial_points + len(xy0)
+
+        self._n_initial_points = n_initial_points
+        self.n_initial_points_ = n_initial_points
+
+        # remember the initialization points
+        self.x0 = x0
+
+        # index of initial point to be evaluated
+        self._x0_index = 0
+
+        self.xy0 = xy0
+
+        # Initialize storage for optimization
         self.models = []
         self.Xi = []
         self.yi = []
@@ -258,6 +341,10 @@ class Optimizer(object):
         # This ensures that multiple calls to `ask` with n_points set
         # return same sets of points. Reset to {} at every call to `tell`.
         self.cache_ = {}
+
+        # record the initial points
+        for x, y in self.xy0:
+            self.tell(x, y, fit=False)
 
     def copy(self, random_state=None):
         """Create a shallow copy of an instance of the optimizer.
@@ -272,12 +359,16 @@ class Optimizer(object):
             dimensions=self.space.dimensions,
             base_estimator=self.base_estimator_,
             n_initial_points=self.n_initial_points_,
+            x0=self.x0,
+            xy0=self.xy0,
             acq_func=self.acq_func,
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
             random_state=random_state,
         )
+
+        optimizer._x0_index = self._x0_index
 
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
@@ -377,19 +468,41 @@ class Optimizer(object):
 
     def _ask(self):
         """Suggest next point at which to evaluate the objective.
+        First, return all the initial points, if any provided by the user.
 
-        Return a random point while not at least `n_initial_points`
+        Then, return a random point while not at least `n_initial_points`
         observations have been `tell`ed, after that `base_estimator` is used
         to determine the next point.
         """
+
+        if self.x0 is not None and len(self.x0) > 0 and len(self.Xi) < self._n_initial_points:
+            # if no points have been evaluated - return an initialization one
+            if len(self.Xi) == 0:
+                return self.x0[0]
+
+            Xi = np.array(self.Xi)
+
+            # check if all the inital points have been evaluated.
+            # if not, return the ones that are not yet evaluated
+            for x in self.x0:
+                if np.any(np.any(Xi == x, axis=1)):
+                    continue
+                return x
+
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
+
+            i = self.n_initial_points_ - self._n_initial_points
+
+            if len(self.x0) > i:
+                return self.x0[i]
+
             return self.space.rvs(random_state=self.rng)[0]
 
         else:
             if not self.models:
-                raise RuntimeError("Random evaluations exhausted and no "
+                raise RuntimeError("Initial evaluations exhausted and no "
                                    "model has been fit.")
 
             next_x = self._next_x
