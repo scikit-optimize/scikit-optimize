@@ -760,8 +760,6 @@ class Space(object):
         """Check that `point` is within the bounds of the space."""
         # assert that the length of the point is the same as
         # the length of the space
-        if len(point) != len(self.dimensions):
-            return False
 
         for component, dim in zip(point, self.dimensions):
             if component not in dim:

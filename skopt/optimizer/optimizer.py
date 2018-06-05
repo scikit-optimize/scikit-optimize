@@ -284,6 +284,8 @@ class Optimizer(object):
         if (n_initial_points <= 0) and not x0:
             raise ValueError("Either set `n_initial_points` > 0,"
                              " or provide `x0`")
+
+        check_x_in_space(x0, self.space)
         # check if point is withing the search space
         for v in x0:
             if v not in self.space:
@@ -305,11 +307,9 @@ class Optimizer(object):
                     raise ValueError(
                         "`xy0` should contain pairs of x, f(x), got %s" % v
                     )
-                if not v[0] in self.space:
-                    raise ValueError(
-                        "Initial point %s in `xy0` input that does not "
-                        "belong to space. %s" % (v, self.space)
-                    )
+            xx0 = [v[0] for v in xy0]
+            check_x_in_space(xx0, self.space)
+
         # Configure counters of points
         # update the size of initialization
         n_initial_points = n_initial_points + len(x0) + len(xy0)
