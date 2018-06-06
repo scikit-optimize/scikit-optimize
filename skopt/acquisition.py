@@ -26,7 +26,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
     # Check inputs
     X = np.asarray(X)
     if X.ndim != 2:
-        raise ValueError("X should be 2-dimensional.")
+        raise ValueError("X is {}-dimensional, however,"
+                         " it must be 2-dimensional.".format(X.ndim))
 
     if acq_func_kwargs is None:
         acq_func_kwargs = dict()
