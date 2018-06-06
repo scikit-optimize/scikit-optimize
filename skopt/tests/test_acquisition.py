@@ -148,7 +148,7 @@ def test_gaussian_acquisition_check_inputs():
     model = ConstantGPRSurrogate(Space(((1.0, 9.0),)))
     with pytest.raises(ValueError) as err:
         vals = _gaussian_acquisition(np.arange(1, 5), model)
-        assert("it must be 2-dimensional" in exc.value.args[0])
+    assert("it must be 2-dimensional" in err.value.args[0])
 
 
 @pytest.mark.fast_test
