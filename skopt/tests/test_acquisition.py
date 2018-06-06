@@ -144,6 +144,13 @@ def test_acquisition_per_second(acq_func):
     assert_array_almost_equal(acq_wo_time / acq_with_time, np.ravel(X), 2)
 
 
+def test_gaussian_acquisition_check_inputs():
+    model = ConstantGPRSurrogate(Space(((1.0, 9.0),)))
+    with pytest.raises(ValueError) as err:
+        vals = _gaussian_acquisition(np.arange(1, 5), model)
+        assert("it must be 2-dimensional" in exc.value.args[0])
+
+
 @pytest.mark.fast_test
 @pytest.mark.parametrize("acq_func", ["EIps", "PIps"])
 def test_acquisition_per_second_gradient(acq_func):
