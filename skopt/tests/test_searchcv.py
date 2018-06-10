@@ -5,6 +5,8 @@ search with interface similar to those of GridSearchCV
 import pytest
 import time
 
+import numpy as np
+
 from sklearn.utils.testing import assert_greater
 from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
@@ -12,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.externals.joblib import cpu_count
 
 from skopt.space import Real, Categorical, Integer
@@ -314,3 +317,21 @@ def test_searchcv_total_iterations():
     )
 
     assert opt.total_iterations == 10 + 5
+
+
+def test_search_cv_internal_parameter_types():
+    # Test whether the parameters passed to the
+    # estimator of the BayesSearchCV are of standard python
+    # types - float, int, str
+
+    # Below is example code that used to not work.
+    X = np.random.randn(10, 1)
+    y = X[:, 0] > 0
+
+    model = BayesSearchCV(
+        estimator=SVC(),
+        search_spaces={'kernel': ['rbf', 'linear']},
+        n_iter=11
+    )
+
+    model.fit(X, y)
