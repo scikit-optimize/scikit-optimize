@@ -5,8 +5,6 @@ search with interface similar to those of GridSearchCV
 import pytest
 import time
 
-import numpy as np
-
 from sklearn.utils.testing import assert_greater
 from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
@@ -14,7 +12,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator
 from sklearn.externals.joblib import cpu_count
 
 from skopt.space import Real, Categorical, Integer
@@ -324,13 +322,33 @@ def test_search_cv_internal_parameter_types():
     # estimator of the BayesSearchCV are of standard python
     # types - float, int, str
 
+    # This is estimator is used to check whether the types provided
+    # are native python types.
+    class TypeCheckEstimator(BaseEstimator):
+        def __init__(self, float_param=0.0, int_param=0, str_param=""):
+            self.float_param = float_param
+            self.int_param = int_param
+            self.str_param = str_param
+
+        def fit(self, X, y):
+            assert isinstance(self.float_param, float)
+            assert isinstance(self.int_param, int)
+            assert isinstance(self.str_param, str)
+            return self
+
+        def score(self, X, y):
+            return 0.0
+
     # Below is example code that used to not work.
-    X = np.random.randn(10, 1)
-    y = X[:, 0] > 0
+    X, y = make_classification(10, 4)
 
     model = BayesSearchCV(
-        estimator=SVC(),
-        search_spaces={'kernel': ['rbf', 'linear']},
+        estimator=TypeCheckEstimator(),
+        search_spaces={
+            'float_param': [0.0, 1.0],
+            'int_param': [0, 10],
+            'str_param': ["one", "two", "three"],
+        },
         n_iter=11
     )
 
