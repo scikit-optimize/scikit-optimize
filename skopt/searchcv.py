@@ -539,6 +539,11 @@ class BayesSearchCV(BaseSearchCV):
 
         # get parameter values to evaluate
         params = optimizer.ask(n_points=n_points)
+
+        # convert parameters to python native types
+        params = [[np.asscalar(np.array(v)) for v in p] for p in params]
+
+        # make lists into dictionaries
         params_dict = [point_asdict(search_space, p) for p in params]
 
         # HACK: self.cv_results_ is reset at every call to _fit, keep current
