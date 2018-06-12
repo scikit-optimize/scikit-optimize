@@ -663,7 +663,7 @@ class BayesSearchCV(BaseSearchCV):
 
                 if eval_callbacks(callbacks, optim_result):
                     break
-            
+
             self.optimizer_results_[optimizer] = optim_result
 
         # Refit the best model on the the whole dataset
