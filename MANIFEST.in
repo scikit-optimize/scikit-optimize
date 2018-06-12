@@ -1,2 +1,4 @@
 include *.md
 include *.rst
+include versioneer.py
+include skopt/_version.py
