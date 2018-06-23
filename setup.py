@@ -2,9 +2,12 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+import versioneer
+
 
 setup(name='scikit-optimize',
-      version='0.5.2',
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       description='Sequential model-based optimization toolbox.',
       long_description=open('README.rst').read(),
       url='https://scikit-optimize.github.io/',
