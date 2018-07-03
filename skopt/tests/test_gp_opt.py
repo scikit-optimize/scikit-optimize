@@ -1,5 +1,3 @@
-from itertools import product
-
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_less
 import pytest
@@ -22,33 +20,37 @@ def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
     assert_less(r.fun, y_opt + margin)
 
 
-SEARCH_AND_ACQ = list(product(["sampling", "lbfgs"], ["LCB", "EI"]))
+SEARCH = ["sampling", "lbfgs"]
+ACQUISITION = ["LCB", "EI"]
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+@pytest.mark.parametrize("search", SEARCH)
+@pytest.mark.parametrize("acq", ACQUISITION)
 def test_gp_minimize_bench1(search, acq):
     check_minimize(bench1, 0.,
                    [(-2.0, 2.0)], search, acq, 0.05, 20)
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+@pytest.mark.parametrize("search", SEARCH)
+@pytest.mark.parametrize("acq", ACQUISITION)
 def test_gp_minimize_bench2(search, acq):
     check_minimize(bench2, -5,
                    [(-6.0, 6.0)], search, acq, 0.05, 20)
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("search, acq", SEARCH_AND_ACQ)
+@pytest.mark.parametrize("search", SEARCH)
+@pytest.mark.parametrize("acq", ACQUISITION)
 def test_gp_minimize_bench3(search, acq):
     check_minimize(bench3, -0.9,
                    [(-2.0, 2.0)], search, acq, 0.05, 20)
 
 
 @pytest.mark.fast_test
-@pytest.mark.parametrize("search, acq",
-                         list(product(["sampling"], ["LCB", "EI"])))
+@pytest.mark.parametrize("search", ["sampling"])
+@pytest.mark.parametrize("acq", ACQUISITION)
 def test_gp_minimize_bench4(search, acq):
     # this particular random_state picks "2" twice so we can make an extra
     # call to the objective without repeating options

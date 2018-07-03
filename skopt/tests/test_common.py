@@ -90,11 +90,9 @@ def call_single(res):
 
 
 @pytest.mark.fast_test
-@pytest.mark.parametrize("verbose, call",
-                         product(
-                            [True, False],
-                            [call_single, [call_single,
-                                           check_result_callable]]))
+@pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.parametrize("call",
+                         [call_single, [call_single, check_result_callable]])
 def test_minimizer_api_dummy_minimize(verbose, call):
     # dummy_minimize is special as it does not support all parameters
     # and does not fit any models
@@ -112,12 +110,10 @@ def test_minimizer_api_dummy_minimize(verbose, call):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("verbose, call, minimizer",
-                         product(
-                            [True, False],
-                            [call_single, [call_single,
-                                           check_result_callable]],
-                            MINIMIZERS))
+@pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.parametrize("call",
+                         [call_single, [call_single, check_result_callable]])
+@pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_minimizer_api(verbose, call, minimizer):
     n_calls = 7
     n_random_starts = 3
@@ -196,11 +192,9 @@ def test_minimizer_with_space(minimizer):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 1, 2, 3, 4],
-                                 [gp_minimize,
-                                  forest_minimize,
-                                  gbrt_minimize]))
+@pytest.mark.parametrize("n_random_starts", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("optimizer_func",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_init_vals_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points, y0 values
     # and random starts
@@ -217,11 +211,9 @@ def test_init_vals_and_models(n_random_starts, optimizer_func):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 1, 2, 3, 4],
-                                 [gp_minimize,
-                                  forest_minimize,
-                                  gbrt_minimize]))
+@pytest.mark.parametrize("n_random_starts", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("optimizer_func",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_init_points_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points and random
     # starts (no y0 in this case)
@@ -236,11 +228,9 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 5],
-                                 [gp_minimize,
-                                  forest_minimize,
-                                  gbrt_minimize]))
+@pytest.mark.parametrize("n_random_starts", [0, 5])
+@pytest.mark.parametrize("optimizer_func",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_init_vals(n_random_starts, optimizer_func):
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
@@ -443,10 +433,9 @@ def test_early_stopping_delta_x_empty_result_object(minimizer):
     assert len(res.x_iters) < n_calls
 
 
-@pytest.mark.parametrize("acq_func, minimizer", product(ACQ_FUNCS_PS,
-                                                        [gp_minimize,
-                                                         forest_minimize,
-                                                         gbrt_minimize]))
+@pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
+@pytest.mark.parametrize("minimizer",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_per_second_api(acq_func, minimizer):
     def bench1_with_time(x):
         return bench1(x), np.abs(x[0])

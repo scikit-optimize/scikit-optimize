@@ -1,5 +1,3 @@
-from itertools import product
-
 import numpy as np
 from scipy import optimize
 from scipy.spatial.distance import pdist, squareform
@@ -82,7 +80,8 @@ def test_gradient_correctness(kernel):
 
 
 @pytest.mark.fast_test
-@pytest.mark.parametrize("random_state, kernel", product([0, 1], KERNELS))
+@pytest.mark.parametrize("random_state", [0, 1])
+@pytest.mark.parametrize("kernel", KERNELS)
 def test_gradient_finiteness(random_state, kernel):
     """
     When x is the same as X_train, gradients might become undefined because
