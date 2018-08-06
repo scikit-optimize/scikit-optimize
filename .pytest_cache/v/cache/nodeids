@@ -1,0 +1,3 @@
+[
+  "skopt/tests/test_searchcv.py::test_search_cv_internal_parameter_types"
+]
