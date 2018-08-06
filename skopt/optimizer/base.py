@@ -56,7 +56,9 @@ def base_minimize(func, dimensions, base_estimator,
         which returns `std(Y | x)`` along with `E[Y | x]`.
 
     * `n_calls` [int, default=100]:
-        Maximum number of calls to `func`.
+        Maximum number of calls to `func`. An objective fucntion will
+        always be evaluated this number of times; Various options to 
+        supply initialization points do not affect this value.
 
     * `n_random_starts` [int, default=10]:
         Number of evaluations of `func` with random points before
@@ -92,14 +94,21 @@ def base_minimize(func, dimensions, base_estimator,
               - The optimal of these local minima is used to update the prior.
 
     * `x0` [list, list of lists or `None`]:
-        Initial input points.
+        Initial input points. 
 
-        - If it is a list of lists, use it as a list of input points.
-        - If it is a list, use it as a single initial input point.
+        - If it is a list of lists, use it as a list of input points. If no 
+          corresponding outputs `y0` are supplied, then len(x0) of total
+          calls to the objective function will be spent evaluating the points
+          in `x0`. If the corresponding outputs are provided, then they will
+          be used together with evaluated points during a run of the algorithm
+          to construct a surrogate.
+        - If it is a list, use it as a single initial input point. The 
+          algorithm will spend 1 call to evaluate the initial point, if the
+          outputs are not provided.
         - If it is `None`, no initial input points are used.
 
     * `y0` [list, scalar or `None`]
-        Evaluation of initial input points.
+        Objective values at initial input points.
 
         - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
