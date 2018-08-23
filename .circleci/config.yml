@@ -11,20 +11,33 @@ jobs:
           name: Install dependencies
           command: |
             bash build_tools/circle/install.sh
+          no_output_timeout: 1024s
       - save_cache:
           key: deps-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
           paths:
             - /opt/conda/pkgs
-            - ~/.cache/pip
+            - .cache/pip
       - run:
           name: Run build
           command: |
             bash build_tools/circle/execute.sh
             if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
-      - run:
-          name: Deploy docs
-          command: |
-            bash build_tools/circle/deploy.sh
+          no_output_timeout: 3600s
       - store_artifacts:
-          path: ~/doc/skopt/notebooks
+          path: doc
+      - persist_to_workspace:
+          root: doc
+          paths: .
 
+  deploy:
+    docker:
+      - image: circleci/python:3.6.1
+    steps:
+      - checkout
+      - attach_workspace:
+          at: doc
+      - deploy:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              bash build_tools/circle/deploy.sh
+            fi
