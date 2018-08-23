@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: continuumio/miniconda3:4.5.4
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: ./build_tools/circle/install.sh
+
+workflows:
+  version: 2
+  all:
+    - test
