@@ -1,10 +1,9 @@
 #!/bin/bash
 # Almost copied verbatim from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/push_doc.sh
 
-if [ -z $CIRCLE_PROJECT_USERNAME ]; then
-	USERNAME="skoptci"
-else
-	USERNAME=$CIRCLE_PROJECT_USERNAME
+if [ -z $CIRCLE_PROJECT_USERNAME ];
+then USERNAME="skoptci";
+else USERNAME=$CIRCLE_PROJECT_USERNAME;
 fi
 
 MSG="Pushing the docs for revision for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
