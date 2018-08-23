@@ -16,7 +16,7 @@ jobs:
           key: deps-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
           paths:
             - /opt/conda/pkgs
-            - .cache/pip
+            - ~/.cache/pip
       - run:
           name: Run build
           command: |
