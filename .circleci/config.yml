@@ -24,10 +24,10 @@ jobs:
             if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
           no_output_timeout: 3600s
       - store_artifacts:
-          path: doc
+          path: ~/doc
           destination: doc
       - persist_to_workspace:
-          root: doc
+          root: ~/doc
           paths: .
 
   deploy:
@@ -36,7 +36,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: doc
+          at: ~/doc
       - deploy:
           command: bash build_tools/circle/deploy.sh
 
