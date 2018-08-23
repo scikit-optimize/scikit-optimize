@@ -37,7 +37,16 @@ jobs:
       - attach_workspace:
           at: doc
       - deploy:
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              bash build_tools/circle/deploy.sh
-            fi
+          command: bash build_tools/circle/deploy.sh
+
+workflows:
+  version: 2
+  build-doc-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
