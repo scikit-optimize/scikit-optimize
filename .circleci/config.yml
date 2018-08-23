@@ -5,9 +5,15 @@ jobs:
       - image: continuumio/miniconda3:4.5.4
     steps:
       - checkout
+      - restore_cache:
+          keys: {{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
       - run:
           name: Install dependencies
           command: ./build_tools/circle/install.sh
+      - save_cache:
+          keys: {{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
+          paths:
+            - /opt/conda/pkgs
 
 workflows:
   version: 2
