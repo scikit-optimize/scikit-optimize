@@ -1,21 +1,30 @@
 version: 2
 jobs:
-  test:
+  build:
     docker:
       - image: continuumio/miniconda3:4.5.4
     steps:
       - checkout
       - restore_cache:
-          keys: {{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
+          key: deps-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
       - run:
           name: Install dependencies
-          command: ./build_tools/circle/install.sh
+          command: |
+            bash build_tools/circle/install.sh
       - save_cache:
-          keys: {{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
+          key: deps-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
           paths:
             - /opt/conda/pkgs
+            - ~/.cache/pip
+      - run:
+          name: Run build
+          command: |
+            bash build_tools/circle/execute.sh
+            if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
+      - run:
+          name: Deploy docs
+          command: |
+            bash build_tools/circle/deploy.sh
+      - store_artifacts:
+          path: ~/doc/skopt/notebooks
 
-workflows:
-  version: 2
-  all:
-    - test
