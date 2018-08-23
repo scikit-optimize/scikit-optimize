@@ -25,6 +25,7 @@ jobs:
           no_output_timeout: 3600s
       - store_artifacts:
           path: doc
+          destination: doc
       - persist_to_workspace:
           root: doc
           paths: .
