@@ -591,7 +591,7 @@ class BayesSearchCV(BaseSearchCV):
 
         return total_iter
 
-    def _run_search(self, x): 
+    def _run_search(self, x):
         pass
 
     def fit(self, X, y=None, groups=None, callback=None):
