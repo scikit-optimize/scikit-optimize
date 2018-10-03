@@ -591,6 +591,9 @@ class BayesSearchCV(BaseSearchCV):
 
         return total_iter
 
+    def _run_search(self, x): 
+        pass
+
     def fit(self, X, y=None, groups=None, callback=None):
         """Run fit on the estimator with randomly drawn parameters.
 
