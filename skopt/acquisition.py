@@ -201,6 +201,9 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         else:
             mu, std = model.predict(X, return_std=True)
 
+    # make sure mu and std have the same shape so we can divide them below
+    std = std.reshape(mu.shape)
+
     values = np.zeros_like(mu)
     mask = std > 0
     improve = y_opt - xi - mu[mask]
@@ -275,6 +278,9 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
 
         else:
             mu, std = model.predict(X, return_std=True)
+
+    # make sure mu and std have the same shape so we can divide them below
+    std = std.reshape(mu.shape)
 
     values = np.zeros_like(mu)
     mask = std > 0
