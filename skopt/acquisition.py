@@ -201,8 +201,13 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         else:
             mu, std = model.predict(X, return_std=True)
 
-    # make sure mu and std have the same shape so we can divide them below
-    std = std.reshape(mu.shape)
+    # check dimensionality of mu, std so we can divide them below
+    if (mu.ndim != 1) or (std.ndim != 1):
+        raise ValueError("mu and std are {}-dimensional and {}-dimensional, "
+                         "however both must be 1-dimensional. Did you train "
+                         "your model with an (N, 1) vector instead of an "
+                         "(N,) vector?"
+                         .format(mu.ndim, std.ndim))
 
     values = np.zeros_like(mu)
     mask = std > 0
@@ -279,8 +284,13 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         else:
             mu, std = model.predict(X, return_std=True)
 
-    # make sure mu and std have the same shape so we can divide them below
-    std = std.reshape(mu.shape)
+    # check dimensionality of mu, std so we can divide them below
+    if (mu.ndim != 1) or (std.ndim != 1):
+        raise ValueError("mu and std are {}-dimensional and {}-dimensional, "
+                         "however both must be 1-dimensional. Did you train "
+                         "your model with an (N, 1) vector instead of an "
+                         "(N,) vector?"
+                         .format(mu.ndim, std.ndim))
 
     values = np.zeros_like(mu)
     mask = std > 0
