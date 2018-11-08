@@ -32,7 +32,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6.7
     steps:
       - checkout
       - attach_workspace:
