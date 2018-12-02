@@ -35,7 +35,8 @@ def _fit_svc(n_jobs=1, n_points=1, cv=None):
             'gamma': Real(1e-3, 1e+1, prior='log-uniform'),
             'degree': Integer(1, 3),
         },
-        n_jobs=n_jobs, n_iter=11, n_points=n_points, cv=cv
+        n_jobs=n_jobs, n_iter=11, n_points=n_points, cv=cv,
+        random_state=42,
     )
 
     opt.fit(X, y)
