@@ -297,7 +297,7 @@ class Real(Dimension):
 
 
 class Integer(Dimension):
-    def __init__(self, low, high, transform=None, name=None):
+    def __init__(self, low, high, prior="uniform", transform=None, name=None):
         """Search space dimension that can take on integer values.
 
         Parameters
@@ -307,6 +307,13 @@ class Integer(Dimension):
 
         * `high` [int]:
             Upper bound (inclusive).
+
+        * `prior` ["uniform" or "log-uniform", default="uniform"]:
+            Distribution to use when sampling random intgers for this dimension.
+            - If `"uniform"`, intgers are sampled uniformly between the lower
+              and upper bounds.
+            - If `"log-uniform"`, intgers are sampled uniformly between
+              `log10(lower)` and `log10(upper)`.
 
         * `transform` ["identity", "normalize", optional]:
             The following transformations are supported.
@@ -324,6 +331,7 @@ class Integer(Dimension):
                              " upper bound {}".format(low, high))
         self.low = low
         self.high = high
+        self.prior = prior
         self.name = name
 
         if transform is None:
@@ -334,12 +342,25 @@ class Integer(Dimension):
         if transform not in ["normalize", "identity"]:
             raise ValueError("transform should be 'normalize' or 'identity'"
                              " got {}".format(self.transform_))
-        if transform == "normalize":
-            self._rvs = uniform(0, 1)
-            self.transformer = Normalize(low, high, is_int=True)
+
+        if self.transform_ == "normalize":
+            self._rvs = _uniform_inclusive(0.0, 1.0)
+            if self.prior == "uniform":
+                self.transformer = Pipeline(
+                    [Identity(), Normalize(low, high)])
+            else:
+                self.transformer = Pipeline(
+                    [Log10(), Normalize(np.log10(low), np.log10(high))]
+                )
         else:
-            self._rvs = randint(self.low, self.high + 1)
-            self.transformer = Identity()
+            if self.prior == "uniform":
+                self._rvs = randint(self.low, self.high + 1)
+                self.transformer = Identity()
+            else:
+                self._rvs = _uniform_inclusive(
+                    np.log10(self.low),
+                    np.log10(self.high) - np.log10(self.low))
+                self.transformer = Log10()
 
     def __eq__(self, other):
         return (type(self) is type(other) and
@@ -347,7 +368,8 @@ class Integer(Dimension):
                 np.allclose([self.high], [other.high]))
 
     def __repr__(self):
-        return "Integer(low={}, high={})".format(self.low, self.high)
+        return "Integer(low={}, high={}, prior='{}', transform='{}')".format(
+            self.low, self.high, self.prior, self.transform_)
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
@@ -355,7 +377,7 @@ class Integer(Dimension):
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        return super(Integer, self).inverse_transform(Xt).astype(np.int)
+        return np.round(super(Integer, self).inverse_transform(Xt)).astype(np.int)
 
     @property
     def bounds(self):
