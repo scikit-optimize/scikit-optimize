@@ -92,22 +92,23 @@ def check_dimension(dimension, transform=None):
 
     if len(dimension) == 3:
         if (any([isinstance(dim, int) for dim in dimension[:2]]) and
-            dimension[2] in ["uniform", "log-uniform"]):
+                dimension[2] in ["uniform", "log-uniform"]):
             return Integer(*dimension, transform=transform)
         elif (any([isinstance(dim, (float, int)) for dim in dimension[:2]]) and
-            dimension[2] in ["uniform", "log-uniform"]):
+              dimension[2] in ["uniform", "log-uniform"]):
             return Real(*dimension, transform=transform)
         else:
             return Categorical(dimension, transform=transform)
 
     if len(dimension) == 4:
         if (any([isinstance(dim, int) for dim in dimension[:2]]) and
-            dimension[2] == "log-uniform" and isinstance(dimension[3], int)):
+                dimension[2] == "log-uniform" and isinstance(dimension[3],
+                                                             int)):
             return Integer(*dimension, transform=transform)
         elif (any([isinstance(dim, (float, int)) for dim in dimension[:2]]) and
-            dimension[2] == "log-uniform" and isinstance(dimension[3], int)):
+              dimension[2] == "log-uniform" and isinstance(dimension[3], int)):
             return Real(*dimension, transform=transform)
-            
+
     if len(dimension) > 3:
         return Categorical(dimension, transform=transform)
 
@@ -182,8 +183,8 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 
 class Real(Dimension):
-    def __init__(self, low, high, prior="uniform", base=10, transform=None, 
-				 name=None):
+    def __init__(self, low, high, prior="uniform", base=10, transform=None,
+                 name=None):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -199,7 +200,8 @@ class Real(Dimension):
             - If `"uniform"`, points are sampled uniformly between the lower
               and upper bounds.
             - If `"log-uniform"`, points are sampled uniformly between
-              `log10(lower)` and `log10(upper)`.`
+              `log(lower, base)` and `log(upper, base)` where log
+              has base `base`.
      
         * `base` [int]:
             The logarithmic base to use for a log-uniform prior.
@@ -248,8 +250,8 @@ class Real(Dimension):
                     [Identity(), Normalize(low, high)])
             else:
                 self.transformer = Pipeline(
-                    [LogN(self.base), Normalize(np.log10(low) / self.log_base, 
-						np.log10(high) / self.log_base)]
+                    [LogN(self.base), Normalize(np.log10(low) / self.log_base,
+                                                np.log10(high) / self.log_base)]
                 )
         else:
             if self.prior == "uniform":
@@ -258,8 +260,8 @@ class Real(Dimension):
             else:
                 self._rvs = _uniform_inclusive(
                     np.log10(self.low) / self.log_base,
-                    np.log10(self.high) / self.log_base - 
-						np.log10(self.low) / self.log_base)
+                    np.log10(self.high) / self.log_base -
+                    np.log10(self.low) / self.log_base)
                 self.transformer = LogN(self.base)
 
     def __eq__(self, other):
@@ -280,7 +282,7 @@ class Real(Dimension):
         return np.clip(
             super(Real, self).inverse_transform(Xt).astype(np.float),
             self.low, self.high
-            )
+        )
 
     @property
     def bounds(self):
@@ -317,8 +319,8 @@ class Real(Dimension):
 
 
 class Integer(Dimension):
-    def __init__(self, low, high, prior="uniform", base=10, transform=None, 
-				 name=None):
+    def __init__(self, low, high, prior="uniform", base=10, transform=None,
+                 name=None):
         """Search space dimension that can take on integer values.
 
         Parameters
@@ -334,7 +336,8 @@ class Integer(Dimension):
             - If `"uniform"`, intgers are sampled uniformly between the lower
               and upper bounds.
             - If `"log-uniform"`, intgers are sampled uniformly between
-              `log10(lower)` and `log10(upper)`.
+              `log(lower, base)` and `log(upper, base)` where log
+              has base `base`.
               
         * `base` [int]:
             The logarithmic base to use for a log-uniform prior.
@@ -376,10 +379,10 @@ class Integer(Dimension):
                 self.transformer = Pipeline(
                     [Identity(), Normalize(low, high)])
             else:
-                
+
                 self.transformer = Pipeline(
-                    [LogN(self.base), Normalize(np.log10(low) / self.log_base, 
-						np.log10(high) / self.log_base)]
+                    [LogN(self.base), Normalize(np.log10(low) / self.log_base,
+                                                np.log10(high) / self.log_base)]
                 )
         else:
             if self.prior == "uniform":
@@ -388,8 +391,8 @@ class Integer(Dimension):
             else:
                 self._rvs = _uniform_inclusive(
                     np.log10(self.low) / self.log_base,
-                    np.log10(self.high) / self.log_base - 
-						np.log10(self.low) / self.log_base)
+                    np.log10(self.high) / self.log_base -
+                    np.log10(self.low) / self.log_base)
                 self.transformer = LogN(self.base)
 
     def __eq__(self, other):
@@ -408,8 +411,8 @@ class Integer(Dimension):
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
         return np.round(
-			super(Integer, self).inverse_transform(Xt)
-		).astype(np.int)
+            super(Integer, self).inverse_transform(Xt)
+        ).astype(np.int)
 
     @property
     def bounds(self):
@@ -489,7 +492,7 @@ class Categorical(Dimension):
         # XXX check that sum(prior) == 1
         self._rvs = rv_discrete(
             values=(range(len(self.categories)), self.prior_)
-            )
+        )
 
     def __eq__(self, other):
         return (type(self) is type(other) and
@@ -498,7 +501,7 @@ class Categorical(Dimension):
 
     def __repr__(self):
         if len(self.categories) > 7:
-            cats = self.categories[:3] + (_Ellipsis(), ) + self.categories[-3:]
+            cats = self.categories[:3] + (_Ellipsis(),) + self.categories[-3:]
         else:
             cats = self.categories
 
@@ -771,7 +774,7 @@ class Space(object):
                 columns.append(dim.inverse_transform(Xt[:, start]))
             else:
                 columns.append(
-                    dim.inverse_transform(Xt[:, start:start+offset]))
+                    dim.inverse_transform(Xt[:, start:start + offset]))
 
             start += offset
 

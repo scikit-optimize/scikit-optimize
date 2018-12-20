@@ -23,16 +23,17 @@ class Identity(Transformer):
 
     def inverse_transform(self, Xt):
         return Xt
-    
+
+
 class LogN(Transformer):
     """Base N logarithm transform."""
-    
+
     def __init__(self, base):
         self._base = base
-    
+
     def transform(self, X):
         return np.log10(np.asarray(X, dtype=np.float)) / np.log10(self._base)
-    
+
     def inverse_transform(self, Xt):
         return self._base ** np.asarray(Xt, dtype=np.float)
 

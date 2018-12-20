@@ -241,7 +241,7 @@ def test_space_consistency():
     assert_equal(s1, s5)
     assert_array_equal(a1, a2)
     assert_array_equal(a1, a3)
-    
+
     # Integers (log-uniform)
     s1 = Space([Integer(16, 512, prior="log-uniform", base=2)])
     s2 = Space([Integer(16.0, 512.0, prior="log-uniform", base=2)])
@@ -393,7 +393,7 @@ def test_normalize():
     X_orig = a.inverse_transform(a.transform(X))
     assert_equal(X_orig.dtype, "int64")
     assert_array_equal(X_orig, X)
-    
+
     a = Integer(2, 30, prior="log-uniform", base=2, transform="normalize")
     for i in range(50):
         check_limits(a.rvs(random_state=i), 2, 30)
