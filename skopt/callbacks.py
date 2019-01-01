@@ -13,7 +13,7 @@ Early stopping callbacks
 ------------------------
 * DeltaXStopper
 """
-from collections import Callable
+from collections.abc import Callable
 from time import time
 
 import numpy as np
