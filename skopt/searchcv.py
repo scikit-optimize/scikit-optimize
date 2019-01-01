@@ -1,4 +1,5 @@
-from collections import defaultdict, Sized
+from collections import defaultdict
+from collections.abc import Sized
 from functools import partial
 
 import numpy as np
