@@ -253,7 +253,7 @@ class Optimizer(object):
                 self._non_cat_inds.append(ind)
 
         # Initialize storage for optimization
-        if not isinstance(model_history, (int, None)):
+        if not isinstance(model_history, (int, type(None))):
             raise TypeError("model_history should be an int or None,"
             "got {}".format(type(model_history)))
         self.history = model_history
