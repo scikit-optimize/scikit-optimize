@@ -2,6 +2,7 @@ import sys
 import warnings
 from math import log
 from numbers import Number
+from collections import deque
 
 import numpy as np
 
@@ -138,7 +139,9 @@ class Optimizer(object):
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
-                 random_state=None, acq_func_kwargs=None,
+                 random_state=None, 
+                 model_history=None,
+                 acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
 
         self.rng = check_random_state(random_state)
@@ -249,7 +252,7 @@ class Optimizer(object):
 
         # Initialize storage for optimization
 
-        self.models = []
+        self.models = deque([], model_history)
         self.Xi = []
         self.yi = []
 
@@ -487,7 +490,7 @@ class Optimizer(object):
 
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
-            self.models.append(est)
+            self.models.extend(est)
 
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points

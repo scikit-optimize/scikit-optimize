@@ -25,7 +25,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1):
+                  xi=0.01, kappa=1.96, n_jobs=1, model_history=None):
     """
     Parameters
     ----------
@@ -218,7 +218,7 @@ def base_minimize(func, dimensions, base_estimator,
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
-                          random_state=random_state,
+                          random_state=random_state, model_history=model_history,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
     # check x0: element-wise data type, dimensionality
