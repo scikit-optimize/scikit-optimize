@@ -138,7 +138,7 @@ class Optimizer(object):
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
-                 random_state=None, 
+                 random_state=None,
                  model_history=None,
                  acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
@@ -489,7 +489,7 @@ class Optimizer(object):
 
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
-           
+            
             if self.history is None:
                 self.models.append(est)
             elif len(self.models) < self.history:

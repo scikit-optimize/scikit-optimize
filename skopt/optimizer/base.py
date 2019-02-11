@@ -218,7 +218,8 @@ def base_minimize(func, dimensions, base_estimator,
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
-                          random_state=random_state, model_history=model_history,
+                          random_state=random_state, 
+                          model_history=model_history,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
     # check x0: element-wise data type, dimensionality
