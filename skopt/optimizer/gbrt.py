@@ -119,6 +119,10 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         The number of jobs to run in parallel for `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
+    * `model_history` [int or None, default=None]
+        Keeps list of models only as long as the argument given. In the 
+        case of None, the list has no capped length.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:

@@ -119,6 +119,9 @@ class Optimizer(object):
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
+    * `model_history` [int or None, default=None]
+        Keeps list of models only as long as the argument given. In the 
+        case of None, the list has no capped length.
 
     Attributes
     ----------
@@ -250,6 +253,9 @@ class Optimizer(object):
                 self._non_cat_inds.append(ind)
 
         # Initialize storage for optimization
+        if not isinstance(model_history, (int, NoneType)):
+            raise TypeError("model_history should be an int or None,"
+            "got {}".format(type(model_history)))
         self.history = model_history
         self.models = []
         self.Xi = []

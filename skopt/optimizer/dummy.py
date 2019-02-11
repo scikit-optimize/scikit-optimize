@@ -64,6 +64,10 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
+    * `model_history` [int or None, default=None]
+        Keeps list of models only as long as the argument given. In the 
+        case of None, the list has no capped length.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
