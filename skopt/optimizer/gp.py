@@ -189,6 +189,10 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
+    * `model_history` [int or None, default=None]
+        Keeps list of models only as long as the argument given. In the 
+        case of None, the list has no capped length.
+
     Returns
     -------
     * `res` [`OptimizeResult`, scipy object]:
