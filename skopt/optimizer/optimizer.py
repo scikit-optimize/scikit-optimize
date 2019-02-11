@@ -490,9 +490,12 @@ class Optimizer(object):
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
            
-            if len(self.models) < self.history or self.history is None:
+            if self.history is None:
+                self.models.append(est)
+            elif len(self.models) < self.history:
                 self.models.append(est)
             else:
+                # Maximum list size obtained, remove oldest model.
                 self.models.pop(0)
                 self.models.append(est)
 
