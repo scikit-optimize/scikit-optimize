@@ -1,7 +1,7 @@
 # Benchmarks
 
 These results are obtained by running our optimizers on the set of benchmark
-functions provided in Table 2 of http://www.automl.org/papers/13-BayesOpt_EmpiricalFoundation.pdf
+functions provided in Table 2 of https://ml.informatik.uni-freiburg.de/papers/13-BayesOpt_EmpiricalFoundation.pdf
 
 All optimizers are run with default values and with `n_calls=200`. Runs are
 repeated 10 times.
