@@ -499,32 +499,37 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
-
+    x_eval = result.x
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
-                xi, yi = partial_dependence(space, result.models[-1], i,
+                if usepartialdependence:
+                    xi, yi = partial_dependence(space, result.models[-1], i,
                                             j=None,
                                             sample_points=rvs_transformed,
                                             n_points=n_points)
-
+                else:
+                    xi, yi = x_dependence(space, result.models[-1], x_eval, i, j=None, n_points=n_points)
                 ax[i, i].plot(xi, yi)
-                ax[i, i].axvline(result.x[i], linestyle="--", color="r", lw=1)
+                ax[i, i].axvline(x_eval[i], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
-                xi, yi, zi = partial_dependence(space, result.models[-1],
+                if usepartialdependence:
+                    xi, yi, zi = partial_dependence(space, result.models[-1],
                                                 i, j,
                                                 rvs_transformed, n_points)
+                else:
+                    xi, yi, zi = x_dependence(space, result.models[-1], x_eval, i, j, n_points = n_points)
                 ax[i, j].contourf(xi, yi, zi, levels,
-                                  locator=locator, cmap='viridis_r')
+                                locator=locator, cmap='viridis_r')
                 ax[i, j].scatter(samples[:, j], samples[:, i],
-                                 c='k', s=10, lw=0.)
-                ax[i, j].scatter(result.x[j], result.x[i],
-                                 c=['r'], s=20, lw=0.)
+                                c='k', s=10, lw=0.)
+                ax[i, j].scatter(x_eval[j], x_eval[i],
+                                c=['r'], s=20, lw=0.)
 
     return _format_scatter_plot_axes(ax, space, ylabel="Partial dependence",
-                                     dim_labels=dimensions)
+                                        dim_labels=dimensions)
 
 
 def plot_evaluations(result, bins=20, dimensions=None):
