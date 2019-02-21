@@ -347,6 +347,90 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
         return xi, yi, np.array(zi).T
 
+def x_dependence(space, model, x, i, j=None, n_points=40):
+    """Calculate the dependence for dimensions `i` and `j` with
+    respect to the objective value, as approximated by `model`.
+
+    The dependence plot shows how the value of the dimensions
+    `i` and `j` influence the `model` predictions when all other
+    parameter values are set as constants (x)
+
+    Parameters
+    ----------
+    * `space` [`Space`]
+        The parameter space over which the minimization was performed.
+
+    * `model`
+        Surrogate model for the objective function.
+
+    * `x` [`list`]
+        The values to be used for all parameters othe than i and j if it is defined.
+
+    * `i` [int]
+        The first dimension for which to calculate the partial dependence.
+
+    * `j` [int, default=None]
+        The second dimension for which to calculate the partial dependence.
+        To calculate the 1D partial dependence on `i` alone set `j=None`.
+
+    * `n_points` [int, default=40]
+        Number of points at which to evaluate the partial dependence
+        along each dimension `i` and `j`.
+
+    Returns
+    -------
+    For 1D dependence:
+
+    * `xi`: [np.array]:
+        The points at which the dependence was evaluated.
+
+    * `yi`: [np.array]:
+        The value of the model at each point `xi`.
+
+    For 2D dependence:
+
+    * `xi`: [np.array, shape=n_points]:
+        The points at which the dependence was evaluated.
+    * `yi`: [np.array, shape=n_points]:
+        The points at which the dependence was evaluated.
+    * `zi`: [np.array, shape=(n_points, n_points)]:
+        The value of the model at each point `(xi, yi)`.
+    """
+
+    assert model.n_features_ == len(x), 'Number of defined parameters must be equal to number of features'
+    if j is None: # 1d plot
+        bounds = space.dimensions[i].bounds
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[i].transform(xi) # The values for parameter i for which 
+            #predictions should be made
+
+        yi = np.zeros(n_points) # preallocating array
+        for ii in range(n_points): # Loop through all values for parameter 'i'
+            rvs_ = np.array(x).reshape(1,-1) # Create a 1d array of the constant values of all parameters 
+            rvs_[0,i] = xi_transformed[ii] # Replace parameer 'i'
+            yi[ii] = model.predict(rvs_) # Predict using surogate function
+        return xi, yi
+
+    else: # 2d plot
+        # Works same way as above (1d plot) except both parameter 'i' and 'j' are the ones being varied
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        bounds = space.dimensions[j].bounds
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[j].transform(xi)
+
+        bounds = space.dimensions[i].bounds
+        yi = np.linspace(bounds[0], bounds[1], n_points)
+        yi_transformed = space.dimensions[i].transform(yi)
+
+        zi=np.zeros([n_points,n_points]) # preallocating
+        for ii in range(n_points):
+            for jj in range(n_points):
+                rvs_ = np.array(x).reshape(1,-1)
+                rvs_[0, (j, i)] = (xi_transformed[ii], yi_transformed[jj])
+                zi[jj,ii] = model.predict(rvs_)
+
+        return xi, yi, zi
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear', dimensions=None):
