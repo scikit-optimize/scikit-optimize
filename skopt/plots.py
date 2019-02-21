@@ -592,3 +592,17 @@ def plot_evaluations(result, bins=20, dimensions=None):
 
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
                                      dim_labels=dimensions)
+
+def expected_min_random_sampling(model, space, n_samples=100000):
+    # Make model predictions using n_samples random samples
+    # and return the sample_valus that results in the minimum function value
+
+    # sample points from search space
+    random_samples = space.rvs(n_samples=n_samples)
+    
+    # make estimations with surrogate
+    y_random = model.predict(space.transform(random_samples))
+    index_best_objective = np.argmin(y_random)
+    min_x = random_samples[index_best_objective]
+    
+    return min_x
