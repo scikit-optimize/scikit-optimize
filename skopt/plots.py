@@ -433,7 +433,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
         return xi, yi, zi
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None):
+                   zscale='linear', dimensions=None, usepartialdependence = False):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
