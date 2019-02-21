@@ -433,7 +433,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
         return xi, yi, zi
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None, usepartialdependence = False, eval = 'result'):
+                   zscale='linear', dimensions=None, usepartialdependence=False, eval='result'):
     """Pairwise dependence plot of the objective function.
 
     The diagonal shows the dependence for dimension `i` with
@@ -623,7 +623,7 @@ def plot_evaluations(result, bins=20, dimensions=None):
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
                                      dim_labels=dimensions)
 
-def expected_min_random_sampling(model, space, n_samples=100000):
+def expected_min_random_sampling(model, space, n_samples = 100000):
     # Make model predictions using n_samples random samples
     # and return the sample_valus that results in the minimum function value
 
