@@ -8,7 +8,7 @@ from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator
 
 from scipy.optimize import OptimizeResult
-
+from skopt import expected_minimum
 
 def plot_convergence(*args, **kwargs):
     """Plot one or several convergence traces.
@@ -433,7 +433,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
         return xi, yi, zi
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None, usepartialdependence = False):
+                   zscale='linear', dimensions=None, usepartialdependence = False, eval = 'result'):
     """Pairwise partial dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -499,7 +499,26 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
-    x_eval = result.x
+    # Here we define the parameters for which to plot the red dot (2d plot) and the red dotted line (1d plot).
+    # These same parameters will be used for evaluating the plots when not using partial dependence.
+    if isinstance(eval,str):
+        if eval == 'result':
+            # Using the best observed result
+            x_eval = result.x
+        elif eval == 'expected_minimum':
+            # Do a gradient based minimum search using scipys own minimizer
+            x_eval,_ = expected_minimum(result, n_random_starts=20, random_state=None)
+        elif eval == 'expected_minimum_random':
+            # Do a minimum search by evaluating the function with n_samples sample values
+            x_eval = expected_min_random_sampling(result.models[-1], space, n_samples=100000)
+        else:
+            raise ValueError('Argument ´eval´ must be a valid string (´result´)')
+    elif isinstance(eval,list):
+        assert len(eval) == len(result.x) , 'Argument ´eval´ of type list must have same length as number of features'
+        # Using defined x_values
+        x_eval = eval
+    else:
+        raise ValueError('Argument ´eval´ must be a string or a list')
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
