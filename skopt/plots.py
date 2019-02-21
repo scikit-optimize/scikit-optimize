@@ -434,17 +434,18 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear', dimensions=None, usepartialdependence = False, eval = 'result'):
-    """Pairwise partial dependence plot of the objective function.
+    """Pairwise dependence plot of the objective function.
 
-    The diagonal shows the partial dependence for dimension `i` with
+    The diagonal shows the dependence for dimension `i` with
     respect to the objective function. The off-diagonal shows the
-    partial dependence for dimensions `i` and `j` with
+    dependence for dimensions `i` and `j` with
     respect to the objective function. The objective function is
     approximated by `result.model.`
 
     Pairwise scatter plots of the points at which the objective
     function was directly evaluated are shown on the off-diagonal.
-    A red point indicates the found minimum.
+    A red point can indicate a type of minimum defined by "eval".
+    If "eval" is a list, a red point just indicates the values in this list.
 
     Note: search spaces that contain `Categorical` dimensions are
           currently not supported by this function.
@@ -476,7 +477,17 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     * `dimensions` [list of str, default=None] Labels of the dimension
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
-
+    * `usepartialdependence` [bool, default=false] wether to use partial
+        dependence or not when calculating dependence. If false plot_objective
+        will use x_dependence function instead of partial_dependence function
+    * `eval` [str, default = 'result' or list of floats] Defines the values for the red
+        points in the plots, and if partialdependence is false also what the
+        values of the other parameters should be when calculating dependence plots.
+        Valid strings:  'result' - Use best observed parameters
+                        'expected_minimum' - parameters that gives the best minimum
+                            Calculated using scipy's minimize method
+                        'expected_minimum' - parameters that gives the best minimum
+                            when using naive random sampling
     Returns
     -------
     * `ax`: [`Axes`]:
