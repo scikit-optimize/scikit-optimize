@@ -353,7 +353,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
 
     The dependence plot shows how the value of the dimensions
     `i` and `j` influence the `model` predictions when all other
-    parameter values are set as constants (x)
+    parameter values are set as constants (x).
 
     Parameters
     ----------
@@ -407,8 +407,8 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
 
         yi = np.zeros(n_points) # preallocating array
         for ii in range(n_points): # Loop through all values for parameter 'i'
-            rvs_ = np.array(x).reshape(1,-1) # Create a 1d array of the constant values of all parameters 
-            rvs_[0,i] = xi_transformed[ii] # Replace parameer 'i'
+            rvs_ = np.array(x).reshape(1,-1) # Create a 1d array with the values of all parameters
+            rvs_[0,i] = xi_transformed[ii] # Replace parameter 'i'
             yi[ii] = model.predict(rvs_) # Predict using surogate function
         return xi, yi
 
@@ -423,7 +423,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
         yi = np.linspace(bounds[0], bounds[1], n_points)
         yi_transformed = space.dimensions[i].transform(yi)
 
-        zi=np.zeros([n_points,n_points]) # preallocating
+        zi=np.zeros([n_points,n_points])
         for ii in range(n_points):
             for jj in range(n_points):
                 rvs_ = np.array(x).reshape(1,-1)
@@ -433,7 +433,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
         return xi, yi, zi
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None, usepartialdependence=False, eval='result'):
+                   zscale='linear', dimensions=None, usepartialdependence=True, pars='result'):
     """Pairwise dependence plot of the objective function.
 
     The diagonal shows the dependence for dimension `i` with
@@ -444,8 +444,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     Pairwise scatter plots of the points at which the objective
     function was directly evaluated are shown on the off-diagonal.
-    A red point can indicate a type of minimum defined by "eval".
-    If "eval" is a list, a red point just indicates the values in this list.
+    A red point can indicate a type of minimum defined by "pars".
+    If "pars" is a list, a red point just indicates the values in this list.
 
     Note: search spaces that contain `Categorical` dimensions are
           currently not supported by this function.
@@ -480,7 +480,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     * `usepartialdependence` [bool, default=false] wether to use partial
         dependence or not when calculating dependence. If false plot_objective
         will use x_dependence function instead of partial_dependence function
-    * `eval` [str, default = 'result' or list of floats] Defines the values for the red
+    * `pars` [str, default = 'result' or list of floats] Defines the values for the red
         points in the plots, and if partialdependence is false also what the
         values of the other parameters should be when calculating dependence plots.
         Valid strings:  'result' - Use best observed parameters
@@ -512,24 +512,24 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                         hspace=0.1, wspace=0.1)
     # Here we define the parameters for which to plot the red dot (2d plot) and the red dotted line (1d plot).
     # These same parameters will be used for evaluating the plots when not using partial dependence.
-    if isinstance(eval,str):
-        if eval == 'result':
+    if isinstance(pars,str):
+        if pars == 'result':
             # Using the best observed result
             x_eval = result.x
-        elif eval == 'expected_minimum':
+        elif pars == 'expected_minimum':
             # Do a gradient based minimum search using scipys own minimizer
             x_eval,_ = expected_minimum(result, n_random_starts=20, random_state=None)
-        elif eval == 'expected_minimum_random':
+        elif pars == 'expected_minimum_random':
             # Do a minimum search by evaluating the function with n_samples sample values
             x_eval = expected_min_random_sampling(result.models[-1], space, n_samples=100000)
         else:
-            raise ValueError('Argument ´eval´ must be a valid string (´result´)')
-    elif isinstance(eval,list):
-        assert len(eval) == len(result.x) , 'Argument ´eval´ of type list must have same length as number of features'
+            raise ValueError('Argument ´pars´ must be a valid string (´result´)')
+    elif isinstance(pars,list):
+        assert len(pars) == len(result.x) , 'Argument ´pars´ of type list must have same length as number of features'
         # Using defined x_values
-        x_eval = eval
+        x_eval = pars
     else:
-        raise ValueError('Argument ´eval´ must be a string or a list')
+        raise ValueError('Argument ´pars´ must be a string or a list')
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
@@ -558,7 +558,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                 ax[i, j].scatter(x_eval[j], x_eval[i],
                                 c=['r'], s=20, lw=0.)
 
-    return _format_scatter_plot_axes(ax, space, ylabel="Partial dependence",
+    if usepartialdependence:
+        ylabel="Partial dependence"
+    else:
+        ylabel="Dependence"
+    return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
                                         dim_labels=dimensions)
 
 
