@@ -8,7 +8,7 @@ from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator
 
 from scipy.optimize import OptimizeResult
-
+from skopt import expected_minimum
 
 def plot_convergence(*args, **kwargs):
     """Plot one or several convergence traces.
@@ -347,20 +347,105 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
         return xi, yi, np.array(zi).T
 
+def x_dependence(space, model, x, i, j=None, n_points=40):
+    """Calculate the dependence for dimensions `i` and `j` with
+    respect to the objective value, as approximated by `model`.
+
+    The dependence plot shows how the value of the dimensions
+    `i` and `j` influence the `model` predictions when all other
+    parameter values are set as constants (x).
+
+    Parameters
+    ----------
+    * `space` [`Space`]
+        The parameter space over which the minimization was performed.
+
+    * `model`
+        Surrogate model for the objective function.
+
+    * `x` [`list`]
+        The values to be used for all parameters othe than i and j if it is defined.
+
+    * `i` [int]
+        The first dimension for which to calculate the partial dependence.
+
+    * `j` [int, default=None]
+        The second dimension for which to calculate the partial dependence.
+        To calculate the 1D partial dependence on `i` alone set `j=None`.
+
+    * `n_points` [int, default=40]
+        Number of points at which to evaluate the partial dependence
+        along each dimension `i` and `j`.
+
+    Returns
+    -------
+    For 1D dependence:
+
+    * `xi`: [np.array]:
+        The points at which the dependence was evaluated.
+
+    * `yi`: [np.array]:
+        The value of the model at each point `xi`.
+
+    For 2D dependence:
+
+    * `xi`: [np.array, shape=n_points]:
+        The points at which the dependence was evaluated.
+    * `yi`: [np.array, shape=n_points]:
+        The points at which the dependence was evaluated.
+    * `zi`: [np.array, shape=(n_points, n_points)]:
+        The value of the model at each point `(xi, yi)`.
+    """
+
+    assert model.n_features_ == len(x), 'Number of defined parameters must be equal to number of features'
+    if j is None: # 1d plot
+        bounds = space.dimensions[i].bounds
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[i].transform(xi) # The values for parameter i for which 
+            #predictions should be made
+
+        yi = np.zeros(n_points) # preallocating array
+        for ii in range(n_points): # Loop through all values for parameter 'i'
+            rvs_ = np.array(x).reshape(1,-1) # Create a 1d array with the values of all parameters
+            rvs_[0,i] = xi_transformed[ii] # Replace parameter 'i'
+            yi[ii] = model.predict(rvs_) # Predict using surogate function
+        return xi, yi
+
+    else: # 2d plot
+        # Works same way as above (1d plot) except both parameter 'i' and 'j' are the ones being varied
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        bounds = space.dimensions[j].bounds
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = space.dimensions[j].transform(xi)
+
+        bounds = space.dimensions[i].bounds
+        yi = np.linspace(bounds[0], bounds[1], n_points)
+        yi_transformed = space.dimensions[i].transform(yi)
+
+        zi=np.zeros([n_points,n_points])
+        for ii in range(n_points):
+            for jj in range(n_points):
+                rvs_ = np.array(x).reshape(1,-1)
+                rvs_[0, (j, i)] = (xi_transformed[ii], yi_transformed[jj])
+                zi[jj,ii] = model.predict(rvs_)
+
+        return xi, yi, zi
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None):
-    """Pairwise partial dependence plot of the objective function.
+                   zscale='linear', dimensions=None, usepartialdependence=True, pars='result'):
+    """Pairwise dependence plot of the objective function.
 
-    The diagonal shows the partial dependence for dimension `i` with
+    The diagonal shows the dependence for dimension `i` with
     respect to the objective function. The off-diagonal shows the
-    partial dependence for dimensions `i` and `j` with
+    dependence for dimensions `i` and `j` with
     respect to the objective function. The objective function is
     approximated by `result.model.`
 
     Pairwise scatter plots of the points at which the objective
     function was directly evaluated are shown on the off-diagonal.
-    A red point indicates the found minimum.
+    A red point can indicate a type of minimum defined by "pars".
+    If "pars" is a list, a red point just indicates the values in this list.
 
     Note: search spaces that contain `Categorical` dimensions are
           currently not supported by this function.
@@ -392,7 +477,17 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     * `dimensions` [list of str, default=None] Labels of the dimension
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
-
+    * `usepartialdependence` [bool, default=false] wether to use partial
+        dependence or not when calculating dependence. If false plot_objective
+        will use x_dependence function instead of partial_dependence function
+    * `pars` [str, default = 'result' or list of floats] Defines the values for the red
+        points in the plots, and if partialdependence is false also what the
+        values of the other parameters should be when calculating dependence plots.
+        Valid strings:  'result' - Use best observed parameters
+                        'expected_minimum' - parameters that gives the best minimum
+                            Calculated using scipy's minimize method
+                        'expected_minimum' - parameters that gives the best minimum
+                            when using naive random sampling
     Returns
     -------
     * `ax`: [`Axes`]:
@@ -415,32 +510,60 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
-
+    # Here we define the parameters for which to plot the red dot (2d plot) and the red dotted line (1d plot).
+    # These same parameters will be used for evaluating the plots when not using partial dependence.
+    if isinstance(pars,str):
+        if pars == 'result':
+            # Using the best observed result
+            x_eval = result.x
+        elif pars == 'expected_minimum':
+            # Do a gradient based minimum search using scipys own minimizer
+            x_eval,_ = expected_minimum(result, n_random_starts=20, random_state=None)
+        elif pars == 'expected_minimum_random':
+            # Do a minimum search by evaluating the function with n_samples sample values
+            x_eval = expected_min_random_sampling(result.models[-1], space, n_samples=100000)
+        else:
+            raise ValueError('Argument ´pars´ must be a valid string (´result´)')
+    elif isinstance(pars,list):
+        assert len(pars) == len(result.x) , 'Argument ´pars´ of type list must have same length as number of features'
+        # Using defined x_values
+        x_eval = pars
+    else:
+        raise ValueError('Argument ´pars´ must be a string or a list')
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
-                xi, yi = partial_dependence(space, result.models[-1], i,
+                if usepartialdependence:
+                    xi, yi = partial_dependence(space, result.models[-1], i,
                                             j=None,
                                             sample_points=rvs_transformed,
                                             n_points=n_points)
-
+                else:
+                    xi, yi = x_dependence(space, result.models[-1], x_eval, i, j=None, n_points=n_points)
                 ax[i, i].plot(xi, yi)
-                ax[i, i].axvline(result.x[i], linestyle="--", color="r", lw=1)
+                ax[i, i].axvline(x_eval[i], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
-                xi, yi, zi = partial_dependence(space, result.models[-1],
+                if usepartialdependence:
+                    xi, yi, zi = partial_dependence(space, result.models[-1],
                                                 i, j,
                                                 rvs_transformed, n_points)
+                else:
+                    xi, yi, zi = x_dependence(space, result.models[-1], x_eval, i, j, n_points = n_points)
                 ax[i, j].contourf(xi, yi, zi, levels,
-                                  locator=locator, cmap='viridis_r')
+                                locator=locator, cmap='viridis_r')
                 ax[i, j].scatter(samples[:, j], samples[:, i],
-                                 c='k', s=10, lw=0.)
-                ax[i, j].scatter(result.x[j], result.x[i],
-                                 c=['r'], s=20, lw=0.)
+                                c='k', s=10, lw=0.)
+                ax[i, j].scatter(x_eval[j], x_eval[i],
+                                c=['r'], s=20, lw=0.)
 
-    return _format_scatter_plot_axes(ax, space, ylabel="Partial dependence",
-                                     dim_labels=dimensions)
+    if usepartialdependence:
+        ylabel="Partial dependence"
+    else:
+        ylabel="Dependence"
+    return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
+                                        dim_labels=dimensions)
 
 
 def plot_evaluations(result, bins=20, dimensions=None):
@@ -503,3 +626,17 @@ def plot_evaluations(result, bins=20, dimensions=None):
 
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
                                      dim_labels=dimensions)
+
+def expected_min_random_sampling(model, space, n_samples = 100000):
+    # Make model predictions using n_samples random samples
+    # and return the sample_valus that results in the minimum function value
+
+    # sample points from search space
+    random_samples = space.rvs(n_samples=n_samples)
+    
+    # make estimations with surrogate
+    y_random = model.predict(space.transform(random_samples))
+    index_best_objective = np.argmin(y_random)
+    min_x = random_samples[index_best_objective]
+    
+    return min_x
