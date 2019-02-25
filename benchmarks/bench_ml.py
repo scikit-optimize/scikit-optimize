@@ -45,12 +45,12 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import r2_score
 from sklearn.metrics import log_loss
 
-from skopt import gbrt_minimize
-from skopt import gp_minimize
-from skopt import forest_minimize
-from skopt.space import Categorical
-from skopt.space import Integer
-from skopt.space import Real
+from ProcessOptimizer import gbrt_minimize
+from ProcessOptimizer import gp_minimize
+from ProcessOptimizer import forest_minimize
+from ProcessOptimizer.space import Categorical
+from ProcessOptimizer.space import Integer
+from ProcessOptimizer.space import Real
 
 
 MODEL_PARAMETERS = "model parameters"
@@ -313,7 +313,7 @@ def evaluate_optimizer(surrogate_minimize, model, dataset, n_calls, random_state
     Parameters
     ----------
     * `surrogate_minimize`:
-        Minimization function from skopt (eg gp_minimize) that is used
+        Minimization function from ProcessOptimizer (eg gp_minimize) that is used
         to minimize the objective.
     * `model`: scikit-learn estimator.
         sklearn estimator used for parameter tuning.

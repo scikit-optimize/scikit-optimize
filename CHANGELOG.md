@@ -91,11 +91,11 @@ in `gp_minimize`.
 
 * Speed improvements when using `gp_minimize` with `acq_optimizer='lbfgs'` and
 `acq_optimizer='auto'` when all the search-space dimensions are Real.
-* Persistence of minimization results using `skopt.dump` and `skopt.load`.
+* Persistence of minimization results using `ProcessOptimizer.dump` and `ProcessOptimizer.load`.
 * Support for using arbitrary estimators that implement a
-`return_std` argument in their `predict` method by means of `base_minimize` from `skopt.optimizer.`
+`return_std` argument in their `predict` method by means of `base_minimize` from `ProcessOptimizer.optimizer.`
 * Support for tuning noise in `gp_minimize` using the `noise` argument.
-* `TimerCallback` in `skopt.callbacks` to log the time between iterations of
+* `TimerCallback` in `ProcessOptimizer.callbacks` to log the time between iterations of
 the minimization loop.
 
 

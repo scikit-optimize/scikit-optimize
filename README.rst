@@ -5,9 +5,9 @@
 Scikit-Optimize
 ===============
 
-Scikit-Optimize, or ``skopt``, is a simple and efficient library to
+Scikit-Optimize, or ``ProcessOptimizer``, is a simple and efficient library to
 minimize (very) expensive and noisy black-box functions. It implements
-several methods for sequential model-based optimization. ``skopt`` aims
+several methods for sequential model-based optimization. ``ProcessOptimizer`` aims
 to be accessible and easy to use in many contexts.
 
 The library is built on top of NumPy, SciPy and Scikit-Learn.
@@ -21,7 +21,7 @@ optimization algorithms look at
    :alt: Approximated objective
 
 Approximated objective function after 50 iterations of ``gp_minimize``.
-Plot made using ``skopt.plots.plot_objective``.
+Plot made using ``ProcessOptimizer.plots.plot_objective``.
 
 Important links
 ---------------
@@ -65,12 +65,12 @@ Getting started
 ---------------
 
 Find the minimum of the noisy function ``f(x)`` over the range
-``-2 < x < 2`` with ``skopt``:
+``-2 < x < 2`` with ``ProcessOptimizer``:
 
 .. code:: python
 
     import numpy as np
-    from skopt import gp_minimize
+    from ProcessOptimizer import gp_minimize
 
     def f(x):
         return (np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) +
@@ -79,12 +79,12 @@ Find the minimum of the noisy function ``f(x)`` over the range
     res = gp_minimize(f, [(-2.0, 2.0)])
 
 
-For more control over the optimization loop you can use the ``skopt.Optimizer``
+For more control over the optimization loop you can use the ``ProcessOptimizer.Optimizer``
 class:
 
 .. code:: python
 
-    from skopt import Optimizer
+    from ProcessOptimizer import Optimizer
 
     opt = Optimizer([(-2.0, 2.0)])
 

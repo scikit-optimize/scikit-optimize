@@ -8,7 +8,7 @@ The goal of scikit-optimize is to become the go to project for black box
 optimization, freely available to the reader and everyone else. As any other
 open source project, it requires a community of people who maintain and
 contribute to it. The quality of the project depends on the engagement and
-size of the community; thus you as a user of skopt directly benefit from
+size of the community; thus you as a user of ProcessOptimizer directly benefit from
 creating positive environment that encourages people to contribute to the
 project.
 
