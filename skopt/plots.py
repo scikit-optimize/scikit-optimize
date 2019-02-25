@@ -433,7 +433,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
         return xi, yi, zi
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None, usepartialdependence=True, pars='result'):
+                   zscale='linear', dimensions=None, usepartialdependence=True, pars='result', expected_minimum_samples = None):
     """Pairwise dependence plot of the objective function.
 
     The diagonal shows the dependence for dimension `i` with
@@ -490,6 +490,9 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                             Calculated using scipy's minimize method
                         'expected_minimum_random' - Parameters that gives the best minimum
                             when using naive random sampling
+    * `expected_minimum_samples` [float, default = None] Determines how many points should be evaluated
+        to find the minimum when using 'expected_minimum' or 'expected_minimum_random'
+        
     Returns
     -------
     * `ax`: [`Axes`]:
@@ -520,10 +523,16 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
             x_eval = result.x
         elif pars == 'expected_minimum':
             # Do a gradient based minimum search using scipys own minimizer
-            x_eval,_ = expected_minimum(result, n_random_starts=20, random_state=None)
+            if expected_minimum_samples: # If a value for expected_minimum_samples has been parsed
+                x_eval,_ = expected_minimum(result, n_random_starts=expected_minimum_samples, random_state=None)
+            else: # Use standard of 20 random starting points
+                x_eval,_ = expected_minimum(result, n_random_starts=20, random_state=None)
         elif pars == 'expected_minimum_random':
             # Do a minimum search by evaluating the function with n_samples sample values
-            x_eval = expected_min_random_sampling(result.models[-1], space, n_samples=100000)
+            if expected_minimum_samples: # If a value for expected_minimum_samples has been parsed
+                x_eval = expected_min_random_sampling(result.models[-1], space, n_samples=expected_minimum_samples)
+            else: # Use standard of 10^n_parameters. Note this becomes very slow for many parameters
+                x_eval = expected_min_random_sampling(result.models[-1], space, n_samples=10**len(result.x))
         else:
             raise ValueError('Argument ´pars´ must be a valid string (´result´)')
     elif isinstance(pars,list):
