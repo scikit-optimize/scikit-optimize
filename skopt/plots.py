@@ -353,7 +353,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
 
     The dependence plot shows how the value of the dimensions
     `i` and `j` influence the `model` predictions when all other
-    parameter values are set as constants (x).
+    parameter values are set as constants defined by the argument 'x'.
 
     Parameters
     ----------
@@ -364,7 +364,7 @@ def x_dependence(space, model, x, i, j=None, n_points=40):
         Surrogate model for the objective function.
 
     * `x` [`list`]
-        The values to be used for all parameters othe than i and j if it is defined.
+        The values to be used for all parameters other than i, and j if j is defined.
 
     * `i` [int]
         The first dimension for which to calculate the partial dependence.
@@ -477,16 +477,18 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     * `dimensions` [list of str, default=None] Labels of the dimension
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
-    * `usepartialdependence` [bool, default=false] wether to use partial
+
+    * `usepartialdependence` [bool, default=false] Wether to use partial
         dependence or not when calculating dependence. If false plot_objective
-        will use x_dependence function instead of partial_dependence function
+        will use the x_dependence function instead of partial_dependence function
+
     * `pars` [str, default = 'result' or list of floats] Defines the values for the red
-        points in the plots, and if partialdependence is false also what the
-        values of the other parameters should be when calculating dependence plots.
+        points in the plots, and if partialdependence is false, this argument also 
+        defines what the values of the other parameters should be when calculating dependence plots.
         Valid strings:  'result' - Use best observed parameters
-                        'expected_minimum' - parameters that gives the best minimum
+                        'expected_minimum' - Parameters that gives the best minimum
                             Calculated using scipy's minimize method
-                        'expected_minimum' - parameters that gives the best minimum
+                        'expected_minimum_random' - Parameters that gives the best minimum
                             when using naive random sampling
     Returns
     -------
