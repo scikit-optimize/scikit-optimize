@@ -1,4 +1,0 @@
-include *.md
-include *.rst
-include versioneer.py
-include ProcessOptimizer/_version.py

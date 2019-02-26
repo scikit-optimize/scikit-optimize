@@ -5,7 +5,7 @@ except ImportError:
 
 
 setup(name='ProcessOptimizer',
-      version='0.0.5',
+      version='0.0.1',
       description='Sequential model-based optimization toolbox (forked from scikit-optimize)',
       long_description=open('README.rst').read(),
       url='https://github.com/bytesandbrains/ProcessOptimizer',
