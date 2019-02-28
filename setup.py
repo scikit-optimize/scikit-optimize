@@ -2,22 +2,17 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-import versioneer
 
 
-setup(name='scikit-optimize',
-      version=versioneer.get_version(),
-      cmdclass=versioneer.get_cmdclass(),
-      description='Sequential model-based optimization toolbox.',
+setup(name='ProcessOptimizer',
+      version='0.0.1',
+      description='Sequential model-based optimization toolbox (forked from scikit-optimize)',
       long_description=open('README.rst').read(),
-      url='https://scikit-optimize.github.io/',
+      url='https://github.com/bytesandbrains/ProcessOptimizer',
       license='BSD',
-      author='The scikit-optimize contributors',
-      packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
-                'skopt.learning.gaussian_process'],
-      install_requires=['pyaml', 'numpy', 'scipy>=0.14.0',
-                        'scikit-learn>=0.19.1'],
-      extras_require={
-        'plots':  ["matplotlib"]
-        }
+      author='Bytes and Brains',
+      packages=['ProcessOptimizer', 'ProcessOptimizer.learning', 'ProcessOptimizer.optimizer', 'ProcessOptimizer.space',
+                'ProcessOptimizer.learning.gaussian_process'],
+      install_requires=['pyaml', 'numpy', 'matplotlib', 'scipy>=0.14.0',
+                        'scikit-learn>=0.19.1']
       )

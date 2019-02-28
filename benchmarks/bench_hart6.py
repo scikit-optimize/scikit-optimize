@@ -1,11 +1,11 @@
 import argparse
 import numpy as np
 
-from skopt.benchmarks import hart6
-from skopt import gp_minimize
-from skopt import forest_minimize
-from skopt import gbrt_minimize
-from skopt import dummy_minimize
+from ProcessOptimizer.benchmarks import hart6
+from ProcessOptimizer import gp_minimize
+from ProcessOptimizer import forest_minimize
+from ProcessOptimizer import gbrt_minimize
+from ProcessOptimizer import dummy_minimize
 
 
 def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):

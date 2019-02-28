@@ -1,11 +1,11 @@
 import numpy as np
 import argparse
 
-from skopt.benchmarks import branin
-from skopt import gp_minimize
-from skopt import forest_minimize
-from skopt import gbrt_minimize
-from skopt import dummy_minimize
+from ProcessOptimizer.benchmarks import branin
+from ProcessOptimizer import gp_minimize
+from ProcessOptimizer import forest_minimize
+from ProcessOptimizer import gbrt_minimize
+from ProcessOptimizer import dummy_minimize
 
 def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
     bounds = [(-5.0, 10.0), (0.0, 15.0)]
