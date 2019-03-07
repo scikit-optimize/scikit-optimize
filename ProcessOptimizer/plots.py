@@ -532,9 +532,12 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                                  c='k', s=10, lw=0.)
                 ax[i, j].scatter(minimum[j], minimum[i],
                                  c=['r'], s=20, lw=0.)
-
-    return _format_scatter_plot_axes(ax, space, ylabel="Partial dependence",
-                                     dim_labels=dimensions)
+    if usepartialdependence:
+        ylabel="Partial dependence"
+    else:
+        ylabel="Dependence"
+    return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
+                                        dim_labels=dimensions)
 
 
 def plot_evaluations(result, bins=20, dimensions=None):
