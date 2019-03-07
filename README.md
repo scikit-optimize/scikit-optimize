@@ -13,4 +13,4 @@ If you have not packaged before check out https://packaging.python.org/tutorials
 To upload a new version to PyPi do the following:
 * Change version number in setup.py
 * run `python3 setup.py sdist bdist_wheel`
-* run `python3 -m twine upload dist/*
+* run `python3 -m twine upload dist/*`
