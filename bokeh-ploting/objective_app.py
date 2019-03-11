@@ -32,7 +32,7 @@ from ProcessOptimizer.plots import dependence
 from utils import get_plots_layout
 import matplotlib.pyplot as plt
 #from bokeh.models import Toggle
-from bokeh.models.widgets import Toggle, CheckboxButtonGroup, Div, PreText, Slider
+from bokeh.models.widgets import Toggle, CheckboxButtonGroup, Div, PreText, Slider, Select
 
 #this is the main
 #first we load models
@@ -47,11 +47,12 @@ buttonGenerate.on_click(lambda : handleButtonGenerate(layout,result))
 buttonsParameters = CheckboxButtonGroup(
         labels=['x '+str(s) for s in range(max_pars)], active=[])
 button_partial_dependence = Toggle(label="Use partial dependence", button_type="success")
+eval_method = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand' ],width = 200,height = 40)
 sliderNPoints = Slider(start=1, end=20, value=5, step=1,title="n-points",width=200, height=10)
 rowSliders = row([], id = 'sliders',width = 300)
 rowPlots = row([],id = 'plots')
 rowTop = row(buttonGenerate,buttonsParameters)
-colRightSide = column(button_partial_dependence, sliderNPoints, id = 'rightSide')
+colRightSide = column(button_partial_dependence,eval_method, sliderNPoints, id = 'rightSide')
 colLeftSide = column(rowTop,rowSliders,rowPlots,id = 'leftSide')
 layout = row(colLeftSide,colRightSide)
 
