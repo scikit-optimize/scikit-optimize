@@ -35,6 +35,8 @@ import matplotlib.pyplot as plt
 from bokeh.models.widgets import Toggle, CheckboxButtonGroup, Div, PreText, Slider, Select
 
 #this is the main
+source = {'red' : [], 'samples' : []} #this is a global parameter where we keep the data for the plots
+        # so we easily can update it
 #first we load models
 pickle_in = open("result_cat.pickle","rb")
 result = pickle.load(pickle_in)
@@ -43,7 +45,7 @@ max_pars = len(result.space.dimensions)
 topBox = row([]) # This row contains update button as well as toggle buttons for parameters
 
 buttonGenerate = Button(label="Generate", button_type="success")
-buttonGenerate.on_click(lambda : handleButtonGenerate(layout,result))
+buttonGenerate.on_click(lambda : handleButtonGenerate(layout,result,source))
 buttonsParameters = CheckboxButtonGroup(
         labels=['x '+str(s) for s in range(max_pars)], active=[])
 button_partial_dependence = Toggle(label="Use partial dependence", button_type="success")
@@ -57,12 +59,12 @@ colLeftSide = column(rowTop,rowSliders,rowPlots,id = 'leftSide')
 layout = row(colLeftSide,colRightSide)
 
 
-source = ColumnDataSource(data=dict(x=[0,1,2,3], y=[0,1,2,3]))
+source_yo = ColumnDataSource(data=dict(x=[0,1,2,3], y=[0,1,2,3]))
 plot = figure(plot_height=200, plot_width=200, title='hej',
                 tools = '',
                 x_range=[0,4],y_range=[0, 4])
 plot.toolbar.logo = None #remove the bokeh logo fom figures
-plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
+plot.line('x', 'y', source=source_yo, line_width=3, line_alpha=0.6)
                 # must give a vector of image data for image parameter
                # plot.image(image=[zi], x=-1, y=-1, dw=2, dh=2, palette="Spectral11")
 #layout.children[0].children[2] = plot
@@ -78,12 +80,16 @@ plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
 #button.on_click(lambda : handleButtonGenerate(layout))
 curdoc().add_root(layout)
 
-def handleButtonGenerate(layout,result):
+def handleButtonGenerate(layout,result,source):
     # Callback for when generate button gets pressed
+    print('10-1')
     active_list = get_active_list()
+    print('10-2')
     n_points = get_n_points()
+    print('10-3')
     # Updating plots
-    layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points)
+    layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points,source)
+    print('10-4')
     #Updating sliders
     #layout.children[0].children[1] = get_sliders_layout(result,active_list)
 def handleSliders(layout):
@@ -96,9 +102,10 @@ def get_active_list():
 def get_n_points():
     # The active list is the list of parameters that have been
     #clicked in the button group
-    return layout.children[1].children[1].children[0].value
+    return layout.children[1].children[2].children[0].value
 def get_use_partial_dependence():
     # The active list is the list of parameters that have been
     #clicked in the button group
     return layout.children[1].children[1].children[0].value
-
+def handle_eval_change():
+        pass

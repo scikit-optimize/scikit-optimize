@@ -32,6 +32,7 @@ from ProcessOptimizer.plots import dependence
 import matplotlib.pyplot as plt
 #from bokeh.models import Toggle
 from bokeh.models.widgets import Toggle, CheckboxButtonGroup, Div, PreText, Slider, Select
+from ProcessOptimizer.plots import _map_categories
 
 def get_index_of_child(id,layout):
     ''' Returns the index of the child with the corresponding id. Returns None if no id was found
@@ -51,7 +52,7 @@ def get_index_of_child(id,layout):
     elif len(ind)> 1:
         raise ValueError('Could not find index ' + id)
 
-def get_plot_list(layout,result,active_list,n_points):
+def get_plot_list(layout,result,active_list,n_points,source):
     # return a column of rows of plots
     plots=[]
     # if no parameters have been selected
@@ -63,14 +64,22 @@ width=500, height=100)
     space = result.space
     model = result.models[-1]
     bounds = result.space.bounds
+    samples, minimum, iscat = _map_categories(space, result.x_iters, result.x)
     # While iterating throuhg each plot we keep track of the max and min values of y and z in case of 2d plots
     #  so we can adjust all axis later
     y_min = float("inf")
     y_max = -float("inf")
     z_min = float("inf")
     z_max = -float("inf")
+    print('kan')
+    source['red'] = []
+    print('kan')
     for i_list in range(len(active_list)): #only evaluate the paramets that have
         #been selected
+        print('bank')
+        source['red'].append([])
+        source['samples'].append([])
+        print('bank')
         plots.append([])
         for j_list in range(len(active_list)): #we only evaluate the lower left half of the grid
             #if i in active_pars or j in active_pars:
@@ -91,14 +100,18 @@ width=500, height=100)
                 print('diag 1')
                 #x_range = [-1,1]
                 #y_range = [0,min(1,np.max(y))]
-                source = ColumnDataSource(data=dict(x=xi, y=yi))
+                print('fad')
+                source_temp = ColumnDataSource(data=dict(x=xi, y=yi))
+                source_samples = [] # We dont plot samples on diagonal
+                source_red = result.x[i]
                 print('diag 2')
                 plot = figure(plot_height=200, plot_width=200, title=str(i)+str(j),
                 tools = '',
                 x_range=x_range,y_range=[0,20])
                 print('diag 3')
                 plot.toolbar.logo = None #remove the bokeh logo fom figures
-                plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
+                plot.line('x', 'y', source=source_temp, line_width=3, line_alpha=0.6)
+                plot.add_layout(Span(location=3, dimension='height', line_color='red', line_width=3))
                 print('diag 4')
                 if np.min(yi) < y_min:
                     y_min = np.min(yi)
@@ -141,7 +154,17 @@ width=500, height=100)
 
                 # must give a vector of image data for image parameter
                 plot.image(image=[zi], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span, palette="Spectral11")
-            radians = 2
+                #red_source = result.x
+                #source.red[i_list].append(red_source)
+                x_samples = [val[j] for val in result.x_iters]
+                print('fas')
+                y_samples = [val[i] for val in result.x_iters]
+                print(y_samples)
+                source_samples = ColumnDataSource(data=dict(x = x_samples, y = y_samples))
+                source_red = ColumnDataSource(data=dict(x = [result.x[j]], y = [result.x[i]]))
+                print('fas')
+                plot.circle(x='x',y='y',source=source_samples, size=10, color="black", alpha=0.5)
+                plot.circle(x='x',y='y',source=source_red, size=10, color="red", alpha=1)
             if isinstance(space.dimensions[j],Categorical):
                 plot.xaxis.major_label_orientation = 0.3
             if isinstance(space.dimensions[i],Categorical) and i != j:
@@ -150,6 +173,8 @@ width=500, height=100)
                 #plot.circle(x='x', y='y', source=source)
                 #plot.circle(x='x',y='y',source=source_red, size=10, color="red", alpha=0.5)
             plots[i_list].append(plot)
+            source['samples'][i_list].append(source_samples)
+            source['red'][i_list].append(source_red)
     # Now plots is a list of rows of plots
     # here we set the range for all the diagonal plots
     print('hej')
@@ -158,8 +183,8 @@ width=500, height=100)
         
     return plots
 
-def get_plots_layout(layout,result,active_list,n_points):
-    plots = get_plot_list(layout,result,active_list,n_points)
+def get_plots_layout(layout,result,active_list,n_points,source):
+    plots = get_plot_list(layout,result,active_list,n_points,source)
     print('1')
     value_adjusters = get_value_adjusters_list(result,active_list)
     print('2')
@@ -241,4 +266,5 @@ def get_value_adjusters_list(result,active_list):
         div = Div(text="""<font size="2">No Sliders</font>""",
 width=500, height=100)
         return div
-#Here we make a list with lists of plots'
+
+#def plot_red(plot,values):
