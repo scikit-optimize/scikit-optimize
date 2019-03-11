@@ -29,16 +29,16 @@ from ProcessOptimizer.plots import plot_objective
 from ProcessOptimizer import gp_minimize, forest_minimize, dummy_minimize
 from ProcessOptimizer import plots
 from ProcessOptimizer.plots import dependence
-from utils import get_plot_layout
+from utils import get_plots_layout
 import matplotlib.pyplot as plt
 #from bokeh.models import Toggle
 from bokeh.models.widgets import Toggle, CheckboxButtonGroup, Div, PreText, Slider
 
 #this is the main
 #first we load models
-pickle_in = open("data.pickle","rb")
+pickle_in = open("result_cat.pickle","rb")
 result = pickle.load(pickle_in)
-max_pars = len(result.x)
+max_pars = len(result.space.dimensions)
 #Then we define layout
 topBox = row([]) # This row contains update button as well as toggle buttons for parameters
 
@@ -48,7 +48,7 @@ buttonsParameters = CheckboxButtonGroup(
         labels=['x '+str(s) for s in range(max_pars)], active=[])
 button_partial_dependence = Toggle(label="Use partial dependence", button_type="success")
 sliderNPoints = Slider(start=1, end=20, value=5, step=1,title="n-points",width=200, height=10)
-rowSliders = row([], id = 'sliders')
+rowSliders = row([], id = 'sliders',width = 300)
 rowPlots = row([],id = 'plots')
 rowTop = row(buttonGenerate,buttonsParameters)
 colRightSide = column(button_partial_dependence, sliderNPoints, id = 'rightSide')
@@ -81,7 +81,10 @@ def handleButtonGenerate(layout,result):
     # Callback for when generate button gets pressed
     active_list = get_active_list()
     n_points = get_n_points()
-    layout.children[0].children[2] = get_plot_layout(layout,result,active_list,n_points)
+    # Updating plots
+    layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points)
+    #Updating sliders
+    #layout.children[0].children[1] = get_sliders_layout(result,active_list)
 def handleSliders(layout):
     # Callback whenever there is a change in the parameters sliders
     layout.children.pop()
