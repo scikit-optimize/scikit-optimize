@@ -20,7 +20,7 @@ from ProcessOptimizer.space import Integer, Categorical
 import numpy as np
 from bokeh.io import curdoc
 from bokeh.layouts import row, column, Spacer
-from bokeh.models import ColumnDataSource, Button, Range1d
+from bokeh.models import ColumnDataSource, Button, Range1d, Span
 from bokeh.models.widgets import Slider, TextInput
 from bokeh.plotting import figure
 from ProcessOptimizer.benchmarks import branin as branin
@@ -92,10 +92,13 @@ width=500, height=100)
                 xi,yi = dependence(space, model, i, j=None, sample_points=None,
                        n_samples=50, n_points=n_points, x_eval = None)
                 if isinstance(space.dimensions[i],Categorical): #check if values are categorical
+                    source_red = minimum[i]+0.5 # The Span class does not support categorical values. Using
+                        # numerical values and adding 0.5 is a workaround
                     x_range = space.dimensions[i].categories
                     #convert integers to catogorical strings
                     xi = [bounds[i][ind] for ind in xi]
                 else:
+                    source_red = minimum[i]
                     x_range = [bounds[i][0],bounds[i][1]]
                 print('diag 1')
                 #x_range = [-1,1]
@@ -103,7 +106,6 @@ width=500, height=100)
                 print('fad')
                 source_temp = ColumnDataSource(data=dict(x=xi, y=yi))
                 source_samples = [] # We dont plot samples on diagonal
-                source_red = result.x[i]
                 print('diag 2')
                 plot = figure(plot_height=200, plot_width=200, title=str(i)+str(j),
                 tools = '',
@@ -111,7 +113,8 @@ width=500, height=100)
                 print('diag 3')
                 plot.toolbar.logo = None #remove the bokeh logo fom figures
                 plot.line('x', 'y', source=source_temp, line_width=3, line_alpha=0.6)
-                plot.add_layout(Span(location=3, dimension='height', line_color='red', line_width=3))
+                # Add red line
+                plot.add_layout(Span(location=source_red, dimension='height', line_color='red', line_width=3))
                 print('diag 4')
                 if np.min(yi) < y_min:
                     y_min = np.min(yi)
