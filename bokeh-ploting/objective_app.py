@@ -11,6 +11,7 @@ from ProcessOptimizer.space import Integer, Categorical
 from ProcessOptimizer.plots import _map_categories
 import numpy as np
 from bokeh.models.markers import Circle
+import matplotlib.pyplot as plt
 
 
 #from bokeh.models import Toggle
@@ -190,20 +191,23 @@ width=500, height=100)
                     xi = [bounds[j][ind] for ind in xi]
                     x_anchor = 0
                     x_span = len(result.space.dimensions[j].categories)
+                    x_red = minimum[j]+0.5
                 else:
                     x_anchor = bounds[j][0]
                     x_span = bounds[j][1]-bounds[j][0]
                     x_range =[np.min(xi),np.max(xi)]
+                    x_red = result.x[j]
                 if isinstance(space.dimensions[i],Categorical): #check if values are categorical
                     yi = [bounds[i][ind] for ind in yi]
                     y_range = space.dimensions[i].categories
                     y_anchor = 0
                     y_span = len(result.space.dimensions[i].categories)
+                    y_red = minimum[i]+0.5
                 else:
                     y_anchor = bounds[i][0]
                     y_span = bounds[i][1]-bounds[i][0]
                     y_range =[np.min(yi),np.max(yi)]
-
+                    y_red = result.x[i]
                 if np.min(zi) < z_min:
                     z_min = np.min(zi)
                 if np.max(zi) > z_max:
@@ -213,9 +217,12 @@ width=500, height=100)
                 #y = np.random.rand(100,100)
                 plot = figure(plot_height=200, plot_width=200,x_range=x_range,y_range=y_range, tools = '')
                 plot.toolbar.logo = None
-
+                print('hejsa')
                 # must give a vector of image data for image parameter
-                plot.image(image=[zi], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span, palette="Spectral11")
+                im = get_plt_contour_as_im(xi, yi, zi)
+                print('hejsa')
+                plot.image(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span, palette="Spectral11")
+                print('hejsa')
                 #red_source = result.x
                 #source.red[i_list].append(red_source)
                 x_samples = [val[j] for val in result.x_iters]
@@ -223,7 +230,7 @@ width=500, height=100)
                 y_samples = [val[i] for val in result.x_iters]
                 print(y_samples)
                 source_samples = ColumnDataSource(data=dict(x = x_samples, y = y_samples))
-                source_red = ColumnDataSource(data=dict(x = [10], y = [10]))
+                source_red = ColumnDataSource(data=dict(x = [x_red], y = [y_red]))
                 print('fas')
                 #plot.circle(x='x',y='y',source=source_samples, size=10, color="black", alpha=0.5)
                 #glyph = Circle(x='x',y='y', size=10, line_color="red", fill_color="red")
@@ -310,12 +317,10 @@ def get_value_adjusters_list(result,active_list):
                 select.js_on_change('value', CustomJS(args=dict(source=source, n=n,cats=cats), code="""
                     var ind = cats.indexOf(cb_obj.value);
                     source['reds'][n][n]['location'] = ind + 0.5;
-                    
-                    
-                    console.log(source['samples'].length)
-                    
-   
-
+                    for (i = n+1; i < source.reds.length; i++) { 
+                    source.reds[i][n].data.x = [ind + 0.5] ;
+                    source.reds[i][n].change.emit()
+                    }
                      """)
                     )
                 #select.on_change(handle_eval_change)
@@ -338,6 +343,8 @@ def get_value_adjusters_list(result,active_list):
                 #slider.js_on_change('value', f_callback,args = i)
 
                 slider.js_on_change('value', CustomJS(args=dict(source=source, n=n), code="""
+                source.reds[n][n].location = cb_obj.value;
+                source.reds[n][n].change.emit()
                 for (i = n+1; i < source.reds.length; i++) { 
                 source.reds[i][n].data.x = [cb_obj.value] ;
                 source.reds[i][n].change.emit()
@@ -365,3 +372,16 @@ def get_value_adjusters_list(result,active_list):
 width=500, height=100)
         return div
 #def plot_red(plot,values):
+
+def get_plt_contour_as_im(xi, yi, zi):
+    fig = plt.figure()
+    ax = fig.add_axes([0.,0.,1.,1.])
+    ax = plt.gca()
+    ax.contourf(xi, yi, zi, 10,
+                                    locator=None, cmap='Greys')
+    plt.axis('off')
+    fig.canvas.draw()
+    # grab the pixel buffer and dump it into a numpy array
+    X = np.array(fig.canvas.renderer._renderer)
+    X=X[:,:,1]
+    return X
