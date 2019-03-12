@@ -2,7 +2,7 @@
 import pickle
 from bokeh.io import curdoc
 from bokeh.layouts import row, column, gridplot, Spacer
-from bokeh.models import ColumnDataSource, Button, Range1d, Span
+from bokeh.models import ColumnDataSource, Button, Range1d, Span, CustomJS
 from bokeh.models.widgets import Slider, TextInput,Toggle, CheckboxButtonGroup, Div, PreText,Select
 from bokeh.plotting import figure
 from ProcessOptimizer.plots import dependence
@@ -10,13 +10,12 @@ from bokeh.models.glyphs import Text
 from ProcessOptimizer.space import Integer, Categorical
 from ProcessOptimizer.plots import _map_categories
 import numpy as np
-
+from bokeh.models.markers import Circle
 
 
 #from bokeh.models import Toggle
-
 #this is the main
-source = {'red' : [], 'samples' : []} #this is a global parameter where we keep the data for the plots
+source = {'reds' : [],'red_span' : [], 'samples' : []} #this is a global parameter where we keep the data for the plots
         # so we easily can update it
 #first we load models
 pickle_in = open("result_cat.pickle","rb")
@@ -26,7 +25,7 @@ max_pars = len(result.space.dimensions)
 topBox = row([]) # This row contains update button as well as toggle buttons for parameters
 
 buttonGenerate = Button(label="Generate", button_type="success")
-buttonGenerate.on_click(lambda : handleButtonGenerate(layout,result,source))
+buttonGenerate.on_click(lambda : handleButtonGenerate(layout,result))
 buttonsParameters = CheckboxButtonGroup(
         labels=['x '+str(s) for s in range(max_pars)], active=[])
 button_partial_dependence = Toggle(label="Use partial dependence", button_type="success")
@@ -61,7 +60,7 @@ plot.line('x', 'y', source=source_yo, line_width=3, line_alpha=0.6)
 #button.on_click(lambda : handleButtonGenerate(layout))
 curdoc().add_root(layout)
 
-def handleButtonGenerate(layout,result,source):
+def handleButtonGenerate(layout,result):
     # Callback for when generate button gets pressed
     print('10-1')
     active_list = get_active_list()
@@ -69,8 +68,10 @@ def handleButtonGenerate(layout,result,source):
     n_points = get_n_points()
     print('10-3')
     # Updating plots
-    layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points,source)
-    print('10-4')
+    layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points)
+    #print('h' +str(len( source['red_point'][0])))
+    print(source['reds'][1][0].data['x'])
+    source['reds'][1][0].data['x']=[5]
     #Updating sliders
     #layout.children[0].children[1] = get_sliders_layout(result,active_list)
 def handleSliders(layout):
@@ -88,9 +89,6 @@ def get_use_partial_dependence():
     # The active list is the list of parameters that have been
     #clicked in the button group
     return layout.children[1].children[1].children[0].value
-def handle_eval_change(attr, old, new):
-    source['red'][0][0].location = 10
-    pass
 def get_index_of_child(id,layout):
     ''' Returns the index of the child with the corresponding id. Returns None if no id was found
     Arguments:
@@ -109,7 +107,7 @@ def get_index_of_child(id,layout):
     elif len(ind)> 1:
         raise ValueError('Could not find index ' + id)
 
-def get_plot_list(layout,result,active_list,n_points,source):
+def get_plot_list(layout,result,active_list,n_points):
     # return a column of rows of plots
     plots=[]
     # if no parameters have been selected
@@ -129,12 +127,15 @@ width=500, height=100)
     z_min = float("inf")
     z_max = -float("inf")
     print('kan')
-    source['red'] = []
+    source['reds'] = [] # a list of lists with source values for red dots and red lines (spans)
+        # for diagonal elements i.e source['reds'][2][2] the type is span. For off-diagonal type is ColumnDataSource
+    source['red_span'] = [] # a list of spans of length n_parameters
+    source['samples'] =[] #
     print('kan')
     for i_list in range(len(active_list)): #only evaluate the paramets that have
         #been selected
         print('bank')
-        source['red'].append([])
+        source['reds'].append([])
         source['samples'].append([])
         print('bank')
         plots.append([])
@@ -158,6 +159,7 @@ width=500, height=100)
                     source_red = Span(location=minimum[i], dimension='height', line_color='red', line_width=3)
                     x_range = [bounds[i][0],bounds[i][1]]
                 print('diag 1')
+                
                 #x_range = [-1,1]
                 #y_range = [0,min(1,np.max(y))]
                 print('fad')
@@ -221,9 +223,11 @@ width=500, height=100)
                 y_samples = [val[i] for val in result.x_iters]
                 print(y_samples)
                 source_samples = ColumnDataSource(data=dict(x = x_samples, y = y_samples))
-                source_red = ColumnDataSource(data=dict(x = [result.x[j]], y = [result.x[i]]))
+                source_red = ColumnDataSource(data=dict(x = [10], y = [10]))
                 print('fas')
-                plot.circle(x='x',y='y',source=source_samples, size=10, color="black", alpha=0.5)
+                #plot.circle(x='x',y='y',source=source_samples, size=10, color="black", alpha=0.5)
+                #glyph = Circle(x='x',y='y', size=10, line_color="red", fill_color="red")
+                #plot.add_glyph(source_red, glyph)
                 plot.circle(x='x',y='y',source=source_red, size=10, color="red", alpha=1)
             if isinstance(space.dimensions[j],Categorical):
                 plot.xaxis.major_label_orientation = 0.3
@@ -233,8 +237,9 @@ width=500, height=100)
                 #plot.circle(x='x', y='y', source=source)
                 #plot.circle(x='x',y='y',source=source_red, size=10, color="red", alpha=0.5)
             plots[i_list].append(plot)
+            source['reds'][i_list].append(source_red)
             source['samples'][i_list].append(source_samples)
-            source['red'][i_list].append(source_red)
+            
     # Now plots is a list of rows of plots
     # here we set the range for all the diagonal plots
     print('hej')
@@ -243,8 +248,8 @@ width=500, height=100)
         
     return plots
 
-def get_plots_layout(layout,result,active_list,n_points,source):
-    plots = get_plot_list(layout,result,active_list,n_points,source)
+def get_plots_layout(layout,result,active_list,n_points):
+    plots = get_plot_list(layout,result,active_list,n_points)
     print('1')
     value_adjusters = get_value_adjusters_list(result,active_list)
     print('2')
@@ -289,18 +294,30 @@ def get_plots_layout(layout,result,active_list,n_points,source):
     return plot_layout
 
 def get_value_adjusters_list(result,active_list):
+    #global SOURCE
     #returns a list of sliders for non-categorical values and groups of buttons for categorical values
     bounds = result.space.bounds
     if len(active_list):
         value_adjusters=[]
+        n=0
         for i in active_list:
 
             if isinstance(result.space.dimensions[i],Categorical):
                 #create a buton group with categorical values
                 select_row = row(Div(text='',width = 50))
                 cats = list(result.space.dimensions[i].categories)
-                select = Select(title="Value:", value=cats[0], options=cats,width = 100,height = 15)
-                
+                select = Select(title="Value:", value = cats[0], options = cats, width = 100,height = 15)
+                select.js_on_change('value', CustomJS(args=dict(source=source, n=n,cats=cats), code="""
+                    var ind = cats.indexOf(cb_obj.value);
+                    source['reds'][n][n]['location'] = ind + 0.5;
+                    
+                    
+                    console.log(source['samples'].length)
+                    
+   
+
+                     """)
+                    )
                 #select.on_change(handle_eval_change)
                 select_row.children.append(select)
                 select_row.children.append(Div(text='',width = 50))
@@ -316,14 +333,32 @@ def get_value_adjusters_list(result,active_list):
                 value = start+span/2 
             #we create space on each side of slider
                 slider  = Slider(start=start, end=end, value=value, step=.1,title="",width=150, height=30)
-                slider.on_change('value', handle_eval_change)
+                #lambda : handleButtonGenerate(layout,result,source)
+                #slider.on_change('hej',handle_eval_change)
+                #slider.js_on_change('value', f_callback,args = i)
+
+                slider.js_on_change('value', CustomJS(args=dict(source=source, n=n), code="""
+                for (i = n+1; i < source.reds.length; i++) { 
+                source.reds[i][n].data.x = [cb_obj.value] ;
+                source.reds[i][n].change.emit()
+                }
+                //source.reds[1][0].data.x = [cb_obj.value]
+                //source.data.y.push(cb_obj.value) 
+                    //source['reds'][n][n]['location'] = cb_obj.value;
+                    //source['reds'][1][0].data['x'] = cb_obj.k;
+                    //source['reds'][1][0].data['y'] = cb_obj.value;
+                    //source.data['x'] = [5];
+                    //console.log(source.reds.('1').('0').data.x)
+                    //source.change.emit()
+                     """)
+                    )
                 slider_row.children.append(slider)
                 slider_row.children.append(Div(text='',width = 50))
                 slider_col = column(Div(text='',height = 50))
                 slider_col.children.append(slider_row)
                 slider_col.children.append(Div(text='',height = 50))
                 value_adjusters.append(slider_col)
-            #sliders.append(row(column(space,width = 1000),column(slider,width = 1000),column(space,width = 1000)))
+            n+=1
         return value_adjusters#row(*sliders,width = 1000)
     else:
         div = Div(text="""<font size="2">No Sliders</font>""",
