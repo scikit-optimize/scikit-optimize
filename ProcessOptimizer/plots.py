@@ -693,3 +693,30 @@ def expected_min_random_sampling(model, space, n_samples = 100000):
     min_x = random_samples[index_best_objective]
     
     return min_x
+
+def cat_to_int(space, points):
+    """
+    Map categorical values to integers in a set of points.
+    Same as _map_categories but does not take a minimum as an argument
+
+    Returns
+    -------
+    * `mapped_points` [np.array, shape=points.shape]:
+        A copy of `points` with categoricals replaced with their indices in
+        the corresponding `Dimension`.
+
+    * `iscat` [np.array, shape=(space.n_dims,)]:
+       Boolean array indicating whether dimension `i` in the `space` is
+       categorical.
+    """
+    points = np.asarray(points, dtype=object)  # Allow slicing, preserve cats
+    iscat = np.repeat(False, space.n_dims)
+    pts_ = np.zeros(points.shape)
+    for i, dim in enumerate(space.dimensions):
+        if isinstance(dim, Categorical):
+            iscat[i] = True
+            catmap = dict(zip(dim.categories, count()))
+            pts_[:, i] = [catmap[cat] for cat in points[:, i]]
+        else:
+            pts_[:, i] = points[:, i]
+    return pts_, iscat
