@@ -3,11 +3,6 @@ import sys
 from itertools import count
 from functools import partial
 
-# For plot tests, matplotlib must be set to headless mode early
-if 'pytest' in sys.modules:
-    import matplotlib
-    matplotlib.use('Agg')
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
