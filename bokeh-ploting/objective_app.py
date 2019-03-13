@@ -12,17 +12,19 @@ from ProcessOptimizer import expected_minimum
 import numpy as np
 from bokeh.models.markers import Circle
 import matplotlib.pyplot as plt
-
+import copy
 
 #from bokeh.models import Toggle
 #this is the main
+value_adjusters=[] # The valueadjusters are kept global so we can get their values when needed
+old_active_list = []
 source = {'reds' : [],'red_span' : [], 'samples' : []} #this is a global parameter where we keep the data for the plots
         # so we easily can update it
 #first we load models
 pickle_in = open("result_cat.pickle","rb")
 result = pickle.load(pickle_in)
 max_pars = len(result.space.dimensions)
-slider_values = result.x
+slider_values = copy.copy(result.x) # We define the slider values globally so we can acces slider values for plots that have been destroyed
 #Then we define layout
 topBox = row([]) # This row contains update button as well as toggle buttons for parameters
 
@@ -30,7 +32,7 @@ buttonGenerate = Button(label="Generate", button_type="success")
 buttonGenerate.on_click(lambda : handleButtonGenerate(layout,result))
 buttonsParameters = CheckboxButtonGroup(
         labels=['x '+str(s) for s in range(max_pars)], active=[])
-button_partial_dependence = Toggle(label="Use partial dependence", button_type="success")
+button_partial_dependence = Toggle(label="Use partial dependence", button_type="default")
 eval_method_dropdown = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand','Sliders'],width = 200,height = 40)
 sliderNPoints = Slider(start=1, end=20, value=5, step=1,title="n-points",width=200, height=10)
 rowSliders = row([], id = 'sliders',width = 300)
@@ -56,12 +58,14 @@ layout = row(colLeftSide,colRightSide)
 
 
 def handleButtonGenerate(layout,result):
+    global old_active_list
+    print(get_use_partial_dependence())
     # Callback for when generate button gets pressed
-    
     active_list = get_active_list()
     n_points = get_n_points()
     # Updating plots
     if active_list:
+
         x_eval = get_x_eval(result,active_list)
         #eval_x_method = layout.children[1].children[1].children[1].value
         
@@ -72,9 +76,26 @@ def handleButtonGenerate(layout,result):
     else:
         layout.children[0].children[2] = Div(text="""<font size="10"><br><br>Let's select som parameters to plot!</font>""",
             width=500, height=100)
-    
+
     #Updating sliders
     #layout.children[0].children[1] = get_sliders_layout(result,active_list)
+    old_active_list = active_list
+def get_slider_values():
+    global value_adjusters
+    global old_active_list
+    vals = slider_values
+    #hasattr('abc', 'upper')
+    
+    if True:
+        n=0
+        for i in old_active_list: # Use slider value from a displayed slider instead
+            #val = value_adjusters[n].value
+            val = layout.children[0].children[2].children[n].children[n].children[0].value
+            vals[i] = val
+            
+            n+=1
+    vals = slider_values
+    return vals
 def handleSliders(layout):
     # Callback whenever there is a change in the parameters sliders
     layout.children.pop()
@@ -89,7 +110,7 @@ def get_n_points():
 def get_use_partial_dependence():
     # The active list is the list of parameters that have been
     #clicked in the button group
-    return layout.children[1].children[1].children[0].value
+    return button_partial_dependence.active #layout.children[1].children[1].children[0].value
 def get_index_of_child(id,layout):
     ''' Returns the index of the child with the corresponding id. Returns None if no id was found
     Arguments:
@@ -109,6 +130,11 @@ def get_index_of_child(id,layout):
         raise ValueError('Could not find index ' + id)
 
 def get_plot_list(layout,result,active_list,n_points,x_eval):
+    if get_use_partial_dependence():
+        dependence_eval = None
+        
+    else:
+        dependence_eval = x_eval
     # return a column of rows of plots
     plots=[]
     # if no parameters have been selected
@@ -144,7 +170,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 break
             elif i==j: #diagonal
                 xi,yi = dependence(space, model, i, j=None, sample_points=None,
-                       n_samples=50, n_points=n_points, x_eval = None)
+                       n_samples=50, n_points=n_points, x_eval = dependence_eval)
                 if isinstance(space.dimensions[i],Categorical): #check if values are categorical
                     source_red = Span(location=red_val[i]+0.5, dimension='height', line_color='red', line_width=3) # The Span class does not support categorical values. Using
                         # numerical values and adding 0.5 is a workaround
@@ -179,7 +205,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 
             else: #contour plot
                 xi,yi,zi = dependence(space, model, i, j=j, sample_points=None,
-                       n_samples=50, n_points=n_points, x_eval = None)
+                       n_samples=50, n_points=n_points, x_eval = dependence_eval)
                 if isinstance(space.dimensions[j],Categorical): #check if values are categorical
                     x_range = space.dimensions[j].categories
                     #convert integers to catogorical strings
@@ -250,10 +276,11 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
     return plots
 
 def get_plots_layout(layout,result,active_list,n_points,x_eval):
+    global value_adjusters
     plots = get_plot_list(layout,result,active_list,n_points,x_eval)
     
     value_adjusters = get_value_adjusters_list(result,active_list,x_eval)
-    
+    #print([adjuster.value for adjuster in value_adjusters])
     # We now convert the plots to a layout
     # Here we create a list of row objects, where each row object contains a list of plot objects
     if True:
@@ -295,9 +322,10 @@ def get_plots_layout(layout,result,active_list,n_points,x_eval):
     return plot_layout
 
 def get_value_adjusters_list(result,active_list,x_eval):
+    global slider_values
     #global SOURCE
     #returns a list of sliders for non-categorical values and groups of buttons for categorical values
-    
+
     bounds = result.space.bounds
     value_adjusters=[]
     n=0
@@ -323,13 +351,15 @@ def get_value_adjusters_list(result,active_list,x_eval):
                 }
                     """)
                 )
+            
             #select.on_change(handle_eval_change)
             select_row.children.append(select)
             select_row.children.append(Div(text='',width = 50))
             select_col = column(Div(text='',height = 50))
             select_col.children.append(select_row)
             select_col.children.append(Div(text='',height = 50))
-            value_adjusters.append(select_col)
+            value_adjusters.append(select)
+
             slider_values[i] = x_eval[i]
         else: 
             slider_row=row(Div(text='',width = 50))
@@ -357,7 +387,6 @@ def get_value_adjusters_list(result,active_list,x_eval):
             source.reds[n][j].data.y = [cb_obj.value] ;
             source.reds[n][j].change.emit();
             }
-
                     """)
                 )
             slider_row.children.append(slider)
@@ -365,7 +394,7 @@ def get_value_adjusters_list(result,active_list,x_eval):
             slider_col = column(Div(text='',height = 50))
             slider_col.children.append(slider_row)
             slider_col.children.append(Div(text='',height = 50))
-            value_adjusters.append(slider_col)
+            value_adjusters.append(slider)
             slider_values[i] = x_eval[i]
         n+=1
     return value_adjusters#row(*sliders,width = 1000)
@@ -385,25 +414,23 @@ def get_plt_contour_as_im(xi, yi, zi):
     return X
 
 def get_x_eval(result,active_list):
+
     '''Returns values for parameters defined by the eval-method dropdown menu'''
     _,iscat = cat_to_int(result.space,[result.x])
     eval_method = eval_method_dropdown.value
-
     # Expected_minimum does not support categorical values
     if eval_method == 'Exp min' and any(iscat):
         eval_method = "Exp min rand"
     
     if eval_method == 'Result':
         x = result.x
-    if eval_method == 'Sliders':
-        x = slider_values
-        print(x)
+
+    elif eval_method == 'Sliders':
+        x = get_slider_values()
     elif eval_method == 'Exp min' and not any(iscat):
         x = expected_minimum(result, n_random_starts=1, random_state=None)
     elif eval_method == 'Exp min rand':
         x = expected_min_random_sampling(result.models[-1], result.space, np.min([10**len(result.x),10000]))
-    elif eval_method == 'sliders':
-        x = slider_values
     else:
         ValueError('Could not find evalmethod from dropdown menu')
     return x
