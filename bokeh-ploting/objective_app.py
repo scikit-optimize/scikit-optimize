@@ -423,7 +423,7 @@ def get_plt_contour_as_rgba(xi, yi, zi):
     ax = fig.add_axes([0.,0.,1.,1.])
     ax = plt.gca()
     ax.contourf(xi, yi, zi, 10,
-                                    locator=None, cmap='Greys')
+                                    locator=None, cmap='viridis_r')
     plt.axis('off')
     fig.canvas.draw()
     # grab the pixel buffer and dump it into a numpy array
