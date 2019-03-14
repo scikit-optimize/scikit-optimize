@@ -188,7 +188,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 source_temp = ColumnDataSource(data=dict(x=xi, y=yi))
                 source_samples = [] # We dont plot samples on diagonal
                 
-                plot = figure(plot_height=200, plot_width=200, title=str(i)+str(j),
+                plot = figure(plot_height=200, plot_width=200,
                 tools = '',
                 x_range=x_range,y_range=[0,20])
                 
@@ -335,7 +335,7 @@ def get_value_adjusters_list(result,active_list,x_eval):
             #create a buton group with categorical values
             select_row = row(Div(text='',width = 50))
             cats = list(result.space.dimensions[i].categories)
-            select = Select(title="Value:", value = x_eval[i], options = cats, width = 100,height = 15)
+            select = Select(title='X'+str(i), value = x_eval[i], options = cats, width = 100,height = 15)
             select.js_on_change('value', CustomJS(args=dict(source=source, n=n,cats=cats), code="""
                 
                 var ind = cats.indexOf(cb_obj.value); // Convert categorical to index
@@ -368,7 +368,7 @@ def get_value_adjusters_list(result,active_list,x_eval):
             span = end-start
             value = start+span/2 
         #we create space on each side of slider
-            slider  = Slider(start=start, end=end, value=x_eval[i], step=.1,title="",width=150, height=30)
+            slider  = Slider(start=start, end=end, value=x_eval[i], step=.1,title='X'+str(i),width=150, height=30)
             #lambda : handleButtonGenerate(layout,result,source)
             #slider.on_change('hej',handle_eval_change)
             #slider.js_on_change('value', f_callback,args = i)
