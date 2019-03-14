@@ -5,7 +5,7 @@ except ImportError:
 
 
 setup(name='ProcessOptimizer',
-      version='0.1.2',
+      version='0.2.0',
       description='Sequential model-based optimization toolbox (forked from scikit-optimize)',
       url='https://github.com/bytesandbrains/ProcessOptimizer',
       license='BSD',
@@ -13,5 +13,5 @@ setup(name='ProcessOptimizer',
       packages=['ProcessOptimizer', 'ProcessOptimizer.learning', 'ProcessOptimizer.optimizer', 'ProcessOptimizer.space',
                 'ProcessOptimizer.learning.gaussian_process'],
       install_requires=['pyaml', 'numpy', 'matplotlib', 'scipy>=0.14.0',
-                        'scikit-learn>=0.19.1']
+                        'scikit-learn>=0.19.1', 'bokeh']
       )
