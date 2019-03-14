@@ -5,7 +5,7 @@ from bokeh.layouts import row, column, gridplot, Spacer
 from bokeh.models import ColumnDataSource, Button, Range1d, Span, CustomJS
 from bokeh.models.widgets import Slider, TextInput,Toggle, CheckboxButtonGroup, Div, PreText,Select
 from bokeh.plotting import figure
-from bokeh.models.glyphs import Text
+from bokeh.models.glyphs import Text, ImageRGBA
 from ProcessOptimizer.space import Integer, Categorical
 from ProcessOptimizer.plots import _map_categories, dependence, expected_min_random_sampling, cat_to_int
 from ProcessOptimizer import expected_minimum
@@ -239,10 +239,16 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 plot.toolbar.logo = None
                 
                 # must give a vector of image data for image parameter
-                im = get_plt_contour_as_im(xi, yi, zi)
+                #im = get_plt_contour_as_im(xi, yi, zi)
+                im = get_plt_contour_as_rgba(xi, yi, zi)
+                #ImageRGBA
+                #plot.image(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span, palette="Spectral11")
                 
-                plot.image(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span, palette="Spectral11")
-                
+                #glyph = ImageRGBA(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span)
+                print('das')
+                #plot.add_glyph(glyph)
+                plot.image_rgba(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span)
+                print('das')
                 #red_source = result.x
                 #source.red[i_list].append(red_source)
                 x_samples = [val[j] for val in result.x_iters]
@@ -412,7 +418,28 @@ def get_plt_contour_as_im(xi, yi, zi):
     X = np.array(fig.canvas.renderer._renderer)
     X=X[:,:,1]
     return X
+def get_plt_contour_as_rgba(xi, yi, zi):
+    fig = plt.figure()
+    ax = fig.add_axes([0.,0.,1.,1.])
+    ax = plt.gca()
+    ax.contourf(xi, yi, zi, 10,
+                                    locator=None, cmap='Greys')
+    plt.axis('off')
+    fig.canvas.draw()
+    # grab the pixel buffer and dump it into a numpy array
+    X = np.array(fig.canvas.renderer._renderer)
+    xdim= X.shape[1]
+    ydim= X.shape[0]
+# Create an array representation for the image `img`, and an 8-bit "4
+# layer/RGBA" version of it `view`.
+    img = np.empty((ydim, xdim), dtype=np.uint32)
+    view = img.view(dtype=np.uint8).reshape((ydim, xdim, 4))
+# Copy the RGBA image into view, flipping it so it comes right-side up
+# with a lower-left origin
+    view[:,:,:] = np.flipud(X)
 
+    #X=X[:,:,1]
+    return img
 def get_x_eval(result,active_list):
 
     '''Returns values for parameters defined by the eval-method dropdown menu'''
