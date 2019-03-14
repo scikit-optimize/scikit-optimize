@@ -485,9 +485,9 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         raise ValueError('Argument ´pars´ must be a string or a list')
 
     if usepartialdependence:
-        x_eval = x_vals
-    else:
         x_eval = None
+    else:
+        x_eval = x_vals
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
     samples, minimum, _ = _map_categories(space, result.x_iters, x_vals)
 
