@@ -3,10 +3,6 @@ import sys
 from itertools import count
 from functools import partial
 
-# For plot tests, matplotlib must be set to headless mode early
-if 'pytest' in sys.modules:
-    import matplotlib
-    matplotlib.use('Agg')
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -279,6 +275,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
 
 def dependence(space, model, i, j=None, sample_points=None,
                        n_samples=250, n_points=40, x_eval = None):
+    print(x_eval)
     """Calculate the dependence for dimensions `i` and `j` with
     respect to the objective value, as approximated by `model`.
     If x_eval is set to "None" partial dependence will be calculated.
@@ -355,7 +352,7 @@ def dependence(space, model, i, j=None, sample_points=None,
         sample_points = space.transform(space.rvs(n_samples=n_samples))
     else:
         sample_points = space.transform([x_eval])
-
+    print(sample_points)
     # dim_locs[i] is the (column index of the) start of dim i in sample_points.
     # This is usefull when we are using one hot encoding, i.e using categorical values
     dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
@@ -493,6 +490,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         x_eval = None
     else:
         x_eval = x_vals
+    print(x_eval)
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
     samples, minimum, _ = _map_categories(space, result.x_iters, x_vals)
 
