@@ -335,6 +335,7 @@ def get_plt_contour_as_rgba(xi, yi, zi):
     img = np.empty((ydim, xdim), dtype=np.uint32)
     view = img.view(dtype=np.uint8).reshape((ydim, xdim, 4))
     view[:,:,:] = np.flipud(X)
+    plt.close()
     return img
 
 def get_x_eval(result,active_list):
