@@ -351,7 +351,7 @@ def get_x_eval(result,active_list):
     elif eval_method == 'Sliders':
         x = get_x_eval_selectors_values()
     elif eval_method == 'Exp min' and not any(iscat):
-        x = expected_minimum(result, n_random_starts=10, random_state=None)
+        x,_ = expected_minimum(result, n_random_starts=10, random_state=None)
     elif eval_method == 'Exp min rand':
         x = expected_min_random_sampling(result.models[-1], result.space, np.min([10**len(result.x),10000]))
     else:
