@@ -73,17 +73,16 @@ def handle_button_generate(layout,result):
     active_list = get_active_list() # Get the current active list
     n_points = get_n_points()
     # Updating plots
-    if active_list: # Only plot if there is at leas one selection
-        
+    if active_list: # Only plot if there is at least one selection
         x_eval = get_x_eval(result,active_list) # x_eval is used both for red markers and as the values for
         x_eval_transformed = result.space.transform([x_eval])
         # We update the part of the layout that contains the plots
         layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points,x_eval)
         # Calculate y and confidence interval
         y,std = result.models[-1].predict(x_eval_transformed,return_std=True)
-        confidence =[round(y[0]-2*std[0],5),round(y[0]+2*std[0],5)]
+        confidence =[round(y[0]-1.96*std[0],5),round(y[0]+1.96*std[0],5)]
         #Update text in right side of GUI
-        y_value.text = """<font size="5"><b><br>"""+'Y = '+str(round(y[0],5))+'<br> (' + str(confidence[0])+', '+str(confidence[1]) + ')'+'</b></font>'
+        y_value.text = """<font size="5"><b><br>"""+'Y = '+str(round(y[0],5))+'</b><br> (' + str(confidence[0])+', '+str(confidence[1]) + ')'+'</font>'
     else: # If no selection we encourage the user to select some parameters
         layout.children[0].children[2] = Div(text="""<font size="10"><br><br>Let's select som parameters to plot!</font>""",
             width=500, height=100)
