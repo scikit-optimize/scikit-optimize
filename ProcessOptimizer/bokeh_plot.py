@@ -24,6 +24,7 @@ from bokeh.server.server import Server
 # Generate button: Dependence is only calculated a new when this buton is pressed
 # Other buttons: With buttons we can toggle partial dependence on and off, control the n_points variable (resolution when calculating dependence)
 #   and control the evaluation method
+# Y values: A small text field which shows the expected value as well as confidence interval
 
 # Here we define the global variables (global variables are generally not advices so maybe we should change this at some point)
 result = None
@@ -41,10 +42,11 @@ button_generate = None
 buttons_toggle_x = None
 dropdown_eval_method = None
 slider_n_points = None
+y_value = None
 
 def set_globals(parsed_result):
     global button_generate, buttons_toggle_x, dropdown_eval_method, slider_n_points, max_pars, source, old_active_list
-    global result, x_eval_selectors, layout, x_eval_selectors_values, button_partial_dependence
+    global result, x_eval_selectors, layout, x_eval_selectors_values, button_partial_dependence,y_value
     #Here we se the values of the global variables and create the layout
     result = parsed_result
     x_eval_selectors_values = copy.copy(result.x)
@@ -58,10 +60,11 @@ def set_globals(parsed_result):
     button_partial_dependence = Toggle(label="Use partial dependence", button_type="default")
     dropdown_eval_method = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand','Sliders'],width = 200,height = 40)
     slider_n_points = Slider(start=1, end=20, value=5, step=1,title="n-points",width=200, height=10)
+    y_value = Div(text="""""", width=300, height=200)
     row_x_eval_selectors = row([],width = 300)
     row_plots = row([])
     row_top = row(button_generate,buttons_toggle_x)
-    col_right_side = column(button_partial_dependence,dropdown_eval_method, slider_n_points)
+    col_right_side = column(button_partial_dependence,dropdown_eval_method, slider_n_points,y_value)
     col_left_side = column(row_top,row_x_eval_selectors,row_plots)
     layout = row(col_left_side,col_right_side)
 def handle_button_generate(layout,result):
@@ -71,10 +74,16 @@ def handle_button_generate(layout,result):
     n_points = get_n_points()
     # Updating plots
     if active_list: # Only plot if there is at leas one selection
+        
         x_eval = get_x_eval(result,active_list) # x_eval is used both for red markers and as the values for
-            #calculating dependence  
+        x_eval_transformed = result.space.transform([x_eval])
         # We update the part of the layout that contains the plots
         layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points,x_eval)
+        # Calculate y and confidence interval
+        y,std = result.models[-1].predict(x_eval_transformed,return_std=True)
+        confidence =[round(y[0]-2*std[0],5),round(y[0]+2*std[0],5)]
+        #Update text in right side of GUI
+        y_value.text = """<font size="5"><b><br>"""+'Y = '+str(round(y[0],5))+'<br> (' + str(confidence[0])+', '+str(confidence[1]) + ')'+'</b></font>'
     else: # If no selection we encourage the user to select some parameters
         layout.children[0].children[2] = Div(text="""<font size="10"><br><br>Let's select som parameters to plot!</font>""",
             width=500, height=100)
