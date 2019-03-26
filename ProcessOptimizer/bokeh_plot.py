@@ -59,7 +59,7 @@ def set_globals(parsed_result):
             labels=['x '+str(s) for s in range(max_pars)], active=[])
     button_partial_dependence = Toggle(label="Use partial dependence", button_type="default")
     dropdown_eval_method = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand','Sliders'],width = 200,height = 40)
-    slider_n_points = Slider(start=1, end=20, value=5, step=1,title="n-points",width=200, height=10)
+    slider_n_points = Slider(start=1, end=20, value=10, step=1,title="n-points",width=200, height=10)
     y_value = Div(text="""""", width=300, height=200)
     row_x_eval_selectors = row([],width = 300)
     row_plots = row([])
@@ -218,8 +218,8 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 source_samples = ColumnDataSource(data=dict(x = x_samples, y = y_samples))
                 source_red = ColumnDataSource(data=dict(x = [red_vals[j]], y = [red_vals[i]]))
                 # We plot samples as black circles and the evaluation marker as a  red circle
-                plot.circle(x='x',y='y',source=source_samples, size=10, color="black", alpha=0.5)
-                plot.circle(x='x',y='y',source=source_red, size=10, color="red", alpha=1)
+                plot.circle(x='x',y='y',source=source_samples, size=2, color="black", alpha=0.5)
+                plot.circle(x='x',y='y',source=source_red, size=5, color="red", alpha=1)
             # We rotate the categorical labels slighty so they take up less space
             if iscat[j]:
                 plot.xaxis.major_label_orientation = 0.3
