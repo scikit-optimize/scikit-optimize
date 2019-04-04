@@ -21,7 +21,7 @@ class Identity(Transformer):
     string and the inverse transform will cast to the type defined in dtype."""
 
     def __init__(self, dtype=None):
-        super().__init__()
+        super(Identity, self).__init__()
         self.dtype = dtype
 
     def transform(self, X):
