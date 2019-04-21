@@ -37,7 +37,7 @@ Important links
 Install
 -------
 
-The latest released version of scikit-optimize is v0.5.2, which you can install
+The latest released version of scikit-optimize is v0.6, which you can install
 with:
 ::
 

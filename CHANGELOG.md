@@ -1,5 +1,30 @@
 # Release history
 
+## Version 0.6
+
+Highly composite six.
+
+### New features
+
+* `plot_regret` function for plotting the cumulative regret; 
+The purpose of such plot is to access how much an optimizer 
+is effective at picking good points.
+* `CheckpointSaver` that can be used to save a 
+checkpoint after each iteration with skopt.dump
+* `Space.from_yaml()`
+ to allow for external file to define Space parameters
+
+### Bug fixes
+
+* Fixed numpy broadcasting issues in gaussian_ei, gaussian_pi 
+* Fixed build with newest scikit-learn 
+* Use native python types inside BayesSearchCV
+* Include fit_params in BayesSearchCV refit 
+
+### Maintenance
+
+* Added `versioneer` support, to reduce changes with new version of the `skopt`
+
 ## Version 0.5.2
 
 ### Bug fixes
@@ -15,7 +40,7 @@
 
 High five!
 
-## New features
+### New features
 
 * Single element dimension definition, which can be used to
 fix the value of a dimension during optimization.
