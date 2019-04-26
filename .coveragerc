@@ -1,0 +1,6 @@
+[run]
+omit =
+    # this file comes from versioneer and we don’t test it
+    */_version.py
+    # these are our tests, don't count them towards coverage
+    skopt/tests/*
