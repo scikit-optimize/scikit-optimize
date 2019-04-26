@@ -1,3 +1,10 @@
+# show coverage in CI status, not as a comment. 
+comment: off
 coverage:
-  ignore:
-    - "skopt/tests/*"
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: 20% 
