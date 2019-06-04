@@ -14,7 +14,7 @@ from .transformers import Normalize
 from .transformers import Identity
 from .transformers import Log10
 from .transformers import Pipeline
-
+from .constraints import rvs_constraints
 
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
@@ -171,7 +171,7 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 
 class Real(Dimension):
-    def __init__(self, low, high, prior="uniform", transform=None, name=None):
+    def __init__(self, low, high, prior="uniform", transform=None, name=None, constraints = None):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -457,7 +457,6 @@ class Categorical(Dimension):
 
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
-
         if isinstance(choices, numbers.Integral):
             return self.categories[choices]
         else:
@@ -614,7 +613,7 @@ class Space(object):
 
         return space
 
-    def rvs(self, n_samples=1, random_state=None):
+    def rvs(self, n_samples=1, random_state=None, constraints = None):
         """Draw random samples.
 
         The samples are in the original space. They need to be transformed
@@ -634,28 +633,31 @@ class Space(object):
         * `points`: [list of lists, shape=(n_points, n_dims)]
            Points sampled from the space.
         """
-        rng = check_random_state(random_state)
 
-        # Draw
-        columns = []
+        if constraints:
+            return rvs_constraints(self, constraints, n_samples=n_samples, random_state = random_state)
+        else: # Don't check constraints
+            rng = check_random_state(random_state)
 
-        for dim in self.dimensions:
-            if sp_version < (0, 16):
-                columns.append(dim.rvs(n_samples=n_samples))
-            else:
-                columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
+            columns = []
+        
+            for dim in self.dimensions:
+                if sp_version < (0, 16):
+                    columns.append(dim.rvs(n_samples=n_samples))
+                else:
+                    columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
+                    
 
-        # Transpose
-        rows = []
+            # Transpose
+            rows = []
+            for i in range(n_samples):
+                r = []
+                for j in range(self.n_dims):
+                    r.append(columns[j][i])
 
-        for i in range(n_samples):
-            r = []
-            for j in range(self.n_dims):
-                r.append(columns[j][i])
+                rows.append(r)
 
-            rows.append(r)
-
-        return rows
+            return rows
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
