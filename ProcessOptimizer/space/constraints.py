@@ -68,7 +68,16 @@ class Exclusive:
             self.validate_constraints = self._validate_constraint_categorical
         else:
             self.validate_constraints = self._validate_constraint_real
-
+class Sum:
+    def __init__(self, dimensions, bound, bound_type):
+        """
+        Dimension: example [0,3,5]. Deteermnies what dimensions should be summed
+        Bound: The constraint on the sum
+        bound_type: "min" or "max" Determines if the sum should be minimum a large as the bound or maximum as large.
+        """
+        self.dimensions = dimensions
+        self.bound = bound
+        self.bound_type = bound_type
 def check_constraints(space,constraints):
     """ Checks if list of constraints is valid
     """
