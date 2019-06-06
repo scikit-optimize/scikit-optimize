@@ -4,22 +4,49 @@ from sklearn.utils.fixes import sp_version
 import numpy as np
 class Constraints:
     def __init__(self, constraints_list,space):
-        self.hard = [[] for _ in range(space.n_dims)]
+        """
+        takes a list of constraints. Creates other lists of constraints so that it can more easily be read by validate_sample
+        """
+        self.hard = [None for _ in range(space.n_dims)]
         self.inclusive = [[] for _ in range(space.n_dims)]
         self.exclusive = [[] for _ in range(space.n_dims)]
         self.constraints_list = constraints_list
         for constraint in constraints_list:
             if constraint.type == 'hard':
-               self.hard[constraint.dimension].append(constraint)
+               self.hard[constraint.dimension] = constraint
             if constraint.type == 'inclusive':
                 self.inclusive[constraint.dimension].append(constraint)
             if constraint.type == 'exclusive':
                 self.exclusive[constraint.dimension].append(constraint)
+    def validate_sample(self,sample):
+        """ Validates a sample of of parameter values in regards to the constraints
+        Parameters
+        ----------
+        * `sample`:
+            A list of values from each dimension to be checked
+        * `constraints`
+
+        """
+        for i in range(len(sample)):
+            for constraint in self.exclusive[i]:
+                if not constraint.validate_constraints(sample[i]):
+                    return False
+            for constraint in self.inclusive[i]:
+                if not constraint.validate_constraints(sample[i]):
+                    return False
+        return True
 class Hard:
     def __init__(self, dimension, value):
         self.value = value
         self.dimension = dimension
         self.type = 'hard'
+    def __repr__(self):
+        return "Hard(dimension={}, value={})".format(self.dimension, self.value)
+    def __eq__(self, other):
+        if hasattr(other,'value') and hasattr(other,'dimension') and hasattr(other,'type'):
+            return self.value == other.value and self.dimension == other.dimension and self.type == other.type
+        else:
+            return False
 class Inclusive:
     def _validate_constraint_categorical(self, value):
         if value in self.bounds:
@@ -40,10 +67,17 @@ class Inclusive:
         self.bounds = bounds
         self.dimension = dimension
         self.type = 'inclusive'
-        if type(bounds) == str:
+        if type(bounds[0]) == str:
             self.validate_constraints = self._validate_constraint_categorical
         else:
             self.validate_constraints = self._validate_constraint_real
+    def __repr__(self):
+        return "Inclusive(dimension={}, bounds={})".format(self.dimension, self.bounds)
+    def __eq__(self, other):
+        if hasattr(other,'bounds') and hasattr(other,'dimension') and hasattr(other,'type'):
+            return all([a == b for a, b in zip(self.bounds, other.bounds)]) and self.dimension == other.dimension and self.type == other.type
+        else:
+            return False
 class Exclusive:
     def _validate_constraint_categorical(self, value):
         if value in self.bounds:
@@ -68,8 +102,15 @@ class Exclusive:
             self.validate_constraints = self._validate_constraint_categorical
         else:
             self.validate_constraints = self._validate_constraint_real
+    def __repr__(self):
+        return "Exclusive(dimension={}, bounds={})".format(self.dimension, self.bounds)
+    def __eq__(self, other):
+        if hasattr(other,'bounds') and hasattr(other,'dimension') and hasattr(other,'type'):
+            return all([a == b for a, b in zip(self.bounds, other.bounds)]) and self.dimension == other.dimension and self.type == other.type
+        else:
+            return False
 class Sum:
-    def __init__(self, dimensions, bound, bound_type):
+    def __init__(self, dimensions, bound, bound_type = max):
         """
         Dimension: example [0,3,5]. Deteermnies what dimensions should be summed
         Bound: The constraint on the sum
@@ -84,7 +125,6 @@ def check_constraints(space,constraints):
     from .space import Integer, Categorical, Real
     assert type(constraints) == list, "Constraints must be a list"
     for i in range(len(constraints)):
-        
         if isinstance(constraints[i],Hard):
             # Hard constraint
             dimension = constraints[i].dimension
@@ -99,6 +139,7 @@ def check_constraints(space,constraints):
                 assert constraints[i].value in space.dimensions[dimension].categories, "Constraint value %r is not in categories" % constraints[i].value
         elif isinstance(constraints[i],Inclusive) or isinstance(constraints[i],Exclusive):
             dimension = constraints[i].dimension
+            assert type(constraints[i].bounds) == list, 'Bounds must be a list'
             assert type(dimension) == int, 'dimension must be of type int got %r' % type(dimension)
             assert dimension < space.n_dims, 'Constraint dimension exeeds number of dimensions'
             for bound in constraints[i].bounds:
@@ -112,23 +153,6 @@ def check_constraints(space,constraints):
         else:
             raise TypeError('Constraints must be of type "hard", "exlusive" or "inclusive" ')
 
-def validate_sample(sample, constraints):
-    """ Validates a sample of of parameter values in regards to the constraints
-    Parameters
-    ----------
-    * `sample`:
-        A list of values from each dimension to be checked
-    * `constraints`
-
-    """
-    for i in range(len(sample)):
-        for constraint in constraints.exclusive[i]:
-            if not constraint.validate_constraints(sample[i]):
-                return False
-        for constraint in constraints.inclusive[i]:
-            if not constraint.validate_constraints(sample[i]):
-                return False
-    return True
 
 def populate_sample_with_hard_constraints(sample, constraints = None):
     pass
@@ -149,7 +173,7 @@ def rvs_constraints(space, constraints_list, n_samples=1, random_state = None):
     constraints = Constraints(constraints_list,space)
     rng = check_random_state(random_state)
     rows  = []
-    while len(rows) < n_samples:
+    while len(rows) < n_samples: # We keep sampling until all samples a valid with regard to the constraints
         columns = []
         for i in range(space.n_dims):
             dim = space.dimensions[i]
@@ -167,31 +191,12 @@ def rvs_constraints(space, constraints_list, n_samples=1, random_state = None):
             r = []
             for j in range(space.n_dims):
                 r.append(columns[j][i])
-            if validate_sample(r,constraints):
+            if constraints.validate_sample(r):
                 rows.append(r)
 
     return rows[:n_samples]
-
-
-    # Draw candidates
-   # columns = []
-   # if constraints: #Check constraints
-      #  n_valid_samples = 0
-       # rows = []
-       # while len(rows) < n_samples:
-        #    # Do a normal random sampling
-           # for dim in self.dimensions:
-           #     if sp_version < (0, 16):
-             #       columns.append(dim.rvs(n_samples=n_samples))
-            #    else:
-              #      columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
-                # Populate with hard constraints
-                # HERE
-
-            #for i in range(n_samples):
-                # Check validity
-              #  r = []
-              #  for j in range(self.n_dims):
-              #      r.append(columns[j][i])
-              #  if constraints.validate_sample(r): #
-                #    rows.append(r)
+def are_constraints_equal(constraints_a,constraints_b):
+    if constraints_a and constraints_b:
+        return all([a == b for a, b in zip(constraints_a, constraints_b)])
+    else:
+        return False

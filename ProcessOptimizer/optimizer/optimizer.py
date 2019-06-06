@@ -18,6 +18,7 @@ from ..acquisition import gaussian_acquisition_1D
 from ..learning import GaussianProcessRegressor
 from ..space import Categorical
 from ..space import Space
+from ..space.constraints import are_constraints_equal, check_constraints
 from ..utils import check_x_in_space
 from ..utils import cook_estimator
 from ..utils import create_result
@@ -25,7 +26,6 @@ from ..utils import has_gradients
 from ..utils import is_listlike
 from ..utils import is_2Dlistlike
 from ..utils import normalize_dimensions
-
 
 class Optimizer(object):
     """Run bayesian optimisation loop.
@@ -139,8 +139,8 @@ class Optimizer(object):
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None):
-
+                 acq_optimizer_kwargs=None,
+                 constraints = None):
         self.rng = check_random_state(random_state)
 
         # Configure acquisition function
@@ -238,6 +238,10 @@ class Optimizer(object):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
 
+        # After space has been initialized we can add constraints
+        self.add_constraints(constraints)
+        # A list of a list of constraints that have been used so far
+        self.list_of_constraints = [self.constraints]
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -385,9 +389,12 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
-            return self.space.rvs(random_state=self.rng)[0]
+            return self.space.rvs(random_state=self.rng,constraints = self.constraints)[0]
 
         else:
+            # Check if new constraints have been added since last tell
+            if are_constraints_equal(self.list_of_constraints[-1],self.constraints):
+                pass
             if not self.models:
                 raise RuntimeError("Random evaluations exhausted and no "
                                    "model has been fit.")
@@ -470,7 +477,10 @@ class Optimizer(object):
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
-
+        
+        # Append current constraints_list to the list fo constraints that have been
+        # used so far.
+        self.list_of_constraints.append(self.constraints)
         # optimizer learned something new - discard cache
         self.cache_ = {}
 
@@ -492,7 +502,7 @@ class Optimizer(object):
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
             X = self.space.transform(self.space.rvs(
-                n_samples=self.n_points, random_state=self.rng))
+                n_samples=self.n_points, random_state=self.rng,constraints = self.constraints))
 
             self.next_xs_ = []
             for cand_acq_func in self.cand_acq_funcs_:
@@ -586,3 +596,11 @@ class Optimizer(object):
 
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+    def add_constraints(self,constraints_list):
+        if constraints_list:
+            check_constraints(self.space,constraints_list)
+            self.constraints = constraints_list
+        else:
+            self.constraints =  None
+    def remove_constraints(self):
+        self.constraints = None
