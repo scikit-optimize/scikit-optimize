@@ -241,7 +241,7 @@ class Optimizer(object):
         # After space has been initialized we can add constraints
         self.add_constraints(constraints)
         # A list of a list of constraints that have been used so far
-        self.list_of_constraints = [self.constraints]
+        self.list_of_constraints = []
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -281,6 +281,7 @@ class Optimizer(object):
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
             random_state=random_state,
+            constraints = self.constraints,
         )
 
         if hasattr(self, "gains_"):
@@ -322,6 +323,18 @@ class Optimizer(object):
                flavours of `cl_x` strategies.
 
         """
+        # Check if new constraints have been added since last tell
+        if len(self.list_of_constraints)>0:
+            if not are_constraints_equal(self.list_of_constraints[-1],self.constraints):
+                print('constraints are not the same')
+                # We need to call tell to get a new value for ask but without adding new values to the fit.
+                # We do this by making a copy of the optimizer. The copy method of the optimizer automatically
+                # calls tell with only the so far used fit values. Hence we get a new next_x value for
+                # the ask method but with new constraints
+                opt = self.copy(random_state=self.rng.randint(0,
+                                                        np.iinfo(np.int32).max))
+                # Call ask on the copy
+                return opt.ask(n_points=n_points, strategy=strategy)
         if n_points is None:
             return self._ask()
 
@@ -390,11 +403,7 @@ class Optimizer(object):
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
             return self.space.rvs(random_state=self.rng,constraints = self.constraints)[0]
-
         else:
-            # Check if new constraints have been added since last tell
-            if are_constraints_equal(self.list_of_constraints[-1],self.constraints):
-                pass
             if not self.models:
                 raise RuntimeError("Random evaluations exhausted and no "
                                    "model has been fit.")

@@ -27,12 +27,12 @@ class Constraints:
         * `constraints`
 
         """
-        for i in range(len(sample)):
-            for constraint in self.exclusive[i]:
-                if not constraint.validate_constraints(sample[i]):
+        for dim in range(len(sample)):
+            for constraint in self.exclusive[dim]:
+                if not constraint.validate_constraints(sample[dim]):
                     return False
-            for constraint in self.inclusive[i]:
-                if not constraint.validate_constraints(sample[i]):
+            for constraint in self.inclusive[dim]:
+                if not constraint.validate_constraints(sample[dim]):
                     return False
         return True
 class Hard:
@@ -48,16 +48,6 @@ class Hard:
         else:
             return False
 class Inclusive:
-    def _validate_constraint_categorical(self, value):
-        if value in self.bounds:
-            return True
-        else:
-            return False
-    def _validate_constraint_real(self, value):
-        if value >= self.bounds[0] and value <= self.bounds[1]:
-            return True
-        else:
-            return False
     def __init__(self, dimension, bounds):
         """
         bounds is a list.
@@ -71,6 +61,16 @@ class Inclusive:
             self.validate_constraints = self._validate_constraint_categorical
         else:
             self.validate_constraints = self._validate_constraint_real
+    def _validate_constraint_categorical(self, value):
+        if value in self.bounds:
+            return True
+        else:
+            return False
+    def _validate_constraint_real(self, value):
+        if value >= self.bounds[0] and value <= self.bounds[1]:
+            return True
+        else:
+            return False
     def __repr__(self):
         return "Inclusive(dimension={}, bounds={})".format(self.dimension, self.bounds)
     def __eq__(self, other):
@@ -78,7 +78,21 @@ class Inclusive:
             return all([a == b for a, b in zip(self.bounds, other.bounds)]) and self.dimension == other.dimension and self.type == other.type
         else:
             return False
+
 class Exclusive:
+    def __init__(self, dimension, bounds):
+        """
+        bounds is a list.
+        If dimension is integer or real numbers between bounds[0] and bounds[1] are excluded.
+        If dimension is categorical all values found in bounds are excluded.
+        """
+        self.bounds = bounds
+        self.dimension = dimension
+        self.type = 'exclusive'
+        if type(bounds[0]) == str:
+            self.validate_constraints = self._validate_constraint_categorical
+        else:
+            self.validate_constraints = self._validate_constraint_real
     def _validate_constraint_categorical(self, value):
         if value in self.bounds:
             return False
@@ -89,19 +103,6 @@ class Exclusive:
             return False
         else:
             return True
-    def __init__(self, dimension, bounds):
-        """
-        bounds is a list.
-        If dimension is integer or real numbers between bounds[0] and bounds[1] are excluded.
-        If dimension is categorical all values found in bounds are excluded.
-        """
-        self.bounds = bounds
-        self.dimension = dimension
-        self.type = 'exclusive'
-        if type(bounds) == str:
-            self.validate_constraints = self._validate_constraint_categorical
-        else:
-            self.validate_constraints = self._validate_constraint_real
     def __repr__(self):
         return "Exclusive(dimension={}, bounds={})".format(self.dimension, self.bounds)
     def __eq__(self, other):
@@ -109,8 +110,9 @@ class Exclusive:
             return all([a == b for a, b in zip(self.bounds, other.bounds)]) and self.dimension == other.dimension and self.type == other.type
         else:
             return False
+
 class Sum:
-    def __init__(self, dimensions, bound, bound_type = max):
+    def __init__(self, dimensions, bound, bound_type=max):
         """
         Dimension: example [0,3,5]. Deteermnies what dimensions should be summed
         Bound: The constraint on the sum
@@ -119,6 +121,7 @@ class Sum:
         self.dimensions = dimensions
         self.bound = bound
         self.bound_type = bound_type
+
 def check_constraints(space,constraints):
     """ Checks if list of constraints is valid
     """
@@ -153,10 +156,6 @@ def check_constraints(space,constraints):
         else:
             raise TypeError('Constraints must be of type "hard", "exlusive" or "inclusive" ')
 
-
-def populate_sample_with_hard_constraints(sample, constraints = None):
-    pass
-
 def draw_hard_constrained_values(constraint,n_samples):
     if constraint.type == 'hard':
         column = np.full(n_samples, constraint.value)
@@ -173,6 +172,7 @@ def rvs_constraints(space, constraints_list, n_samples=1, random_state = None):
     constraints = Constraints(constraints_list,space)
     rng = check_random_state(random_state)
     rows  = []
+    
     while len(rows) < n_samples: # We keep sampling until all samples a valid with regard to the constraints
         columns = []
         for i in range(space.n_dims):
@@ -196,7 +196,12 @@ def rvs_constraints(space, constraints_list, n_samples=1, random_state = None):
 
     return rows[:n_samples]
 def are_constraints_equal(constraints_a,constraints_b):
-    if constraints_a and constraints_b:
+    # Check if teo constraints are the same
+    # First check if they both are "None"
+    if constraints_a == constraints_b:
+        return True
+    elif constraints_a and constraints_b:
+        # Check if all constraints in the lists are the same
         return all([a == b for a, b in zip(constraints_a, constraints_b)])
     else:
         return False
