@@ -18,7 +18,7 @@ from ..acquisition import gaussian_acquisition_1D
 from ..learning import GaussianProcessRegressor
 from ..space import Categorical
 from ..space import Space
-from ..space.constraints import are_constraints_equal, check_constraints
+from ..space.constraints import Constraints
 from ..utils import check_x_in_space
 from ..utils import cook_estimator
 from ..utils import create_result
@@ -238,10 +238,17 @@ class Optimizer(object):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
 
-        # After space has been initialized we can add constraints
-        self.add_constraints(constraints)
+
         # A list of a list of constraints that have been used so far
         self.list_of_constraints = []
+        # After space has been initialized we can add constraints
+        if constraints:
+            if isinstance(constraints,Constraints):
+                self.constraints = constraints
+            else:
+                self.constraints = Constraints(constraints,self.space)
+        else:
+            self.constraints = None
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -323,18 +330,7 @@ class Optimizer(object):
                flavours of `cl_x` strategies.
 
         """
-        # Check if new constraints have been added since last tell
-        if len(self.list_of_constraints)>0:
-            if not are_constraints_equal(self.list_of_constraints[-1],self.constraints):
-                print('constraints are not the same')
-                # We need to call tell to get a new value for ask but without adding new values to the fit.
-                # We do this by making a copy of the optimizer. The copy method of the optimizer automatically
-                # calls tell with only the so far used fit values. Hence we get a new next_x value for
-                # the ask method but with new constraints
-                opt = self.copy(random_state=self.rng.randint(0,
-                                                        np.iinfo(np.int32).max))
-                # Call ask on the copy
-                return opt.ask(n_points=n_points, strategy=strategy)
+       
         if n_points is None:
             return self._ask()
 
@@ -605,11 +601,21 @@ class Optimizer(object):
 
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
-    def add_constraints(self,constraints_list):
-        if constraints_list:
-            check_constraints(self.space,constraints_list)
-            self.constraints = constraints_list
+    def add_constraints(self,constraints):
+        if constraints:
+            if isinstance(constraints,Constraints):
+                self.constraints = constraints
+            else:
+                self.constraints = Constraints(constraints,self.space)
         else:
             self.constraints =  None
+
+        # Ask for a new next_x now that new constraints have been added
+        if hasattr(self,'_next_x'):
+            opt = self.copy(random_state=self.rng)
+            self._next_x = opt._next_x
+
     def remove_constraints(self):
-        self.constraints = None
+        self.add_constraints(None)
+        
+ 

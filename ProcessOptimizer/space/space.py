@@ -14,7 +14,7 @@ from .transformers import Normalize
 from .transformers import Identity
 from .transformers import Log10
 from .transformers import Pipeline
-from .constraints import rvs_constraints
+from .constraints import Constraints
 
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
@@ -171,7 +171,7 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 
 class Real(Dimension):
-    def __init__(self, low, high, prior="uniform", transform=None, name=None, constraints = None):
+    def __init__(self, low, high, prior="uniform", transform=None, name=None):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -340,6 +340,10 @@ class Integer(Dimension):
         else:
             self._rvs = randint(self.low, self.high + 1)
             self.transformer = Identity()
+
+
+    def update_samplingspace(self, new_space):
+        self._rvs = new_space
 
     def __eq__(self, other):
         return (type(self) is type(other) and
@@ -635,7 +639,7 @@ class Space(object):
         """
 
         if constraints:
-            return rvs_constraints(self, constraints, n_samples=n_samples, random_state = random_state)
+            return constraints.rvs(self, n_samples=n_samples, random_state = random_state)
         else: # Don't check constraints
             rng = check_random_state(random_state)
 
