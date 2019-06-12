@@ -9,7 +9,7 @@ dist/
 .idea/
 .cache/
 .pytest_cache/
-ProcessOptimizer/*/__pycache__/*
+/__pycache__/
 
 *.cpython-36.pyc
 # mac OS users
