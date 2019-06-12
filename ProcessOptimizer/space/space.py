@@ -14,7 +14,6 @@ from .transformers import Normalize
 from .transformers import Identity
 from .transformers import Log10
 from .transformers import Pipeline
-from .constraints import Constraints
 
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
 class _Ellipsis:
@@ -638,30 +637,27 @@ class Space(object):
            Points sampled from the space.
         """
 
-        if constraints:
-            return constraints.rvs(self, n_samples=n_samples, random_state = random_state)
-        else: # Don't check constraints
-            rng = check_random_state(random_state)
+        rng = check_random_state(random_state)
 
-            columns = []
-        
-            for dim in self.dimensions:
-                if sp_version < (0, 16):
-                    columns.append(dim.rvs(n_samples=n_samples))
-                else:
-                    columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
-                    
+        columns = []
+    
+        for dim in self.dimensions:
+            if sp_version < (0, 16):
+                columns.append(dim.rvs(n_samples=n_samples))
+            else:
+                columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
+                
 
-            # Transpose
-            rows = []
-            for i in range(n_samples):
-                r = []
-                for j in range(self.n_dims):
-                    r.append(columns[j][i])
+        # Transpose
+        rows = []
+        for i in range(n_samples):
+            r = []
+            for j in range(self.n_dims):
+                r.append(columns[j][i])
 
-                rows.append(r)
+            rows.append(r)
 
-            return rows
+        return rows
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.

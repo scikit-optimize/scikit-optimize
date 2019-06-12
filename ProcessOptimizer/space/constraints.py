@@ -1,6 +1,6 @@
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
-
+from .space import Real, Integer, Categorical
 import numpy as np
 class Constraints:
     def __init__(self, constraints_list,space):
@@ -37,9 +37,9 @@ class Constraints:
         
         while len(rows) < n_samples: # We keep sampling until all samples a valid with regard to the constraints
             columns = []
-            for i in range(space.n_dims):
+            for i in range(space.n_dims): # Iterate through all dimensions
                 dim = space.dimensions[i]
-                if self.single[i]:
+                if self.single[i]: # If a dimension has a "Single"-type constraint we just sample that value
                     column = np.full(n_samples, self.single[i].value)
                 else:
                     if sp_version < (0, 16):
@@ -54,6 +54,7 @@ class Constraints:
                 for j in range(space.n_dims):
                     r.append(columns[j][i])
                 if self.validate_sample(r):
+                    # Only append sample to rows if it is valid with regards to the constraints
                     rows.append(r)
 
         return rows[:n_samples]
@@ -205,9 +206,8 @@ class Sum:
         self.bound_type = bound_type
 
 def check_constraints(space,constraints):
-    """ Checks if list of constraints is valid
+    """ Checks if list of constraints is valid when compared with the dimensions of space
     """
-    from .space import Integer, Categorical, Real
     if not type(constraints) == list:
         raise TypeError('Constraints must be a list. Got ' + str(type(constraints)))
     n_dims = space.n_dims
@@ -231,11 +231,26 @@ def check_constraints(space,constraints):
         else:
             raise TypeError('Can not find valid dimension for' + str(space_dim))
 
-        # Check if constraints are insinde the bounds of the space
+        # Check if constraints are inside bounds of space
         if isinstance(constraint,Single):
-            pass
+            check_value(space_dim,constraint.value)
         elif isinstance(constraint,Inclusive) or isinstance(constraint,Exclusive):
-            pass
+            check_bounds(space_dim,constraint.bounds)
         else:
             raise TypeError('Constraints must be of type "Single", "Exlusive" or "Inclusive" ')
- 
+def check_bounds(dim,bounds):
+    if isinstance(dim,Real) or isinstance(dim,Integer):
+        for value in bounds:
+            if value < dim.low or value > dim.high:
+                raise ValueError('Bounds {} exceeds bounds of space {}'.format(bounds,[dim.low,dim.high]))
+    else:
+        for value in bounds:
+            if value not in dim.categories:
+                raise ValueError('Categorical value {} is not in space with categoreis {}'.format(value,dim.categories))
+def check_value(dim,value):
+    if isinstance(dim,Real) or isinstance(dim,Integer):
+        if value < dim.low or value > dim.high:
+            raise ValueError('Value {} exceeds bounds of space {}'.format(value,[dim.low,dim.high]))
+    else:
+        if value not in dim.categories:
+            raise ValueError('Categorical value {} is not in space with categoreis {}'.format(value,dim.categories))

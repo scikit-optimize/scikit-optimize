@@ -139,8 +139,7 @@ class Optimizer(object):
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None,
-                 constraints = None):
+                 acq_optimizer_kwargs=None):
         self.rng = check_random_state(random_state)
 
         # Configure acquisition function
@@ -242,13 +241,7 @@ class Optimizer(object):
         # A list of a list of constraints that have been used so far
         self.list_of_constraints = []
         # After space has been initialized we can add constraints
-        if constraints:
-            if isinstance(constraints,Constraints):
-                self.constraints = constraints
-            else:
-                self.constraints = Constraints(constraints,self.space)
-        else:
-            self.constraints = None
+        self.constraints = None
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -288,7 +281,6 @@ class Optimizer(object):
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
             random_state=random_state,
-            constraints = self.constraints,
         )
 
         if hasattr(self, "gains_"):
@@ -506,8 +498,13 @@ class Optimizer(object):
 
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
-            X = self.space.transform(self.space.rvs(
-                n_samples=self.n_points, random_state=self.rng,constraints = self.constraints))
+            if self.constraints: 
+                # We use another sampling method if there are constraints
+                X = self.space.transform(self.constraints.rvs(
+                    n_samples=self.n_points, random_state=self.rng,constraints = self.constraints))
+            else:
+                X = self.space.transform(self.space.rvs(
+                    n_samples=self.n_points, random_state=self.rng))
 
             self.next_xs_ = []
             for cand_acq_func in self.cand_acq_funcs_:

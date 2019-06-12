@@ -1,8 +1,30 @@
 import numpy as np
 import pytest
 
-from ProcessOptimizer.space import constraints
-from ProcessOptimizer import space
+from ProcessOptimizer.space.constraints import onstraints, Single, Exclusive, Inclusive
+from ProcessOptimizer import space, optimizer
+
+SPACE = [
+    Real(1, 10, name='max_depth',transform='normalize', prior = 'uniform'),
+    Integer(0, 10, name='max_features'),
+    Categorical(list('abcdefg'), name='dummy',transform='onehot'),
+    Categorical(['gini', 1,'cool'], name='criterion'),
+]
+
+
+# A list of constraints used for testing
+cons = [Single(0,5.0,'real'),
+        Single(1,5,'integer'),
+        Single(2,'a','categorical'),
+        Inclusive(3,[3.0,5.0],'real'),
+        Inclusive(4,[3,5],'integer'),
+        Inclusive(5,'a','categorical'),
+
+    Inclusive(1,[1,3],'integer'),
+    constraints.Exclusive(2,['a','b'],'categorical')]
+
+# List of constraints that should all fail
+bad_cons = 
 
 @pytest.mark.new_test
 def test_are_constraints_equal():
