@@ -8,43 +8,6 @@ from ProcessOptimizer.space import Real, Integer, Categorical, Space
 
 from sklearn.utils.testing import assert_equal, assert_not_equal, assert_true, assert_false
 
-SPACE = Space([
-    Real(1, 10),
-    Real(1, 10),
-    Real(1, 10),
-    Integer(0, 10),
-    Integer(0, 10),
-    Integer(0, 10),
-    Categorical(list('abcdefg')),
-    Categorical(list('abcdefg')),
-    Categorical(list('abcdefg'))
-])
-
-
-# A list of constraints that compatible with SPACE
-CONS_A = [Single(0,5.0,'real'),
-        Inclusive(1,(3.0,5.0),'real'),
-        Exclusive(2,(3.0,5.0),'real'),
-        Single(3,5,'integer'),
-        Inclusive(4,(3,5),'integer'),
-        Exclusive(5,(3,5),'integer'),
-        Single(6,'b','categorical'),
-        Inclusive(7,('c','d','e'),'categorical'),
-        Exclusive(8,('c','d','e'),'categorical')
-]
-
-# Another list of constraints that are compatible with SPACE
-CONS_B = [Single(0,4.0,'real'),
-        Inclusive(1,(3.0,5.0),'real'),
-        Exclusive(2,(3.0,5.0),'real'),
-        Single(3,5,'integer'),
-        Inclusive(4,(3,5),'integer'),
-        Exclusive(5,(3,5),'integer'),
-        Single(6,'b','categorical'),
-        Inclusive(7,('c','d','e'),'categorical'),
-        Exclusive(8,('c','d','e'),'categorical')
-]
-
 @pytest.mark.new_test
 def test_constraints_equality():
     # Same constraints should be equal
@@ -99,19 +62,21 @@ def test_single_inclusive_and_exclusive():
     Single(0,-1,'integer')
     Single(0,'a','categorical')
     Inclusive(0,(1.0,2.0),'real')
+    Inclusive(0,[1.0,2.0],'real')
     Inclusive(0,(-1,2),'integer')
     Inclusive(0,('a','b','c',1,0.1),'categorical')
     Exclusive(0,(1.0,2.0),'real')
+    Exclusive(0,[1.0,2.0],'real')
     Exclusive(0,(-1,1),'integer')
     Exclusive(0,('a','b','c',1,0.1),'categorical')
-    
+
     # A tuple or list should be passed
     with raises(TypeError):
         Inclusive(0,'a','real')
     with raises(TypeError):
         Exclusive(0,dict(),'real')
     
-    # Lenght of bounds should be 2
+    # Length of bounds should be 2
     with raises(ValueError):
         Inclusive(0,[0],'integer')
     with raises(ValueError):
@@ -171,6 +136,11 @@ def test_check_constraints():
         check_constraints(space,cons_list)
     cons_list = [Single(0,'a','categorical')]
     with raises(TypeError):
+        check_constraints(space,cons_list)
+
+    # Only one Single constraint per dimension
+    cons_list = [Single(0,1.0,'real'),Single(0,2.0,'real')]
+    with raises(IndexError):
         check_constraints(space,cons_list)
 
 @pytest.mark.new_test
@@ -513,18 +483,26 @@ def test_constraints_rvs():
             Exclusive(5,(7,9),'integer'),
     ]
 
+    # Test lenght of samples
     constraints = Constraints(cons_list,space)
     samples = constraints.rvs(n_samples = 100)
     assert_equal(len(samples),100)
     assert_equal(len(samples[0]),space.n_dims)
     assert_equal(len(samples[-1]),space.n_dims)
-
+    
+    # Test random state
     samples_a = constraints.rvs(n_samples = 100,random_state = 1)
     samples_b = constraints.rvs(n_samples = 100,random_state = 1)
     samples_c = constraints.rvs(n_samples = 100,random_state = 2)
     assert_equal(samples_a,samples_b)
     assert_not_equal(samples_a,samples_c)
 
+    # Test invalid constraint combinations
+    space = Space([Real(0, 1)])
+    cons_list = [Exclusive(0,(0.3,0.7),'real'), Inclusive(0,(0.5,0.6),'real')]
+    constraints = Constraints(cons_list,space)
+    with raises(RuntimeError):
+        samples = constraints.rvs(n_samples = 10)
 @pytest.mark.new_test
 def test_optimizer_with_constraints():
     space = Space([
@@ -571,7 +549,7 @@ def test_optimizer_with_constraints():
     assert_equal(opt.constraints,None)
 
     # Test behavior when adding constraints
-    opt = Optimizer(SPACE, "ET", acq_optimizer="sampling",n_initial_points = 3)
+    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 3)
     opt.add_constraints(cons)
     assert_equal(opt.constraints,cons)
     next_x= opt.ask()
@@ -619,19 +597,19 @@ def test_optimizer_with_constraints():
     assert_equal(opt._next_x[3],4)
 
     # Test that adding a Constraint or constraint_list gives the same
-    opt = Optimizer(SPACE, "ET", acq_optimizer="sampling",n_initial_points = 3)
+    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 3)
     opt.add_constraints(cons_list)
-    opt2 = Optimizer(SPACE, "ET", acq_optimizer="sampling",n_initial_points = 3)
+    opt2 = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 3)
     opt2.add_constraints(cons)
     assert_equal(opt.constraints,opt2.constraints)
 
     # Test that constraints are satisfied
-    opt = Optimizer(SPACE, "ET", acq_optimizer="sampling",n_initial_points = 2)
+    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 2)
     opt.add_constraints(cons)
     next_x= opt.ask()
     assert_equal(next_x[0],5.0)
 
-    opt = Optimizer(SPACE, "ET", acq_optimizer="sampling",n_initial_points = 2)
+    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 2)
     next_x= opt.ask()
     assert_not_equal(next_x[0],5.0)
     f_val = np.random.random()*100

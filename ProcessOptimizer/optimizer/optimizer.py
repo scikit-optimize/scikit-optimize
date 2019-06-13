@@ -237,8 +237,9 @@ class Optimizer(object):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
 
-        # After space has been initialized we can add constraints
+        # Default is no constraints
         self.constraints = None
+
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -257,7 +258,7 @@ class Optimizer(object):
         # Initialize cache for `ask` method responses
 
         # This ensures that multiple calls to `ask` with n_points set
-        # return same sets of points. Reset to {} at every call to `tell`.
+        # return same sets of points. Reset to {} at every call to `tell` and `add_constraints`.
         self.cache_ = {}
 
     def copy(self, random_state=None):
@@ -280,6 +281,7 @@ class Optimizer(object):
             random_state=random_state,
         )
 
+        # It is important to copy the constraints so that a call to '_tell()' will create a valid _next_x
         optimizer.constraints = self.constraints
 
         if hasattr(self, "gains_"):
@@ -323,7 +325,6 @@ class Optimizer(object):
         """
        
         if n_points is None:
-            print('ye')
             return self._ask()
 
         supported_strategies = ["cl_min", "cl_mean", "cl_max"]
@@ -391,6 +392,7 @@ class Optimizer(object):
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
             if self.constraints:
+                # We use another sampling method when constraints are added
                 return self.constraints.rvs(random_state=self.rng)[0]
             else:
                 return self.space.rvs(random_state=self.rng)[0]
@@ -499,12 +501,10 @@ class Optimizer(object):
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
             if self.constraints: 
-                print('yo')
-                # We use another sampling method if there are constraints
+                # We use another sampling method if constraints have been added
                 X = self.space.transform(self.constraints.rvs(
                     n_samples=self.n_points, random_state=self.rng))
             else:
-                print('hej')
                 X = self.space.transform(self.space.rvs(
                     n_samples=self.n_points, random_state=self.rng))
 
@@ -601,20 +601,32 @@ class Optimizer(object):
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
     def add_constraints(self,constraints):
+        ''' Adds constraints to the optimizer
+
+        Parameters
+        ----------
+        * `constraints` [list] or [Constraints]:
+            Can either be a list of Constraint objects or a Constraints object
+        '''
         if constraints:
             if isinstance(constraints,Constraints):
+                # If constraints is a Constraints object we simply add it
                 self.constraints = constraints
             else:
+                # If it is a list of constraints we initialize a Constraints object.
                 self.constraints = Constraints(constraints,self.space)
         else:
             self.constraints =  None
 
+        # Reset cache
+        self.cache_ = {}
         # Ask for a new next_x now that new constraints have been added
-        if hasattr(self,'_next_x'):
+        if hasattr(self,'_next_x'): # We only need to overwrite _next_x if it exists.
             opt = self.copy(random_state=self.rng)
             self._next_x = opt._next_x
 
     def remove_constraints(self):
+        ''' Sets constraints to None'''
         self.add_constraints(None)
         
  
