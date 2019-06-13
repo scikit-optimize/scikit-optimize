@@ -616,7 +616,7 @@ class Space(object):
 
         return space
 
-    def rvs(self, n_samples=1, random_state=None, constraints = None):
+    def rvs(self, n_samples=1, random_state=None):
         """Draw random samples.
 
         The samples are in the original space. They need to be transformed

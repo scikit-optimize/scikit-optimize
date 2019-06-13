@@ -237,9 +237,6 @@ class Optimizer(object):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
 
-
-        # A list of a list of constraints that have been used so far
-        self.list_of_constraints = []
         # After space has been initialized we can add constraints
         self.constraints = None
         # record categorical and non-categorical indices
@@ -283,6 +280,8 @@ class Optimizer(object):
             random_state=random_state,
         )
 
+        optimizer.constraints = self.constraints
+
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
 
@@ -324,6 +323,7 @@ class Optimizer(object):
         """
        
         if n_points is None:
+            print('ye')
             return self._ask()
 
         supported_strategies = ["cl_min", "cl_mean", "cl_max"]
@@ -390,7 +390,10 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
-            return self.space.rvs(random_state=self.rng,constraints = self.constraints)[0]
+            if self.constraints:
+                return self.constraints.rvs(random_state=self.rng)[0]
+            else:
+                return self.space.rvs(random_state=self.rng)[0]
         else:
             if not self.models:
                 raise RuntimeError("Random evaluations exhausted and no "
@@ -475,9 +478,6 @@ class Optimizer(object):
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
         
-        # Append current constraints_list to the list fo constraints that have been
-        # used so far.
-        self.list_of_constraints.append(self.constraints)
         # optimizer learned something new - discard cache
         self.cache_ = {}
 
@@ -499,10 +499,12 @@ class Optimizer(object):
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
             if self.constraints: 
+                print('yo')
                 # We use another sampling method if there are constraints
                 X = self.space.transform(self.constraints.rvs(
-                    n_samples=self.n_points, random_state=self.rng,constraints = self.constraints))
+                    n_samples=self.n_points, random_state=self.rng))
             else:
+                print('hej')
                 X = self.space.transform(self.space.rvs(
                     n_samples=self.n_points, random_state=self.rng))
 
