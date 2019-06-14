@@ -33,7 +33,7 @@ class Constraints:
 
     def __eq__(self, other):
         if isinstance(other,Constraints):
-            return self.constraints_list == other.constraints_list and self.space == other.space
+            return self.constraints_list == other.constraints_list
         else:
             return False
 

@@ -8,6 +8,10 @@ from ProcessOptimizer.space import Real, Integer, Categorical, Space
 
 from sklearn.utils.testing import assert_equal, assert_not_equal, assert_true, assert_false
 
+# Combination of base estimators and acquisition optimizers
+ACQ_OPTIMIZERS= ['sampling','lbfgs']
+
+
 @pytest.mark.new_test
 def test_constraints_equality():
     # Same constraints should be equal
@@ -42,15 +46,6 @@ def test_constraints_equality():
     space_b = Space([(0.0,5.0)])
     cons_list_a = [Single(0,4.0,'real')]
     cons_list_b = [Single(0,4.1,'real')]
-    cons_a = Constraints(cons_list_a,space_a)
-    cons_b = Constraints(cons_list_b,space_b)
-    assert_not_equal(cons_a, cons_b)
-
-    # Different space should not be equal
-    space_a = Space([(0.0,6.0)])
-    space_b = Space([(0.0,5.0)])
-    cons_list_a = [Single(0,4.0,'real')]
-    cons_list_b = [Single(0,4.0,'real')]
     cons_a = Constraints(cons_list_a,space_a)
     cons_b = Constraints(cons_list_b,space_b)
     assert_not_equal(cons_a, cons_b)
@@ -503,8 +498,11 @@ def test_constraints_rvs():
     constraints = Constraints(cons_list,space)
     with raises(RuntimeError):
         samples = constraints.rvs(n_samples = 10)
+
 @pytest.mark.new_test
-def test_optimizer_with_constraints():
+@pytest.mark.parametrize('acq_optimizer', ACQ_OPTIMIZERS)
+def test_optimizer_with_constraints(acq_optimizer):
+    base_estimator = 'GP'
     space = Space([
         Real(1, 10),
         Real(1, 10),
@@ -517,66 +515,52 @@ def test_optimizer_with_constraints():
         Categorical(list('abcdefg'))
     ])
 
-    cons_list = [Single(0,5.0,'real'),
-            Inclusive(1,(3.0,5.0),'real'),
-            Exclusive(2,(3.0,5.0),'real'),
-            Single(3,5,'integer'),
-            Inclusive(4,(3,5),'integer'),
-            Exclusive(5,(3,5),'integer'),
-            Single(6,'b','categorical'),
-            Inclusive(7,('c','d','e'),'categorical'),
-            Exclusive(8,('c','d','e'),'categorical'),
-            # Note that two constraints are being added to dimension 4 and 5
-            Inclusive(4,(7,9),'integer'),
-            Exclusive(5,(7,9),'integer'),
-    ]
-
     cons_list = [Single(0,5.0,'real'),Single(3,5,'integer')]
     cons_list_2 = [Single(0,4.0,'real'),Single(3,4,'integer')]
     cons = Constraints(cons_list,space)
     cons_2 = Constraints(cons_list_2,space)
     # Test behavior when not adding constraitns
-    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 5)
+    opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 5)
     # Test that constraint is None
-    assert_equal(opt.constraints,None)
+    assert_equal(opt._constraints,None)
     # Test constraints are still None
     for _ in range(6):
         next_x= opt.ask()
         f_val = np.random.random()*100
         opt.tell(next_x, f_val)
-    assert_equal(opt.constraints,None)
+    assert_equal(opt._constraints,None)
     opt.remove_constraints()
-    assert_equal(opt.constraints,None)
+    assert_equal(opt._constraints,None)
 
     # Test behavior when adding constraints
-    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 3)
+    opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
     opt.add_constraints(cons)
-    assert_equal(opt.constraints,cons)
+    assert_equal(opt._constraints,cons)
     next_x= opt.ask()
     assert_equal(next_x[0],5.0)
     assert_equal(next_x[3],5)
     f_val = np.random.random()*100
     opt.tell(next_x, f_val)
-    assert_equal(opt.constraints,cons)
+    assert_equal(opt._constraints,cons)
     opt.add_constraints(cons_2)
     next_x= opt.ask()
-    assert_equal(opt.constraints,cons_2)
+    assert_equal(opt._constraints,cons_2)
     assert_equal(next_x[0],4.0)
     assert_equal(next_x[3],4)
     f_val = np.random.random()*100
     opt.tell(next_x, f_val)
-    assert_equal(opt.constraints,cons_2)
+    assert_equal(opt._constraints,cons_2)
     opt.remove_constraints()
-    assert_equal(opt.constraints,None)
+    assert_equal(opt._constraints,None)
     next_x= opt.ask()
     assert_not_equal(next_x[0],4.0)
     assert_not_equal(next_x[0],5.0)
     f_val = np.random.random()*100
     opt.tell(next_x, f_val)
-    assert_equal(opt.constraints,None)
+    assert_equal(opt._constraints,None)
 
     # Test that next_x is changed when adding constraints
-    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 3)
+    opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
     assert_false(hasattr(opt,'_next_x'))
     for _ in range(4): # We exhaust initial points
         next_x= opt.ask()
@@ -597,19 +581,19 @@ def test_optimizer_with_constraints():
     assert_equal(opt._next_x[3],4)
 
     # Test that adding a Constraint or constraint_list gives the same
-    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 3)
+    opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
     opt.add_constraints(cons_list)
-    opt2 = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 3)
+    opt2 = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
     opt2.add_constraints(cons)
-    assert_equal(opt.constraints,opt2.constraints)
+    assert_equal(opt._constraints,opt2._constraints)
 
     # Test that constraints are satisfied
-    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 2)
+    opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 2)
     opt.add_constraints(cons)
     next_x= opt.ask()
     assert_equal(next_x[0],5.0)
 
-    opt = Optimizer(space, "ET", acq_optimizer="sampling",n_initial_points = 2)
+    opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 2)
     next_x= opt.ask()
     assert_not_equal(next_x[0],5.0)
     f_val = np.random.random()*100
@@ -631,3 +615,11 @@ def test_optimizer_with_constraints():
     assert_equal(next_x[0],4.0)
     assert_equal(next_x[3],4)
 
+@pytest.mark.new_test
+def test_get_constraints():
+    space = Space([Real(1, 10)])
+    cons_list = [Single(0,5.0,'real')]
+    cons = Constraints(cons_list,space)
+    opt = Optimizer(space, "ET")
+    opt.add_constraints(cons)
+    assert_equal(cons,opt.get_constraints())

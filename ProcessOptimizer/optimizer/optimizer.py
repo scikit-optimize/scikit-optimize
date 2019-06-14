@@ -238,7 +238,7 @@ class Optimizer(object):
         self.space = Space(dimensions)
 
         # Default is no constraints
-        self.constraints = None
+        self._constraints = None
 
         # record categorical and non-categorical indices
         self._cat_inds = []
@@ -282,7 +282,7 @@ class Optimizer(object):
         )
 
         # It is important to copy the constraints so that a call to '_tell()' will create a valid _next_x
-        optimizer.constraints = self.constraints
+        optimizer._constraints = self._constraints
 
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
@@ -391,9 +391,9 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
-            if self.constraints:
+            if self._constraints:
                 # We use another sampling method when constraints are added
-                return self.constraints.rvs(random_state=self.rng)[0]
+                return self._constraints.rvs(random_state=self.rng)[0]
             else:
                 return self.space.rvs(random_state=self.rng)[0]
         else:
@@ -500,9 +500,9 @@ class Optimizer(object):
 
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
-            if self.constraints: 
+            if self._constraints: 
                 # We use another sampling method if constraints have been added
-                X = self.space.transform(self.constraints.rvs(
+                X = self.space.transform(self._constraints.rvs(
                     n_samples=self.n_points, random_state=self.rng))
             else:
                 X = self.space.transform(self.space.rvs(
@@ -515,8 +515,9 @@ class Optimizer(object):
                     acq_func=cand_acq_func,
                     acq_func_kwargs=self.acq_func_kwargs)
                 # Find the minimum of the acquisition function by randomly
-                # sampling points from the space
-                if self.acq_optimizer == "sampling":
+                # sampling points from the space. If constraints are present
+                # we use this strategy
+                if self.acq_optimizer == "sampling" or self._constraints:
                     next_x = X[np.argmin(values)]
 
                 # Use BFGS to find the mimimum of the acquisition function, the
@@ -611,12 +612,12 @@ class Optimizer(object):
         if constraints:
             if isinstance(constraints,Constraints):
                 # If constraints is a Constraints object we simply add it
-                self.constraints = constraints
+                self._constraints = constraints
             else:
                 # If it is a list of constraints we initialize a Constraints object.
-                self.constraints = Constraints(constraints,self.space)
+                self._constraints = Constraints(constraints,self.space)
         else:
-            self.constraints =  None
+            self._constraints =  None
 
         # Reset cache
         self.cache_ = {}
@@ -628,5 +629,8 @@ class Optimizer(object):
     def remove_constraints(self):
         ''' Sets constraints to None'''
         self.add_constraints(None)
-        
+    
+    def get_constraints(self):
+        '''Returns constraints'''
+        return self._constraints
  
