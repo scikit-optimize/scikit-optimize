@@ -203,7 +203,7 @@ class Single:
         else:
             return False
 
-class Bound_Constraint():
+class Bound_constraint():
     """Base class for Exclusive and Inclusive constraints"""
 
     def __init__(self, dimension, bounds, dimension_type):
@@ -233,7 +233,7 @@ class Bound_Constraint():
         self.dimension = dimension
         self.dimension_type = dimension_type
 
-class Inclusive(Bound_Constraint):
+class Inclusive(Bound_constraint):
     def __init__(self, dimension, bounds,dimension_type):
         super().__init__(dimension, bounds, dimension_type) 
         """Constraint class of type Inclusive.
@@ -288,7 +288,7 @@ class Inclusive(Bound_Constraint):
         else:
             return False
 
-class Exclusive(Bound_Constraint):
+class Exclusive(Bound_constraint):
     def __init__(self, dimension, bounds, dimension_type):
         super().__init__(dimension, bounds, dimension_type) 
         """Constraint class of type Inclusive.
@@ -342,6 +342,13 @@ class Exclusive(Bound_Constraint):
             return all([a == b for a, b in zip(self.bounds, other.bounds)]) and self.dimension == other.dimension and self.dimension_type == other.dimension_type
         else:
             return False
+
+class Conditional():
+    def __init__(self, condition, constraint_true, constraint_false):
+        ''' Constraints like: if x<1 then y> 2'''
+        self.condition = condition
+        self.constraint_true = constraint_true
+        self.constraint_false = constraint_false
 
 def check_constraints(space,constraints):
     """ Checks if list of constraints is valid when compared with the dimensions of space.

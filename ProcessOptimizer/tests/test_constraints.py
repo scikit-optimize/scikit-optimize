@@ -389,6 +389,12 @@ def test_Constraints_validate_sample():
     sample[3] = -4
     assert_true(cons.validate_sample(sample))
 
+    cons_list = [Exclusive(3,(5,5),'integer')]
+    cons = Constraints(cons_list,space)
+    sample = [0]*space.n_dims
+    sample[3] = 5
+    assert_false(cons.validate_sample(sample))
+
     cons_list = [Exclusive(6,('c','d','e'),'categorical')]
     cons = Constraints(cons_list,space)
     sample = [0]*space.n_dims
