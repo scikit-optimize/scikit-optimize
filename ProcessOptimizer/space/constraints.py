@@ -22,6 +22,7 @@ class Constraints:
         self.inclusive = [[] for _ in range(space.n_dims)]
         self.exclusive = [[] for _ in range(space.n_dims)]
         self.sum = []
+        self.conditional = []
         self.constraints_list = constraints_list # A copy of the list of constraints
         # Append constraints to the lists
         for constraint in constraints_list:
@@ -33,6 +34,10 @@ class Constraints:
                 self.exclusive[constraint.dimension].append(constraint)
             elif isinstance(constraint,Sum):
                 self.sum.append(constraint)
+            elif isinstance(constraint,Conditional):
+                self.conditional.append(constraint)
+            else:
+                raise TypeError('Constraint type {} is not recognized'.format(type(constraint)))
 
     def __eq__(self, other):
         if isinstance(other,Constraints):
@@ -118,13 +123,13 @@ class Constraints:
            Bool is true if samples are valid. Else None.
         """
 
-        # We iterate through all the dimensions and check the the type of constriants that are applid
+        # We iterate through all the dimensions and check the the type of constriants that are applied
         # to a single dimensions, i.e Single, Exlcusive and Inclusive
         for dim in range(len(sample)): # We iterate through all samples which corresponds to number of dimensions.
             
             # Single constraints.
             if self.single[dim]:
-                if not self.single[dim].validate_constraints(sample[dim]):
+                if not self.single[dim].validate_constraint(sample[dim]):
                     return False
 
             # Inclusive constraints.
@@ -133,7 +138,7 @@ class Constraints:
                 # of the bounds of the inclusive constraints we return false.
                 value_is_valid = False
                 for constraint in self.inclusive[dim]:
-                    if constraint.validate_constraints(sample[dim]):
+                    if constraint.validate_constraint(sample[dim]):
                         value_is_valid = True
                         break
                 if not value_is_valid:
@@ -142,7 +147,7 @@ class Constraints:
             # Exclusive constraints
             for constraint in self.exclusive[dim]:
                 # The first time a value is inside of the exlcuded bounds of the exclusive constraint we return false.
-                if not constraint.validate_constraints(sample[dim]):
+                if not constraint.validate_constraint(sample[dim]):
                     return False
 
         
@@ -150,7 +155,10 @@ class Constraints:
         for constraint in self.sum:
             if not constraint.validate_sample(sample):
                 return False
-
+        # We iterate through Conditional constraints
+        for constraint in self.conditional:
+            if not constraint.validate_sample(sample):
+                return False
         # If we we did not find any violaiton of the constraints we return True.
         return True
 
@@ -196,7 +204,11 @@ class Single:
         self.value = value
         self.dimension = dimension
         self.dimension_type = dimension_type
-        self.validate_constraints = self._validate_constraint
+        self.validate_constraint = self._validate_constraint
+        self.validate_sample = self._validate_sample
+
+    def _validate_sample(self, sample):
+        return self.validate_constraint(sample[self.dimension])
 
     def _validate_constraint(self, value):
         # Compares value with constraint.
@@ -274,9 +286,13 @@ class Inclusive(Bound_constraint):
 
         # We use another validation strategy for categorical dimensions.
         if dimension_type == 'categorical':
-            self.validate_constraints = self._validate_constraint_categorical
+            self.validate_constraint = self._validate_constraint_categorical
         else:
-            self.validate_constraints = self._validate_constraint_real
+            self.validate_constraint = self._validate_constraint_real
+        self.validate_sample = self._validate_sample
+
+    def _validate_sample(self, sample):
+        return self.validate_constraint(sample[self.dimension])
 
     def _validate_constraint_categorical(self, value):
         if value in self.bounds:
@@ -329,9 +345,13 @@ class Exclusive(Bound_constraint):
 
         # We use another validation strategy for categorical dimensions.
         if dimension_type == 'categorical':
-            self.validate_constraints = self._validate_constraint_categorical
+            self.validate_constraint = self._validate_constraint_categorical
         else:
-            self.validate_constraints = self._validate_constraint_real
+            self.validate_constraint = self._validate_constraint_real
+        self.validate_sample = self._validate_sample
+
+    def _validate_sample(self, sample):
+        return self.validate_constraint(sample[self.dimension])
 
     def _validate_constraint_categorical(self, value):
         if value in self.bounds:
@@ -416,6 +436,20 @@ class Conditional():
         self.condition = condition
         self.if_true = if_true
         self.if_false = if_false
+        self.validate_sample = self._validate_sample
+
+    def _validate_sample(self,sample):
+        if self.condition.validate_sample(sample):
+            if self.if_true:
+                return self.if_true.validate_sample(sample)
+            else:
+                return True
+        else:
+            if self.if_false:
+                return self.if_false.validate_sample(sample)
+            else:
+                return True
+
     def __repr__(self):
         return "Conditional(condition={}, if_true={}, if_false={})".format(self.condition, self.if_true, self.if_false)
 
