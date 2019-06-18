@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pytest import raises
 
-from ProcessOptimizer.space.constraints import Constraints, Single, Exclusive, Inclusive, check_constraints, check_bounds, check_value
+from ProcessOptimizer.space.constraints import Constraints, Single, Exclusive, Inclusive, Sum, Conditional, check_constraints, check_bounds, check_value
 from ProcessOptimizer import Optimizer
 from ProcessOptimizer.space import Real, Integer, Categorical, Space
 
@@ -106,7 +106,65 @@ def test_single_inclusive_and_exclusive():
     # dimension_type should be valid
     with raises(ValueError):
         Single('a',1.0,'not a proper value')
+
+@pytest.mark.new_test
+def test_Sum():
+    Sum((1,2,3),5,max_sum = False)
+    Sum([3,2,1],-10.0,max_sum = True)
+
+    with raises(TypeError):
+        Sum('a',5)
+    with raises(TypeError):
+        Sum((1,2,3),5,max_sum = 1)
+    with raises(TypeError):
+        Sum((1,2,3),True)
+    with raises(ValueError):
+        Sum([0],True)
+    with raises(ValueError):
+        Sum([-10,1,2],True)
+
+    space = Space([[0.0,10.0],[0,10],['abcdef']])
+    cons_list = [Sum((4,3),5)]
+    with raises(IndexError):
+        Constraints(cons_list,space)
+    cons_list = [Sum((1,2),5)]
+    with raises(ValueError):
+        Constraints(cons_list,space)
     
+
+    cons = Constraints([Sum((0,1),6)],space)
+    assert_false(cons.validate_sample([0.0,7,'a']))
+    assert_false(cons.validate_sample([7.0,0,'a']))
+    assert_false(cons.validate_sample([3.00001,3,'a']))
+    assert_true(cons.validate_sample([2.99999,3,'a']))
+
+    cons = Constraints([Sum((0,1),6,max_sum = False)],space)
+    assert_true(cons.validate_sample([0.0,7,'a']))
+    assert_true(cons.validate_sample([7.0,0,'a']))
+    assert_true(cons.validate_sample([3.00001,3,'a']))
+    assert_false(cons.validate_sample([2.99999,3,'a']))
+
+    samples = cons.rvs(n_samples = 1000)
+    for sample in samples:
+        assert_true(cons.validate_sample(sample))
+
+@pytest.mark.new_test
+def test_Conditional():
+    space = Space([(0,5),(1.0,5.0),list('abcdefg')])
+    condition = Single(0,1,'integer')
+    if_true = Exclusive(1,(2.0,3.0),'real')
+    if_false = Inclusive(2,('a','b'),'categorical')
+    Conditional(condition, if_true, if_false)
+    Conditional(condition, if_true = if_true, if_false = if_false)
+    cons_list = [Conditional(condition, if_true = if_true, if_false = if_false)]
+    cons = Constraints(cons_list,space)
+    
+    # Test nested contraints
+    a = Conditional(condition, if_true, if_false)
+    b = Conditional(condition, if_true, if_false)
+    cons_list = [Conditional(condition, if_true = a, if_false = b)]
+    cons = Constraints(cons_list,space)
+
 @pytest.mark.new_test
 def test_check_constraints():
     space = Space([(0.0,5.0),(1.0,5.0)])

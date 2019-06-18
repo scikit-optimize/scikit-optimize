@@ -21,6 +21,7 @@ class Constraints:
         self.single = [None for _ in range(space.n_dims)]
         self.inclusive = [[] for _ in range(space.n_dims)]
         self.exclusive = [[] for _ in range(space.n_dims)]
+        self.sum = []
         self.constraints_list = constraints_list # A copy of the list of constraints
         # Append constraints to the lists
         for constraint in constraints_list:
@@ -30,6 +31,8 @@ class Constraints:
                 self.inclusive[constraint.dimension].append(constraint)
             elif isinstance(constraint,Exclusive):
                 self.exclusive[constraint.dimension].append(constraint)
+            elif isinstance(constraint,Sum):
+                self.sum.append(constraint)
 
     def __eq__(self, other):
         if isinstance(other,Constraints):
@@ -115,6 +118,8 @@ class Constraints:
            Bool is true if samples are valid. Else None.
         """
 
+        # We iterate through all the dimensions and check the the type of constriants that are applid
+        # to a single dimensions, i.e Single, Exlcusive and Inclusive
         for dim in range(len(sample)): # We iterate through all samples which corresponds to number of dimensions.
             
             # Single constraints.
@@ -139,6 +144,12 @@ class Constraints:
                 # The first time a value is inside of the exlcuded bounds of the exclusive constraint we return false.
                 if not constraint.validate_constraints(sample[dim]):
                     return False
+
+        
+        # We iterate through sum constriants
+        for constraint in self.sum:
+            if not constraint.validate_sample(sample):
+                return False
 
         # If we we did not find any violaiton of the constraints we return True.
         return True
@@ -343,12 +354,76 @@ class Exclusive(Bound_constraint):
         else:
             return False
 
+class Sum():
+    def __init__(self, dimensions, value, max_sum = True):
+        ''' Constraints like: x1+x2+x3<5'''
+
+        if not (type(dimensions) == tuple or type(dimensions) == list):
+            raise TypeError('Argument `dimensions` must be of type tuple or list. Got {}'.format(type(dimensions)))
+        if not len(dimensions) > 1:
+            raise ValueError('Argument `dimensions` must have a lenght of more than 1. Got {}'.format(len(dimensions)))
+        if not all(type(dim) == int for dim in dimensions):
+            raise TypeError('dimension indices must all be of type int.')
+        if not all(dim >= 0 for dim in dimensions):
+            raise ValueError('Dimension index must be positive')
+        if not (type(value) == int or type(value) == float):
+            raise TypeError('Argument `value` must be of type float or int. Got {}'.format(type(value)))
+        if not type(max_sum) == bool:
+            raise TypeError('Argument `max_sum` must be of type bool (True or False). Got {}'.format(type(max_sum)))
+
+        self.dimensions = tuple(dimensions)
+        self.value = value
+        self.max_sum = max_sum
+
+        self.validate_sample = self._validate_sample
+
+    def _validate_sample(self, sample):
+        # Compares the sum of the parameters for the specified dimensions from `sample` with the value set in the constraint.
+        if self.max_sum:
+            return np.sum([sample[dim] for dim in self.dimensions])<=self.value
+        else:
+            return np.sum([sample[dim] for dim in self.dimensions])>=self.value
+
+
+    def __repr__(self):
+        return "Sum(dimensions={}, value={}, max_sum={})".format(self.dimensions, self.value, self.max_sum)
+
+    def __eq__(self, other):
+        if isinstance(other, Sum):
+            return all([a == b for a, b in zip(self.dimensions, other.dimensions)]) and self.value == other.value and self.max_sum == other.max_sum
+        else:
+            return False
+
 class Conditional():
-    def __init__(self, condition, constraint_true, constraint_false):
-        ''' Constraints like: if x<1 then y> 2'''
+    def __init__(self, condition, if_true = None, if_false = None):
+        ''' Constraints like: if x<1 then y> 2
+        
+        Condition is a constraint but cant be a conditional constraint
+        if_true and if_false can be any constraints
+        '''
+
+        if isinstance(condition,Conditional):
+            raise TypeError('Condition can not be a conditional constraint')
+        check_is_constraint(condition)
+        if if_true:
+            check_is_constraint(if_true)
+        if if_false:
+            check_is_constraint(if_false)
+
+        # All arguments are expected to be constraints. These have already been initialised and therefore we do
+        # not need to validate them here.
+
         self.condition = condition
-        self.constraint_true = constraint_true
-        self.constraint_false = constraint_false
+        self.if_true = if_true
+        self.if_false = if_false
+    def __repr__(self):
+        return "Conditional(condition={}, if_true={}, if_false={})".format(self.condition, self.if_true, self.if_false)
+
+    def __eq__(self, other):
+        if isinstance(other, Conditional):
+            return self.condition == other.condition and self.if_true == other.if_true and self.if_false == other.if_false
+        else:
+            return False
 
 def check_constraints(space,constraints):
     """ Checks if list of constraints is valid when compared with the dimensions of space.
@@ -368,37 +443,56 @@ def check_constraints(space,constraints):
     n_dims = space.n_dims
 
     single_constraints = [False]*n_dims
-    for i in range(len(constraints)):
-        constraint = constraints[i]
-        ind_dim = constraint.dimension # Index of the dimension
-        if not ind_dim < n_dims:
-            raise IndexError('Dimension index {} out of range for n_dims = {}'.format(ind_dim,n_dims))
-        space_dim = space.dimensions[constraint.dimension]
-
-        # Check if space dimensions types are the same as constraint dimension types
-        if isinstance(space_dim,Real):
-            if not constraint.dimension_type == 'real':
-                raise TypeError('Constraint for real dimension {} must be of dimension_type real. Got {}'.format(ind_dim,constraint.dimension_type))
-        elif isinstance(space_dim,Integer):
-            if not constraint.dimension_type == 'integer':
-                raise TypeError('Constraint for integer dimension {} must be of dimension_type integer. Got {}'.format(ind_dim,constraint.dimension_type))
-        elif isinstance(space_dim,Categorical):
-            if not constraint.dimension_type == 'categorical':
-                raise TypeError('Constraint for categorical dimension {} must be of dimension_type categorical. Got {}'.format(ind_dim,constraint.dimension_type))
-        else:
-            raise TypeError('Can not find valid dimension for' + str(space_dim))
+    for constraint in constraints:
 
         # Check if constraints are inside bounds of space and if more than one single constraint has been
         # applied to the same dimension
         if isinstance(constraint,Single):
+            check_dim_and_space(space,constraint)
+            ind_dim = constraint.dimension
             if single_constraints[ind_dim] == True:
                 raise IndexError('Can not add more than one Singe-type constraint to dimension {}'.format(ind_dim))
             single_constraints[ind_dim] = True
+            space_dim = space.dimensions[constraint.dimension]
             check_value(space_dim,constraint.value)
         elif isinstance(constraint,Inclusive) or isinstance(constraint,Exclusive):
+            check_dim_and_space(space,constraint)
+            space_dim = space.dimensions[constraint.dimension]
             check_bounds(space_dim,constraint.bounds)
+        elif isinstance(constraint,Sum):
+            if not all(dim < n_dims for dim in constraint.dimensions):
+                raise IndexError('Dimension index exceeds number of dimensions')
+            for ind_dim in constraint.dimensions:
+                if isinstance(space.dimensions[ind_dim],Categorical):
+                    raise ValueError('Sum constraint can not be applid to categorical dimension: {}'.format(space.dimensions[ind_dim]))
+        elif isinstance(constraint,Conditional):
+            # We run check_constraints on each constraint instance in the conditional constraint.
+            # We only check them if they are not None
+            if constraint.condition: check_constraints(space,[constraint.condition])
+            if constraint.if_true: check_constraints(space,[constraint.if_true])
+            if constraint.if_false: check_constraints(space,[constraint.if_true])
         else:
-            raise TypeError('Constraints must be of type "Single", "Exlusive" or "Inclusive" ')
+            raise TypeError('Constraints must be of type "Single", "Exlusive", "Inclusive", "Sum" or "Conditional". Got {}'.format(type(constraint)))
+
+def check_dim_and_space(space,constraint):
+    n_dims = space.n_dims
+    ind_dim = constraint.dimension # Index of the dimension
+    if not ind_dim < n_dims:
+        raise IndexError('Dimension index {} out of range for n_dims = {}'.format(ind_dim,n_dims))
+    space_dim = space.dimensions[constraint.dimension]
+
+    # Check if space dimensions types are the same as constraint dimension types
+    if isinstance(space_dim,Real):
+        if not constraint.dimension_type == 'real':
+            raise TypeError('Constraint for real dimension {} must be of dimension_type real. Got {}'.format(ind_dim,constraint.dimension_type))
+    elif isinstance(space_dim,Integer):
+        if not constraint.dimension_type == 'integer':
+            raise TypeError('Constraint for integer dimension {} must be of dimension_type integer. Got {}'.format(ind_dim,constraint.dimension_type))
+    elif isinstance(space_dim,Categorical):
+        if not constraint.dimension_type == 'categorical':
+            raise TypeError('Constraint for categorical dimension {} must be of dimension_type categorical. Got {}'.format(ind_dim,constraint.dimension_type))
+    else:
+        raise TypeError('Can not find valid dimension for' + str(space_dim))
 
 def check_bounds(dim,bounds):
     """ Checks if bounds are included in the dimension.
@@ -443,3 +537,15 @@ def check_value(dim,value):
     else: # Categorical dimension.
         if value not in dim.categories:
             raise ValueError('Categorical value {} is not in space with categoreis {}'.format(value,dim.categories))
+
+def check_is_constraint(constraint):
+    ''' Checks if constraint is a valid constraint type. Throws error otherwise.
+    Types can be Single, Inclusive, Exclusive, Sum and Conditional'''
+
+    if not (isinstance(constraint, Single) or isinstance(constraint, Inclusive)
+        or isinstance(constraint, Exclusive) or isinstance(constraint, Sum)
+        or isinstance(constraint, Conditional)):
+        raise TypeError('Constraint must be of type Inclusive, Exlusive, Single, Sum or Conditional. Got {}'.format(type(constraint)))
+
+
+    
