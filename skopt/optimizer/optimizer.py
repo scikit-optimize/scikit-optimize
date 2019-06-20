@@ -9,7 +9,7 @@ from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils import check_random_state
 
