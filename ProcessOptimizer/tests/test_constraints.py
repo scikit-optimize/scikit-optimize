@@ -598,7 +598,7 @@ def test_optimizer_with_constraints(acq_optimizer):
 
     # Test behavior when adding constraints
     opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
-    opt.add_constraints(cons)
+    opt.set_constraints(cons)
     assert_equal(opt._constraints,cons)
     next_x= opt.ask()
     assert_equal(next_x[0],5.0)
@@ -606,7 +606,7 @@ def test_optimizer_with_constraints(acq_optimizer):
     f_val = np.random.random()*100
     opt.tell(next_x, f_val)
     assert_equal(opt._constraints,cons)
-    opt.add_constraints(cons_2)
+    opt.set_constraints(cons_2)
     next_x= opt.ask()
     assert_equal(opt._constraints,cons_2)
     assert_equal(next_x[0],4.0)
@@ -634,26 +634,26 @@ def test_optimizer_with_constraints(acq_optimizer):
     assert_not_equal(next_x[0],4.0)
     assert_not_equal(next_x[0],5.0)
     next_x = opt._next_x
-    opt.add_constraints(cons)
+    opt.set_constraints(cons)
     assert_not_equal(opt._next_x,next_x) # Check that next_x has been changed
     assert_equal(opt._next_x[0],5.0)
     assert_equal(opt._next_x[3],5)
     next_x = opt._next_x
-    opt.add_constraints(cons_2)
+    opt.set_constraints(cons_2)
     assert_not_equal(opt._next_x,next_x)
     assert_equal(opt._next_x[0],4.0)
     assert_equal(opt._next_x[3],4)
 
     # Test that adding a Constraint or constraint_list gives the same
     opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
-    opt.add_constraints(cons_list)
+    opt.set_constraints(cons_list)
     opt2 = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
-    opt2.add_constraints(cons)
+    opt2.set_constraints(cons)
     assert_equal(opt._constraints,opt2._constraints)
 
     # Test that constraints are satisfied
     opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 2)
-    opt.add_constraints(cons)
+    opt.set_constraints(cons)
     next_x= opt.ask()
     assert_equal(next_x[0],5.0)
 
@@ -662,15 +662,15 @@ def test_optimizer_with_constraints(acq_optimizer):
     assert_not_equal(next_x[0],5.0)
     f_val = np.random.random()*100
     opt.tell(next_x, f_val)
-    opt.add_constraints(cons)
+    opt.set_constraints(cons)
     next_x= opt.ask()
     assert_equal(next_x[0],5.0)
     assert_equal(next_x[3],5)
-    opt.add_constraints(cons)
+    opt.set_constraints(cons)
     next_x= opt.ask()
     f_val = np.random.random()*100
     opt.tell(next_x, f_val)
-    opt.add_constraints(cons_2)
+    opt.set_constraints(cons_2)
     next_x= opt.ask()
     assert_equal(next_x[0],4.0)
     assert_equal(next_x[3],4)
@@ -685,5 +685,5 @@ def test_get_constraints():
     cons_list = [Single(0,5.0,'real')]
     cons = Constraints(cons_list,space)
     opt = Optimizer(space, "ET")
-    opt.add_constraints(cons)
+    opt.set_constraints(cons)
     assert_equal(cons,opt.get_constraints())

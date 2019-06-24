@@ -122,7 +122,7 @@ class Constraints:
         * `is_valid`: [bool]
            Bool is true if samples are valid. Else None.
         """
-
+       
         # We iterate through all the dimensions and check the the type of constriants that are applied
         # to a single dimensions, i.e Single, Exlcusive and Inclusive
         for dim in range(len(sample)): # We iterate through all samples which corresponds to number of dimensions.
@@ -146,7 +146,7 @@ class Constraints:
 
             # Exclusive constraints
             for constraint in self.exclusive[dim]:
-                # The first time a value is inside of the exlcuded bounds of the exclusive constraint we return false.
+                # The first time a value is inside of the excluded bounds of the exclusive constraint we return false.
                 if not constraint.validate_constraint(sample[dim]):
                     return False
 

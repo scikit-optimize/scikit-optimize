@@ -258,7 +258,7 @@ class Optimizer(object):
         # Initialize cache for `ask` method responses
 
         # This ensures that multiple calls to `ask` with n_points set
-        # return same sets of points. Reset to {} at every call to `tell` and `add_constraints`.
+        # return same sets of points. Reset to {} at every call to `tell` and `set_constraints`.
         self.cache_ = {}
 
     def copy(self, random_state=None):
@@ -601,7 +601,7 @@ class Optimizer(object):
 
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
-    def add_constraints(self,constraints):
+    def set_constraints(self,constraints):
         ''' Adds constraints to the optimizer
 
         Parameters
@@ -628,7 +628,7 @@ class Optimizer(object):
 
     def remove_constraints(self):
         ''' Sets constraints to None'''
-        self.add_constraints(None)
+        self.set_constraints(None)
     
     def get_constraints(self):
         '''Returns constraints'''
