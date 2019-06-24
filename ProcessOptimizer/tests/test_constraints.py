@@ -109,13 +109,13 @@ def test_single_inclusive_and_exclusive():
 
 @pytest.mark.new_test
 def test_Sum():
-    Sum((1,2,3),5,max_sum = False)
-    Sum([3,2,1],-10.0,max_sum = True)
+    Sum((1,2,3),5,less_than = False)
+    Sum([3,2,1],-10.0,less_than = True)
 
     with raises(TypeError):
         Sum('a',5)
     with raises(TypeError):
-        Sum((1,2,3),5,max_sum = 1)
+        Sum((1,2,3),5,less_than = 1)
     with raises(TypeError):
         Sum((1,2,3),True)
     with raises(ValueError):
@@ -138,7 +138,7 @@ def test_Sum():
     assert_false(cons.validate_sample([3.00001,3,'a']))
     assert_true(cons.validate_sample([2.99999,3,'a']))
 
-    cons = Constraints([Sum((0,1),6,max_sum = False)],space)
+    cons = Constraints([Sum((0,1),6,less_than = False)],space)
     assert_true(cons.validate_sample([0.0,7,'a']))
     assert_true(cons.validate_sample([7.0,0,'a']))
     assert_true(cons.validate_sample([3.00001,3,'a']))

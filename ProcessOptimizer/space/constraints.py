@@ -307,7 +307,7 @@ class Inclusive(Bound_constraint):
             return False
 
     def __repr__(self):
-        return "Inclusive(dimension={}, bounds={}, space_Type={})".format(self.dimension, self.bounds, self.dimension_type)
+        return "Inclusive(dimension={}, bounds={}, dimension_type={})".format(self.dimension, self.bounds, self.dimension_type)
 
     def __eq__(self, other):
         if isinstance(other, Inclusive):
@@ -375,7 +375,7 @@ class Exclusive(Bound_constraint):
             return False
 
 class Sum():
-    def __init__(self, dimensions, value, max_sum = True):
+    def __init__(self, dimensions, value, less_than = True):
         ''' Constraints like: x1+x2+x3<5'''
 
         if not (type(dimensions) == tuple or type(dimensions) == list):
@@ -388,29 +388,29 @@ class Sum():
             raise ValueError('Dimension index must be positive')
         if not (type(value) == int or type(value) == float):
             raise TypeError('Argument `value` must be of type float or int. Got {}'.format(type(value)))
-        if not type(max_sum) == bool:
-            raise TypeError('Argument `max_sum` must be of type bool (True or False). Got {}'.format(type(max_sum)))
+        if not type(less_than) == bool:
+            raise TypeError('Argument `less_than` must be of type bool (True or False). Got {}'.format(type(less_than)))
 
         self.dimensions = tuple(dimensions)
         self.value = value
-        self.max_sum = max_sum
+        self.less_than = less_than
 
         self.validate_sample = self._validate_sample
 
     def _validate_sample(self, sample):
         # Compares the sum of the parameters for the specified dimensions from `sample` with the value set in the constraint.
-        if self.max_sum:
+        if self.less_than:
             return np.sum([sample[dim] for dim in self.dimensions])<=self.value
         else:
             return np.sum([sample[dim] for dim in self.dimensions])>=self.value
 
 
     def __repr__(self):
-        return "Sum(dimensions={}, value={}, max_sum={})".format(self.dimensions, self.value, self.max_sum)
+        return "Sum(dimensions={}, value={}, less_than={})".format(self.dimensions, self.value, self.less_than)
 
     def __eq__(self, other):
         if isinstance(other, Sum):
-            return all([a == b for a, b in zip(self.dimensions, other.dimensions)]) and self.value == other.value and self.max_sum == other.max_sum
+            return all([a == b for a, b in zip(self.dimensions, other.dimensions)]) and self.value == other.value and self.less_than == other.less_than
         else:
             return False
 
