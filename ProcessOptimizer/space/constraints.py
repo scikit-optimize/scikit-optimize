@@ -1,6 +1,6 @@
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
-from .space import Real, Integer, Categorical
+from .space import Real, Integer, Categorical, Space
 import numpy as np
 class Constraints:
     def __init__(self, constraints_list,space):
@@ -8,13 +8,15 @@ class Constraints:
 
         Parameters
         ----------
-        * `constraints_list` [list]:
+        * `constraints_list` [list of constraints]:
             A list of constraint objects.
 
         * `space` [Space]:
             A Space object.
         """
 
+        if not isinstance(space,Space):
+            raise TypeError('space must be of type Space. Got {}'.format(type(space)))
         check_constraints(space,constraints_list) # Check that all constraints are valid
         self.space = space
         # Lists that keep track of which dimensions has which constraints 
@@ -93,34 +95,25 @@ class Constraints:
                     rows.append(r)
 
             n_samples_candidates += n_samples
-            if n_samples_candidates > 10000 and len(rows) == 0:
-                # If we have tried with over 10000 samples and still not found a single valid one
-                # we throw an error
-                raise RuntimeError('Could not find valid samples with constraints {}'.format(self))
+            if n_samples_candidates > 100000 and len(rows) < 100:
+                # If we have less than a 1/10.000 succes rate on the sampling we throw an error
+                raise RuntimeError('Could not find valid samples in constrained space. Please check that the constraints allows for valid samples to be drawn')
 
         # We draw more samples when needed so we only return n_samples of the samples
         return rows[:n_samples]
 
     def validate_sample(self,sample):
-        """ Validates a sample of of parameter values in regards to the constraints
-        Parameters
-        ----------
-        * `sample`:
-            A list of values from each dimension to be checked
-        * `constraints`
-
-        """
-        """Validates a sample of of parameter values in regards to the constraints
+        """ Validates a sample of parameter values in regards to the constraints.
 
         Parameters
         ----------
         * `sample` [list]:
-            A list of values for which validity is checked.
+            A list of values for each dimension.
 
         Returns
         -------
         * `is_valid`: [bool]
-           Bool is true if samples are valid. Else None.
+           Returns True for valid samples and False for non-valid samples
         """
        
         # We iterate through all the dimensions and check the the type of constriants that are applied
@@ -208,6 +201,7 @@ class Single:
         self.validate_sample = self._validate_sample
 
     def _validate_sample(self, sample):
+        # Returns True if sample does not violate the constraints.
         return self.validate_constraint(sample[self.dimension])
 
     def _validate_constraint(self, value):
@@ -227,9 +221,9 @@ class Single:
             return False
 
 class Bound_constraint():
-    """Base class for Exclusive and Inclusive constraints"""
-
     def __init__(self, dimension, bounds, dimension_type):
+        """Base class for Exclusive and Inclusive constraints"""
+
         # Validating input parameters
         if not type(bounds) == tuple and not type(bounds) == list:
             raise TypeError('Bounds should be a tuple or a list. Got {}'.format(type(bounds)))
@@ -292,6 +286,7 @@ class Inclusive(Bound_constraint):
         self.validate_sample = self._validate_sample
 
     def _validate_sample(self, sample):
+        # Checks if a sample violates the constraints. Returns True if the dont.
         return self.validate_constraint(sample[self.dimension])
 
     def _validate_constraint_categorical(self, value):
@@ -351,6 +346,7 @@ class Exclusive(Bound_constraint):
         self.validate_sample = self._validate_sample
 
     def _validate_sample(self, sample):
+        # Returns True if sample does not violate the constraints.
         return self.validate_constraint(sample[self.dimension])
 
     def _validate_constraint_categorical(self, value):
@@ -376,7 +372,23 @@ class Exclusive(Bound_constraint):
 
 class Sum():
     def __init__(self, dimensions, value, less_than = True):
-        ''' Constraints like: x1+x2+x3<5'''
+        """Constraint class of type Sum.
+
+        This constraint enforces that the sum of all values drawn for the specified dimensions, is less_than or equal to a value.
+        Can only be used with integer or real dimensions.
+
+        Parameters
+        ----------
+        * `dimensions` [list of ints]:
+            A list of integers coresponding to the index of the dimensions that should be summed
+
+        * `value` [float or int]:
+            The value for which the sum should be less than or equal to.
+
+        * `less_than` [bool, default=True]:
+            If true then the sum should be less than or equal to the value. If False the sum should 
+            be greater than or equal to the value.
+        """
 
         if not (type(dimensions) == tuple or type(dimensions) == list):
             raise TypeError('Argument `dimensions` must be of type tuple or list. Got {}'.format(type(dimensions)))
@@ -398,7 +410,7 @@ class Sum():
         self.validate_sample = self._validate_sample
 
     def _validate_sample(self, sample):
-        # Compares the sum of the parameters for the specified dimensions from `sample` with the value set in the constraint.
+        # Returns True if sample does not violate the constraints.
         if self.less_than:
             return np.sum([sample[dim] for dim in self.dimensions])<=self.value
         else:
@@ -416,22 +428,51 @@ class Sum():
 
 class Conditional():
     def __init__(self, condition, if_true = None, if_false = None):
-        ''' Constraints like: if x<1 then y> 2
+        ''' Constraint class of type Conditional
         
-        Condition is a constraint but cant be a conditional constraint
-        if_true and if_false can be any constraints
+        This constraint enforces other constraints depending on the 'condition'.
+        If condition is satisfied the if_true constraint is applied. If not then the if_false
+        constraint is applied.
+
+        Parameters
+        ----------
+        * `condition` [Constraint]:
+            A constraint that defines the condition.
+            Condition can not be a Conditional constraint.
+
+        * `if_true` [Constraint or tuple/list of constraints, deault=None]:
+            If the constraint from the condition-argument is satisfied then this constraint is applied.
+
+        * `if_false` [Constraint or tuple/list of constraints, deault=None]:
+            If the constraint from the condition-argument is not satisfied then this constraint is applied.
         '''
 
         if isinstance(condition,Conditional):
             raise TypeError('Condition can not be a conditional constraint')
         check_is_constraint(condition)
         if if_true:
-            check_is_constraint(if_true)
+            if type(if_true) == tuple or type(if_true) == list:
+                # Check all constraints
+                for constraint in if_true:
+                    check_is_constraint(constraint)
+                if_true = tuple(if_true)
+            else:
+                check_is_constraint(if_true)
+                # Convert to tuple if only one constraint has been passed
+                if_true = tuple([if_true])
+        else:
+            # Convert "None" to empty tuple
+            if_true = ()
         if if_false:
-            check_is_constraint(if_false)
-
-        # All arguments are expected to be constraints. These have already been initialised and therefore we do
-        # not need to validate them here.
+            if type(if_false) == tuple or type(if_false) == list:
+                for constraint in if_false:
+                    check_is_constraint(constraint)
+                    if_false = tuple(if_false)
+            else:
+                check_is_constraint(if_false)
+                if_false = tuple([if_false])
+        else:
+            if_false = ()
 
         self.condition = condition
         self.if_true = if_true
@@ -439,14 +480,24 @@ class Conditional():
         self.validate_sample = self._validate_sample
 
     def _validate_sample(self,sample):
+        # Returns True if sample does not violate the constraints.
         if self.condition.validate_sample(sample):
+            # Condition evaluates to true
             if self.if_true:
-                return self.if_true.validate_sample(sample)
-            else:
+                for constraint in self.if_true: # Iterate through all constrains in if_true
+                    if not constraint.validate_sample(sample):
+                        # The first time a constraint fails we return False
+                        return False
+                # If no constraints failed we return True
+                return True
+            else: # If there is no constraints we return True
                 return True
         else:
             if self.if_false:
-                return self.if_false.validate_sample(sample)
+                for constraint in self.if_false:
+                    if not constraint.validate_sample(sample):
+                        return False
+                return True
             else:
                 return True
 
@@ -461,7 +512,7 @@ class Conditional():
 
 def check_constraints(space,constraints):
     """ Checks if list of constraints is valid when compared with the dimensions of space.
-        Throws errors otherwise
+        Throws errors otherwise.
 
         Parameters
         ----------
@@ -503,8 +554,13 @@ def check_constraints(space,constraints):
             # We run check_constraints on each constraint instance in the conditional constraint.
             # We only check them if they are not None
             if constraint.condition: check_constraints(space,[constraint.condition])
-            if constraint.if_true: check_constraints(space,[constraint.if_true])
-            if constraint.if_false: check_constraints(space,[constraint.if_true])
+            if constraint.if_true: 
+                # Check all constraints in the if_true tuple
+                for constraint_if_true in constraint.if_true:
+                    check_constraints(space,[constraint_if_true])
+            if constraint.if_false:
+                for constraint_if_false in constraint.if_false:
+                    check_constraints(space,[constraint_if_false])
         else:
             raise TypeError('Constraints must be of type "Single", "Exlusive", "Inclusive", "Sum" or "Conditional". Got {}'.format(type(constraint)))
 
@@ -552,7 +608,7 @@ def check_bounds(dim,bounds):
                 raise ValueError('Categorical value {} is not in space with categories {}'.format(value,dim.categories))
 
 def check_value(dim,value):
-    """ Checks if value are included in the dimension.
+    """ Checks if value are included in the bounds of the dimension.
         Throws errors otherwise.
 
         Parameters

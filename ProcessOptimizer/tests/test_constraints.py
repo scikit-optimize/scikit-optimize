@@ -150,20 +150,72 @@ def test_Sum():
 
 @pytest.mark.new_test
 def test_Conditional():
-    space = Space([(0,5),(1.0,5.0),list('abcdefg')])
-    condition = Single(0,1,'integer')
-    if_true = Exclusive(1,(2.0,3.0),'real')
-    if_false = Inclusive(2,('a','b'),'categorical')
+    space = Space([list('ab'),list('ab'),list('ab'),[1,4],[1,4],[1,4]])
+    condition = Single(0,'a','categorical')
+    if_true = Inclusive(3,[1,2],'integer')
+    if_false = Exclusive(3,[1,2],'integer')
+
+    # Test init of constriants
     Conditional(condition, if_true, if_false)
     Conditional(condition, if_true = if_true, if_false = if_false)
     cons_list = [Conditional(condition, if_true = if_true, if_false = if_false)]
     cons = Constraints(cons_list,space)
     
+    samples = cons.rvs(n_samples = 100)
+    for sample in samples:
+        if sample[0] == 'a':
+            assert_true(sample[3] < 3)
+        else:
+            assert_true(sample[3] > 2)
+
+    assert_false(cons.validate_sample(['a','a','a',3,3,3]))
+    assert_true(cons.validate_sample(['a','a','a',2,3,3]))
+    assert_false(cons.validate_sample(['b','a','a',2,3,3]))
+    assert_true(cons.validate_sample(['b','a','a',3,3,3]))
+
+    # Test list of constraints
+    cons = Constraints([
+        Conditional(
+            Single(0,'a','categorical'),
+            if_true = [Single(1,'a','categorical'),Single(2,'a','categorical')],
+            if_false = [Single(1,'b','categorical'),Single(2,'b','categorical')]
+        )
+    ],space)
+    assert_false(cons.validate_sample(['a','a','b',3,3,3]))
+    assert_true(cons.validate_sample(['a','a','a',3,3,3]))
+    assert_false(cons.validate_sample(['b','a','b',3,3,3]))
+    assert_true(cons.validate_sample(['b','b','b',3,3,3]))
+
     # Test nested contraints
-    a = Conditional(condition, if_true, if_false)
-    b = Conditional(condition, if_true, if_false)
-    cons_list = [Conditional(condition, if_true = a, if_false = b)]
-    cons = Constraints(cons_list,space)
+    cons = Constraints([
+        Conditional(
+            Inclusive(3,[1,2],'integer'),
+            Conditional(
+                Single(0,'a','categorical'),
+                if_true = [Single(1,'a','categorical'),Single(2,'a','categorical')],
+                if_false = [Single(1,'b','categorical'),Single(2,'b','categorical')]
+            ),
+            Conditional(
+                Single(0,'a','categorical'),
+                if_true = [Single(1,'b','categorical'),Single(2,'b','categorical')],
+                if_false = [Single(1,'a','categorical'),Single(2,'a','categorical')]
+            ),
+        )
+    ],space)
+
+    assert_false(cons.validate_sample(['a','a','b',2,3,3]))
+    assert_true(cons.validate_sample(['a','a','a',2,3,3]))
+    assert_false(cons.validate_sample(['b','a','b',2,3,3]))
+    assert_true(cons.validate_sample(['b','b','b',2,3,3]))
+    
+    assert_true(cons.validate_sample(['a','b','b',3,3,3]))
+    assert_false(cons.validate_sample(['a','a','a',3,3,3]))
+    assert_true(cons.validate_sample(['b','a','a',3,3,3]))
+    assert_false(cons.validate_sample(['b','b','b',3,3,3]))
+    
+    samples = cons.rvs(n_samples = 100)
+    for sample in samples:
+        assert_true(cons.validate_sample(sample))
 
 @pytest.mark.new_test
 def test_check_constraints():
