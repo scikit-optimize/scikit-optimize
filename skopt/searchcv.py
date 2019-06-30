@@ -289,9 +289,14 @@ class BayesSearchCV(BaseSearchCV):
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
         self._check_search_space(self.search_spaces)
+        # Temporary fix for compatibility with sklearn 0.20 and 0.21
+        # See scikit-optimize#762
+        # To be consistent with sklearn 0.21+, fit_params should be deprecated
+        # in the constructor and be passed in ``fit``.
+        self.fit_params = fit_params
 
         super(BayesSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
+             estimator=estimator, scoring=scoring,
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
              return_train_score=return_train_score)
