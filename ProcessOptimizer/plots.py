@@ -460,9 +460,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
             # Using the best observed result
             x_vals = result.x
         elif pars == 'expected_minimum':
-            # Check if there are any strings in the parameter list
-            strings_in_list = [s for s in result.x if isinstance(s,str)]
-            if strings_in_list:
+            if not result.space.is_real:
+                # space is also categorical
                 raise ValueError('expected_minimum does not support categorical values')
             # Do a gradient based minimum search using scipys own minimizer
             if expected_minimum_samples: # If a value for expected_minimum_samples has been parsed
