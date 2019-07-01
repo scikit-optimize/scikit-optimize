@@ -16,7 +16,7 @@ class Constraints:
         """
 
         if not isinstance(space,Space):
-            raise TypeError('space must be of type Space. Got {}'.format(type(space)))
+            space = Space(space)
         check_constraints(space,constraints_list) # Check that all constraints are valid
         self.space = space
         # Lists that keep track of which dimensions has which constraints 
