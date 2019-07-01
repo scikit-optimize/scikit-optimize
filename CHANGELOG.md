@@ -1,5 +1,15 @@
 # Release history
 
+## Version 0.3.0
+
+### New features
+* Constraints
+
+## Version 0.2.0
+
+### New features
+* Interactive bokeh GUI for plotting the objective function
+
 ## Version 0.0.2
 
 ### New features
