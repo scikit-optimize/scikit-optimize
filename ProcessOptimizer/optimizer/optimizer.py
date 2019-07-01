@@ -602,7 +602,7 @@ class Optimizer(object):
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
     def set_constraints(self,constraints):
-        ''' Adds constraints to the optimizer
+        ''' Sets the constraints for the optimizer
 
         Parameters
         ----------

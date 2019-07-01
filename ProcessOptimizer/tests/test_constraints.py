@@ -11,8 +11,7 @@ from sklearn.utils.testing import assert_equal, assert_not_equal, assert_true, a
 # Combination of base estimators and acquisition optimizers
 ACQ_OPTIMIZERS= ['sampling','lbfgs']
 
-
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_constraints_equality():
     # Same constraints should be equal
     space_a = Space([(0.0,5.0),(1.0,5.0)])
@@ -32,7 +31,7 @@ def test_constraints_equality():
     cons_b = Constraints(cons_list_b,space_b)
     assert_not_equal(cons_a, cons_b)
 
-    # Different dimnsion types in constraints_list should not be equal
+    # Different dimension types in constraints_list should not be equal
     space_a = Space([(0.0,5.0)])
     space_b = Space([(0,5)])
     cons_list_a = [Single(0,4.0,'real')]
@@ -50,7 +49,7 @@ def test_constraints_equality():
     cons_b = Constraints(cons_list_b,space_b)
     assert_not_equal(cons_a, cons_b)
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_single_inclusive_and_exclusive():
     # Test that valid constraints can be initialized
     Single(0,1.0,'real')
@@ -77,7 +76,7 @@ def test_single_inclusive_and_exclusive():
     with raises(ValueError):
         Inclusive(0,(0,1,2),'integer')
 
-    # Dimenion type and bounds should be of the same type i.e 'real' -> float, 'integer' > int
+    # Dimenion type and bounds should be of the same type i.e 'real' -> float, 'integer' -> int
     with raises(TypeError):
         Single(0,1,'real')
     with raises(TypeError):
@@ -87,7 +86,7 @@ def test_single_inclusive_and_exclusive():
     with raises(TypeError):
         Inclusive(0,(1.0,2),'integer')
     
-    # dimension should be int
+    # Dimension should be int
     with raises(TypeError):
         Single('a',1.0,'real')
     with raises(TypeError):
@@ -95,7 +94,7 @@ def test_single_inclusive_and_exclusive():
     with raises(TypeError):
         Exclusive('b',(1.0,2.0),'real')
 
-    # dimension should not be negative
+    # Dimension should not be negative
     with raises(ValueError):
         Single(-1,1.0,'real')
     with raises(ValueError):
@@ -103,53 +102,63 @@ def test_single_inclusive_and_exclusive():
     with raises(ValueError):
         Exclusive(-1,(1.0,2.0),'real')
 
-    # dimension_type should be valid
+    # Dimension_type should be valid
     with raises(ValueError):
         Single('a',1.0,'not a proper value')
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_Sum():
+    # Test that Sym type constraintcan be initialized
     Sum((1,2,3),5,less_than = False)
     Sum([3,2,1],-10.0,less_than = True)
 
     with raises(TypeError):
         Sum('a',5)
+    # `less_than` should be a bool
     with raises(TypeError):
         Sum((1,2,3),5,less_than = 1)
+    # Value should be int or float
     with raises(TypeError):
         Sum((1,2,3),True)
+    # Dimensions should be of lenght > 1
     with raises(ValueError):
         Sum([0],True)
+    # Dimensions can not be a negative int
     with raises(ValueError):
         Sum([-10,1,2],True)
 
     space = Space([[0.0,10.0],[0,10],['abcdef']])
+    # A dimension value of 4 is out of bounds for a space with only 3 dimensions
     cons_list = [Sum((4,3),5)]
     with raises(IndexError):
         Constraints(cons_list,space)
+    # Cannot apply sum constraint to categorical dimensions
     cons_list = [Sum((1,2),5)]
     with raises(ValueError):
         Constraints(cons_list,space)
     
-
+    # Check that validate_sample validates samples correctly
     cons = Constraints([Sum((0,1),6)],space)
     assert_false(cons.validate_sample([0.0,7,'a']))
     assert_false(cons.validate_sample([7.0,0,'a']))
     assert_false(cons.validate_sample([3.00001,3,'a']))
     assert_true(cons.validate_sample([2.99999,3,'a']))
 
+    # Check that validate_sample validates samples correctly for less_than = False
     cons = Constraints([Sum((0,1),6,less_than = False)],space)
     assert_true(cons.validate_sample([0.0,7,'a']))
     assert_true(cons.validate_sample([7.0,0,'a']))
     assert_true(cons.validate_sample([3.00001,3,'a']))
     assert_false(cons.validate_sample([2.99999,3,'a']))
 
+    # Check that only valid samples are drawn
     samples = cons.rvs(n_samples = 1000)
     for sample in samples:
         assert_true(cons.validate_sample(sample))
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_Conditional():
+    # Test conditional constraints
     space = Space([list('ab'),list('ab'),list('ab'),[1,4],[1,4],[1,4]])
     condition = Single(0,'a','categorical')
     if_true = Inclusive(3,[1,2],'integer')
@@ -161,6 +170,7 @@ def test_Conditional():
     cons_list = [Conditional(condition, if_true = if_true, if_false = if_false)]
     cons = Constraints(cons_list,space)
     
+    # Check that only valid samples are being drawn
     samples = cons.rvs(n_samples = 100)
     for sample in samples:
         if sample[0] == 'a':
@@ -168,6 +178,7 @@ def test_Conditional():
         else:
             assert_true(sample[3] > 2)
 
+    # Test that validate_sample works
     assert_false(cons.validate_sample(['a','a','a',3,3,3]))
     assert_true(cons.validate_sample(['a','a','a',2,3,3]))
     assert_false(cons.validate_sample(['b','a','a',2,3,3]))
@@ -217,7 +228,7 @@ def test_Conditional():
     for sample in samples:
         assert_true(cons.validate_sample(sample))
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_check_constraints():
     space = Space([(0.0,5.0),(1.0,5.0)])
     cons_list = Single(0,1,'integer')
@@ -248,7 +259,7 @@ def test_check_constraints():
     with raises(IndexError):
         check_constraints(space,cons_list)
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_check_bounds():
     # Check that no error is raised when using valid bounds
     space = Space([(0.0,5.0),(0,5),['a','b','c',1,1.0]])
@@ -270,7 +281,7 @@ def test_check_bounds():
     with raises(ValueError):
         check_bounds(space.dimensions[2],('a','b','c',1.2))
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_check_value():
     # Test that no error is raised when using a valid value
     space = Space([(0.0,5.0),(0,5),['a','b','c',1,1.0]])
@@ -294,7 +305,7 @@ def test_check_value():
     with raises(ValueError):
         check_value(space.dimensions[2],1.2)
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_single_validate_constraint():
     # Test categorical
     cons = Single(0,1.0,'categorical')
@@ -315,7 +326,7 @@ def test_single_validate_constraint():
     assert_true(cons._validate_constraint(1))
     assert_false(cons._validate_constraint(2))
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_Constraints_init():
     space = Space([
         Real(1, 10),
@@ -372,7 +383,7 @@ def test_Constraints_init():
     assert_not_equal(cons.exclusive[5],[])
     assert_equal(len(cons.exclusive[5]),2)
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_Constraints_validate_sample():
     space = Space([
         Real(1, 10),
@@ -566,7 +577,7 @@ def test_Constraints_validate_sample():
     sample[0] = 7.0
     assert_true(cons.validate_sample(sample))
 
-@pytest.mark.new_test
+@pytest.mark.slow_test
 def test_constraints_rvs():
     space = Space([
         Real(1, 10),
@@ -615,7 +626,7 @@ def test_constraints_rvs():
     with raises(RuntimeError):
         samples = constraints.rvs(n_samples = 10)
 
-@pytest.mark.new_test
+@pytest.mark.slow_test
 @pytest.mark.parametrize('acq_optimizer', ACQ_OPTIMIZERS)
 def test_optimizer_with_constraints(acq_optimizer):
     base_estimator = 'GP'
@@ -635,10 +646,13 @@ def test_optimizer_with_constraints(acq_optimizer):
     cons_list_2 = [Single(0,4.0,'real'),Single(3,4,'integer')]
     cons = Constraints(cons_list,space)
     cons_2 = Constraints(cons_list_2,space)
+
     # Test behavior when not adding constraitns
     opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 5)
-    # Test that constraint is None
+
+    # Test that constraint is None when no constraint has been set so far
     assert_equal(opt._constraints,None)
+
     # Test constraints are still None
     for _ in range(6):
         next_x= opt.ask()
@@ -648,7 +662,7 @@ def test_optimizer_with_constraints(acq_optimizer):
     opt.remove_constraints()
     assert_equal(opt._constraints,None)
 
-    # Test behavior when adding constraints
+    # Test behavior when adding constraints in an optimization setting
     opt = Optimizer(space, base_estimator, acq_optimizer=acq_optimizer,n_initial_points = 3)
     opt.set_constraints(cons)
     assert_equal(opt._constraints,cons)
@@ -731,8 +745,9 @@ def test_optimizer_with_constraints(acq_optimizer):
     assert_equal(next_x[0],4.0)
     assert_equal(next_x[3],4)
 
-@pytest.mark.new_test
+@pytest.mark.fast_test
 def test_get_constraints():
+    # Test that the get_constraints() function returns the constraints that were set byt set_constraints()
     space = Space([Real(1, 10)])
     cons_list = [Single(0,5.0,'real')]
     cons = Constraints(cons_list,space)
