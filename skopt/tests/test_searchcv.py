@@ -2,6 +2,7 @@
 search with interface similar to those of GridSearchCV
 """
 
+import numpy as np
 import pytest
 import time
 
@@ -57,6 +58,38 @@ def test_raise_errors():
     with pytest.raises(TypeError):
         BayesSearchCV(SVC(), ['C', (1.0, 1)])
 
+    # check if invalid n_iter type is raising errors
+    with pytest.raises(ValueError):
+        opt = BayesSearchCV(
+            SVC(),
+            [
+                (
+                    {
+                        'C': Real(1e-6, 1e+6, prior='log-uniform'),
+                    },
+                    'invalid n_iter',
+                )
+            ],
+        )
+
+    # check if fit_params is raising errors
+    with pytest.raises(ValueError):
+
+        X, y = load_iris(True)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, train_size=0.75, random_state=0
+        )
+
+        opt = BayesSearchCV(
+            SVC(),
+            {
+                'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            },
+            fit_params={'sample_weight': np.ones_like(y_train, dtype=float)}
+        )
+
+        opt.fit(X_train, y_train,
+                sample_weight=np.ones_like(y_train, dtype=float))
 
 @pytest.mark.parametrize("surrogate", ['gp', None])
 @pytest.mark.parametrize("n_jobs", [1, -1])  # test sequential and parallel
@@ -108,6 +141,7 @@ def test_searchcv_runs(surrogate, n_jobs, n_points, cv=None):
     # this normally does not hold only if something is wrong
     # with the optimizaiton procedure as such
     assert_greater(opt.score(X_test, y_test), 0.9)
+    assert_greater(opt.best_score_, 0.9)
 
 
 @pytest.mark.slow_test
@@ -354,3 +388,38 @@ def test_search_cv_internal_parameter_types():
     )
 
     model.fit(X, y)
+
+
+def test_return_train_score():
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    opt = BayesSearchCV(
+        SVC(),
+        {
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+        },
+    )
+
+    opt.fit(X_train, y_train)
+
+
+def test_searchcv_fit_params():
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    opt = BayesSearchCV(
+        SVC(),
+        {
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+        },
+    )
+
+    opt.fit(X_train, y_train,
+            sample_weight=np.ones_like(y_train, dtype=float))
