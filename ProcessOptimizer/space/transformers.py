@@ -126,9 +126,9 @@ class Normalize(Transformer):
 
     def transform(self, X):
         X = np.asarray(X)
-        if np.any(X > self.high + 1e-8):
+        if np.any(X > self.high + 1e-6):
             raise ValueError("All values should be less than %f" % self.high)
-        if np.any(X < self.low - 1e-8):
+        if np.any(X < self.low - 1e-6):
             raise ValueError("All values should be greater than %f" % self.low)
         return (X - self.low) / (self.high - self.low)
 
