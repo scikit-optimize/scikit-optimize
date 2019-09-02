@@ -157,6 +157,14 @@ def test_normalize_dimensions_all_categorical():
 
 
 @pytest.mark.fast_test
+def test_categoricals_mixed_types():
+    domain = [[1, 2, 3, 4], ['a', 'b', 'c'], [True, False]]
+    x = [1, 'a', True]
+    space = normalize_dimensions(domain)
+    assert (space.inverse_transform(space.transform([x])) == [x])
+
+
+@pytest.mark.fast_test
 @pytest.mark.parametrize("dimensions, normalizations",
                          [(((1, 3), (1., 3.)),
                            ('normalize', 'normalize')
