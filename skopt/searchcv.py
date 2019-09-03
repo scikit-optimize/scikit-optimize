@@ -654,6 +654,7 @@ class BayesSearchCV(BaseSearchCV):
         self.cv_results_ = defaultdict(list)
         self.best_index_ = None
         self.multimetric_ = False
+        self.optimizer_results_ = {}
 
         n_points = self.n_points
 
@@ -678,6 +679,8 @@ class BayesSearchCV(BaseSearchCV):
 
                 if eval_callbacks(callbacks, optim_result):
                     break
+
+            self.optimizer_results_[optimizer] = optim_result
 
         # Refit the best model on the the whole dataset
         if self.refit:
