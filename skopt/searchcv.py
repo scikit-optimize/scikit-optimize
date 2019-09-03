@@ -298,9 +298,9 @@ class BayesSearchCV(BaseSearchCV):
         self.fit_params = fit_params
 
         if logger:
-            printfn = logger.info
+            self.printfn = logger.info
         else:
-            printfn = print
+            self.printfn = print
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
@@ -391,7 +391,7 @@ class BayesSearchCV(BaseSearchCV):
         n_splits = cv.get_n_splits(X, y, groups)
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
-            printfn("Fitting {0} folds for each of {1} candidates, totalling"
+            self.printfn("Fitting {0} folds for each of {1} candidates, totalling"
                   " {2} fits".format(n_splits, n_candidates,
                                      n_candidates * n_splits))
 
