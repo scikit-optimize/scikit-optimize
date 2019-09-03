@@ -297,7 +297,7 @@ class BayesSearchCV(BaseSearchCV):
         # in the constructor and be passed in ``fit``.
         self.fit_params = fit_params
 
-        if self.logger:
+        if logger:
             printfn = logger.info
         else:
             printfn = print
