@@ -1,6 +1,8 @@
 from collections import defaultdict, Sized
 from functools import partial
 
+import logging
+
 import numpy as np
 from scipy.stats import rankdata
 
@@ -281,7 +283,7 @@ class BayesSearchCV(BaseSearchCV):
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  n_points=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=False):
+                 error_score='raise', return_train_score=False, logger=None):
 
         self.search_spaces = search_spaces
         self.n_iter = n_iter
@@ -294,6 +296,11 @@ class BayesSearchCV(BaseSearchCV):
         # To be consistent with sklearn 0.21+, fit_params should be deprecated
         # in the constructor and be passed in ``fit``.
         self.fit_params = fit_params
+
+        if self.logger:
+            printfn = logger.info
+        else:
+            printfn = print
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
@@ -384,9 +391,10 @@ class BayesSearchCV(BaseSearchCV):
         n_splits = cv.get_n_splits(X, y, groups)
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
-            print("Fitting {0} folds for each of {1} candidates, totalling"
+            printfn("Fitting {0} folds for each of {1} candidates, totalling"
                   " {2} fits".format(n_splits, n_candidates,
                                      n_candidates * n_splits))
+
 
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
