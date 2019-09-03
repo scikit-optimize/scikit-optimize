@@ -32,8 +32,6 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.datasets import fetch_mldata
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
-from sklearn.externals.joblib import delayed
-from sklearn.externals.joblib import Parallel
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -44,6 +42,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import r2_score
 from sklearn.metrics import log_loss
+
+from joblib import Parallel, delayed
 
 from skopt import gbrt_minimize
 from skopt import gp_minimize
