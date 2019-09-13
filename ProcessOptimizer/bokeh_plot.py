@@ -47,6 +47,7 @@ y_value = None
 def set_globals(parsed_result):
     global button_generate, buttons_toggle_x, dropdown_eval_method, slider_n_points, max_pars, source, old_active_list
     global result, x_eval_selectors, layout, x_eval_selectors_values, button_partial_dependence,y_value
+    
     #Here we se the values of the global variables and create the layout
     result = parsed_result
     x_eval_selectors_values = copy.copy(result.x)
@@ -61,6 +62,7 @@ def set_globals(parsed_result):
     dropdown_eval_method = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand','Sliders'],width = 200,height = 40)
     slider_n_points = Slider(start=1, end=20, value=10, step=1,title="n-points",width=200, height=10)
     y_value = Div(text="""""", width=300, height=200)
+
     row_x_eval_selectors = row([],width = 300)
     row_plots = row([])
     row_top = row(button_generate,buttons_toggle_x)
@@ -83,6 +85,7 @@ def handle_button_generate(layout,result):
         confidence =[round(y[0]-1.96*std[0],5),round(y[0]+1.96*std[0],5)]
         #Update text in right side of GUI
         y_value.text = """<font size="5"><b><br>"""+'Y = '+str(round(y[0],5))+'</b><br> (' + str(confidence[0])+', '+str(confidence[1]) + ')'+'</font>'
+
     else: # If no selection we encourage the user to select some parameters
         layout.children[0].children[2] = Div(text="""<font size="10"><br><br>Let's select som parameters to plot!</font>""",
             width=500, height=100)
@@ -143,11 +146,13 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
     y_max = -float("inf")
     
     source['reds'] = [] # reset the sources for red markers
-    
+    plots_to_do = len(active_list)*(len(active_list)+1)/2 # Triangular numbers
+    current_plot  = 0# count how many plots we have calculated so far
     for i_active in range(len(active_list)): # Only plot the selected parameters
         source['reds'].append([])
         plots.append([])
         for j_active in range(len(active_list)):
+            did_calculate_a_plot = False # used to determine wether not progress should be updated
             i = active_list[i_active]
             j = active_list[j_active]
             if j>i: # We only plot the lower left half of the grid, to avoid duplicates.
@@ -176,7 +181,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                     y_min = np.min(yi)
                 if np.max(yi) > y_max:
                     y_max = np.max(yi)
-                
+                did_calculate_a_plot = True
                 
             else: # Contour plot
                 xi,yi,zi = dependence(space, model, i, j=j, sample_points = None,
@@ -220,6 +225,14 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 # We plot samples as black circles and the evaluation marker as a  red circle
                 plot.circle(x='x',y='y',source=source_samples, size=2, color="black", alpha=0.5)
                 plot.circle(x='x',y='y',source=source_red, size=5, color="red", alpha=1)
+
+                did_calculate_a_plot = True
+            
+            if did_calculate_a_plot:
+                # only update progress if a plot was calculated
+                current_plot+=1
+                # We put the progress into the div where we normally show the y-values (confidence bounds)
+                y_value.text = """<font size="5"><b><br> Calculating objective. Please wait. <br> """+str(int(current_plot))+" / "+str(int(plots_to_do))+ """</font>"""
             # We rotate the categorical labels slighty so they take up less space
             if iscat[j]:
                 plot.xaxis.major_label_orientation = 0.3
