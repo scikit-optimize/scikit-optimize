@@ -6,8 +6,8 @@ from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize as sp_minimize
 from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.externals.joblib import dump as dump_
-from sklearn.externals.joblib import load as load_
+from joblib import dump as dump_
+from joblib import load as load_
 
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor

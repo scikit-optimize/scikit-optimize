@@ -28,7 +28,7 @@ def check_callback(callback):
         if isinstance(callback, Callable):
             return [callback]
 
-        elif (isinstance(callback, list) and
+        elif (isinstance(callback, (list, tuple)) and
               all([isinstance(c, Callable) for c in callback])):
             return callback
 

@@ -9,9 +9,8 @@ cache:
 
 env:
   matrix:
-    - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="false"
-    - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
     - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="false"
+    - DISTRIB="conda" PYTHON_VERSION="3.7" COVERAGE="false"
 
 install: source build_tools/travis/install.sh
 
@@ -26,16 +25,3 @@ after_success:
     pip install codecov;
     codecov;
     fi
-
-deploy:
-  provider: pypi
-  user: betatim
-  # this line together with `setup.cfg` creates universal wheels as long as
-  # skopt is a python only module (no compiled code)
-  distributions: sdist bdist_wheel
-  on:
-    tags: true
-    repo: scikit-optimize/scikit-optimize
-    condition: "$PYTHON_VERSION = 3.5"
-  password:
-    secure: "NoybLUwpiDZAQAWkhd9IL0NnwbvW5Hy9cPumcVT3ZS7LJRGmb/zJfQajSIA7kf5RGGbydtCnKD82Mj5A9e1BRVgN6OEl7PJQD5EKCcFpaifnm5romTPN9i+BUeZz+mLpZUJbIANb6L3eBWqMthdsw1r6FR95YDL8mgVXvAqOA+7Inm4b+NssXK6XLyqwrN56UK1TT2oppCdKAVBk02oG/moF5czGbSHsNdcTpDHCPN7xJB/R4qxkvIa1z8WcsSjgpj2rhpCGmGM/XBpueROqvcycUOvG1nSNUn7q3/miOdZDCQvZkNSU10UlB+b3Yva3y1baGaNILYie0CC4dgVhWTSZI12fOfl9jCMzOLZAOPQghb+BjnVzxrHQHJeMFQR3VqXdSYY8basASfK/981siaVkXkEFnbKichEUtEHrDYgYCXCFGhA3GEDMQhvhqw2v3FTL3xN8VgVWjJUM4L/RRbJiXADXuxzb9/3v6PehF1NlSzEnwO5m7GuFbkPNBwZGuoMF0wQmLx5vb0E1T29R0oMHGe3k7BLhaFnMMii3bnPaSCWSsBE88Z1Bcwjs45JYgbWXZQG0ManeLEvM2digaQ0WDtkkjHqRjTeRR7f5+BvB0/meDZwW4XUccB8gCFDWC/jivLAwF8WRxpSLYBBUvfUax//OkKpzbHDsaZZh8i0="
