@@ -1,3 +1,5 @@
+**Disclaimer**: This project is no longer actively maintained! *Help is welcome to take over*.
+
 |Logo|
 
 |Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
