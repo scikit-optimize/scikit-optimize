@@ -16,13 +16,24 @@ class Transformer(object):
 
 
 class Identity(Transformer):
-    """Identity transform."""
+    """Identity transform.
+    If dtype is different from None the transform will cast everything to a
+    string and the inverse transform will cast to the type defined in dtype."""
+
+    def __init__(self, dtype=None):
+        super(Identity, self).__init__()
+        self.dtype = dtype
 
     def transform(self, X):
-        return X
+        if self.dtype is None:
+            return X
+        return [str(x) for x in X]
+
 
     def inverse_transform(self, Xt):
-        return Xt
+        if self.dtype is None:
+            return Xt
+        return [self.dtype(x) for x in Xt]
 
 
 class Log10(Transformer):
@@ -115,9 +126,9 @@ class Normalize(Transformer):
 
     def transform(self, X):
         X = np.asarray(X)
-        if np.any(X > self.high + 1e-8):
+        if np.any(X > self.high + 1e-6):
             raise ValueError("All values should be less than %f" % self.high)
-        if np.any(X < self.low - 1e-8):
+        if np.any(X < self.low - 1e-6):
             raise ValueError("All values should be greater than %f" % self.low)
         return (X - self.low) / (self.high - self.low)
 

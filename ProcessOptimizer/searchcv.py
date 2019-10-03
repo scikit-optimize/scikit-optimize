@@ -1,17 +1,20 @@
 from collections import defaultdict, Sized
 from functools import partial
 
+import logging
+
 import numpy as np
 from scipy.stats import rankdata
 
 import sklearn
 from sklearn.base import is_classifier, clone
-from sklearn.externals.joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
 from sklearn.metrics.scorer import check_scoring
+
+from joblib import Parallel, delayed
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
@@ -281,7 +284,7 @@ class BayesSearchCV(BaseSearchCV):
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
                  n_points=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=False):
+                 error_score='raise', return_train_score=False, logger=None):
 
         self.search_spaces = search_spaces
         self.n_iter = n_iter
@@ -289,12 +292,22 @@ class BayesSearchCV(BaseSearchCV):
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
         self._check_search_space(self.search_spaces)
+        # Temporary fix for compatibility with sklearn 0.20 and 0.21
+        # See scikit-optimize#762
+        # To be consistent with sklearn 0.21+, fit_params should be deprecated
+        # in the constructor and be passed in ``fit``.
+        self.fit_params = fit_params
+
+        if logger:
+            self.printfn = logger.info
+        else:
+            self.printfn = print
 
         super(BayesSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
-             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-             pre_dispatch=pre_dispatch, error_score=error_score,
-             return_train_score=return_train_score)
+            estimator=estimator, scoring=scoring,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
 
     def _check_search_space(self, search_space):
         """Checks whether the search space argument is correct"""
@@ -379,9 +392,9 @@ class BayesSearchCV(BaseSearchCV):
         n_splits = cv.get_n_splits(X, y, groups)
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
-            print("Fitting {0} folds for each of {1} candidates, totalling"
-                  " {2} fits".format(n_splits, n_candidates,
-                                     n_candidates * n_splits))
+            self.printfn("Fitting {0} folds for each of {1} candidates, totalling"
+                         " {2} fits".format(n_splits, n_candidates,
+                                            n_candidates * n_splits))
 
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
@@ -391,15 +404,15 @@ class BayesSearchCV(BaseSearchCV):
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
         )(delayed(sklearn.model_selection._validation._fit_and_score)(
-                clone(base_estimator),
-                X, y, self.scorer_,
-                train, test, self.verbose, parameters,
-                fit_params=self.fit_params,
-                return_train_score=self.return_train_score,
-                return_n_test_samples=True,
-                return_times=True, return_parameters=True,
-                error_score=self.error_score
-            )
+            clone(base_estimator),
+            X, y, self.scorer_,
+            train, test, self.verbose, parameters,
+            fit_params=self.fit_params,
+            return_train_score=self.return_train_score,
+            return_n_test_samples=True,
+            return_times=True, return_parameters=True,
+            error_score=self.error_score
+        )
             for parameters in parameter_iterable
             for train, test in cv_iter)
 
@@ -456,10 +469,10 @@ class BayesSearchCV(BaseSearchCV):
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
         param_results = defaultdict(partial(
-                                            MaskedArray,
-                                            np.empty(n_candidates,),
-                                            mask=True,
-                                            dtype=object))
+            MaskedArray,
+            np.empty(n_candidates,),
+            mask=True,
+            dtype=object))
         for cand_i, params in enumerate(candidate_params):
             for name, value in params.items():
                 # An all masked empty array gets created for the key
@@ -641,6 +654,7 @@ class BayesSearchCV(BaseSearchCV):
         self.cv_results_ = defaultdict(list)
         self.best_index_ = None
         self.multimetric_ = False
+        self.optimizer_results_ = {}
 
         n_points = self.n_points
 
@@ -665,6 +679,8 @@ class BayesSearchCV(BaseSearchCV):
 
                 if eval_callbacks(callbacks, optim_result):
                     break
+
+            self.optimizer_results_[optimizer] = optim_result
 
         # Refit the best model on the the whole dataset
         if self.refit:

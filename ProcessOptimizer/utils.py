@@ -6,8 +6,8 @@ from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize as sp_minimize
 from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.externals.joblib import dump as dump_
-from sklearn.externals.joblib import load as load_
+from joblib import dump as dump_
+from joblib import load as load_
 
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor
@@ -329,12 +329,12 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         else:
             other_kernel = Matern(
                 length_scale=np.ones(n_dims),
-                length_scale_bounds=[(0.01, 100)] * n_dims, nu=2.5)
+                length_scale_bounds=[(0.1, 1)] * n_dims, nu=2.5)
 
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * other_kernel,
             normalize_y=True, noise="gaussian",
-            n_restarts_optimizer=2)
+            n_restarts_optimizer=4)
     elif base_estimator == "RF":
         base_estimator = RandomForestRegressor(n_estimators=100,
                                                min_samples_leaf=3)

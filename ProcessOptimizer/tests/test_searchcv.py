@@ -13,7 +13,6 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 from sklearn.base import BaseEstimator
-from sklearn.externals.joblib import cpu_count
 
 from ProcessOptimizer.space import Real, Categorical, Integer
 from ProcessOptimizer import BayesSearchCV

@@ -1,5 +1,58 @@
 # Release history
 
+## Version 0.4.0
+
+Merged darnr's scikit-optimize fork into ProcessOptimizer. Here is their changelog:
+
+### New features
+
+- `plot_regret` function for plotting the cumulative regret;
+  The purpose of such plot is to access how much an optimizer
+  is effective at picking good points.
+- `CheckpointSaver` that can be used to save a
+  checkpoint after each iteration with skopt.dump
+- `Space.from_yaml()`
+  to allow for external file to define Space parameters
+
+### Bug fixes
+
+- Fixed numpy broadcasting issues in gaussian_ei, gaussian_pi
+- Fixed build with newest scikit-learn
+- Use native python types inside BayesSearchCV
+- Include fit_params in BayesSearchCV refit
+
+### Maintenance
+
+- Added `versioneer` support, to reduce changes with new version of the `skopt`
+
+### Bug fixes
+
+- Separated `n_points` from `n_jobs` in `BayesSearchCV`.
+- Dimensions now support boolean np.arrays.
+
+### Maintenance
+
+- `matplotlib` is now an optional requirement (install with `pip install 'scikit-optimize[plots]'`)
+
+High five!
+
+### New features
+
+- Single element dimension definition, which can be used to
+  fix the value of a dimension during optimization.
+- `total_iterations` property of `BayesSearchCV` that
+  counts total iterations needed to explore all subspaces.
+- Add iteration event handler for `BayesSearchCV`, useful
+  for early stopping inside `BayesSearchCV` search loop.
+- added `utils.use_named_args` decorator to help with unpacking named dimensions
+  when calling an objective function.
+
+### Bug fixes
+
+- Removed redundant estimator fitting inside `BayesSearchCV`.
+- Fixed the log10 transform for Real dimensions that would lead to values being
+  out of bounds.
+
 ## Version 0.3.3
 
 ### New features
@@ -10,7 +63,7 @@
 
 ### New features
 
-- Constraints
+- Added constrained parameters
 
 ## Version 0.2.0
 
