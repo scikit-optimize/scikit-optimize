@@ -171,7 +171,9 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 # Source red is what we end up appending to the global source variable
                 # So the location of the red line can be changed interactively
                 source_red = Span(location=red_vals[i], dimension='height', line_color='red', line_width=3) 
-                plot = figure(plot_height=200, plot_width=200, tools = '', x_range=x_range,y_range=[0,20])
+                #dotte_line_low = Span(location=red_vals[i], dimension='height', line_color='red', line_width=3) 
+                #TODO : Create dotted lines
+                plot = figure(plot_height=200, plot_width=250, tools = '', x_range=x_range,y_range=[0,20])
                 source_line = ColumnDataSource(data=dict(x=xi, y=yi))
                 plot.line('x', 'y', source=source_line, line_width=3, line_alpha=0.6)
                 # Add span i.e red line to plot
@@ -211,7 +213,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                     y_span = bounds[i][1]-bounds[i][0]
                     y_range =[np.min(yi),np.max(yi)]
 
-                plot = figure(plot_height=200, plot_width=200,x_range=x_range,y_range=y_range, tools = '')
+                plot = figure(plot_height=200, plot_width=250,x_range=x_range,y_range=y_range, tools = '')
                 
                 # Get an rgba contour image from matplotlib as bokeh does not support contour plots
                 im = get_plt_contour_as_rgba(xi, yi, zi)
@@ -288,7 +290,7 @@ def get_x_eval_selectors_list(result,active_list,x_eval):
             # Create a "Select" object which is a type of dropdown menu
             # This object gets a title equal to the parameter number, and the value is set to
             # x_eval
-            select = Select(title='X'+str(i), value = x_eval[i], options = cats, width = 100,height = 15)
+            select = Select(title='X'+str(i), value = x_eval[i], options = cats, width = 200,height = 15)
             # Here we define a callback that updates the appropiate red markers by changing
             # with the current value of the selector by changing the global "source" variable
             # The callback function is written in javascript
@@ -319,7 +321,7 @@ def get_x_eval_selectors_list(result,active_list,x_eval):
             start = bounds[i][0]
             end = bounds[i][1]
             step = get_step_size(start,end) # We change the stepsize according to the range of the slider
-            slider  = Slider(start=start, end=end, value=x_eval[i], step=step,title='X'+str(i),width=150, height=30)
+            slider  = Slider(start=start, end=end, value=x_eval[i], step=step,title='X'+str(i),width=200, height=30)
             # javascript callback function that gets called everytime a user changes the slider value
             slider.js_on_change('value', CustomJS(args=dict(source=source, n=n), code="""
                 source.reds[n][n].location = cb_obj.value;
@@ -342,10 +344,12 @@ def get_x_eval_selectors_list(result,active_list,x_eval):
 def get_plt_contour_as_rgba(xi, yi, zi):
     # Returns a matplotlib contour plot as an rgba image
     # We create a matplotlib figure and draws it so we can capture the figure as an image.
+    
     fig = plt.figure()
     ax = fig.add_axes([0.,0.,1.,1.])
     ax = plt.gca()
     ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r')
+    ax.contour(xi, yi, zi, levels = [(np.max(zi)-np.min(zi))*0.1+np.min(zi)], locator=None, colors='black',linestyles=('--',),linewidths=(3,))
     plt.axis('off')
     fig.canvas.draw()
     # Grab the pixel buffer and dump it into a numpy array
