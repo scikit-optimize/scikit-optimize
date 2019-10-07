@@ -38,6 +38,7 @@ x_eval_selectors_values = None
 max_pars = None #Defines the maximum number of parameters that can be plotted
 layout = None
 button_partial_dependence = None
+button_color_map = None
 button_generate = None
 buttons_toggle_x = None
 dropdown_eval_method = None
@@ -59,6 +60,7 @@ def set_globals(parsed_result):
     buttons_toggle_x = CheckboxButtonGroup(
             labels=['x '+str(s) for s in range(max_pars)], active=[])
     button_partial_dependence = Toggle(label="Use partial dependence", button_type="default")
+    button_color_map = Toggle(label="Use same color map", button_type="default")
     dropdown_eval_method = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand','Sliders'],width = 200,height = 40)
     slider_n_points = Slider(start=1, end=20, value=10, step=1,title="n-points",width=200, height=10)
     y_value = Div(text="""""", width=300, height=200)
@@ -66,7 +68,7 @@ def set_globals(parsed_result):
     row_x_eval_selectors = row([],width = 300)
     row_plots = row([])
     row_top = row(button_generate,buttons_toggle_x)
-    col_right_side = column(button_partial_dependence,dropdown_eval_method, slider_n_points,y_value)
+    col_right_side = column(button_partial_dependence,button_color_map,dropdown_eval_method, slider_n_points,y_value)
     col_left_side = column(row_top,row_x_eval_selectors,row_plots)
     layout = row(col_left_side,col_right_side)
 def handle_button_generate(layout,result):
@@ -118,6 +120,10 @@ def get_use_partial_dependence():
     # Returns True or false depending on wether or not the partial dependence button
     # is toggled in the GUI
     return button_partial_dependence.active
+def get_use_same_color_map():
+    # Returns True or false depending on wether or not the color_map button
+    # is toggled in the GUI
+    return button_color_map.active
 def get_plot_list(layout,result,active_list,n_points,x_eval):
     # Returns a NxN list of plots where N is the number of parameters to be plotted.
     # The diagonal is 1d plots and the off diagonal is contour plots
@@ -129,6 +135,10 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
     else:
         dependence_eval = x_eval
 
+    
+    plots_data = [] #First we calculate all the data tat will beused for all the plots. After this we draw the plots.
+    # It is important that we do it in this order as we need to know the maxmimum and minimum values before drawing the plots,
+    # in order to create a correct color-mapping
     plots=[]
     space = result.space
     model = result.models[-1]
