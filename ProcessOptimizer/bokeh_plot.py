@@ -162,7 +162,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
         source['reds'].append([])
         plots.append([])
         for j_active in range(len(active_list)):
-            did_calculate_a_plot = False # used to determine wether not progress should be updated
+            
             i = active_list[i_active]
             j = active_list[j_active]
             if j>i: # We only plot the lower left half of the grid, to avoid duplicates.
@@ -193,7 +193,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                     y_min = np.min(yi)
                 if np.max(yi) > y_max:
                     y_max = np.max(yi)
-                did_calculate_a_plot = True
+                
                 
             else: # Contour plot
                 xi,yi,zi = dependence(space, model, i, j=j, sample_points = None,
@@ -238,13 +238,13 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 plot.circle(x='x',y='y',source=source_samples, size=2, color="black", alpha=0.5)
                 plot.circle(x='x',y='y',source=source_red, size=5, color="red", alpha=1)
 
-                did_calculate_a_plot = True
+                
             
-            if did_calculate_a_plot:
-                # only update progress if a plot was calculated
-                current_plot+=1
-                # We put the progress into the div where we normally show the y-values (confidence bounds)
-                y_value.text = """<font size="5"><b><br> Calculating objective. Please wait. <br> """+str(int(current_plot))+" / "+str(int(plots_to_do))+ """</font>"""
+            
+            current_plot+=1
+            # We put the progress into the div where we normally show the y-values (confidence bounds)
+            y_value.text = """<font size="5"><b><br> Calculating objective. Please wait. <br> """+str(int(current_plot))+" / "+str(int(plots_to_do))+ """</font>"""
+            
             # We rotate the categorical labels slighty so they take up less space
             if iscat[j]:
                 plot.xaxis.major_label_orientation = 0.3
