@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import math
 import copy
 from bokeh.server.server import Server
+import matplotlib as mpl
 
 # Quick introduction. 
 # The GUI conists of several elements.
@@ -44,10 +45,11 @@ buttons_toggle_x = None
 dropdown_eval_method = None
 slider_n_points = None
 y_value = None
+colorbar = None
 
 def set_globals(parsed_result):
     global button_generate, buttons_toggle_x, dropdown_eval_method, slider_n_points, max_pars, source, old_active_list
-    global result, x_eval_selectors, layout, x_eval_selectors_values, button_partial_dependence,y_value
+    global result, x_eval_selectors, layout, x_eval_selectors_values, button_partial_dependence,y_value, button_color_map,colorbar
     
     #Here we se the values of the global variables and create the layout
     result = parsed_result
@@ -64,11 +66,11 @@ def set_globals(parsed_result):
     dropdown_eval_method = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand','Sliders'],width = 200,height = 40)
     slider_n_points = Slider(start=1, end=20, value=10, step=1,title="n-points",width=200, height=10)
     y_value = Div(text="""""", width=300, height=200)
-
+    colorbar = Div() # We initiate colorbar as an empty div first and then change it to a plot in case we want to show it
     row_x_eval_selectors = row([],width = 300)
     row_plots = row([])
     row_top = row(button_generate,buttons_toggle_x)
-    col_right_side = column(button_partial_dependence,button_color_map,dropdown_eval_method, slider_n_points,y_value)
+    col_right_side = column(button_partial_dependence,button_color_map,dropdown_eval_method, slider_n_points,y_value,colorbar)
     col_left_side = column(row_top,row_x_eval_selectors,row_plots)
     layout = row(col_left_side,col_right_side)
 def handle_button_generate(layout,result):
@@ -81,13 +83,23 @@ def handle_button_generate(layout,result):
         x_eval = get_x_eval(result,active_list) # x_eval is used both for red markers and as the values for
         x_eval_transformed = result.space.transform([x_eval])
         # We update the part of the layout that contains the plots
-        layout.children[0].children[2] = get_plots_layout(layout,result,active_list,n_points,x_eval)
+        plots, colorbar_interval = get_plots_layout(layout,result,active_list,n_points,x_eval)
+        layout.children[0].children[2] = plots
         # Calculate y and confidence interval
         y,std = result.models[-1].predict(x_eval_transformed,return_std=True)
         confidence =[round(y[0]-1.96*std[0],5),round(y[0]+1.96*std[0],5)]
         #Update text in right side of GUI
         y_value.text = """<font size="5"><b><br>"""+'Y = '+str(round(y[0],5))+'</b><br> (' + str(confidence[0])+', '+str(confidence[1]) + ')'+'</font>'
-
+        print(colorbar_interval)
+        if colorbar_interval:
+            colorbar_plot = figure(plot_height=200, plot_width=100, tools = '', x_range=[0,1],y_range=colorbar_interval)
+            im = get_colorbar_as_rgba()
+            colorbar_plot.image_rgba(image=[im], x=0, y=colorbar_interval[0], dw=1, dh=colorbar_interval[1]-colorbar_interval[0])
+            colorbar_plot.xaxis.visible = False
+            colorbar_plot.toolbar.logo = None
+        else:
+            colorbar_plot = Div()
+        layout.children[1].children[5] = colorbar_plot
     else: # If no selection we encourage the user to select some parameters
         layout.children[0].children[2] = Div(text="""<font size="10"><br><br>Let's select som parameters to plot!</font>""",
             width=500, height=100)
@@ -128,6 +140,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
     # Returns a NxN list of plots where N is the number of parameters to be plotted.
     # The diagonal is 1d plots and the off diagonal is contour plots
     global source
+    use_same_color_map = get_use_same_color_map()
     if get_use_partial_dependence():
         # Not passing any eval values to dependency function makes it calculate
         # partial dependence
@@ -152,17 +165,20 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
     red_vals = [val+0.5 if iscat[i] else val for i, val in enumerate(red_vals)]
     # While iterating through each plot we keep track of the max and min values of y and z in case of 2d plots.
     # We use these values to set the axis of all plots, so they share the same axis.
-    y_min = float("inf")
-    y_max = -float("inf")
+    val_min_1d = float("inf")
+    val_max_1d = -float("inf")
+    val_min_2d = float("inf")
+    val_max_2d = -float("inf")
     
     source['reds'] = [] # reset the sources for red markers
     plots_to_do = len(active_list)*(len(active_list)+1)/2 # Triangular numbers
     current_plot  = 0# count how many plots we have calculated so far
-    for i_active in range(len(active_list)): # Only plot the selected parameters
-        source['reds'].append([])
-        plots.append([])
+
+
+    # First we calculate xi, yi and zi for each combination of parameters
+    for i_active in range(len(active_list)):
+        row = []
         for j_active in range(len(active_list)):
-            
             i = active_list[i_active]
             j = active_list[j_active]
             if j>i: # We only plot the lower left half of the grid, to avoid duplicates.
@@ -171,6 +187,42 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 # Passing j = None to dependence makes it calculate a diagonal plot
                 xi,yi = dependence(space, model, i, j=None, sample_points=None,
                     n_samples=250, n_points=n_points, x_eval = dependence_eval)
+                row.append({"xi":xi,"yi":yi})
+
+                if np.min(yi) < val_min_1d:
+                    val_min_1d = np.min(yi)
+                if np.max(yi) > val_max_1d:
+                    val_max_1d = np.max(yi)
+                    
+            else: # Contour plot
+                xi,yi,zi = dependence(space, model, i, j=j, sample_points = None,
+                    n_samples=50, n_points=n_points, x_eval = dependence_eval)
+                row.append({"xi":xi,"yi":yi,"zi":zi})
+                if np.min(zi) < val_min_2d:
+                    val_min_2d = np.min(zi)
+                if np.max(zi) > val_max_2d:
+                    val_max_2d = np.max(zi)
+            current_plot+=1   
+            # We put the progress into the div where we normally show the y-values (confidence bounds)
+            y_value.text = """<font size="5"><b><br> Calculating objective. Please wait. <br> """+str(int(current_plot))+" / "+str(int(plots_to_do))+ """</font>"""
+             
+        plots_data.append(row)
+        
+       
+    y_value.text = """<font size="5"><b><br> Drawing. Please wait. <br> """+str(int(current_plot))+" / "+str(int(plots_to_do))+ """</font>"""
+    for i_active in range(len(active_list)): # Only plot the selected parameters
+        source['reds'].append([])
+        plots.append([])
+        for j_active in range(len(active_list)):
+            i = active_list[i_active]
+            j = active_list[j_active]
+            if j>i: # We only plot the lower left half of the grid, to avoid duplicates.
+                break
+            elif i==j: # Diagonal
+                # Passing j = None to dependence makes it calculate a diagonal plot
+                xi = plots_data[i_active][j_active]["xi"]
+                yi = plots_data[i_active][j_active]["yi"]
+                
                 if iscat[i]: # Categorical
                     x_range = space.dimensions[i].categories
                     # Convert integers to catogorical strings
@@ -183,21 +235,20 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 source_red = Span(location=red_vals[i], dimension='height', line_color='red', line_width=3) 
                 #dotte_line_low = Span(location=red_vals[i], dimension='height', line_color='red', line_width=3) 
                 #TODO : Create dotted lines
-                plot = figure(plot_height=200, plot_width=250, tools = '', x_range=x_range,y_range=[0,20])
+                plot = figure(plot_height=200, plot_width=250, tools = '', x_range=x_range,y_range=[val_min_1d,val_max_1d])
                 source_line = ColumnDataSource(data=dict(x=xi, y=yi))
                 plot.line('x', 'y', source=source_line, line_width=3, line_alpha=0.6)
                 # Add span i.e red line to plot
                 plot.add_layout(source_red)
                 #update max and minimum y _values
-                if np.min(yi) < y_min:
-                    y_min = np.min(yi)
-                if np.max(yi) > y_max:
-                    y_max = np.max(yi)
+
                 
                 
             else: # Contour plot
-                xi,yi,zi = dependence(space, model, i, j=j, sample_points = None,
-                    n_samples=50, n_points=n_points, x_eval = dependence_eval)
+                xi = plots_data[i_active][j_active]["xi"]
+                yi = plots_data[i_active][j_active]["yi"]
+                zi = plots_data[i_active][j_active]["zi"]
+
 
                 if iscat[j]: #check if values are categorical
                     # Convert integers to catogorical strings
@@ -225,8 +276,12 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
 
                 plot = figure(plot_height=200, plot_width=250,x_range=x_range,y_range=y_range, tools = '')
                 
+                if use_same_color_map:
+                    cmap = [val_min_2d,val_max_2d]
+                else:
+                    cmap = None
                 # Get an rgba contour image from matplotlib as bokeh does not support contour plots
-                im = get_plt_contour_as_rgba(xi, yi, zi)
+                im = get_plt_contour_as_rgba(xi, yi, zi,cmap = cmap)
                 plot.image_rgba(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span)
                 # x and y samples are the coordinates of the parameter values that have been
                 # sampled during the creation of the model
@@ -241,9 +296,6 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 
             
             
-            current_plot+=1
-            # We put the progress into the div where we normally show the y-values (confidence bounds)
-            y_value.text = """<font size="5"><b><br> Calculating objective. Please wait. <br> """+str(int(current_plot))+" / "+str(int(plots_to_do))+ """</font>"""
             
             # We rotate the categorical labels slighty so they take up less space
             if iscat[j]:
@@ -257,13 +309,18 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
             source['reds'][i_active].append(source_red)
 
     # Setting the same y-range for all diagonal plots for easier comparison
-    for i in range(len(plots)):
-        plots[i][i].y_range = Range1d(y_min,y_max)
-    return plots
+    #for i in range(len(plots)):
+       # plots[i][i].y_range = Range1d(y_min,y_max)
+    if use_same_color_map:
+        colorbar_interval = [val_min_2d,val_max_2d]
+    else:
+        colorbar_interval = None
+
+    return plots, colorbar_interval
 
 def get_plots_layout(layout,result,active_list,n_points,x_eval):
     global x_eval_selectors
-    plots = get_plot_list(layout,result,active_list,n_points,x_eval)
+    plots,colorbar_interval = get_plot_list(layout,result,active_list,n_points,x_eval)
     x_eval_selectors = get_x_eval_selectors_list(result,active_list,x_eval)
     # Create the layout using the lists of plots and selectors.
     # The layout consists of rows that we append plots and selectors to.
@@ -282,7 +339,7 @@ def get_plots_layout(layout,result,active_list,n_points,x_eval):
             rows.append(row(*plots[i],x_eval_selectors[i+1]))  
     # Create a column with all the rows
     plot_layout = column(*rows)
-    return plot_layout
+    return plot_layout, colorbar_interval
 
 def get_x_eval_selectors_list(result,active_list,x_eval):
     # Returns a list of selectors. The selectors are sliders for numerical values and dropdown menus
@@ -350,15 +407,37 @@ def get_x_eval_selectors_list(result,active_list,x_eval):
             x_eval_selectors_values[i] = x_eval[i]
         n+=1
     return x_eval_selectors
-
-def get_plt_contour_as_rgba(xi, yi, zi):
+def get_colorbar_as_rgba():
+    # plots a colorbar without axes. Code stolen from 
+   
+    fig, ax = plt.subplots()
+    col_map = plt.get_cmap('viridis_r')
+    mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
+    fig.subplots_adjust(top = 1.01,bottom = 0,left = 0,right = 1)
+    plt.axis('off')
+    # As for a more fancy example, you can also give an axes by hand:
+    fig.canvas.draw()
+    # Grab the pixel buffer and dump it into a numpy array
+    X = np.array(fig.canvas.renderer._renderer)
+    xdim= X.shape[1]
+    ydim= X.shape[0]
+    # Converting image so that bokeh's image_rgba can read it. (code stolen of the internet)
+    img = np.empty((ydim, xdim), dtype=np.uint32)
+    view = img.view(dtype=np.uint8).reshape((ydim, xdim, 4))
+    view[:,:,:] = np.flipud(X)
+    plt.close()
+    return view
+def get_plt_contour_as_rgba(xi, yi, zi,cmap = None):
     # Returns a matplotlib contour plot as an rgba image
     # We create a matplotlib figure and draws it so we can capture the figure as an image.
     
     fig = plt.figure()
     ax = fig.add_axes([0.,0.,1.,1.])
     ax = plt.gca()
-    ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r')
+    if cmap:
+        ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r',vmin = cmap[0],vmax = cmap[1])
+    else:
+        ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r')
     ax.contour(xi, yi, zi, levels = [(np.max(zi)-np.min(zi))*0.1+np.min(zi)], locator=None, colors='black',linestyles=('--',),linewidths=(3,))
     plt.axis('off')
     fig.canvas.draw()
