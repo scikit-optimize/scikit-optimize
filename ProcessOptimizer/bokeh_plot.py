@@ -78,19 +78,20 @@ def handle_button_generate(layout,result):
     # Callback for when generate button gets pressed
     active_list = get_active_list() # Get the current active list
     n_points = get_n_points()
+    
     # Updating plots
     if active_list: # Only plot if there is at least one selection
         x_eval = get_x_eval(result,active_list) # x_eval is used both for red markers and as the values for
         x_eval_transformed = result.space.transform([x_eval])
-        # We update the part of the layout that contains the plots
-        plots, colorbar_interval = get_plots_layout(layout,result,active_list,n_points,x_eval)
-        layout.children[0].children[2] = plots
         # Calculate y and confidence interval
         y,std = result.models[-1].predict(x_eval_transformed,return_std=True)
         confidence =[round(y[0]-1.96*std[0],5),round(y[0]+1.96*std[0],5)]
+        # We update the part of the layout that contains the plots
+        plots, colorbar_interval = get_plots_layout(layout,result,active_list,n_points,x_eval,confidence)
+        layout.children[0].children[2] = plots
+        print(std)
         #Update text in right side of GUI
         y_value.text = """<font size="5"><b><br>"""+'Y = '+str(round(y[0],5))+'</b><br> (' + str(confidence[0])+', '+str(confidence[1]) + ')'+'</font>'
-        print(colorbar_interval)
         if colorbar_interval:
             colorbar_plot = figure(plot_height=200, plot_width=100, tools = '', x_range=[0,1],y_range=colorbar_interval)
             im = get_colorbar_as_rgba()
@@ -136,7 +137,7 @@ def get_use_same_color_map():
     # Returns True or false depending on wether or not the color_map button
     # is toggled in the GUI
     return button_color_map.active
-def get_plot_list(layout,result,active_list,n_points,x_eval):
+def get_plot_list(layout,result,active_list,n_points,x_eval,confidence):
     # Returns a NxN list of plots where N is the number of parameters to be plotted.
     # The diagonal is 1d plots and the off diagonal is contour plots
     global source
@@ -281,7 +282,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
                 else:
                     cmap = None
                 # Get an rgba contour image from matplotlib as bokeh does not support contour plots
-                im = get_plt_contour_as_rgba(xi, yi, zi,cmap = cmap)
+                im = get_plt_contour_as_rgba(xi, yi, zi,confidence,cmap = cmap)
                 plot.image_rgba(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span)
                 # x and y samples are the coordinates of the parameter values that have been
                 # sampled during the creation of the model
@@ -318,9 +319,9 @@ def get_plot_list(layout,result,active_list,n_points,x_eval):
 
     return plots, colorbar_interval
 
-def get_plots_layout(layout,result,active_list,n_points,x_eval):
+def get_plots_layout(layout,result,active_list,n_points,x_eval,confidence):
     global x_eval_selectors
-    plots,colorbar_interval = get_plot_list(layout,result,active_list,n_points,x_eval)
+    plots,colorbar_interval = get_plot_list(layout,result,active_list,n_points,x_eval,confidence)
     x_eval_selectors = get_x_eval_selectors_list(result,active_list,x_eval)
     # Create the layout using the lists of plots and selectors.
     # The layout consists of rows that we append plots and selectors to.
@@ -427,7 +428,7 @@ def get_colorbar_as_rgba():
     view[:,:,:] = np.flipud(X)
     plt.close()
     return view
-def get_plt_contour_as_rgba(xi, yi, zi,cmap = None):
+def get_plt_contour_as_rgba(xi, yi, zi,confidence,cmap = None):
     # Returns a matplotlib contour plot as an rgba image
     # We create a matplotlib figure and draws it so we can capture the figure as an image.
     
@@ -438,7 +439,8 @@ def get_plt_contour_as_rgba(xi, yi, zi,cmap = None):
         ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r',vmin = cmap[0],vmax = cmap[1])
     else:
         ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r')
-    ax.contour(xi, yi, zi, levels = [(np.max(zi)-np.min(zi))*0.1+np.min(zi)], locator=None, colors='black',linestyles=('--',),linewidths=(3,))
+    
+    ax.contour(xi, yi, zi, levels =confidence, locator=None, colors='black',linestyles=('--',),linewidths=(3,))
     plt.axis('off')
     fig.canvas.draw()
     # Grab the pixel buffer and dump it into a numpy array
