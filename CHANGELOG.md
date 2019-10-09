@@ -1,5 +1,13 @@
 # Release history
 
+## Version 0.4.1
+
+### New features
+
+- Draw upper confidence limit in bokeh.
+- Colorbar in bokeh
+- Same color mapping button in bokeh
+
 ## Version 0.4.0
 
 Merged darnr's scikit-optimize fork into ProcessOptimizer. Here is their changelog:
@@ -58,6 +66,11 @@ High five!
 ### New features
 
 - Added text describing progress in bokeh
+
+### Changes
+
+- Changed plot size in bokeh
+- ProcessOptimizer now requires tornado 5.1.1
 
 ## Version 0.3.0
 
