@@ -40,6 +40,7 @@ max_pars = None #Defines the maximum number of parameters that can be plotted
 layout = None
 button_partial_dependence = None
 button_color_map = None
+button_draw_confidence = None
 button_generate = None
 buttons_toggle_x = None
 dropdown_eval_method = None
@@ -49,7 +50,7 @@ colorbar = None
 
 def set_globals(parsed_result):
     global button_generate, buttons_toggle_x, dropdown_eval_method, slider_n_points, max_pars, source, old_active_list
-    global result, x_eval_selectors, layout, x_eval_selectors_values, button_partial_dependence,y_value, button_color_map,colorbar
+    global result, x_eval_selectors, layout, x_eval_selectors_values, button_partial_dependence,y_value, button_color_map,colorbar, button_draw_confidence
     
     #Here we se the values of the global variables and create the layout
     result = parsed_result
@@ -63,6 +64,7 @@ def set_globals(parsed_result):
             labels=['x '+str(s) for s in range(max_pars)], active=[])
     button_partial_dependence = Toggle(label="Use partial dependence", button_type="default")
     button_color_map = Toggle(label="Use same color map", button_type="default")
+    button_draw_confidence = Toggle(label="Draw upper confidence limit", button_type="default")
     dropdown_eval_method = Select(title="Evaluation method:", value='Result', options=['Result','Exp min','Exp min rand','Sliders'],width = 200,height = 40)
     slider_n_points = Slider(start=1, end=20, value=10, step=1,title="n-points",width=200, height=10)
     y_value = Div(text="""""", width=300, height=200)
@@ -70,7 +72,7 @@ def set_globals(parsed_result):
     row_x_eval_selectors = row([],width = 300)
     row_plots = row([])
     row_top = row(button_generate,buttons_toggle_x)
-    col_right_side = column(button_partial_dependence,button_color_map,dropdown_eval_method, slider_n_points,y_value,colorbar)
+    col_right_side = column(button_partial_dependence,button_color_map,button_draw_confidence,dropdown_eval_method, slider_n_points,y_value,colorbar)
     col_left_side = column(row_top,row_x_eval_selectors,row_plots)
     layout = row(col_left_side,col_right_side)
 def handle_button_generate(layout,result):
@@ -89,7 +91,6 @@ def handle_button_generate(layout,result):
         # We update the part of the layout that contains the plots
         plots, colorbar_interval = get_plots_layout(layout,result,active_list,n_points,x_eval,confidence)
         layout.children[0].children[2] = plots
-        print(std)
         #Update text in right side of GUI
         y_value.text = """<font size="5"><b><br>"""+'Y = '+str(round(y[0],5))+'</b><br> (' + str(confidence[0])+', '+str(confidence[1]) + ')'+'</font>'
         if colorbar_interval:
@@ -100,7 +101,7 @@ def handle_button_generate(layout,result):
             colorbar_plot.toolbar.logo = None
         else:
             colorbar_plot = Div()
-        layout.children[1].children[5] = colorbar_plot
+        layout.children[1].children[6] = colorbar_plot
     else: # If no selection we encourage the user to select some parameters
         layout.children[0].children[2] = Div(text="""<font size="10"><br><br>Let's select som parameters to plot!</font>""",
             width=500, height=100)
@@ -142,6 +143,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval,confidence):
     # The diagonal is 1d plots and the off diagonal is contour plots
     global source
     use_same_color_map = get_use_same_color_map()
+    draw_confidence = button_draw_confidence.active
     if get_use_partial_dependence():
         # Not passing any eval values to dependency function makes it calculate
         # partial dependence
@@ -282,7 +284,7 @@ def get_plot_list(layout,result,active_list,n_points,x_eval,confidence):
                 else:
                     cmap = None
                 # Get an rgba contour image from matplotlib as bokeh does not support contour plots
-                im = get_plt_contour_as_rgba(xi, yi, zi,confidence,cmap = cmap)
+                im = get_plt_contour_as_rgba(xi, yi, zi,confidence,cmap = cmap,draw_confidence = draw_confidence)
                 plot.image_rgba(image=[im], x=x_anchor, y=y_anchor, dw=x_span, dh=y_span)
                 # x and y samples are the coordinates of the parameter values that have been
                 # sampled during the creation of the model
@@ -428,7 +430,7 @@ def get_colorbar_as_rgba():
     view[:,:,:] = np.flipud(X)
     plt.close()
     return view
-def get_plt_contour_as_rgba(xi, yi, zi,confidence,cmap = None):
+def get_plt_contour_as_rgba(xi, yi, zi,confidence,cmap = None,draw_confidence = None):
     # Returns a matplotlib contour plot as an rgba image
     # We create a matplotlib figure and draws it so we can capture the figure as an image.
     
@@ -439,8 +441,9 @@ def get_plt_contour_as_rgba(xi, yi, zi,confidence,cmap = None):
         ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r',vmin = cmap[0],vmax = cmap[1])
     else:
         ax.contourf(xi, yi, zi, 10, locator=None, cmap='viridis_r')
-    
-    ax.contour(xi, yi, zi, levels =confidence, locator=None, colors='black',linestyles=('--',),linewidths=(3,))
+    print(confidence)
+    if draw_confidence:
+        ax.contour(xi, yi, zi, levels =[confidence[1]], locator=None, colors='black',linestyles=('--',),linewidths=(3,))
     plt.axis('off')
     fig.canvas.draw()
     # Grab the pixel buffer and dump it into a numpy array
