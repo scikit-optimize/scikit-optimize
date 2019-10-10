@@ -667,7 +667,7 @@ class Optimizer(object):
                 # Check that number of bounds is the same as number of dimensions
                 if not len(bounds) == n_dims:
                     raise ValueError("Number of bounds (%s) must be same as number of dimensions (%s)" % (
-                        n_dims, len(bounds)))
+                        len(bounds), n_dims))
                 for i in range(len(bounds)):
                     if not isinstance(bounds[i], tuple):
                         raise TypeError("Each bound must be of type tuple, got %s" %

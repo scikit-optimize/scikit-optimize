@@ -1,5 +1,9 @@
 # Release history
 
+## Version 0.4.2
+
+### New features
+
 ## Version 0.4.1
 
 ### New features

@@ -299,7 +299,10 @@ def cook_estimator(base_estimator, space=None, length_scale_bounds=None, length_
     * `space` [Space instance]:
         Has to be provided if the base_estimator is a gaussian process.
         Ignored otherwise.
-
+    * `length_scale_bounds` [list of tuples]:
+        the length scale bounds for the matern kernel
+    * `length_scale_bounds` [list of floats]:
+        the length scales for the Matern or Hamming kernel
     * `kwargs` [dict]:
         Extra parameters provided to the base_estimator at init time.
     """
@@ -330,6 +333,11 @@ def cook_estimator(base_estimator, space=None, length_scale_bounds=None, length_
         if not length_scale_bounds:
             length_scale_bounds = [(0.1, 1)] * n_dims
 
+        # Transform lengthscale bounds:
+        length_scale_bounds_transformed = []
+        for i in range(len(space.dimensions)):
+            for j in range(space.dimensions[i].transformed_size):
+                length_scale_bounds_transformed.append(length_scale_bounds[i])
         # only special if *all* dimensions are categorical
         if is_cat:
             other_kernel = HammingKernel(length_scale=length_scale)
