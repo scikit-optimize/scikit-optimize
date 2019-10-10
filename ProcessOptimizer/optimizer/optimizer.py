@@ -28,6 +28,7 @@ from ..utils import is_listlike
 from ..utils import is_2Dlistlike
 from ..utils import normalize_dimensions
 
+
 class Optimizer(object):
     """Run bayesian optimisation loop.
 
@@ -135,6 +136,7 @@ class Optimizer(object):
         to sample points, bounds, and type of parameters.
 
     """
+
     def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
@@ -214,7 +216,7 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
 
         if (not has_gradients(self.base_estimator_) and
-            acq_optimizer != "sampling"):
+                acq_optimizer != "sampling"):
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
@@ -324,7 +326,7 @@ class Optimizer(object):
                flavours of `cl_x` strategies.
 
         """
-       
+
         if n_points is None:
             return self._ask()
 
@@ -362,13 +364,16 @@ class Optimizer(object):
 
             if strategy == "cl_min":
                 y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
-                t_lie = np.min(ti) if ti is not None else log(sys.float_info.max)
+                t_lie = np.min(ti) if ti is not None else log(
+                    sys.float_info.max)
             elif strategy == "cl_mean":
                 y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
-                t_lie = np.mean(ti) if ti is not None else log(sys.float_info.max)
+                t_lie = np.mean(ti) if ti is not None else log(
+                    sys.float_info.max)
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
-                t_lie = np.max(ti) if ti is not None else log(sys.float_info.max)
+                t_lie = np.max(ti) if ti is not None else log(
+                    sys.float_info.max)
 
             # Lie to the optimizer.
             if "ps" in self.acq_func:
@@ -480,14 +485,14 @@ class Optimizer(object):
         else:
             raise ValueError("Type of arguments `x` (%s) and `y` (%s) "
                              "not compatible." % (type(x), type(y)))
-        
+
         # optimizer learned something new - discard cache
         self.cache_ = {}
 
         # after being "told" n_initial_points we switch from sampling
         # random points to using a surrogate model
         if (fit and self._n_initial_points <= 0 and
-           self.base_estimator_ is not None):
+                self.base_estimator_ is not None):
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator_)
 
@@ -501,7 +506,7 @@ class Optimizer(object):
 
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
-            if self._constraints: 
+            if self._constraints:
                 # We use another sampling method if constraints have been added
                 X = self.space.transform(self._constraints.rvs(
                     n_samples=self.n_points, random_state=self.rng))
@@ -602,7 +607,8 @@ class Optimizer(object):
 
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
-    def set_constraints(self,constraints):
+
+    def set_constraints(self, constraints):
         ''' Sets the constraints for the optimizer
 
         Parameters
@@ -611,27 +617,32 @@ class Optimizer(object):
             Can either be a list of Constraint objects or a Constraints object
         '''
         if constraints:
-            if isinstance(constraints,Constraints):
+            if isinstance(constraints, Constraints):
                 # If constraints is a Constraints object we simply add it
                 self._constraints = constraints
             else:
                 # If it is a list of constraints we initialize a Constraints object.
-                self._constraints = Constraints(constraints,self.space)
+                self._constraints = Constraints(constraints, self.space)
         else:
-            self._constraints =  None
+            self._constraints = None
 
         # Reset cache
         self.cache_ = {}
         # Ask for a new next_x now that new constraints have been added
-        if hasattr(self,'_next_x'): # We only need to overwrite _next_x if it exists.
+        # We only need to overwrite _next_x if it exists.
+        if hasattr(self, '_next_x'):
             opt = self.copy(random_state=self.rng)
             self._next_x = opt._next_x
 
     def remove_constraints(self):
         ''' Sets constraints to None'''
         self.set_constraints(None)
-    
+
     def get_constraints(self):
         '''Returns constraints'''
         return self._constraints
- 
+
+    def get_result(self):
+        '''Returns the same result that would be returned by opt.tell() but without calling tell'''
+        return create_result(self.Xi, self.yi, self.space, self.rng,
+                             models=self.models)
