@@ -4,6 +4,12 @@
 
 ### New features
 
+- optimizer.update_next() added
+- Added option to change length scale bounds
+- Added optimizer.get_result()
+- Added exploration example notebook
+- Added length scale bounds example notebook
+
 ## Version 0.4.1
 
 ### New features
