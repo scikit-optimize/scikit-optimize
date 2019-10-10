@@ -120,6 +120,11 @@ class Optimizer(object):
 
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
+        options are:
+        - "length_scale_bounds" [list] a list of tuples with lower and upper bound
+        -  "length_scale" [list] a list of floats
+        - "n_restarts_optimizer" [int]
+        - "n_jobs" [int]
 
 
     Attributes
@@ -182,13 +187,28 @@ class Optimizer(object):
         self._n_initial_points = n_initial_points
         self.n_initial_points_ = n_initial_points
 
-        # Configure estimator
+        # record other arguments
+        if acq_optimizer_kwargs is None:
+            acq_optimizer_kwargs = dict()
 
+        self._length_scale_bounds = acq_optimizer_kwargs.get(
+            "length_scale_bounds", None)
+        self._length_scale = acq_optimizer_kwargs.get(
+            "length_scale", None)
+        self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
+        self.n_restarts_optimizer = acq_optimizer_kwargs.get(
+            "n_restarts_optimizer", 5)
+        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
+        self.n_jobs = n_jobs
+        self.acq_optimizer_kwargs = acq_optimizer_kwargs
+
+        # Configure estimator
+        self._check_length_scale_bounds(dimensions, self._length_scale_bounds)
         # build base_estimator if doesn't exist
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
-                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max), length_scale_bounds=self._length_scale_bounds, length_scale=self._length_scale)
 
         # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
@@ -222,17 +242,6 @@ class Optimizer(object):
                              "='sampling'.".format(type(base_estimator)))
         self.acq_optimizer = acq_optimizer
 
-        # record other arguments
-        if acq_optimizer_kwargs is None:
-            acq_optimizer_kwargs = dict()
-
-        self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
-        self.n_restarts_optimizer = acq_optimizer_kwargs.get(
-            "n_restarts_optimizer", 5)
-        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
-        self.n_jobs = n_jobs
-        self.acq_optimizer_kwargs = acq_optimizer_kwargs
-
         # Configure search space
 
         # normalize space if GP regressor
@@ -242,7 +251,6 @@ class Optimizer(object):
 
         # Default is no constraints
         self._constraints = None
-
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -626,13 +634,7 @@ class Optimizer(object):
         else:
             self._constraints = None
 
-        # Reset cache
-        self.cache_ = {}
-        # Ask for a new next_x now that new constraints have been added
-        # We only need to overwrite _next_x if it exists.
-        if hasattr(self, '_next_x'):
-            opt = self.copy(random_state=self.rng)
-            self._next_x = opt._next_x
+        self.update_next()
 
     def remove_constraints(self):
         ''' Sets constraints to None'''
@@ -642,7 +644,37 @@ class Optimizer(object):
         '''Returns constraints'''
         return self._constraints
 
+    def update_next(self):
+        ''' Updates the value returned by opt.ask(). Useful if a parameter was updated after ask was called.'''
+        self.cache_ = {}
+        # Ask for a new next_x now that new constraints have been added
+        # We only need to overwrite _next_x if it exists.
+        if hasattr(self, '_next_x'):
+            opt = self.copy(random_state=self.rng)
+            self._next_x = opt._next_x
+
     def get_result(self):
         '''Returns the same result that would be returned by opt.tell() but without calling tell'''
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+
+    def _check_length_scale_bounds(self, dimensions, bounds):
+        ''' Checks if length scale bounds are of in correct format'''
+        space = Space(dimensions)
+        n_dims = space.n_dims
+        if bounds:
+            if isinstance(bounds, list):
+                # Check that number of bounds is the same as number of dimensions
+                if not len(bounds) == n_dims:
+                    raise ValueError("Number of bounds (%s) must be same as number of dimensions (%s)" % (
+                        n_dims, len(bounds)))
+                for i in range(len(bounds)):
+                    if not isinstance(bounds[i], tuple):
+                        raise TypeError("Each bound must be of type tuple, got %s" %
+                                        (type(bounds[i])))
+                    if not len(bounds[i]) == 2:
+                        raise ValueError("Each bound-tuple must have length 2, got %s" %
+                                         (len(bounds[i])))
+            else:
+                raise TypeError("Expected bounds to be of type list, got %s" %
+                                (type(bounds)))

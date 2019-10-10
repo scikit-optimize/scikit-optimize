@@ -255,8 +255,8 @@ def has_gradients(estimator):
     estimator: sklearn BaseEstimator instance.
     """
     tree_estimators = (
-            ExtraTreesRegressor, RandomForestRegressor,
-            GradientBoostingQuantileRegressor
+        ExtraTreesRegressor, RandomForestRegressor,
+        GradientBoostingQuantileRegressor
     )
 
     # cook_estimator() returns None for "dummy minimize" aka random values only
@@ -277,7 +277,7 @@ def has_gradients(estimator):
     return not categorical_gp
 
 
-def cook_estimator(base_estimator, space=None, **kwargs):
+def cook_estimator(base_estimator, space=None, length_scale_bounds=None, length_scale=None, **kwargs):
     """
     Cook a default estimator.
 
@@ -303,6 +303,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     * `kwargs` [dict]:
         Extra parameters provided to the base_estimator at init time.
     """
+
     if isinstance(base_estimator, str):
         base_estimator = base_estimator.upper()
         if base_estimator not in ["GP", "ET", "RF", "GBRT", "DUMMY"]:
@@ -322,14 +323,20 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         else:
             raise ValueError("Expected a Space instance, not None.")
 
-        cov_amplitude = ConstantKernel(1.0, (0.01, 1000.0))
+        cov_amplitude = ConstantKernel(1.0, (0.01, 1000))
+
+        if not length_scale:
+            length_scale = np.ones(n_dims)
+        if not length_scale_bounds:
+            length_scale_bounds = [(0.1, 1)] * n_dims
+
         # only special if *all* dimensions are categorical
         if is_cat:
-            other_kernel = HammingKernel(length_scale=np.ones(n_dims))
+            other_kernel = HammingKernel(length_scale=length_scale)
         else:
             other_kernel = Matern(
-                length_scale=np.ones(n_dims),
-                length_scale_bounds=[(0.1, 1)] * n_dims, nu=2.5)
+                length_scale=length_scale,
+                length_scale_bounds=length_scale_bounds, nu=2.5)
 
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * other_kernel,
@@ -491,13 +498,13 @@ def normalize_dimensions(dimensions):
                     Real(dimension.low, dimension.high, dimension.prior,
                          name=dimension.name,
                          transform="normalize")
-                    )
+                )
             elif isinstance(dimension, Integer):
                 transformed_dimensions.append(
                     Integer(dimension.low, dimension.high,
                             name=dimension.name,
                             transform="normalize")
-                    )
+                )
             else:
                 raise RuntimeError("Unknown dimension type "
                                    "(%s)" % type(dimension))
