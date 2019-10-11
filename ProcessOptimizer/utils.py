@@ -335,16 +335,19 @@ def cook_estimator(base_estimator, space=None, length_scale_bounds=None, length_
 
         # Transform lengthscale bounds:
         length_scale_bounds_transformed = []
+        length_scale_transformed = []
         for i in range(len(space.dimensions)):
             for j in range(space.dimensions[i].transformed_size):
                 length_scale_bounds_transformed.append(length_scale_bounds[i])
+                length_scale_transformed.append(length_scale[i])
+
         # only special if *all* dimensions are categorical
         if is_cat:
-            other_kernel = HammingKernel(length_scale=length_scale)
+            other_kernel = HammingKernel(length_scale=length_scale_transformed)
         else:
             other_kernel = Matern(
-                length_scale=length_scale,
-                length_scale_bounds=length_scale_bounds, nu=2.5)
+                length_scale=length_scale_transformed,
+                length_scale_bounds=length_scale_bounds_transformed, nu=2.5)
 
         base_estimator = GaussianProcessRegressor(
             kernel=cov_amplitude * other_kernel,
