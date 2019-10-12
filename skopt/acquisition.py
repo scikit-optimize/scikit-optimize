@@ -33,6 +33,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         acq_func_kwargs = dict()
     xi = acq_func_kwargs.get("xi", 0.01)
     kappa = acq_func_kwargs.get("kappa", 1.96)
+    alpha = acq_func_kwargs.get("alpha", 0.5)
+    gamma = acq_func_kwargs.get("gamma", 0.0)
 
     # Evaluate acquisition function
     per_second = acq_func.endswith("ps")
@@ -41,6 +43,13 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
 
     if acq_func == "LCB":
         func_and_grad = gaussian_lcb(X, model, kappa, return_grad)
+        if return_grad:
+            acq_vals, acq_grad = func_and_grad
+        else:
+            acq_vals = func_and_grad
+
+    elif acq_func == "MI":
+        func_and_grad = gaussian_mi(X, model, y_opt, alpha, gamma, return_grad)
         if return_grad:
             acq_vals, acq_grad = func_and_grad
         else:
@@ -317,5 +326,56 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
 
         grad = exploit_grad + explore_grad
         return values, grad
+
+    return values
+
+
+def gaussian_mi(X, model, y_opt=0.0, alpha=1.6, gamma=0.0, return_grad=False):
+    """
+    Use mutual information to calculate the acquisition values
+
+    Parameters
+    ----------
+    * `X` [array-like, shape=(n_samples, n_features)]:
+        Values where the acquisition function should be computed.
+
+    * `model` [sklearn estimator that implements predict with ``return_std``]:
+        The fit estimator that approximates the function through the
+        method ``predict``.
+        It should have a ``return_std`` parameter that returns the standard
+        deviation.
+
+    * `y_opt` [float, default 0]:
+        Previous minimum value which we would like to improve upon.
+
+    * `gamma`: [float, default=0.0]:
+        Controls the exploration of the algorithm.
+
+    * `alpha`: [float, default=1.6]:
+        Governs the trade-off between precision and confidence.
+        Defined as alpha = log(1/delta) for 0 < delta < 1.
+        Bounds the cumulative regret with confidence 1-delta.
+        Must fall within the interval [0.30, 2.30].
+
+    Returns
+    -------
+    * `values`: [array-like, shape=(X.shape[0],)]:
+        Acquisition function values computed at X.
+    """
+    if return_grad:
+        mu, std, mu_grad, std_grad = model.predict(
+            X, return_std=True, return_mean_grad=True,
+            return_std_grad=True)
+    else:
+        mu, std = model.predict(X, return_std=True)
+
+    values = np.zeros_like(mu)
+    phi = np.sqrt(alpha) * (np.sqrt(std + gamma) - np.sqrt(gamma))
+    values = mu + phi
+    gamma = np.max(gamma + std)
+
+    if return_grad:
+        # Not yet implemented
+        return values, mu_grad
 
     return values
