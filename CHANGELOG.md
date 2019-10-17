@@ -1,5 +1,11 @@
 # Release history
 
+## Version 0.4.3
+
+### Bugfixes
+
+- Lenght scale bounds and length scales were not transformed properly.
+
 ## Version 0.4.2
 
 ### New features
