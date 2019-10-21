@@ -849,3 +849,18 @@ class Space(object):
             distance += dim.distance(a, b)
 
         return distance
+
+    def lhs(self, n):
+        """ Returns n latin hypercube samples as a list of lists
+        """
+
+        samples = []
+        for i in range(self.n_dims):
+            lhs_perm = []
+            # Get evenly distributed samples form one dimension
+            lhs_aranged = self.dimensions[i].lhs_arange(n)
+            perm = np.random.permutation(n)
+            for p in perm:  # Random permutate the order of the samples
+                lhs_perm.append(lhs_aranged[p])
+            samples.append(lhs_perm)
+        return samples
