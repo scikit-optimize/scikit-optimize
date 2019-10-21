@@ -143,7 +143,7 @@ class Optimizer(object):
     """
 
     def __init__(self, dimensions, base_estimator="gp",
-                 n_random_starts=None, n_initial_points=10,
+                 n_random_starts=None, n_initial_points=10, lhs=True,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
@@ -249,6 +249,10 @@ class Optimizer(object):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
 
+        # Latin hypercube sampling
+        self._lhs = lhs
+        self._lhs_samples = self.space.lhs(n_initial_points)
+
         # Default is no constraints
         self._constraints = None
         # record categorical and non-categorical indices
@@ -285,6 +289,7 @@ class Optimizer(object):
             dimensions=self.space.dimensions,
             base_estimator=self.base_estimator_,
             n_initial_points=self.n_initial_points_,
+            lhs=self._lhs,
             acq_func=self.acq_func,
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
@@ -294,6 +299,8 @@ class Optimizer(object):
 
         # It is important to copy the constraints so that a call to '_tell()' will create a valid _next_x
         optimizer._constraints = self._constraints
+
+        optimizer._lhs_samples = self._lhs_samples
 
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
@@ -405,9 +412,15 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
+
+            assert not (
+                self._constraints and self._lhs), "Constraints can't be used while latin hypercube sampling is not exhausted"
+
             if self._constraints:
                 # We use another sampling method when constraints are added
                 return self._constraints.rvs(random_state=self.rng)[0]
+            elif self._lhs:
+                return self._lhs_samples[self._n_initial_points-1]
             else:
                 return self.space.rvs(random_state=self.rng)[0]
         else:
@@ -624,6 +637,9 @@ class Optimizer(object):
         * `constraints` [list] or [Constraints]:
             Can either be a list of Constraint objects or a Constraints object
         '''
+        assert not (self._n_initial_points >
+                    0 and self._lhs), "Can't set constraints while latin hypercube sampling points are not exhausted."
+
         if constraints:
             if isinstance(constraints, Constraints):
                 # If constraints is a Constraints object we simply add it

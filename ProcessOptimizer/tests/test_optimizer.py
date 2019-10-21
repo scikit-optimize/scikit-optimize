@@ -150,7 +150,8 @@ def test_dimension_checking_2D_multiple_points():
     assert "dimensions as the space" in str(e.value)
     # within bounds but one dimension too much
     with pytest.raises(ValueError) as e:
-        opt.tell([[low + 1, low + 1, low + 1], [low + 1, low + 2], [low + 1, low + 3]], 2.)
+        opt.tell([[low + 1, low + 1, low + 1],
+                  [low + 1, low + 2], [low + 1, low + 3]], 2.)
     assert "dimensions as the space" in str(e.value)
 
 
@@ -178,7 +179,7 @@ def test_acq_optimizer(base_estimator):
 @pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
 @pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
 def test_acq_optimizer_with_time_api(base_estimator, acq_func):
-    opt = Optimizer([(-2.0, 2.0),], base_estimator=base_estimator,
+    opt = Optimizer([(-2.0, 2.0), ], base_estimator=base_estimator,
                     acq_func=acq_func,
                     acq_optimizer="sampling", n_initial_points=2)
     x1 = opt.ask()
@@ -301,5 +302,11 @@ def test_defaults_are_equivalent():
 
     assert res_min.space == res_opt.space
     # tolerate small differences in the points sampled
-    assert np.allclose(res_min.x_iters, res_opt.x_iters)#, atol=1e-5)
-    assert np.allclose(res_min.x, res_opt.x)#, atol=1e-5)
+    assert np.allclose(res_min.x_iters, res_opt.x_iters)  # , atol=1e-5)
+    assert np.allclose(res_min.x, res_opt.x)  # , atol=1e-5)
+
+    # TODO: Test that LHS can be parsed to optimizer
+    # TODO: Test that constraints cannot be applied to the optimizer unless all LHS samples have been exhausted.
+    # TODO: Test that update next sample does not alter the latin hypercube sampling
+    # TODO: Test that iterating through ask/tell will use the latin hypercubesampling if set
+    # TODO: Test that callig optimizer with n_points works with latin hypercube sampling

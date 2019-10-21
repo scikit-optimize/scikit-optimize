@@ -405,15 +405,16 @@ class Integer(Dimension):
         return abs(a - b)
 
     def lhs_arange(self, n):
-        """ Returns an evenly distributed numpy array of samples to use with latin hypercube sampling.
+        """ Returns an evenly distributed list of samples to use with latin hypercube sampling.
 
         Parameters
         -----------
         * `n` [int]
             Number of samples.
         """
-
-        return np.round(np.linspace(self.low, self.high, n))
+        rounded_numbers = np.round(np.linspace(self.low, self.high, n))
+        # convert to a list of integers
+        return [int(a) for a in rounded_numbers]
 
 
 class Categorical(Dimension):
@@ -863,4 +864,12 @@ class Space(object):
             for p in perm:  # Random permutate the order of the samples
                 lhs_perm.append(lhs_aranged[p])
             samples.append(lhs_perm)
-        return samples
+        # Now we have a list of lists with samples for each dimension.
+        # We need to transpose this so thatwe get a list of lists with samples for all the dimensions
+        transposed_samples = []
+        for i in range(n):
+            row = []
+            for j in range(self.n_dims):
+                row.append(samples[j][i])
+            transposed_samples.append(row)
+        return transposed_samples

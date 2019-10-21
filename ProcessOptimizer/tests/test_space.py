@@ -138,7 +138,7 @@ def test_categorical_transform():
     assert_array_equal(
         cat.transform(categories),
         [apple, orange, banana, none, true, false, three]
-        )
+    )
     assert_array_equal(cat.transform(["apple", "orange"]), [apple, orange])
     assert_array_equal(cat.transform(["apple", "banana"]), [apple, banana])
     assert_array_equal(cat.inverse_transform([apple, orange]),
@@ -529,3 +529,25 @@ def test_purely_categorical_space():
     x = optimizer.ask()
     # before the fix this call raised an exception
     optimizer.tell(x, 1.)
+
+
+@pytest.mark.fast_test
+def test_lhs_arange():
+    dim = Categorical(['a', 'b', 'c'])
+    dim.lhs_arange(10)
+    dim = Integer(1, 20)
+    dim.lhs_arange(10)
+    dim = Real(-10, 20)
+    dim.lhs_arange(10)
+
+
+@pytest.mark.fast_test
+def test_lhs():
+    SPACE = Space([
+        Integer(-20, 20),
+        Real(-10.5, 100),
+        Categorical(list('abc'))]
+    )
+    samples = SPACE.lhs(10)
+    assert len(samples) == 10
+    assert len(samples[0]) == 3
