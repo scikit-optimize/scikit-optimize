@@ -16,6 +16,8 @@ from .transformers import Log10
 from .transformers import Pipeline
 
 # helper class to be able to print [1, ..., 4] instead of [1, '...', 4]
+
+
 class _Ellipsis:
     def __repr__(self):
         return '...'
@@ -91,7 +93,7 @@ def check_dimension(dimension, transform=None):
 
     if len(dimension) == 3:
         if (any([isinstance(dim, (float, int)) for dim in dimension[:2]]) and
-            dimension[2] in ["uniform", "log-uniform"]):
+                dimension[2] in ["uniform", "log-uniform"]):
             return Real(*dimension, transform=transform)
         else:
             return Categorical(dimension, transform=transform)
@@ -259,7 +261,7 @@ class Real(Dimension):
         return np.clip(
             super(Real, self).inverse_transform(Xt).astype(np.float),
             self.low, self.high
-            )
+        )
 
     @property
     def bounds(self):
@@ -293,6 +295,19 @@ class Real(Dimension):
             raise RuntimeError("Can only compute distance for values within "
                                "the space, not %s and %s." % (a, b))
         return abs(a - b)
+
+    def lhs_arange(self, n):
+        """ Returns an evenly distributed numpy array of samples to use with latin hypercube sampling.
+
+        Parameters
+        -----------
+        * `n` [int]
+            Number of samples.
+        """
+        a = (np.arange(n)+0.5)/n  # Evenly distributed betweeen 0 and 1
+
+        # Transform to the bounds of this dimension
+        return a*(self.high-self.low)+self.low
 
 
 class Integer(Dimension):
@@ -339,7 +354,6 @@ class Integer(Dimension):
         else:
             self._rvs = randint(self.low, self.high + 1)
             self.transformer = Identity()
-
 
     def update_samplingspace(self, new_space):
         self._rvs = new_space
@@ -389,6 +403,17 @@ class Integer(Dimension):
             raise RuntimeError("Can only compute distance for values within "
                                "the space, not %s and %s." % (a, b))
         return abs(a - b)
+
+    def lhs_arange(self, n):
+        """ Returns an evenly distributed numpy array of samples to use with latin hypercube sampling.
+
+        Parameters
+        -----------
+        * `n` [int]
+            Number of samples.
+        """
+
+        return np.round(np.linspace(self.low, self.high, n))
 
 
 class Categorical(Dimension):
@@ -443,7 +468,7 @@ class Categorical(Dimension):
         # XXX check that sum(prior) == 1
         self._rvs = rv_discrete(
             values=(range(len(self.categories)), self.prior_)
-            )
+        )
 
     def __eq__(self, other):
         return (type(self) is type(other) and
@@ -511,6 +536,22 @@ class Categorical(Dimension):
             raise RuntimeError("Can only compute distance for values within"
                                " the space, not {} and {}.".format(a, b))
         return 1 if a != b else 0
+
+    def lhs_arange(self, n):
+        """ Returns an evenly distributed list of samples to use with latin hypercube sampling.
+
+        Parameters
+        -----------
+        * `n` [int]
+            Number of samples.
+        """
+
+        s = []
+        l = len(self.categories)  # Number of categories
+        for i in range(n):
+            # Loop through all categories by using the modulus.
+            s.append(self.categories[i % l])
+        return s
 
 
 class Space(object):
@@ -645,13 +686,12 @@ class Space(object):
         rng = check_random_state(random_state)
 
         columns = []
-    
+
         for dim in self.dimensions:
             if sp_version < (0, 16):
                 columns.append(dim.rvs(n_samples=n_samples))
             else:
                 columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
-                
 
         # Transpose
         rows = []
