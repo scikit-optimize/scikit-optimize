@@ -754,3 +754,17 @@ def test_get_constraints():
     opt = Optimizer(space, "ET")
     opt.set_constraints(cons)
     assert_equal(cons,opt.get_constraints())
+
+@pytest.mark.fast_test
+def test_lhs_with_constraints():
+    # Test that constraints cant be set when lhs is active and that it can be set once the points are exhausted.
+    space = Space([Real(1, 10)])
+    cons_list = [Single(0,5.0,'real')]
+    cons = Constraints(cons_list,space)
+    opt = Optimizer(space, "ET",lhs = True,n_initial_points = 2)
+    opt.tell([1],0) # Use one initial point so that one is still left
+    with raises(RuntimeError): # Error should be thrown when tryin got set constraints
+        opt.set_constraints(cons)
+    opt = Optimizer(space, "ET",lhs = True,n_initial_points = 2)
+    opt.tell([[1],[1]],[0,0]) # Use all of the two initial points
+    opt.set_constraints(cons) # Now it should be possible to set constraints

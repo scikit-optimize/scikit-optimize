@@ -70,6 +70,9 @@ class Optimizer(object):
         `x0` count as initialization points. If len(x0) < n_initial_points
         additional points are sampled at random.
 
+    * `lhs` [bool, default = False]:
+        If set to true the optimizer will use latin hypercube sampling for the first n_initial_points
+
     * `acq_func` [string, default=`"gp_hedge"`]:
         Function to minimize over the posterior distribution. Can be either
 
@@ -143,7 +146,7 @@ class Optimizer(object):
     """
 
     def __init__(self, dimensions, base_estimator="gp",
-                 n_random_starts=None, n_initial_points=10, lhs=True,
+                 n_random_starts=None, n_initial_points=10, lhs=False,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None, acq_func_kwargs=None,
@@ -250,8 +253,10 @@ class Optimizer(object):
         self.space = Space(dimensions)
 
         # Latin hypercube sampling
+
         self._lhs = lhs
-        self._lhs_samples = self.space.lhs(n_initial_points)
+        if lhs:
+            self._lhs_samples = self.space.lhs(n_initial_points)
 
         # Default is no constraints
         self._constraints = None
@@ -299,8 +304,8 @@ class Optimizer(object):
 
         # It is important to copy the constraints so that a call to '_tell()' will create a valid _next_x
         optimizer._constraints = self._constraints
-
-        optimizer._lhs_samples = self._lhs_samples
+        if self._lhs:
+            optimizer._lhs_samples = self._lhs_samples
 
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
@@ -420,7 +425,8 @@ class Optimizer(object):
                 # We use another sampling method when constraints are added
                 return self._constraints.rvs(random_state=self.rng)[0]
             elif self._lhs:
-                return self._lhs_samples[self._n_initial_points-1]
+                # The samples are evaluated starting form lhs_samples[0]
+                return self._lhs_samples[len(self._lhs_samples)-self._n_initial_points]
             else:
                 return self.space.rvs(random_state=self.rng)[0]
         else:
@@ -637,8 +643,10 @@ class Optimizer(object):
         * `constraints` [list] or [Constraints]:
             Can either be a list of Constraint objects or a Constraints object
         '''
-        assert not (self._n_initial_points >
-                    0 and self._lhs), "Can't set constraints while latin hypercube sampling points are not exhausted."
+        if (self._n_initial_points >
+                0 and self._lhs):
+            raise RuntimeError(
+                "Can't set constraints while latin hypercube sampling points are not exhausted.")
 
         if constraints:
             if isinstance(constraints, Constraints):
@@ -663,7 +671,7 @@ class Optimizer(object):
     def update_next(self):
         ''' Updates the value returned by opt.ask(). Useful if a parameter was updated after ask was called.'''
         self.cache_ = {}
-        # Ask for a new next_x now that new constraints have been added
+        # Ask for a new next_x. Usefull if new constraints have been added or lenght_scale has been tweaked.
         # We only need to overwrite _next_x if it exists.
         if hasattr(self, '_next_x'):
             opt = self.copy(random_state=self.rng)

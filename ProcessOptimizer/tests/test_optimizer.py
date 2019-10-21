@@ -306,7 +306,26 @@ def test_defaults_are_equivalent():
     assert np.allclose(res_min.x, res_opt.x)  # , atol=1e-5)
 
     # TODO: Test that LHS can be parsed to optimizer
-    # TODO: Test that constraints cannot be applied to the optimizer unless all LHS samples have been exhausted.
-    # TODO: Test that update next sample does not alter the latin hypercube sampling
-    # TODO: Test that iterating through ask/tell will use the latin hypercubesampling if set
-    # TODO: Test that callig optimizer with n_points works with latin hypercube sampling
+
+
+@pytest.mark.fast_test
+def test_parsing_lhs():
+    opt = Optimizer([(1, 3)], "GP", lhs=True)
+    assert opt._lhs == True
+    opt = Optimizer([(1, 3)], "GP")
+    assert opt._lhs == False
+
+
+@pytest.mark.fast_test
+def test_iterating_ask_tell_lhs():
+    opt = Optimizer([(1, 6)], "GP", lhs=True)
+    samples = opt._lhs_samples
+    # Check that opt.ask gos through all the lhs_samples
+    assert opt.ask() == samples[0]
+    opt.tell([1], 0)  # sample 0
+    assert opt.ask() == samples[1]
+    opt.tell([1], 0)  # sample 1
+    # Assert that the next 3 points are the same
+    assert opt.ask(n_points=3) == samples[2:5]  # samples 2,3 and 4
+    opt.tell([[2], [2], [2]], [0, 0, 0])
+    assert opt.ask() == samples[5]  # sample 5
