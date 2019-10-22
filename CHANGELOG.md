@@ -1,5 +1,15 @@
 # Release history
 
+## Version 0.4.4
+
+### New features
+
+- Latin hypercube sampling
+
+### Bugfixes
+
+- Progress is now correctly showed in bokeh.
+
 ## Version 0.4.3
 
 ### Bugfixes
