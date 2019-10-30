@@ -12,10 +12,10 @@ ProcessOptimizer can also be installed by running pip install -e. in top directo
 ## PyPi
 
 If you have not packaged before check out https://packaging.python.org/tutorials/packaging-projects/
-To upload a new version to PyPi do the following:
+To upload a new version to PyPi do the following in the root folder:
 
-- Remove old build.
+- In terminal run the command "pytest" and make sure there are no errors.
 - Change version number in setup.py.
-- Change version number in \_\_init\_\_.py
+- Change version number in ProcessOptimizer/\_\_init\_\_.py
 - run `python3 setup.py sdist bdist_wheel`
 - run `python3 -m twine upload dist/*`
