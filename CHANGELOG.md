@@ -1,5 +1,13 @@
 # Release history
 
+## Version 0.4.5
+
+### Bugfixes
+
+ProcessOptimizer.\_\_version\_\_ shows correct version.
+Removed \_version.py as we dont use versioneer anymore.
+Version needs to be changed manually in \_\_init\_\_ .py from now on.
+
 ## Version 0.4.4
 
 ### New features

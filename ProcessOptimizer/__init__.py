@@ -64,7 +64,7 @@ from .utils import dump
 from .utils import expected_minimum
 from .utils import load
 
-__version__ = "0.6"
+__version__ = "0.4.5"
 
 
 __all__ = (
@@ -86,7 +86,3 @@ __all__ = (
     "BayesSearchCV",
     "Space"
 )
-
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
