@@ -1,5 +1,11 @@
 # Release history
 
+## Version 0.4.7
+
+### Bugfixes
+
+Changed bokeh version to 1.4.0
+
 ## Version 0.4.6
 
 ### Bugfixes
