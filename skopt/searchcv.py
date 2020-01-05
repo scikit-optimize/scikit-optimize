@@ -545,7 +545,8 @@ class BayesSearchCV(BaseSearchCV):
         params = [[np.asscalar(np.array(v)) for v in p] for p in params]
 
         assert len(params) == n_points, \
-            "The number of params we tried should equal the number of points we were asked to try"
+            "The number of params we tried should equal the number of" \
+            "points we were asked to try"
 
         # make lists into dictionaries
         params_dict = [point_asdict(search_space, p) for p in params]
@@ -562,14 +563,21 @@ class BayesSearchCV(BaseSearchCV):
         for key in six.iterkeys(self.cv_results_):
             assert len(self.cv_results_[key]) == n_points
             for points_iteration, value in enumerate(self.cv_results_[key]):
-                all_cv_results[key][self._cur_total_iter + points_iteration] = self.cv_results_[key][points_iteration]
+
+                current_index = self._cur_total_iter + points_iteration
+                all_cv_results[key][current_index] = \
+                    self.cv_results_[key][current_index]
 
         self.cv_results_ = all_cv_results
 
         self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
 
         # feed the point and objective back into optimizer
-        local_results = self.cv_results_['mean_test_score'][self._cur_total_iter:self._cur_total_iter + n_points]
+
+        end_results = self._cur_total_iter + n_points
+        begin_results = self._cur_total_iter
+        mean_test_score = self.cv_results_['mean_test_score']
+        local_results = mean_test_score[begin_results:end_results]
 
         # optimizer minimizes objective, hence provide negative score
         return optimizer.tell(params, [-score for score in local_results])
@@ -646,8 +654,9 @@ class BayesSearchCV(BaseSearchCV):
 
         n_candidates = len(search_spaces) * self.n_iter
 
-        # We use a masked array as the type of list to store our results in since not all params are
-        # guaranteed to show up in every search - especially if we take in a list of dicts approach
+        # We use a masked array as the type of list to store our results in
+        # since not all params are guaranteed to show up in every search -
+        # especially if we take in a list of dicts approach
         self.cv_results_ = defaultdict(
             partial(
                 MaskedArray,
@@ -662,13 +671,14 @@ class BayesSearchCV(BaseSearchCV):
 
         n_points = self.n_points
 
-
-        self._cur_total_iter = 0 # This is the current iteration out of total that we're on
+        # This is the current iteration out of total that we're on
+        self._cur_total_iter = 0
 
         for search_space, optimizer in zip(search_spaces, optimizers):
 
             assert self._cur_total_iter < n_candidates, \
-                "Current overall iteration should be lower than number of potential iterations"
+                "Current overall iteration should be lower than number of" \
+                " potential iterations"
 
             # if not provided with search subspace, n_iter is taken as
             # self.n_iter
