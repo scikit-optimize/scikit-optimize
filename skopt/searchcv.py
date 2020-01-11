@@ -565,8 +565,7 @@ class BayesSearchCV(BaseSearchCV):
             for points_iteration, value in enumerate(self.cv_results_[key]):
 
                 current_index = self._cur_total_iter + points_iteration
-                all_cv_results[key][current_index] = \
-                    self.cv_results_[key][current_index]
+                all_cv_results[key][current_index] = value
 
         self.cv_results_ = all_cv_results
 
