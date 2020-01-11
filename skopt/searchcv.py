@@ -659,7 +659,7 @@ class BayesSearchCV(BaseSearchCV):
         self.cv_results_ = defaultdict(
             partial(
                 MaskedArray,
-                np.empty(n_candidates,),
+                np.empty(n_candidates),
                 mask=True,
                 dtype=object
             )
