@@ -4,7 +4,7 @@ from sklearn.base import clone
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.utils import check_random_state
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 
 def _parallel_fit(regressor, X, y):
