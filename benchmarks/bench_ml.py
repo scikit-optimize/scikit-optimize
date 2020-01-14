@@ -25,6 +25,8 @@ else:
     from urllib.error import HTTPError
     from urllib import urlopen
 
+from joblib import delayed
+from joblib import Parallel
 import numpy as np
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
@@ -32,8 +34,6 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.datasets import fetch_mldata
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
-from sklearn.externals.joblib import delayed
-from sklearn.externals.joblib import Parallel
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC

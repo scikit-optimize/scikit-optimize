@@ -6,7 +6,7 @@ from scipy.stats import rankdata
 
 import sklearn
 from sklearn.base import is_classifier, clone
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
