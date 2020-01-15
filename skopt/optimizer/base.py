@@ -22,7 +22,7 @@ def base_minimize(func, dimensions, base_estimator,
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1, model_history=None):
+                  xi=0.01, kappa=1.96, n_jobs=1, model_queue_size=None):
     """
     Parameters
     ----------
@@ -156,7 +156,7 @@ def base_minimize(func, dimensions, base_estimator,
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
     
-    * `model_history` [int or None, default=None]
+    * `model_queue_size` [int or None, default=None]
         Keeps list of models only as long as the argument given. In the 
         case of None, the list has no capped length.
 
@@ -220,7 +220,7 @@ def base_minimize(func, dimensions, base_estimator,
                           n_initial_points=n_initial_points,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
                           random_state=random_state, 
-                          model_history=model_history,
+                          model_queue_size=model_queue_size,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
     # check x0: element-wise data type, dimensionality

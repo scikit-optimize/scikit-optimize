@@ -119,7 +119,7 @@ class Optimizer(object):
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
-    * `model_history` [int or None, default=None]
+    * `model_queue_size` [int or None, default=None]
         Keeps list of models only as long as the argument given. In the 
         case of None, the list has no capped length.
 
@@ -142,7 +142,7 @@ class Optimizer(object):
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None,
-                 model_history=None,
+                 model_queue_size=None,
                  acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
 
@@ -253,10 +253,10 @@ class Optimizer(object):
                 self._non_cat_inds.append(ind)
 
         # Initialize storage for optimization
-        if not isinstance(model_history, (int, type(None))):
-            raise TypeError("model_history should be an int or None,"
-            "got {}".format(type(model_history)))
-        self.history = model_history
+        if not isinstance(model_queue_size, (int, type(None))):
+            raise TypeError("model_queue_size should be an int or None,"
+            "got {}".format(type(model_queue_size)))
+        self.max_model_queue_size = model_queue_size
         self.models = []
         self.Xi = []
         self.yi = []
@@ -496,9 +496,9 @@ class Optimizer(object):
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
             
-            if self.history is None:
+            if self.max_model_queue_size is None:
                 self.models.append(est)
-            elif len(self.models) < self.history:
+            elif len(self.models) < self.max_model_queue_size:
                 self.models.append(est)
             else:
                 # Maximum list size obtained, remove oldest model.

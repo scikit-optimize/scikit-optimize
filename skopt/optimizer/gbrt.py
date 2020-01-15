@@ -10,7 +10,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
                   acq_func="EI", acq_optimizer="auto",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, xi=0.01, kappa=1.96,
-                  n_jobs=1, model_history=None):
+                  n_jobs=1, model_queue_size=None):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -119,7 +119,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         The number of jobs to run in parallel for `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
-    * `model_history` [int or None, default=None]
+    * `model_queue_size` [int or None, default=None]
         Keeps list of models only as long as the argument given. In the 
         case of None, the list has no capped length.
 
@@ -155,4 +155,4 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
                          x0=x0, y0=y0, random_state=random_state, xi=xi,
                          kappa=kappa, acq_func=acq_func, verbose=verbose,
                          callback=callback, acq_optimizer="sampling",
-                         model_history=model_history)
+                         model_queue_size=model_queue_size)
