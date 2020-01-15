@@ -1,17 +1,48 @@
 language: python
 
-notifications:
-  email: false
-
 cache:
+  apt: true
   directories:
-   - $HOME/.cache/pip
+  - $HOME/.cache/pip
+  - $HOME/.ccache
 
 env:
-  matrix:
-    - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="false"
-    - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
-    - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="false"
+  global:
+    # Directory where tests are run from
+    - TEST_DIR=/tmp/sklearn
+    - OMP_NUM_THREADS=4
+    - OPENBLAS_NUM_THREADS=4
+
+
+matrix:
+  include:
+    # Linux environment to test scikit-learn against numpy and scipy master
+    # installed from their CI wheels in a virtualenv with the Python
+    # interpreter provided by travis.
+    - name: "Python 3.5 latest package versions"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.5"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+           SCIKIT_LEARN_VERSION="*" MATPLOTLIB_VERSION="*" COVERAGE="false"
+           JOBLIB_VERSION="0.11"
+    - name: "Python 3.6 latest package versions"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.6"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+           SCIKIT_LEARN_VERSION="*" MATPLOTLIB_VERSION="*" COVERAGE="false"
+           JOBLIB_VERSION="0.12"
+    - name: "Python 3.7 latest package versions"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.7"
+         NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+         SCIKIT_LEARN_VERSION="*" MATPLOTLIB_VERSION="*" COVERAGE="true"
+         JOBLIB_VERSION="*"
+    - name: "Python 3.8  latest package versions"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.8" COVERAGE="false"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+           SCIKIT_LEARN_VERSION="*" JOBLIB_VERSION="*"
+
 
 install: source build_tools/travis/install.sh
 
