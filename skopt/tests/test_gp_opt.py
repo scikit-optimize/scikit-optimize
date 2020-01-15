@@ -1,5 +1,4 @@
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_less
+from numpy.testing import assert_array_equal
 import pytest
 
 from skopt import gp_minimize
@@ -17,7 +16,7 @@ def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
                     acq_func=acq_func, n_random_starts=n_random_starts,
                     n_calls=n_calls, random_state=1,
                     noise=1e-10)
-    assert_less(r.fun, y_opt + margin)
+    assert r.fun < y_opt + margin
 
 
 SEARCH = ["sampling", "lbfgs"]

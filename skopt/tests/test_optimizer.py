@@ -2,11 +2,9 @@ import numpy as np
 import pytest
 
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_equal
+from numpy.testing import assert_raises
 
 from skopt import gp_minimize
 from skopt import forest_minimize
@@ -187,9 +185,9 @@ def test_acq_optimizer_with_time_api(base_estimator, acq_func):
     res = opt.tell(x2, (bench1(x2), 2.0))
 
     # x1 and x2 are random.
-    assert_true(x1 != x2)
+    assert x1 != x2
 
-    assert_true(len(res.models) == 1)
+    assert len(res.models) == 1
     assert_array_equal(res.func_vals.shape, (2,))
     assert_array_equal(res.log_time.shape, (2,))
 
@@ -220,13 +218,13 @@ def test_optimizer_copy(acq_func):
     copied_estimator = opt_copy.base_estimator_
 
     if "ps" in acq_func:
-        assert_true(isinstance(copied_estimator, MultiOutputRegressor))
+        assert isinstance(copied_estimator, MultiOutputRegressor)
         # check that the base_estimator is not wrapped multiple times
         is_multi = isinstance(copied_estimator.estimator,
                               MultiOutputRegressor)
-        assert_false(is_multi)
+        assert not is_multi
     else:
-        assert_false(isinstance(copied_estimator, MultiOutputRegressor))
+        assert not isinstance(copied_estimator, MultiOutputRegressor)
 
     assert_array_equal(opt_copy.Xi, opt.Xi)
     assert_array_equal(opt_copy.yi, opt.yi)

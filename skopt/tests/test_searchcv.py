@@ -5,7 +5,6 @@ search with interface similar to those of GridSearchCV
 import pytest
 import time
 
-from sklearn.utils.testing import assert_greater
 from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -41,7 +40,7 @@ def _fit_svc(n_jobs=1, n_points=1, cv=None):
 
     opt.fit(X, y)
 
-    assert_greater(opt.score(X, y), 0.9)
+    assert opt.score(X, y) > 0.9
 
 
 def test_raise_errors():
@@ -107,7 +106,7 @@ def test_searchcv_runs(surrogate, n_jobs, n_points, cv=None):
 
     # this normally does not hold only if something is wrong
     # with the optimizaiton procedure as such
-    assert_greater(opt.score(X_test, y_test), 0.9)
+    assert opt.score(X_test, y_test) > 0.9
 
 
 @pytest.mark.slow_test
