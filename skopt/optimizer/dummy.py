@@ -4,7 +4,7 @@ from .base import base_minimize
 
 
 def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
-                   random_state=None, verbose=False, callback=None, 
+                   random_state=None, verbose=False, callback=None,
                    model_queue_size=None):
     """Random search by uniform sampling within the given bounds.
 
@@ -65,7 +65,7 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         If list of callables, then each callable in the list is called.
 
     * `model_queue_size` [int or None, default=None]
-        Keeps list of models only as long as the argument given. In the 
+        Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
     Returns

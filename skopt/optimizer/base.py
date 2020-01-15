@@ -155,9 +155,9 @@ def base_minimize(func, dimensions, base_estimator,
         `acq_optimizer` is set to "lbfgs."
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
-    
+
     * `model_queue_size` [int or None, default=None]
-        Keeps list of models only as long as the argument given. In the 
+        Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
     Returns
@@ -219,7 +219,7 @@ def base_minimize(func, dimensions, base_estimator,
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
-                          random_state=random_state, 
+                          random_state=random_state,
                           model_queue_size=model_queue_size,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)

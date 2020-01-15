@@ -135,7 +135,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         If -1, then the number of jobs is set to the number of cores.
 
     * `model_queue_size` [int or None, default=None]
-        Keeps list of models only as long as the argument given. In the 
+        Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
     Returns
