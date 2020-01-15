@@ -98,6 +98,7 @@ def test_use_given_estimator_with_max_model_size():
     noise_fake = 1e-10
     estimator = cook_estimator("GP", domain, noise=noise_correct)
     res = gp_minimize(branin, domain, n_calls=1, n_random_starts=1,
-                      base_estimator=estimator, noise=noise_fake, model_queue_size=1)
+                      base_estimator=estimator, noise=noise_fake,
+                      model_queue_size=1)
     assert len(res['models']) == 1
     assert res['models'][-1].noise == noise_correct

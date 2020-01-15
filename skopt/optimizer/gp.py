@@ -190,7 +190,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         to number of cores.
 
     * `model_queue_size` [int or None, default=None]
-        Keeps list of models only as long as the argument given. In the 
+        Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
     Returns
