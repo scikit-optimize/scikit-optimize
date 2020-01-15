@@ -68,4 +68,4 @@ pip install -e '.[plots]'
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "import sklearn; sklearn.show_versions();"
+python -c "import sklearn; print('sklearn %s' % sklearn.__version__)"
