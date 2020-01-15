@@ -269,6 +269,50 @@ def test_searchcv_reproducibility():
     assert getattr(best_est, 'kernel') == getattr(best_est2, 'kernel')
 
 
+def test_searchcv_refit():
+    """
+    Test whether results of BayesSearchCV can be reproduced with a fixed
+    random state.
+    """
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    random_state = 42
+
+    opt = BayesSearchCV(
+        SVC(random_state=random_state),
+        {
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
+        },
+        n_iter=11, random_state=random_state
+    )
+
+    opt2 = BayesSearchCV(
+        SVC(random_state=random_state),
+        {
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
+        },
+        n_iter=11, random_state=random_state, refit=True
+    )
+
+    opt.fit(X_train, y_train)
+    opt2.best_estimator_ = opt.best_estimator_
+
+    opt2.fit(X_train, y_train)
+    # this normally does not hold only if something is wrong
+    # with the optimizaiton procedure as such
+    assert opt2.score(X_test, y_test) > 0.9
+
+
 def test_searchcv_callback():
     # Test whether callback is used in BayesSearchCV and
     # whether is can be used to interrupt the search loop
