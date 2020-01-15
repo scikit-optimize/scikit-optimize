@@ -336,7 +336,8 @@ def test_invalid_n_calls_arguments(minimizer):
     # n_calls >= n_random_starts + len(x0)
     with pytest.raises(ValueError):
         minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=1,
-                  x0=[[-1, 2], [-3, 3], [2, 5]], random_state=1, n_random_starts=7)
+                  x0=[[-1, 2], [-3, 3], [2, 5]], random_state=1,
+                  n_random_starts=7)
 
     # n_calls >= n_random_starts
     with pytest.raises(ValueError):
