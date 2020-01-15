@@ -87,3 +87,17 @@ def test_use_given_estimator():
                       base_estimator=estimator, noise=noise_fake)
 
     assert res['models'][-1].noise == noise_correct
+
+
+@pytest.mark.fast_test
+def test_use_given_estimator_with_model_history():
+    """ Test that gp_minimize does not use default estimator if one is passed
+    in explicitly. """
+    domain = [(1.0, 2.0), (3.0, 4.0)]
+    noise_correct = 1e+5
+    noise_fake = 1e-10
+    estimator = cook_estimator("GP", domain, noise=noise_correct)
+    res = gp_minimize(branin, domain, n_calls=1, n_random_starts=1,
+                      base_estimator=estimator, noise=noise_fake, model_history=1)
+    assert len(res['models']) == 1
+    assert res['models'][-1].noise == noise_correct
