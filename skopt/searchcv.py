@@ -1,4 +1,8 @@
-from collections import defaultdict, Sized
+try:
+    from collections.abc import Sized
+except ImportError:
+    from collections import Sized
+from collections import defaultdict
 from functools import partial
 
 import numpy as np
@@ -11,7 +15,10 @@ from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
-from sklearn.metrics.scorer import check_scoring
+try:
+    from sklearn.metrics import check_scoring
+except ImportError:
+    from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
@@ -546,7 +553,7 @@ class BayesSearchCV(BaseSearchCV):
         params = optimizer.ask(n_points=n_points)
 
         # convert parameters to python native types
-        params = [[np.asscalar(np.array(v)) for v in p] for p in params]
+        params = [[np.array(v).item() for v in p] for p in params]
 
         # make lists into dictionaries
         params_dict = [point_asdict(search_space, p) for p in params]

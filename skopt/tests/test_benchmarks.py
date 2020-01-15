@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_almost_equal
 
 from skopt.benchmarks import branin
 from skopt.benchmarks import hart6
