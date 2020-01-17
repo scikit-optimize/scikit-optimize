@@ -297,7 +297,7 @@ class Real(Dimension):
 
 
 class Integer(Dimension):
-    def __init__(self, low, high, transform=None, name=None):
+    def __init__(self, low, high, transform=None, name=None, dtype=np.int64):
         """Search space dimension that can take on integer values.
 
         Parameters
@@ -318,6 +318,10 @@ class Integer(Dimension):
 
         * `name` [str or None]:
             Name associated with dimension, e.g., "number of trees".
+
+        * `dtype` [type]:
+            integer type which will be used in reverse_transform,
+            can be int, np.int32 or np.int64.
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -325,6 +329,10 @@ class Integer(Dimension):
         self.low = low
         self.high = high
         self.name = name
+        self.dtype = dtype
+        if dtype not in [int, np.int32, np.int64]:
+            raise ValueError("dtype should be 'int', 'np.int32' or 'np.int64'"
+                             " got {}".format(self.dtype))
 
         if transform is None:
             transform = "identity"
@@ -355,7 +363,7 @@ class Integer(Dimension):
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        return super(Integer, self).inverse_transform(Xt).astype(np.int64)
+        return super(Integer, self).inverse_transform(Xt).astype(self.dtype)
 
     @property
     def bounds(self):
