@@ -1,21 +1,21 @@
 """Plotting functions."""
 import sys
+import numpy as np
 from itertools import count
 from functools import partial
+from scipy.optimize import OptimizeResult
+
+from .space import Categorical
 
 # For plot tests, matplotlib must be set to headless mode early
 if 'pytest' in sys.modules:
     import matplotlib
     matplotlib.use('Agg')
 
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator, FuncFormatter
-from scipy.optimize import OptimizeResult
-
-from .space import Categorical
 
 
 def plot_convergence(*args, **kwargs):
