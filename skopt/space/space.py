@@ -268,10 +268,10 @@ class Real(Dimension):
             super(Real, self).inverse_transform(Xt).astype(np.float),
             self.low, self.high
             )
-        if self.dtype == float:
-            return getattr(inv_transform, "tolist", lambda: value)()
-        else:
-            return inv_transform
+         # if self.dtype == float:
+         #    return getattr(inv_transform, "tolist", lambda: value)()
+         # else:
+        return inv_transform
 
     @property
     def bounds(self):
