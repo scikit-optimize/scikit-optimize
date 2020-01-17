@@ -406,7 +406,7 @@ def test_normalize():
 
     # Check inverse transform
     X_orig = a.inverse_transform(a.transform(X))
-    assert isinstance(X_orig.dtype, np.int64)
+    assert isinstance(X_orig, np.int64)
     assert_array_equal(X_orig, X)
 
 
