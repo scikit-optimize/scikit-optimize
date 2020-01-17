@@ -644,7 +644,7 @@ class Space(object):
            Instantiated Space object
         """
         with open(yml_path, 'rb') as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
 
         dimension_classes = {'real': Real,
                              'integer': Integer,
