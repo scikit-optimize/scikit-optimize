@@ -30,8 +30,10 @@ def test_plots_work():
     ]
 
     def objective(params):
-        clf = DecisionTreeClassifier(random_state=3, **{dim.name: val
-                for dim, val in zip(SPACE, params) if dim.name != 'dummy'})
+        clf = DecisionTreeClassifier(random_state=3,
+                                     **{dim.name: val
+                                        for dim, val in zip(SPACE, params)
+                                        if dim.name != 'dummy'})
         return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
