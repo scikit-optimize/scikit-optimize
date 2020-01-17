@@ -15,7 +15,7 @@ if 'pytest' in sys.modules:
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
-from matplotlib.ticker import MaxNLocator, FuncFormatter
+from matplotlib.ticker import MaxNLocator, FuncFormatter  # noqa: E402
 
 
 def plot_convergence(*args, **kwargs):
