@@ -397,8 +397,8 @@ def test_normalize():
 
     X = rng.randint(2, 31)
     # Check transformed values are in [0, 1]
-    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
-    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
 
     # Check inverse transform
     X_orig = a.inverse_transform(a.transform(X))
