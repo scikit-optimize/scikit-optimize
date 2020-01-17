@@ -1,10 +1,8 @@
 import pytest
 import tempfile
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
-
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_equal
 import numpy as np
 
 from skopt import gp_minimize
@@ -52,7 +50,7 @@ def test_dump_and_load():
         f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true("func" in res_loaded.specs["args"])
+    assert "func" in res_loaded.specs["args"]
 
     # Test dumping without objective function
     with tempfile.TemporaryFile() as f:
@@ -60,7 +58,7 @@ def test_dump_and_load():
         f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true(not ("func" in res_loaded.specs["args"]))
+    assert not ("func" in res_loaded.specs["args"])
 
     # Delete the objective function and dump the modified object
     del res.specs["args"]["func"]
@@ -69,13 +67,13 @@ def test_dump_and_load():
         f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true(not ("func" in res_loaded.specs["args"]))
+    assert not ("func" in res_loaded.specs["args"])
 
 
 @pytest.mark.fast_test
 def test_dump_and_load_optimizer():
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
                     acq_optimizer="sampling")
 
     opt.run(bench1, n_iter=3)

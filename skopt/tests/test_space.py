@@ -1,18 +1,14 @@
 import pytest
 import numbers
 import numpy as np
+import os
 import yaml
 from tempfile import NamedTemporaryFile
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_raises_regex
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_equal
+from numpy.testing import assert_raises_regex
 
 from skopt import Optimizer
 from skopt.space import Space
@@ -25,22 +21,22 @@ from skopt.space import check_dimension as space_check_dimension
 def check_dimension(Dimension, vals, random_val):
     x = Dimension(*vals)
     assert_equal(x, Dimension(*vals))
-    assert_not_equal(x, Dimension(vals[0], vals[1] + 1))
-    assert_not_equal(x, Dimension(vals[0] + 1, vals[1]))
+    assert x != Dimension(vals[0], vals[1] + 1)
+    assert x != Dimension(vals[0] + 1, vals[1])
     assert_equal(x.rvs(random_state=1), random_val)
 
 
 def check_categorical(vals, random_val):
     x = Categorical(vals)
     assert_equal(x, Categorical(vals))
-    assert_not_equal(x, Categorical(vals[:-1] + ("zzz",)))
+    assert x != Categorical(vals[:-1] + ("zzz",))
     assert_equal(x.rvs(random_state=1), random_val)
 
 
 def check_limits(value, low, high):
     # check if low <= value <= high
-    assert_less_equal(low, value)
-    assert_greater_equal(high, value)
+    assert low <= value
+    assert high >= value
 
 
 @pytest.mark.fast_test
@@ -73,7 +69,7 @@ def test_real():
     for i in range(50):
         r = a.rvs(random_state=i)
         check_limits(r, 1, 25)
-        assert_true(r in a)
+        assert r in a
 
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
@@ -81,7 +77,7 @@ def test_real():
     assert_array_equal(a.inverse_transform(random_values), random_values)
 
     log_uniform = Real(10**-5, 10**5, prior="log-uniform")
-    assert_not_equal(log_uniform, Real(10**-5, 10**5))
+    assert log_uniform != Real(10**-5, 10**5)
     for i in range(50):
         random_val = log_uniform.rvs(random_state=i)
         check_limits(random_val, 10**-5, 10**5)
@@ -98,11 +94,11 @@ def test_real_bounds():
     # should give same answer as using check_limits() but this is easier
     # to read
     a = Real(1., 2.1)
-    assert_false(0.99 in a)
-    assert_true(1. in a)
-    assert_true(2.09 in a)
-    assert_true(2.1 in a)
-    assert_false(np.nextafter(2.1, 3.) in a)
+    assert 0.99 not in a
+    assert 1. in a
+    assert 2.09 in a
+    assert 2.1 in a
+    assert np.nextafter(2.1, 3.) not in a
 
 
 @pytest.mark.fast_test
@@ -110,9 +106,9 @@ def test_integer():
     a = Integer(1, 10)
     for i in range(50):
         r = a.rvs(random_state=i)
-        assert_less_equal(1, r)
-        assert_greater_equal(11, r)
-        assert_true(r in a)
+        assert 1 <= r
+        assert 11 >= r
+        assert r in a
 
     random_values = a.rvs(random_state=0, n_samples=10)
     assert_array_equal(random_values.shape, (10))
@@ -270,25 +266,25 @@ def test_space_api():
     assert isinstance(cat_space.dimensions[1], Categorical)
 
     assert_equal(len(space.dimensions), 5)
-    assert_true(isinstance(space.dimensions[0], Real))
-    assert_true(isinstance(space.dimensions[1], Integer))
-    assert_true(isinstance(space.dimensions[2], Categorical))
-    assert_true(isinstance(space.dimensions[3], Real))
-    assert_true(isinstance(space.dimensions[4], Categorical))
+    assert isinstance(space.dimensions[0], Real)
+    assert isinstance(space.dimensions[1], Integer)
+    assert isinstance(space.dimensions[2], Categorical)
+    assert isinstance(space.dimensions[3], Real)
+    assert isinstance(space.dimensions[4], Categorical)
 
     samples = space.rvs(n_samples=10, random_state=0)
     assert_equal(len(samples), 10)
     assert_equal(len(samples[0]), 5)
 
-    assert_true(isinstance(samples, list))
+    assert isinstance(samples, list)
     for n in range(4):
-        assert_true(isinstance(samples[n], list))
+        assert isinstance(samples[n], list)
 
-    assert_true(isinstance(samples[0][0], numbers.Real))
-    assert_true(isinstance(samples[0][1], numbers.Integral))
-    assert_true(isinstance(samples[0][2], str))
-    assert_true(isinstance(samples[0][3], numbers.Real))
-    assert_true(isinstance(samples[0][4], str))
+    assert isinstance(samples[0][0], numbers.Real)
+    assert isinstance(samples[0][1], numbers.Integral)
+    assert isinstance(samples[0][2], str)
+    assert isinstance(samples[0][3], numbers.Real)
+    assert isinstance(samples[0][4], str)
 
     samples_transformed = space.transform(samples)
     assert_equal(samples_transformed.shape[0], len(samples))
@@ -302,11 +298,11 @@ def test_space_api():
         assert space.distance(orig, round_trip) < 1.e-8
 
     samples = space.inverse_transform(samples_transformed)
-    assert_true(isinstance(samples[0][0], numbers.Real))
-    assert_true(isinstance(samples[0][1], numbers.Integral))
-    assert_true(isinstance(samples[0][2], str))
-    assert_true(isinstance(samples[0][3], numbers.Real))
-    assert_true(isinstance(samples[0][4], str))
+    assert isinstance(samples[0][0], numbers.Real)
+    assert isinstance(samples[0][1], numbers.Integral)
+    assert isinstance(samples[0][2], str)
+    assert isinstance(samples[0][3], numbers.Real)
+    assert isinstance(samples[0][4], str)
 
     for b1, b2 in zip(space.bounds,
                       [(0.0, 1.0), (-5, 5),
@@ -342,8 +338,8 @@ def test_normalize():
     X = 28 * (X - X.min()) / (X.max() - X.min()) + 2
 
     # Check transformed values are in [0, 1]
-    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
-    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
 
     # Check inverse transform
     assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)
@@ -357,8 +353,8 @@ def test_normalize():
     X = np.clip(10**3 * rng.randn(100), 10**2.0, 10**4.0)
 
     # Check transform
-    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
-    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
 
     # Check inverse transform
     assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)
@@ -368,14 +364,14 @@ def test_normalize():
         check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
-    X = rng.randint(2, 31)
+    X = rng.randint(2, 31, dtype="int64")
     # Check transformed values are in [0, 1]
-    assert_true(np.all(a.transform(X) <= np.ones_like(X)))
-    assert_true(np.all(np.zeros_like(X) <= a.transform(X)))
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
 
     # Check inverse transform
     X_orig = a.inverse_transform(a.transform(X))
-    assert_equal(X_orig.dtype, "int64")
+    assert isinstance(X_orig, np.int64)
     assert_array_equal(X_orig, X)
 
 
@@ -405,7 +401,7 @@ def test_categorical_identity():
     categories = ["cat", "dog", "rat"]
     cat = Categorical(categories, transform="identity")
     samples = cat.rvs(100)
-    assert_true(all([t in categories for t in cat.rvs(100)]))
+    assert all([t in categories for t in cat.rvs(100)])
     transformed = cat.transform(samples)
     assert_array_equal(transformed, samples)
     assert_array_equal(samples, cat.inverse_transform(transformed))
@@ -477,7 +473,7 @@ def test_dimension_name_none(dimension):
 
 @pytest.mark.fast_test
 def test_space_from_yaml():
-    with NamedTemporaryFile() as tmp:
+    with NamedTemporaryFile(delete=False) as tmp:
         tmp.write(b"""
         Space:
             - Real:
@@ -510,7 +506,8 @@ def test_space_from_yaml():
 
         space2 = Space.from_yaml(tmp.name)
         assert_equal(space, space2)
-
+        tmp.close()
+        os.unlink(tmp.name)
 
 @pytest.mark.parametrize("name", [1, 1., True])
 def test_dimension_with_invalid_names(name):

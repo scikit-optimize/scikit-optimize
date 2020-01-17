@@ -119,6 +119,9 @@ class Optimizer(object):
     * `acq_optimizer_kwargs` [dict]:
         Additional arguments to be passed to the acquistion optimizer.
 
+    * `model_queue_size` [int or None, default=None]
+        Keeps list of models only as long as the argument given. In the
+        case of None, the list has no capped length.
 
     Attributes
     ----------
@@ -138,7 +141,9 @@ class Optimizer(object):
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
-                 random_state=None, acq_func_kwargs=None,
+                 random_state=None,
+                 model_queue_size=None,
+                 acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
 
         self.rng = check_random_state(random_state)
@@ -248,7 +253,10 @@ class Optimizer(object):
                 self._non_cat_inds.append(ind)
 
         # Initialize storage for optimization
-
+        if not isinstance(model_queue_size, (int, type(None))):
+            raise TypeError("model_queue_size should be an int or None, "
+                            "got {}".format(type(model_queue_size)))
+        self.max_model_queue_size = model_queue_size
         self.models = []
         self.Xi = []
         self.yi = []
@@ -487,7 +495,15 @@ class Optimizer(object):
 
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
-            self.models.append(est)
+
+            if self.max_model_queue_size is None:
+                self.models.append(est)
+            elif len(self.models) < self.max_model_queue_size:
+                self.models.append(est)
+            else:
+                # Maximum list size obtained, remove oldest model.
+                self.models.pop(0)
+                self.models.append(est)
 
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
