@@ -355,7 +355,7 @@ class Integer(Dimension):
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        return super(Integer, self).inverse_transform(Xt).astype(np.int)
+        return super(Integer, self).inverse_transform(Xt).astype(np.int64)
 
     @property
     def bounds(self):
@@ -586,7 +586,7 @@ class Space(object):
            Instantiated Space object
         """
         with open(yml_path, 'rb') as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
 
         dimension_classes = {'real': Real,
                              'integer': Integer,
