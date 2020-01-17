@@ -48,8 +48,7 @@ def test_multiple_asks():
 
 @pytest.mark.fast_test
 def test_model_queue_size():
-    # calling ask() multiple times without a tell() inbetween should
-    # be a "no op"
+    # Check if model_queue_size limits the model queue size
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
                     acq_optimizer="sampling", model_queue_size=2)
