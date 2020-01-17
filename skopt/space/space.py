@@ -331,7 +331,8 @@ class Integer(Dimension):
         self.name = name
         self.dtype = dtype
         if dtype not in [int, np.int16, np.uint32, np.int32, np.int64]:
-            raise ValueError("dtype be int, np.int16, np.uint32, np.int32 or np.int64'"
+            raise ValueError("dtype be 'int', 'np.int16', 'np.uint32', 'np.int32'"
+                             "or 'np.int64'"
                              " got {}".format(self.dtype))
 
         if transform is None:
@@ -363,10 +364,12 @@ class Integer(Dimension):
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
+        inv_transform = super(Integer,
+                              self).inverse_transform(Xt).astype(self.dtype)
         if self.dtype == int:
-            return getattr(super(Integer, self).inverse_transform(Xt).astype(self.dtype), "tolist", lambda: value)()
+            return getattr(inv_transform, "tolist", lambda: value)()
         else:
-            return super(Integer, self).inverse_transform(Xt).astype(self.dtype)
+            return inv_transform
 
     @property
     def bounds(self):
