@@ -202,7 +202,7 @@ class Real(Dimension):
             - If `"log-uniform"`, points are sampled uniformly between
               `log(lower, base)` and `log(upper, base)` where log
               has base `base`.
-     
+
         * `base` [int]:
             The logarithmic base to use for a log-uniform prior.
             - Default 10, otherwise commonly 2.
@@ -250,8 +250,9 @@ class Real(Dimension):
                     [Identity(), Normalize(low, high)])
             else:
                 self.transformer = Pipeline(
-                    [LogN(self.base), Normalize(np.log10(low) / self.log_base,
-                                                np.log10(high) / self.log_base)]
+                    [LogN(self.base),
+                     Normalize(np.log10(low) / self.log_base,
+                               np.log10(high) / self.log_base)]
                 )
         else:
             if self.prior == "uniform":
@@ -332,13 +333,14 @@ class Integer(Dimension):
             Upper bound (inclusive).
 
         * `prior` ["uniform" or "log-uniform", default="uniform"]:
-            Distribution to use when sampling random intgers for this dimension.
+            Distribution to use when sampling random integers for
+            this dimension.
             - If `"uniform"`, intgers are sampled uniformly between the lower
               and upper bounds.
             - If `"log-uniform"`, intgers are sampled uniformly between
               `log(lower, base)` and `log(upper, base)` where log
               has base `base`.
-              
+
         * `base` [int]:
             The logarithmic base to use for a log-uniform prior.
             - Default 10, otherwise commonly 2.
@@ -381,8 +383,9 @@ class Integer(Dimension):
             else:
 
                 self.transformer = Pipeline(
-                    [LogN(self.base), Normalize(np.log10(low) / self.log_base,
-                                                np.log10(high) / self.log_base)]
+                    [LogN(self.base),
+                     Normalize(np.log10(low) / self.log_base,
+                               np.log10(high) / self.log_base)]
                 )
         else:
             if self.prior == "uniform":
