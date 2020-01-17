@@ -413,9 +413,7 @@ class Integer(Dimension):
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        return np.round(
-            super(Integer, self).inverse_transform(Xt)
-        ).astype(np.int)
+        return super(Integer, self).inverse_transform(Xt).astype(np.int64)
 
     @property
     def bounds(self):
