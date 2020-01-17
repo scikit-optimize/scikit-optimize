@@ -496,7 +496,8 @@ def normalize_dimensions(dimensions):
                 transformed_dimensions.append(
                     Integer(dimension.low, dimension.high,
                             name=dimension.name,
-                            transform="normalize")
+                            transform="normalize",
+                            dtype=dimension.dtype)
                     )
             else:
                 raise RuntimeError("Unknown dimension type "
