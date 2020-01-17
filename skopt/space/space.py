@@ -171,7 +171,7 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 
 class Real(Dimension):
-    def __init__(self, low, high, prior="uniform", transform=None, name=None):
+    def __init__(self, low, high, prior="uniform", transform=None, name=None, dtype=np.float):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -199,6 +199,10 @@ class Real(Dimension):
 
         * `name` [str or None]:
             Name associated with the dimension, e.g., "learning rate".
+
+        * `dtype` [type]:
+            float type which will be used in inverse_transform,
+            can be float, np.float (default).
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -207,7 +211,10 @@ class Real(Dimension):
         self.high = high
         self.prior = prior
         self.name = name
-
+        self.dtype = dtype
+        if dtype not in [float, np.float]:
+            raise ValueError("dtype be 'float', 'np.float'"
+                             " got {}".format(self.dtype))
         if transform is None:
             transform = "identity"
 
@@ -257,10 +264,14 @@ class Real(Dimension):
         """Inverse transform samples from the warped space back into the
            orignal space.
         """
-        return np.clip(
+        inv_transform = np.clip(
             super(Real, self).inverse_transform(Xt).astype(np.float),
             self.low, self.high
             )
+        if self.dtype == float:
+            return getattr(inv_transform, "tolist", lambda: value)()
+        else:
+            return inv_transform
 
     @property
     def bounds(self):
@@ -321,7 +332,7 @@ class Integer(Dimension):
 
         * `dtype` [type]:
             integer type which will be used in inverse_transform,
-            can be int, np.int16, np.uint32, np.int32, np.int64.
+            can be int, np.int16, np.uint32, np.int32, np.int64 (default).
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -331,8 +342,8 @@ class Integer(Dimension):
         self.name = name
         self.dtype = dtype
         if dtype not in [int, np.int16, np.uint32, np.int32, np.int64]:
-            raise ValueError("dtype be 'int', 'np.int16', 'np.uint32', 'np.int32'"
-                             "or 'np.int64'"
+            raise ValueError("dtype be 'int', 'np.int16', 'np.uint32',"
+                             "'np.int32' or 'np.int64'"
                              " got {}".format(self.dtype))
 
         if transform is None:

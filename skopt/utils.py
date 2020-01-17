@@ -490,7 +490,8 @@ def normalize_dimensions(dimensions):
                 transformed_dimensions.append(
                     Real(dimension.low, dimension.high, dimension.prior,
                          name=dimension.name,
-                         transform="normalize")
+                         transform="normalize",
+                         dtype=dimension.dtype)
                     )
             elif isinstance(dimension, Integer):
                 transformed_dimensions.append(
