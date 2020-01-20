@@ -208,5 +208,5 @@ def test_gp_regressor():
         assert_array_almost_equal(gpr.predict(enc.transform(X[:2])), y[:2])
     else:
         gpr.fit(X, y)
-        assert_array_almost_equal(gpr.predict(X, y))
+        assert_array_almost_equal(gpr.predict(X), y)
         assert_array_almost_equal(gpr.predict(X[:2]), y[:2])
