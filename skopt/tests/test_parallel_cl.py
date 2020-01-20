@@ -3,8 +3,8 @@ skopt, where constant liar parallelization strategy is used.
 """
 
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
+from numpy.testing import assert_equal
+from numpy.testing import assert_raises
 
 from skopt.space import Real
 from skopt import Optimizer
