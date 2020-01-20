@@ -1,7 +1,11 @@
 import numpy as np
 from scipy import optimize
 from scipy.spatial.distance import pdist, squareform
-from sklearn.preprocessing import OrdinalEncoder
+try:
+    from sklearn.preprocessing import OrdinalEncoder
+    UseOrdinalEncoder = True
+except ImportError:
+    UseOrdinalEncoder = False
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 import pytest
@@ -193,10 +197,16 @@ def test_gp_regressor():
         ["ham", "spam", "spam"]])
     y = rng.randn(3)
     hm = HammingKernel(length_scale=[1.0, 1.0, 1.0])
-    enc = OrdinalEncoder()
-    enc.fit(X)
+    if UseOrdinalEncoder:
+        enc = OrdinalEncoder()
+        enc.fit(X)
 
     gpr = GaussianProcessRegressor(hm)
-    gpr.fit(enc.transform(X), y)
-    assert_array_almost_equal(gpr.predict(enc.transform(X)), y)
-    assert_array_almost_equal(gpr.predict(enc.transform(X[:2])), y[:2])
+    if UseOrdinalEncoder:
+        gpr.fit(enc.transform(X), y)
+        assert_array_almost_equal(gpr.predict(enc.transform(X)), y)
+        assert_array_almost_equal(gpr.predict(enc.transform(X[:2])), y[:2])
+    else:
+        gpr.fit(X, y)
+        assert_array_almost_equal(gpr.predict(X, y))
+        assert_array_almost_equal(gpr.predict(X[:2]), y[:2])
