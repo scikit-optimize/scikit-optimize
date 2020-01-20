@@ -1,8 +1,8 @@
 import numpy as np
 from scipy import optimize
 from scipy.spatial.distance import pdist, squareform
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
 import pytest
 
 from skopt.learning.gaussian_process import GaussianProcessRegressor
