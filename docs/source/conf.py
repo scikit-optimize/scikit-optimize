@@ -17,9 +17,11 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import os
-import pkg_resources
+# import pkg_resources
+import versioneer
 
-__version__ = pkg_resources.get_distribution('skopt').version
+#  __version__ = pkg_resources.get_distribution('skopt').version
+__version__ = versioneer.get_version()
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 # -- Project information -----------------------------------------------------
