@@ -18,8 +18,10 @@
 
 import os
 # import pkg_resources
+import sys
+lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
+sys.path.append(lib_path)
 import versioneer
-
 #  __version__ = pkg_resources.get_distribution('skopt').version
 __version__ = versioneer.get_version()
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
