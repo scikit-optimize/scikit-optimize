@@ -1,23 +1,9 @@
-.. _acquisition-functions:
+.. module:: skopt.acquisition
 
-``skopt.acquisition``, acquisition functions
-============================================
+acquisition
+===========
 
-Overview
---------
-
-.. currentmodule:: skopt.acquisition
-
-.. autosummary::
-
-   gaussian_acquisition_1D
-   gaussian_ei
-   gaussian_lcb
-   gaussian_pi
-
-
-Details
--------
-
-.. automodule:: skopt.acquisition
-   :members:
+.. autofunction:: gaussian_acquisition_1D
+.. autofunction:: gaussian_ei
+.. autofunction:: gaussian_lcb
+.. autofunction:: gaussian_pi
