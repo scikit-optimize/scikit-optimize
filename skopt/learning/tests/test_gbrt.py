@@ -6,10 +6,9 @@ from scipy import stats
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
+from numpy.testing import assert_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_almost_equal
 
 from skopt.learning import GradientBoostingQuantileRegressor
 
@@ -44,12 +43,15 @@ def test_gbrt_base_estimator():
 
     base = RandomForestRegressor()
     rgr = GradientBoostingQuantileRegressor(base_estimator=base)
-    assert_raise_message(ValueError, 'type GradientBoostingRegressor',
-                         rgr.fit, X, y)
+    with pytest.raises(ValueError):
+        # 'type GradientBoostingRegressor',
+        rgr.fit(X, y)
 
     base = GradientBoostingRegressor()
     rgr = GradientBoostingQuantileRegressor(base_estimator=base)
-    assert_raise_message(ValueError, 'quantile loss', rgr.fit, X, y)
+    with pytest.raises(ValueError):
+        # 'quantile loss'
+        rgr.fit(X, y)
 
     base = GradientBoostingRegressor(loss='quantile', n_estimators=20)
     rgr = GradientBoostingQuantileRegressor(base_estimator=base)
@@ -82,7 +84,8 @@ def test_gbrt_with_std():
     assert_array_equal(model.predict(X_).shape, (len(X_)))
 
     l, c, h = model.predict(X_, return_quantiles=True).T
-    assert_equal(l.shape, c.shape, h.shape)
+    assert_equal(l.shape, c.shape)
+    assert_equal(c.shape, h.shape)
     assert_equal(l.shape[0], X_.shape[0])
 
     mean, std = model.predict(X_, return_std=True)
