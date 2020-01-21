@@ -19,8 +19,9 @@
 import os
 # import pkg_resources
 import sys
+import skopt
 
-__version__ = "0.6"
+__version__ = skopt.__version__
 #  __version__ = pkg_resources.get_distribution('skopt').version
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
