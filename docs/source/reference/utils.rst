@@ -3,28 +3,16 @@
 ``skopt.utils``, utility functions
 ==================================
 
-Overview
---------
-
 This is a list of public utility functions. Other functions in this module
 are meant for internal use.
 
 .. currentmodule:: skopt
 
-.. autosummary::
-
-   utils.check_x_in_space
-   utils.cook_estimator
-   utils.dimensions_aslist
-   utils.expected_minimum
-   utils.dump
-   utils.load
-   utils.point_asdict
-   utils.point_aslist
-
-
-Details
--------
-
-.. automodule:: skopt.utils
-   :members:
+.. autofunction::utils.check_x_in_space
+.. autofunction::utils.cook_estimator
+.. autofunction::utils.dimensions_aslist
+.. autofunction::utils.expected_minimum
+.. autofunction::utils.dump
+.. autofunction::utils.load
+.. autofunction::utils.point_asdict
+.. autofunction::utils.point_aslist
