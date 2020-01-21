@@ -134,9 +134,6 @@ class BayesSearchCV(BaseSearchCV):
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
-
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using

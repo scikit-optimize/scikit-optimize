@@ -103,8 +103,8 @@ def plot_regret(*args, **kwargs):
 
         - if `OptimizeResult`, then draw the corresponding single trace;
         - if list of `OptimizeResult`, then draw the corresponding cumulative
-        regret traces in transparency, along with the average cumulative regret
-        trace;
+            regret traces in transparency, along with the average cumulative
+            regret trace;
         - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
           an `OptimizeResult` or a list of `OptimizeResult`.
 
