@@ -15,7 +15,6 @@ cd deploy
 git rm -r notebooks/*
 cd ..
 cp -r ${HOME}/doc/skopt/* deploy
-
 # Move into deployment directory
 cd deploy
 
