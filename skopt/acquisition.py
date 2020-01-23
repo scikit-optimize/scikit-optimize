@@ -150,7 +150,7 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the probability of improvement to calculate the acquisition values.
 
-    The conditional probability `P(y=f(x) | x)`form a gaussian with a
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a
     certain mean and standard deviation approximated by the model.
 
     The PI condition is derived by computing ``E[u(f(x))]``
@@ -233,7 +233,7 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
-    The conditional probability `P(y=f(x) | x)`form a gaussian with a certain
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a certain
     mean and standard deviation approximated by the model.
 
     The EI condition is derived by computing ``E[u(f(x))]``

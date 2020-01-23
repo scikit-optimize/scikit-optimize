@@ -185,7 +185,7 @@ class EarlyStopper(object):
 
 
 class DeltaXStopper(EarlyStopper):
-    """Stop the optimization when |x1 - x2| < `delta`
+    """Stop the optimization when ``|x1 - x2| < delta``
 
     If the last two positions at which the objective has been evaluated
     are less than `delta` apart stop the optimization procedure.
