@@ -3,4 +3,4 @@ numpy
 matplotlib
 pandas
 ipywidgets
-sphinx-copybutton
+nbsphinx
