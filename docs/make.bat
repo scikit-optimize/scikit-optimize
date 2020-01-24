@@ -25,7 +25,8 @@ if errorlevel 9009 (
 	echo.http://sphinx-doc.org/
 	exit /b 1
 )
-
+md \Q ".\source\notebooks"
+copy "..\examples\*.*" ".\source\notebooks"
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS%
 goto end
 

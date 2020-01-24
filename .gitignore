@@ -10,6 +10,9 @@ dist/
 .cache/
 .pytest_cache/
 docs/build
+docs/source/notebooks
+docs/source/auto_examples
+docs/source/modules
 # mac OS users
 .DS_Store
 

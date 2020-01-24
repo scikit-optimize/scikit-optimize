@@ -29,6 +29,21 @@ Plot made using ``skopt.plots.plot_objective``.
    development
    reference/index
 
+
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Example notebooks:
+
+    Ask and tell <notebooks/ask-and-tell.ipynb>
+    Bayesian optimization <notebooks/bayesian-optimization.ipynb>
+    Hyperparameter optimization <notebooks/hyperparameter-optimization.ipynb>
+    Parallel optimization <notebooks/parallel-optimization.ipynb>
+    Sklearn gridsearchcv replacement <notebooks/sklearn-gridsearchcv-replacement.ipynb>
+    Store and load results <notebooks/store-and-load-results.ipynb>
+    Strategy comparison <notebooks/strategy-comparison.ipynb>
+    Visualizing results <notebooks/visualizing-results.ipynb>
+
 Indices and tables
 ==================
 
