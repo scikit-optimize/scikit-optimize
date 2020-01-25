@@ -1,7 +1,6 @@
 .. _bayessearchcv:
-
-``skopt.BayesSearchCV``, GridSearchCV compatible estimator
-==========================================================
+BayesSearchCV, a GridSearchCV compatible estimator
+==================================================
 
 Use ``BayesSearchCV`` as a replacement for scikit-learn's GridSearchCV.
 

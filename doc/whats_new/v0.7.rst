@@ -1,0 +1,11 @@
+Version 0.7
+===========
+
+New features
+------------
+
+Bug fixes
+---------
+
+Maintenance
+-----------

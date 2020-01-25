@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+{% set title = 'scikit-optimize: sequential model-based optimization in Python' %}
+{% block content %}
+<div class="container-fluid sk-landing-bg py-3">
+  <div class="container sk-landing-container">
+    <div class="row">
+      <div class="col-md-6 mb-3 mb-md-0">
+        <h1 class="sk-landing-header text-white text-monospace">scikit-optimize</h1>
+        <h4 class="sk-landing-subheader text-white font-italic mb-3">Sequential model-based optimization in Python</h4>
+        <a class="btn sk-landing-btn mb-1" href="{{ pathto('getting_started') }}" role="button">Getting Started</a>
+        <a class="btn sk-landing-btn mb-1" href="whats_new/v{{ version }}.html" role="button">What's New in {{ release }}</a>
+        <a class="btn sk-landing-btn mb-1" href="https://github.com/scikit-learn/scikit-learn" role="button">GitHub</a>
+      </div>
+      <div class="col-md-6 d-flex">
+        <ul class="sk-landing-header-body">
+          <li>Sequential model-based optimization</li>
+          <li>Built on NumPy, SciPy, and Scikit-Learn</li>
+          <li>Open source, commercially usable - BSD license</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container sk-landing-container pt-3 body" role="main">
+  <div class="row no-gutters">
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="modules/bayessearchcv.html"><h4 class="sk-card-title card-title">BayesSearchCV</h4></a>
+          <p class="card-text">Scikit-learn hyperparameter search wrapper.</p>
+          <p class="card-text"> Search for parameters of machine learning models that result in best cross-validation performance</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/bayessearchcv.html">BayesSearchCV</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/sklearn-gridsearchcv-replacement.html"  aria-label="sklearn-gridsearchcv-replacement">
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="modules/space.html"><h4 class="sk-card-title card-title">Tuning</h4></a>
+          <p class="card-text">Tuning a scikit-learn estimator with skopt</p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/hyperparameter-optimization.html"  aria-label="Tuning the hyper-parameters ">
+          <img src="_images/sphx_glr_hyperparameter-optimization_001.png" class="sk-index-img" alt="Tuning the hyper-parameters">
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="modules/plots.html"><h4 class="sk-card-title card-title">Visualizing</h4></a>
+          <p class="card-text">Visualizing optimization results</p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/visualizing-results.html"  aria-label="Visualizing">
+          <img src="_images/sphx_glr_visualizing-results_006.png" class="sk-index-img" alt="Visualizing">
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="modules/minimize_functions.html"><h4 class="sk-card-title card-title">Comparing surrogate models</h4></a>
+          <p class="card-text">Comparing surrogate models</p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/strategy-comparison.html"  aria-label="Comparing surrogate models">
+          <img src="_images/sphx_glr_strategy-comparison_002.png" class="sk-index-img" alt="Comparing surrogate models">
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="model_selection.html#model-selection"><h4 class="sk-card-title card-title">Model selection</h4></a>
+          <p class="card-text">Comparing, validating and choosing parameters and models.</p>
+          <p class="card-text"><strong>Applications:</strong> Improved accuracy via parameter tuning</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/grid_search.html#grid-search">grid search</a>,
+          <a href="modules/cross_validation.html#cross-validation">cross validation</a>,
+          <a href="modules/model_evaluation.html#model-evaluation">metrics</a>,
+          and <a href="modules/decomposition.html#decompositions">more...</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/model_selection/plot_multi_metric_evaluation.html"  aria-label="Model selection">
+            <img src="_images/sphx_glr_plot_multi_metric_evaluation_thumb.png" class="sk-index-img" alt="Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV">
+          </a>
+        </div>
+          <a href="auto_examples/index.html#model-selection" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid sk-landing-bg-more-info py-3">
+  <div class="container sk-landing-container">
+    <div class="row">
+      <div class="col-md-4">
+        <h4 class="sk-landing-call-header">News</h4>
+        <ul class="sk-landing-call-list list-unstyled">
+        <li><strong>On-going development:</strong>
+        <a href="whats_new/v0.7.html"><strong>What's new</strong> (Changelog)</a>
+        </li>
+        <li><strong>April 2018.</strong> scikit-optimize 0.6  (<a href="whats_new/v0.6.html">Changelog</a>).
+        <li><strong>Mar 2018.</strong> scikit-optimize 0.5  (<a href="whats_new/v0.5.html">Changelog</a>).
+        <li><strong>Aug 2017.</strong> scikit-optimize 0.4 (<a href="whats_new/v0.4.html">Changelog</a>).
+        <li><strong>Feb 2017.</strong> scikit-optimize 0.3  (<a href="whats_new/v0.3.html">Changelog</a>).
+        <li><strong>Oct 2016.</strong> scikit-optimize 0.2  (<a href="whats_new/v0.2.html">Changelog</a>).
+        <li><strong>Aug 2016.</strong> scikit-optimize 0.1  (<a href="whats_new/v0.1.html">Changelog</a>).
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <h4 class="sk-landing-call-header">Community</h4>
+        <ul class="sk-landing-call-list list-unstyled">
+        <li><strong>Questions?</strong> See <a href="https://stackoverflow.com/questions/tagged/scikit-optimize">stackoverflow</a></li>
+        <li><strong>Gitter:</strong> <a href="https://gitter.im/scikit-optimize/Lobby">gitter.im/scikit-optimize</a></li>
+        </ul>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

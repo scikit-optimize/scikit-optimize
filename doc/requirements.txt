@@ -3,4 +3,5 @@ numpy
 matplotlib
 pandas
 ipywidgets
-nbsphinx
+sphinx
+sphinx-gallery
