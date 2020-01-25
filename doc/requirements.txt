@@ -5,3 +5,4 @@ pandas
 ipywidgets
 sphinx
 sphinx-gallery
+numpydoc
