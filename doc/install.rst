@@ -1,3 +1,5 @@
+.. _installation-instructions:
+============
 Installation
 ============
 

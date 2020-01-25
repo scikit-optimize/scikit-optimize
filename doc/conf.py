@@ -136,6 +136,10 @@ html_theme_path = ['themes']
 # html_theme_options = {}
 html_short_title = 'scikit-optimize'
 
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = 'image/logo.png'
+
 html_favicon = 'image/favicon.ico'
 
 # Additional templates that should be rendered to pages, maps page names to
