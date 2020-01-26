@@ -156,8 +156,8 @@ class BayesSearchCV(BaseSearchCV):
         If ``'True'``, the ``cv_results_`` attribute will include training
         scores.
 
-    Example
-    -------
+    Examples
+    --------
 
     from skopt import BayesSearchCV
     # parameter ranges are specified by one of below

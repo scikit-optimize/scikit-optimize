@@ -4,11 +4,14 @@ Interruptible optimization runs with checkpoints
 ================================================
 
 Christian Schell, Mai 2018
+Reformatted by Holger Nahrstaedt 2020
 
+.. currentmodule:: skopt
 Problem statement
 =================
 
-Optimization runs can take a very long time and even run for multiple days. If for some reason the process has to be interrupted results are irreversibly lost, and the routine has to start over from the beginning.
+Optimization runs can take a very long time and even run for multiple days.
+If for some reason the process has to be interrupted results are irreversibly lost, and the routine has to start over from the beginning.
 
 With the help of the `CheckpointSaver` callback the optimizer's current state can be saved after each iteration, allowing to restart from that point at any time.
 

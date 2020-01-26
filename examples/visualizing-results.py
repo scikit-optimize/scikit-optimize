@@ -4,6 +4,9 @@ Visualizing optimization results
 ================================
 
 Tim Head, August 2016.
+Reformatted by Holger Nahrstaedt 2020
+
+.. currentmodule:: skopt
 
 Bayesian optimization or sequential model-based optimization uses a surrogate
 model to model the expensive to evaluate objective function `func`. It is

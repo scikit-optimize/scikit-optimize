@@ -28,20 +28,20 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 from github_link import make_linkcode_resolve
 import sphinx_gallery
 
-__version__ = skopt.__version__
+__version__ = ".".join(skopt.__version__.split(".")[:2])
 #  __version__ = pkg_resources.get_distribution('skopt').version
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 # -- Project information -----------------------------------------------------
 
 project = 'scikit-optimize'
-copyright = '2017, The scikit-optimize contributors.'
+copyright = '2017 - 2020, The scikit-optimize contributors.'
 author = 'The scikit-optimize contributors'
 
 # The short X.Y version
 version = __version__
 # The full version, including alpha/beta/rc tags
-release = __version__
+release = "v" + str(float(__version__.split("+")[0][1:]) + 0.1)
 
 # -- General configuration ---------------------------------------------------
 
@@ -173,7 +173,6 @@ html_use_index = False
 html_theme_path = ['themes']
 
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
@@ -250,6 +249,7 @@ intersphinx_mapping = {
 
 binder_branch = 'master'
 
+
 class SubSectionTitleOrder:
     """Sort example gallery by title of subsection.
     Assumes README.txt exists for all subsections and uses the subsection with
@@ -307,7 +307,10 @@ sphinx_gallery_conf = {
 # thumbnails for the front page of the scikit-learn home page.
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
-carousel_thumbs = {'sphx_glr_plot_ask-and-tell_001.png': 600}
+carousel_thumbs = {'sphx_glr_plot_ask-and-tell_002.png': 600,
+                   'sphx_glr_bayesian-optimization_004.png': 600,
+                   'sphx_glr_strategy-comparison_002.png': 600,
+                   'sphx_glr_visualizing-results_008.png': 600}
 
 
 # enable experimental module so that experimental estimators can be
@@ -373,7 +376,6 @@ warnings.filterwarnings("ignore", category=UserWarning,
 
 # Reduces the output of estimators
 # sklearn.set_config(print_changed_only=True)
-
 
 
 # -- Extension configuration -------------------------------------------------

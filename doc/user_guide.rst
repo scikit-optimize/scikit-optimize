@@ -24,7 +24,7 @@ User Guide
    modules/bayessearchcv
    modules/callbacks
    modules/optimizer
+   modules/minimize_functions
    modules/plots
    modules/space
    modules/utils
-

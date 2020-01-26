@@ -5,7 +5,6 @@ Tuning a scikit-learn estimator with `skopt`
 
 Gilles Louppe, July 2016
 Katie Malone, August 2016
-
 Reformatted by Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
