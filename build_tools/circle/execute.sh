@@ -19,6 +19,5 @@ mkdir -p ${HOME}/doc/skopt/notebooks
 cp ${SKOPT_HOME}/examples/*md ${HOME}/doc/skopt/notebooks
 find ${SKOPT_HOME}/examples -name \*_files -exec cp -r {} ${HOME}/doc/skopt/notebooks \;
 python ${SKOPT_HOME}/build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${SKOPT_HOME}/build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
-mkdir -p ${HOME}/doc/skopt/beta
-cd ${SKOPT_HOME}/doc && sphinx-build -M html ${SKOPT_HOME}/doc ${SKOPT_HOME}/doc/_build # -W --keep-going
-mv ${SKOPT_HOME}/doc/_build/html ${HOME}/doc/skopt/beta
+cd ${SKOPT_HOME}/doc && sphinx-build -M html ${SKOPT_HOME}/doc ${SKOPT_HOME}/doc/beta # -W --keep-going
+mv ${SKOPT_HOME}/doc/beta ${HOME}/doc/skopt/

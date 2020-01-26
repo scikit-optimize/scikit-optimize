@@ -6,10 +6,12 @@ Tuning a scikit-learn estimator with `skopt`
 Gilles Louppe, July 2016
 Katie Malone, August 2016
 
+Reformatted by Holger Nahrstaedt 2020
+
+.. currentmodule:: skopt
+
 If you are looking for a `GridSearchCV` replacement checkout
-.. __the BayesSearchCV example:
-    auto_examples/sklearn-gridsearchcv-replacement.html
- instead.
+:ref:`sphx_glr_auto_examples_sklearn-gridsearchcv-replacement.py` instead.
 
 Problem statement
 =================
@@ -28,8 +30,7 @@ Note: scikit-optimize provides a dedicated interface for estimator tuning via
 `BayesSearchCV` class which has a similar interface to those of
 `GridSearchCV`. This class uses functions of skopt to perform hyperparameter
 search efficiently. For example usage of this class, see
-.. __the BayesSearchCV example:
-    auto_examples/sklearn-gridsearchcv-replacement.html
+:ref:`sphx_glr_auto_examples_sklearn-gridsearchcv-replacement.py`
 example notebook.
 """
 print(__doc__)
