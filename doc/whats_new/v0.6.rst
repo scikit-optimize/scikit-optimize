@@ -9,13 +9,9 @@ Highly composite six.
 New features
 ------------
 
-* `plot_regret` function for plotting the cumulative regret;
-The purpose of such plot is to access how much an optimizer
-is effective at picking good points.
-* `CheckpointSaver` that can be used to save a
-checkpoint after each iteration with skopt.dump
-* `Space.from_yaml()`
- to allow for external file to define Space parameters
+* `plot_regret` function for plotting the cumulative regret; The purpose of such plot is to access how much an optimizer is effective at picking good points.
+* `CheckpointSaver` that can be used to save a checkpoint after each iteration with skopt.dump
+* `Space.from_yaml()` to allow for external file to define Space parameters
 
 Bug fixes
 ---------
@@ -29,4 +25,3 @@ Maintenance
 -----------
 
 * Added `versioneer` support, to reduce changes with new version of the `skopt`
-

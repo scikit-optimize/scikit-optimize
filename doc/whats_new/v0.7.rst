@@ -6,6 +6,7 @@ New features
 
 Bug fixes
 ---------
+* Fixed build with newest scikit-learn
 
 Maintenance
 -----------

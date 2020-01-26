@@ -147,15 +147,15 @@ _ = plot_evaluations(forest_res, bins=10)
 # [Friedman (2001)](http://projecteuclid.org/euclid.aos/1013203451)
 # (doi:10.1214/aos/1013203451 section 8.2)
 # as a method for interpreting the importance of input features used in
-# gradient boosting machines. Given a function of $k$ variables
-# $y=f\left(x_1, x_2, ..., x_k\right)$ the
+# gradient boosting machines. Given a function of :math:`k`: variables
+# :math:`y=f\left(x_1, x_2, ..., x_k\right)`: the
 # partial dependence of $f$ on the $i$-th variable $x_i$ is calculated as:
-# $$\phi\left( x_i \right) = \frac{1}{N} \sum^N_{j=0}f\left(x_{1,j}, x_{2,j}, ..., x_i, ..., x_{k,j}\right)$$
+# :math:`\phi\left( x_i \right) = \frac{1}{N} \sum^N_{j=0}f\left(x_{1,j}, x_{2,j}, ..., x_i, ..., x_{k,j}\right)`:
 # with the sum running over a set of $N$ points drawn at random from the
 # search space.
 #
-# The idea is to visulize how the value of $x_j$ influences the function
-# $f$ after averaging out the influence of all other variables.
+# The idea is to visulize how the value of :math:`x_j`: influences the function
+# :math:`f`: after averaging out the influence of all other variables.
 
 from skopt.plots import plot_objective
 

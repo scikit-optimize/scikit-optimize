@@ -27,10 +27,19 @@ class::
       opt.tell(suggested, y)
       print('iteration:', i, suggested, y)
 
-For more read our `introduction to bayesian optimization`_ and the other
+For more read our :ref:`sphx_glr_auto_examples_bayesian-optimization.py` and the other
 `examples`_.
 
+Examples
+========
 
+* :ref:`sphx_glr_auto_examples_ask-and-tell.py`
+* :ref:`sphx_glr_auto_examples_bayesian-optimization.py`
+* :ref:`sphx_glr_auto_examples_hyperparameter-optimization.py`
+* :ref:`sphx_glr_auto_examples_parallel-optimization.py`
+* :ref:`sphx_glr_auto_examples_sklearn-gridsearchcv-replacement.py`
+* :ref:`sphx_glr_auto_examples_store-and-load-results.py`
+* :ref:`sphx_glr_auto_examples_strategy-comparison.py`
+* :ref:`sphx_glr_auto_examples_visualizing-results.py`
 
-.. _introduction to bayesian optimization: https://scikit-optimize.github.io/notebooks/bayesian-optimization.html
 .. _examples: https://github.com/scikit-optimize/scikit-optimize/tree/master/examples
