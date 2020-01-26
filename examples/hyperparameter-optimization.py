@@ -6,18 +6,31 @@ Tuning a scikit-learn estimator with `skopt`
 Gilles Louppe, July 2016
 Katie Malone, August 2016
 
-If you are looking for a `GridSearchCV` replacement checkout [the `BayesSearchCV` example](sklearn-gridsearchcv-replacement.ipynb) instead.
+If you are looking for a `GridSearchCV` replacement checkout
+.. __the BayesSearchCV example:
+    auto_examples/sklearn-gridsearchcv-replacement.html
+ instead.
 
 Problem statement
 =================
 
-Tuning the hyper-parameters of a machine learning model is often carried out using an exhaustive exploration of (a subset of) the space all hyper-parameter configurations (e.g., using `sklearn.model_selection.GridSearchCV`), which often results in a very time consuming operation.
+Tuning the hyper-parameters of a machine learning model is often carried out
+using an exhaustive exploration of (a subset of) the space all hyper-parameter
+configurations (e.g., using `sklearn.model_selection.GridSearchCV`), which
+often results in a very time consuming operation.
 
-In this notebook, we illustrate how to couple `gp_minimize` with sklearn's estimators to tune hyper-parameters using sequential model-based optimisation, hopefully resulting in equivalent or better solutions, but within less evaluations.
+In this notebook, we illustrate how to couple `gp_minimize` with sklearn's
+estimators to tune hyper-parameters using sequential model-based optimisation,
+hopefully resulting in equivalent or better solutions, but within less
+evaluations.
 
-Note: scikit-optimize provides a dedicated interface for estimator tuning via `BayesSearchCV` class which has a similar interface to those of `GridSearchCV`. This class uses functions of skopt to perform hyperparameter search efficiently. For example usage of this class, see [the `BayesSearchCV` example](sklearn-gridsearchcv-replacement.ipynb) example notebook.
-
-
+Note: scikit-optimize provides a dedicated interface for estimator tuning via
+`BayesSearchCV` class which has a similar interface to those of
+`GridSearchCV`. This class uses functions of skopt to perform hyperparameter
+search efficiently. For example usage of this class, see
+.. __the BayesSearchCV example:
+    auto_examples/sklearn-gridsearchcv-replacement.html
+example notebook.
 """
 print(__doc__)
 import numpy as np
@@ -25,7 +38,9 @@ import numpy as np
 #############################################################################
 # Objective
 # =========
-# To tune the hyper-parameters of our model we need to define a model, decide which parameters to optimize, and define the objective function we want to minimize.
+# To tune the hyper-parameters of our model we need to define a model,
+# decide which parameters to optimize, and define the objective function
+# we want to minimize.
 
 from sklearn.datasets import load_boston
 from sklearn.ensemble import GradientBoostingRegressor
@@ -39,15 +54,18 @@ n_features = X.shape[1]
 reg = GradientBoostingRegressor(n_estimators=50, random_state=0)
 
 #############################################################################
-# Next, we need to define the bounds of the dimensions of the search space we want to explore and pick the objective. In this case the cross-validation mean absolute error of a gradient boosting regressor over the Boston dataset, as a function of its hyper-parameters.
+# Next, we need to define the bounds of the dimensions of the search space
+# we want to explore and pick the objective. In this case the cross-validation
+# mean absolute error of a gradient boosting regressor over the Boston
+# dataset, as a function of its hyper-parameters.
 
 from skopt.space import Real, Integer
 from skopt.utils import use_named_args
 
 
-# The list of hyper-parameters we want to optimize. For each one we define the bounds,
-# the corresponding scikit-learn parameter name, as well as how to sample values
-# from that dimension (`'log-uniform'` for the learning rate)
+# The list of hyper-parameters we want to optimize. For each one we define the
+# bounds, the corresponding scikit-learn parameter name, as well as how to
+# sample values from that dimension (`'log-uniform'` for the learning rate)
 space  = [Integer(1, 5, name='max_depth'),
           Real(10**-5, 10**0, "log-uniform", name='learning_rate'),
           Integer(1, n_features, name='max_features'),
@@ -55,8 +73,8 @@ space  = [Integer(1, 5, name='max_depth'),
           Integer(1, 100, name='min_samples_leaf')]
 
 # this decorator allows your objective function to receive a the parameters as
-# keyword arguments. This is particularly convenient when you want to set scikit-learn
-# estimator parameters
+# keyword arguments. This is particularly convenient when you want to set
+# scikit-learn estimator parameters
 @use_named_args(space)
 def objective(**params):
     reg.set_params(**params)
@@ -67,7 +85,8 @@ def objective(**params):
 #############################################################################
 # Optimize all the things!
 # ========================
-# With these two pieces, we are now ready for sequential model-based optimisation. Here we use gaussian process-based optimisation.
+# With these two pieces, we are now ready for sequential model-based
+# optimisation. Here we use gaussian process-based optimisation.
 
 from skopt import gp_minimize
 res_gp = gp_minimize(objective, space, n_calls=50, random_state=0)
