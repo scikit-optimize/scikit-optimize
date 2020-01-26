@@ -1,17 +1,21 @@
 """
-# Comparing surrogate models
+==========================
+Comparing surrogate models
+==========================
 
 Tim Head, July 2016.
 
-Bayesian optimization or sequential model-based optimization uses a surrogate model
-to model the expensive to evaluate function `func`. There are several choices
-for what kind of surrogate model to use. This notebook compares the performance of:
+Bayesian optimization or sequential model-based optimization uses a surrogate
+model to model the expensive to evaluate function `func`. There are several
+choices for what kind of surrogate model to use. This notebook compares the
+performance of:
 
 * gaussian processes,
 * extra trees, and
 * random forests
 
-as surrogate models. A purely random optimization strategy is also used as a baseline.
+as surrogate models. A purely random optimization strategy is also used as
+a baseline.
 """
 
 print(__doc__)
@@ -20,10 +24,12 @@ np.random.seed(123)
 import matplotlib.pyplot as plt
 
 #############################################################################
-## Toy model
+# Toy model
+# =========
 #
-# We will use the `branin` function as toy model for the expensive function. In
-# a real world application this function would be unknown and expensive to evaluate.
+# We will use the `branin` function as toy model for the expensive function.
+# In a real world application this function would be unknown and expensive
+# to evaluate.
 
 from skopt.benchmarks import branin as _branin
 
@@ -49,7 +55,8 @@ def plot_branin():
                                     vmax=fx.max()))
 
     minima = np.array([[-np.pi, 12.275], [+np.pi, 2.275], [9.42478, 2.475]])
-    ax.plot(minima[:, 0], minima[:, 1], "r.", markersize=14, lw=0, label="Minima")
+    ax.plot(minima[:, 0], minima[:, 1], "r.", markersize=14,
+            lw=0, label="Minima")
 
     cb = fig.colorbar(cm)
     cb.set_label("f(x)")
@@ -65,13 +72,16 @@ def plot_branin():
 plot_branin()
 
 #############################################################################
-# This shows the value of the two-dimensional branin function and the three minima.
+# This shows the value of the two-dimensional branin function and
+# the three minima.
 #
 #
-# ## Objective
+# Objective
+# =========
 #
-# The objective of this example is to find one of these minima in as few iterations
-# as possible. One iteration is defined as one call to the `branin` function.
+# The objective of this example is to find one of these minima in as
+# few iterations as possible. One iteration is defined as one call
+# to the `branin` function.
 #
 # We will evaluate each model several times using a different seed for the
 # random number generator. Then compare the average performance of these
@@ -115,19 +125,19 @@ plot = plot_convergence(("dummy_minimize", dummy_res),
                         ("forest_minimize('et)", et_res),
                         true_minimum=0.397887, yscale="log")
 
-plot.legend(loc="best", prop={'size': 6}, numpoints=1);
+plot.legend(loc="best", prop={'size': 6}, numpoints=1)
 
 #############################################################################
-# This plot shows the value of the minimum found (y axis) as a function of the number
-# of iterations performed so far (x axis). The dashed red line indicates the
-# true value of the minimum of the branin function.
+# This plot shows the value of the minimum found (y axis) as a function
+# of the number of iterations performed so far (x axis). The dashed red line
+# indicates the true value of the minimum of the branin function.
 #
-# For the first ten iterations all methods perform equally well as they all start
-# by creating ten random samples before fitting their respective model for the
-# first time. After iteration ten the next point at which to evaluate `branin` is
-# guided by the model, which is where differences start to appear.
+# For the first ten iterations all methods perform equally well as they all
+# start by creating ten random samples before fitting their respective model
+# for the first time. After iteration ten the next point at which
+# to evaluate `branin` is guided by the model, which is where differences
+# start to appear.
 #
 # Each minimizer only has access to noisy observations of the objective
-# function, so as time passes (more iterations) it will start observing values that
-# are below the true value simply because they are fluctuations.
-
+# function, so as time passes (more iterations) it will start observing
+# values that are below the true value simply because they are fluctuations.
