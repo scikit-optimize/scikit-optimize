@@ -20,7 +20,5 @@ cp ${SKOPT_HOME}/examples/*md ${HOME}/doc/skopt/notebooks
 find ${SKOPT_HOME}/examples -name \*_files -exec cp -r {} ${HOME}/doc/skopt/notebooks \;
 python ${SKOPT_HOME}/build_tools/circle/make_doc.py --overwrite --html --html-dir ./doc --template-dir ${SKOPT_HOME}/build_tools/circle/templates --notebook-dir ./doc/skopt/notebooks skopt
 mkdir -p ${HOME}/doc/skopt/rtd
-mkdir -p ${SKOPT_HOME}/docs/source/notebooks
-cp ${SKOPT_HOME}/examples/*ipynb ${SKOPT_HOME}/docs/source/notebooks
-cd ${SKOPT_HOME}/docs && sphinx-build -M html ${SKOPT_HOME}/docs/source ${SKOPT_HOME}/docs/build # -W --keep-going
-mv ${SKOPT_HOME}/docs/build/html ${HOME}/doc/skopt/rtd
+cd ${SKOPT_HOME}/doc && sphinx-build -M html ${SKOPT_HOME}/doc ${SKOPT_HOME}/doc/_build # -W --keep-going
+mv ${SKOPT_HOME}/doc/build/html ${HOME}/doc/skopt/rtd
