@@ -13,7 +13,7 @@ rgb(249, 159, 222)
  */
 
 a {
-  color: #8880D9;
+  color: #82A0B4;
   word-wrap: break-word;
 }
 
@@ -82,7 +82,7 @@ a code {
 a code {
   background-color: transparent;
   font-weight: bold;
-  color: #8880D9;
+  color: #82A0B4;
   border-radius: 0;
   padding: 0;
 }
@@ -92,7 +92,7 @@ img {
 }
 
 span.highlighted {
-    background-color: #fbe54e;
+    background-color: #E9AD85;
 }
 
 div.highlight {
@@ -115,7 +115,7 @@ div.highlight a {
 }
 
 a.sk-landing-btn {
-  background-color: #D98880;
+  background-color: #E9AD85;
   color: black;
   cursor: pointer;
   font-size: 1.1rem;
@@ -123,7 +123,7 @@ a.sk-landing-btn {
 }
 
 a.sk-landing-btn:hover {
-  background-color: #D98880;
+  background-color: #E9AD85;
 }
 
 .sk-donate-btn {
@@ -158,15 +158,15 @@ div.clearer {
 /* Button */
 
 .sk-btn-primary {
-  background-color: #8880D9;
-  border-color: #8880D9;
+  background-color: #85C1E9;
+  border-color: #85C1E9;
   color: white;
 }
 
 .sk-btn-primary:hover,
 .sk-btn-primary:active {
-  background-color: #8880D9;
-  border-color: #8880D9;
+  background-color: #85C1E9;
+  border-color: #85C1E9;
 }
 
 /* Quote */
@@ -230,12 +230,12 @@ img.sk-brand-img {
 }
 
 .navbar-light .navbar-nav a.nav-link:hover, a.sk-dropdown-item:hover {
-  color: rgba(217, 136, 128, 1);
+  color: rgba(233, 173, 133, 1);
 }
 
 a.sk-nav-dropdown-item:active {
   color: white;
-  background-color: rgba(217, 136, 128, 1);
+  background-color: rgba(233, 173, 133, 1);
 }
 
 .nav-more-item-mobile-items {
@@ -277,7 +277,7 @@ div.sk-landing-bg-more-info dd {
 }
 
 div.sk-landing-bg {
-   background-image: linear-gradient(160deg, #d98880 0%, #80d988 50%, #8880d9 100%)
+   background-image: linear-gradient(160deg, #E9AD85 0%, #ffffff 50%, #85C1E9 100%)
 }
 
 div.sk-landing-bg-more-info {
@@ -298,7 +298,7 @@ div.sk-landing-bg-more-info {
 }
 
 .sk-landing-call-header {
-  color: #D98880;
+  color: #E9AD85;
   font-weight: 700;
 }
 
@@ -422,7 +422,7 @@ div.sk-page-content {
 
 .sk-btn-toggle-toc:hover {
   color: white;
-  background-color: #297ca7;
+  background-color: #85C1E9;
 }
 
 footer.sk-content-footer {
@@ -888,7 +888,7 @@ a.brackets::before, span.brackets > a::before {
 }
 
 div.highlight:hover span.copybutton::after {
-  background: #3F556B;
+  background: #82A0B4;
   border-radius: 0.25rem;
   color: white;
   content: attr(title);
@@ -979,8 +979,8 @@ div.sphx-glr-thumbcontainer {
 /* rellinks */
 
 .sk-btn-rellink {
-  background-color: #80D988;
-  border-color: #80D988;
+  background-color: #8FE985;
+  border-color: #8FE985;
   color: white;
   cursor: pointer;
   font-size: 0.8rem;
@@ -1002,8 +1002,8 @@ div.sphx-glr-thumbcontainer {
   position: absolute;
   padding: 0.5rem;
   overflow: hidden;
-  background-color: #80D988;
-  border: 1px solid #80D988;
+  background-color: #8FE985;
+  border: 1px solid #8FE985;
   white-space: pre;
   content: attr(sk-rellink-tooltip);
   text-align: left;
@@ -1100,7 +1100,7 @@ div.install > label:hover {
 
 /* Style the button when the checkbox is checked */
 div.install > input:checked + label {
-  background-color: #ff9c34;
+  background-color: #E9AD85;
   color: white;
 }
 
