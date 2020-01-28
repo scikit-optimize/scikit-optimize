@@ -1,4 +1,3 @@
-**Disclaimer**: This project is no longer actively maintained! *Help is welcome to take over*.
 
 |Logo|
 
