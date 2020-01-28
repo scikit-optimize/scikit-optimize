@@ -1,6 +1,19 @@
 /* Elements */
+/*
+HEX
+#f9e79f
+#9ff9ba
+#9fb1f9
+#f99fde
+
+rgb(249, 231, 159)
+rgb(159, 249, 186)
+rgb(159, 177, 249)
+rgb(249, 159, 222)
+ */
+
 a {
-  color: #2878A2;
+  color: #8880D9;
   word-wrap: break-word;
 }
 
@@ -69,7 +82,7 @@ a code {
 a code {
   background-color: transparent;
   font-weight: bold;
-  color: #2878A2;
+  color: #8880D9;
   border-radius: 0;
   padding: 0;
 }
@@ -102,7 +115,7 @@ div.highlight a {
 }
 
 a.sk-landing-btn {
-  background-color: #ff9c34;
+  background-color: #D98880;
   color: black;
   cursor: pointer;
   font-size: 1.1rem;
@@ -110,7 +123,7 @@ a.sk-landing-btn {
 }
 
 a.sk-landing-btn:hover {
-  background-color: #ffb05f;
+  background-color: #D98880;
 }
 
 .sk-donate-btn {
@@ -145,15 +158,15 @@ div.clearer {
 /* Button */
 
 .sk-btn-primary {
-  background-color: #30799C;
-  border-color: #30799C;
+  background-color: #8880D9;
+  border-color: #8880D9;
   color: white;
 }
 
 .sk-btn-primary:hover,
 .sk-btn-primary:active {
-  background-color: #3499cd;
-  border-color: #3499cd;
+  background-color: #8880D9;
+  border-color: #8880D9;
 }
 
 /* Quote */
@@ -217,12 +230,12 @@ img.sk-brand-img {
 }
 
 .navbar-light .navbar-nav a.nav-link:hover, a.sk-dropdown-item:hover {
-  color: rgba(246, 126, 0, 1);
+  color: rgba(217, 136, 128, 1);
 }
 
 a.sk-nav-dropdown-item:active {
   color: white;
-  background-color: rgba(246, 126, 0, 1);
+  background-color: rgba(217, 136, 128, 1);
 }
 
 .nav-more-item-mobile-items {
@@ -249,7 +262,7 @@ div.sk-landing-container {
 }
 
 div.sk-landing-container .text-white {
-    text-shadow: 0px 0px 8px rgb(42, 98, 128);
+    text-shadow: 0px 0px 8px rgb(136, 128, 217);
 }
 
 ul.sk-landing-header-body {
@@ -264,7 +277,7 @@ div.sk-landing-bg-more-info dd {
 }
 
 div.sk-landing-bg {
-  background-image: linear-gradient(160deg, rgba(42,98,128,1) 0%, rgba(52,153,205,1) 17%, rgba(255,243,211,1) 59%, rgba(255,178,96,1) 100%);
+   background-image: linear-gradient(160deg, #d98880 0%, #80d988 50%, #8880d9 100%)
 }
 
 div.sk-landing-bg-more-info {
@@ -285,7 +298,7 @@ div.sk-landing-bg-more-info {
 }
 
 .sk-landing-call-header {
-  color: #E07200;
+  color: #D98880;
   font-weight: 700;
 }
 
@@ -485,7 +498,7 @@ dl.citation > dd > ol {
 /* docs index */
 
 div.sk-documentation-index-card {
-  border-left: 0.15rem solid #ff9c34;
+  border-left: 0.15rem solid #F9E79F;
 }
 div.sk-documentation-index-card:hover {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
@@ -493,7 +506,7 @@ div.sk-documentation-index-card:hover {
 
 a.sk-documentation-index-anchor:hover {
   text-decoration: none;
-  color: #2878A2;
+  color: #9FB1F9;
 }
 
 .sk-documentation-index-header {
@@ -966,8 +979,8 @@ div.sphx-glr-thumbcontainer {
 /* rellinks */
 
 .sk-btn-rellink {
-  background-color: #ff9c34;
-  border-color: #ff9c34;
+  background-color: #80D988;
+  border-color: #80D988;
   color: white;
   cursor: pointer;
   font-size: 0.8rem;
@@ -989,8 +1002,8 @@ div.sphx-glr-thumbcontainer {
   position: absolute;
   padding: 0.5rem;
   overflow: hidden;
-  background-color: #ff9c34;
-  border: 1px solid #ff9c34;
+  background-color: #80D988;
+  border: 1px solid #80D988;
   white-space: pre;
   content: attr(sk-rellink-tooltip);
   text-align: left;
