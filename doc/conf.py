@@ -41,7 +41,7 @@ author = 'The scikit-optimize contributors'
 # The short X.Y version
 version = __version__
 # The full version, including alpha/beta/rc tags
-release = "v" + str(float(__version__.split("+")[0][1:]) + 0.1)
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 
