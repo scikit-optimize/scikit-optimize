@@ -22,6 +22,7 @@ find . -delete
 # Generate notebooks and remove other files from examples folder
 GENERATED_NOTEBOOKS_DIR=.generated-notebooks
 cp -r $TMP_CONTENT_DIR/examples $GENERATED_NOTEBOOKS_DIR
+rm $GENERATED_NOTEBOOKS_DIR/utils.py
 
 find $GENERATED_NOTEBOOKS_DIR -name '*.py' -exec sphx_glr_python_to_jupyter.py '{}' +
 NON_NOTEBOOKS=$(find $GENERATED_NOTEBOOKS_DIR -type f | grep -v '\.ipynb')
