@@ -13,6 +13,7 @@ echo "Copying built files"
 git clone -b master "git@github.com:scikit-optimize/scikit-optimize.github.io" deploy
 cd deploy
 git rm -r notebooks/*
+git rm -r rtd/*
 cd ..
 cp -r ${HOME}/doc/skopt/* deploy
 # Move into deployment directory

@@ -13,7 +13,7 @@ rgb(249, 159, 222)
  */
 
 a {
-  color: #82A0B4;
+  color: #14496c;
   word-wrap: break-word;
 }
 
@@ -510,7 +510,7 @@ a.sk-documentation-index-anchor:hover {
 }
 
 .sk-documentation-index-header {
-  background-color: #cde8ef;
+  background-color: #d4e9f7;
   padding: 0.5rem;
   border-radius: 0 1rem;
   text-align: center;
@@ -979,8 +979,8 @@ div.sphx-glr-thumbcontainer {
 /* rellinks */
 
 .sk-btn-rellink {
-  background-color: #8FE985;
-  border-color: #8FE985;
+  background-color: #E9AD85;
+  border-color: #E9AD85;
   color: white;
   cursor: pointer;
   font-size: 0.8rem;
@@ -1002,8 +1002,8 @@ div.sphx-glr-thumbcontainer {
   position: absolute;
   padding: 0.5rem;
   overflow: hidden;
-  background-color: #8FE985;
-  border: 1px solid #8FE985;
+  background-color: #E9AD85;
+  border: 1px solid #E9AD85;
   white-space: pre;
   content: attr(sk-rellink-tooltip);
   text-align: left;
