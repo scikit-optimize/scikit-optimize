@@ -20,12 +20,9 @@ time.
 
 This is useful, for example,
 
-* if you don't know how long the process will take and cannot hog
-    computational resources forever
-* if there might be system failures due to shaky infrastructure
-    (or colleagues...)
-* if you want to adjust some parameters and continue with the already obtained
-    results
+* if you don't know how long the process will take and cannot hog computational resources forever
+* if there might be system failures due to shaky infrastructure (or colleagues...)
+* if you want to adjust some parameters and continue with the already obtained results
 
 """
 print(__doc__)
@@ -123,10 +120,11 @@ gp_minimize(obj_fun,            # the function to minimize
 # =================
 #
 # * **changes in search space:** You can use this technique to interrupt
-# the search, tune the search space and continue the optimization. Note
-# that the optimizers will complain if `x0` contains parameter values not
-# covered by the dimension definitions, so in many cases shrinking the
-# search space will not work without deleting the offending runs from
-# `x0` and `y0`.
+#   the search, tune the search space and continue the optimization. Note
+#   that the optimizers will complain if `x0` contains parameter values not
+#   covered by the dimension definitions, so in many cases shrinking the
+#   search space will not work without deleting the offending runs from
+#   `x0` and `y0`.
 # * see :ref:`sphx_glr_auto_examples_store-and-load-results.py`
+#
 # for more information on how the results get saved and possible caveats
