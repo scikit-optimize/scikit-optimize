@@ -2,6 +2,16 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+try:
+    import builtins
+except ImportError:
+    # Python 2 compat: just to be able to declare that Python >=3.5 is needed.
+    import __builtin__ as builtins
+
+# This is a bit (!) hackish: we are setting a global variable so that the
+# main skopt __init__ can detect if it is being loaded by the setup
+# routine
+builtins.__SKOPT_SETUP__ = True
 
 import skopt
 

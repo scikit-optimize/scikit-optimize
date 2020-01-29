@@ -45,24 +45,15 @@ The development version can be installed through:
 
 Run the tests by executing `pytest` in the top level directory.
 """
+import sys
+try:
+    # This variable is injected in the __builtins__ by the build
+    # process. It is used to enable importing subpackages of sklearn when
+    # the binaries are not built
+    __SKOPT_SETUP__
+except NameError:
+    __SKOPT_SETUP__ = False
 
-from . import acquisition
-from . import benchmarks
-from . import callbacks
-from . import learning
-from . import optimizer
-
-from . import space
-from .optimizer import dummy_minimize
-from .optimizer import forest_minimize
-from .optimizer import gbrt_minimize
-from .optimizer import gp_minimize
-from .optimizer import Optimizer
-from .searchcv import BayesSearchCV
-from .space import Space
-from .utils import dump
-from .utils import expected_minimum
-from .utils import load
 
 # PEP0440 compatible formatted version, see:
 # https://www.python.org/dev/peps/pep-0440/
@@ -83,22 +74,44 @@ from .utils import load
 __version__ = "0.7.rc2"
 
 
-__all__ = (
-    "acquisition",
-    "benchmarks",
-    "callbacks",
-    "learning",
-    "optimizer",
-    "plots",
-    "space",
-    "gp_minimize",
-    "dummy_minimize",
-    "forest_minimize",
-    "gbrt_minimize",
-    "Optimizer",
-    "dump",
-    "load",
-    "expected_minimum",
-    "BayesSearchCV",
-    "Space"
-)
+if __SKOPT_SETUP__:
+    sys.stderr.write('Partial import of skopt during the build process.\n')
+    # We are not importing the rest of scikit-optimize during the build
+    # process, as it may not be compiled yet
+else:
+    from . import acquisition
+    from . import benchmarks
+    from . import callbacks
+    from . import learning
+    from . import optimizer
+
+    from . import space
+    from .optimizer import dummy_minimize
+    from .optimizer import forest_minimize
+    from .optimizer import gbrt_minimize
+    from .optimizer import gp_minimize
+    from .optimizer import Optimizer
+    from .searchcv import BayesSearchCV
+    from .space import Space
+    from .utils import dump
+    from .utils import expected_minimum
+    from .utils import load
+    __all__ = (
+        "acquisition",
+        "benchmarks",
+        "callbacks",
+        "learning",
+        "optimizer",
+        "plots",
+        "space",
+        "gp_minimize",
+        "dummy_minimize",
+        "forest_minimize",
+        "gbrt_minimize",
+        "Optimizer",
+        "dump",
+        "load",
+        "expected_minimum",
+        "BayesSearchCV",
+        "Space"
+    )
