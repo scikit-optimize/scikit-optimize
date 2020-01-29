@@ -1,0 +1,12 @@
+Version 0.7
+===========
+
+New features
+------------
+
+Bug fixes
+---------
+* Fixed build with newest scikit-learn
+
+Maintenance
+-----------
