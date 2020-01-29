@@ -1,0 +1,8 @@
+ipykernel
+numpy
+matplotlib
+pandas
+ipywidgets
+sphinx
+sphinx-gallery
+numpydoc
