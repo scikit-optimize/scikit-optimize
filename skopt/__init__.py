@@ -45,7 +45,6 @@ The development version can be installed through:
 
 Run the tests by executing `pytest` in the top level directory.
 """
-import sys
 try:
     # This variable is injected in the __builtins__ by the build
     # process. It is used to enable importing subpackages of sklearn when
@@ -71,10 +70,10 @@ except NameError:
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "0.7rc3"
-
+__version__ = "0.7"
 
 if __SKOPT_SETUP__:
+    import sys
     sys.stderr.write('Partial import of skopt during the build process.\n')
     # We are not importing the rest of scikit-optimize during the build
     # process, as it may not be compiled yet
