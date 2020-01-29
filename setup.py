@@ -2,12 +2,13 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-import versioneer
 
+import skopt
+
+VERSION = skopt.__version__
 
 setup(name='scikit-optimize',
-      version=versioneer.get_version(),
-      cmdclass=versioneer.get_cmdclass(),
+      version=VERSION,
       description='Sequential model-based optimization toolbox.',
       long_description=open('README.rst').read(),
       url='https://scikit-optimize.github.io/',
