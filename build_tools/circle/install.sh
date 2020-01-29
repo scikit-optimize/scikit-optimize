@@ -1,3 +1,4 @@
+conda update -n base conda
 conda create -n testenv --yes python pip pytest nose
 source activate testenv
 
