@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: continuumio/miniconda3:4.7.12.1
+      - image: continuumio/miniconda3
     steps:
       - checkout
       - restore_cache:
