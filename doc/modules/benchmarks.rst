@@ -4,3 +4,4 @@
 
 Benchmarks
 ==========
+A collection of benchmark problems.

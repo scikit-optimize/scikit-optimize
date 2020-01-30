@@ -14,20 +14,20 @@ the optimization early by returning `True`.
 Monitoring callbacks
 --------------------
 
-* VerboseCallback
-* TimerCallback
+* :class:`VerboseCallback`
+* :class:`TimerCallback`
 
 Early stopping callbacks
 ------------------------
 
-* DeltaXStopper
-* DeadlineStopper
-* DeltaXStopper
-* DeltaYStopper
-* EarlyStopper
+* :class:`DeltaXStopper`
+* :class:`DeadlineStopper`
+* :class:`DeltaXStopper`
+* :class:`DeltaYStopper`
+* :class:`EarlyStopper`
 
 Other callbacks
 ---------------
 
-* CheckpointSaver
+* :class:`CheckpointSaver`
 

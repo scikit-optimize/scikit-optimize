@@ -4,6 +4,7 @@
 
 Plotting tools
 ==============
+Plotting functions.
 
 * :class:`partial_dependence`
 * :class:`plot_convergence`

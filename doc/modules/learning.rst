@@ -4,3 +4,4 @@
 
 Learning
 ========
+Machine learning extensions for model-based optimization.
