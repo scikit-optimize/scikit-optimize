@@ -9,7 +9,7 @@ Reformatted by Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
 
-If you are looking for a `GridSearchCV` replacement checkout
+If you are looking for a :obj:`sklearn.model_selection.GridSearchCV` replacement checkout
 :ref:`sphx_glr_auto_examples_sklearn-gridsearchcv-replacement.py` instead.
 
 Problem statement
@@ -17,17 +17,17 @@ Problem statement
 
 Tuning the hyper-parameters of a machine learning model is often carried out
 using an exhaustive exploration of (a subset of) the space all hyper-parameter
-configurations (e.g., using `sklearn.model_selection.GridSearchCV`), which
+configurations (e.g., using :obj:`sklearn.model_selection.GridSearchCV`), which
 often results in a very time consuming operation.
 
-In this notebook, we illustrate how to couple `gp_minimize` with sklearn's
+In this notebook, we illustrate how to couple :class:`gp_minimize` with sklearn's
 estimators to tune hyper-parameters using sequential model-based optimisation,
 hopefully resulting in equivalent or better solutions, but within less
 evaluations.
 
 Note: scikit-optimize provides a dedicated interface for estimator tuning via
-`BayesSearchCV` class which has a similar interface to those of
-`GridSearchCV`. This class uses functions of skopt to perform hyperparameter
+:class:`BayesSearchCV` class which has a similar interface to those of
+:obj:`sklearn.model_selection.GridSearchCV`. This class uses functions of skopt to perform hyperparameter
 search efficiently. For example usage of this class, see
 :ref:`sphx_glr_auto_examples_sklearn-gridsearchcv-replacement.py`
 example notebook.

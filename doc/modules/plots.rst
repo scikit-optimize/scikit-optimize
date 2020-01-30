@@ -5,8 +5,8 @@
 Plotting tools
 ==============
 
-.. autofunction:: partial_dependence
-.. autofunction:: plot_convergence
-.. autofunction:: plot_evaluations
-.. autofunction:: plot_objective
-.. autofunction:: plot_regret
+* :class:`partial_dependence`
+* :class:`plot_convergence`
+* :class:`plot_evaluations`
+* :class:`plot_objective`
+* :class:`plot_regret`

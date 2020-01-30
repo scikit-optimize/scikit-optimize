@@ -14,7 +14,7 @@ Optimization runs can take a very long time and even run for multiple days.
 If for some reason the process has to be interrupted results are irreversibly
 lost, and the routine has to start over from the beginning.
 
-With the help of the `CheckpointSaver` callback the optimizer's current state
+With the help of the :class:`callbacks.CheckpointSaver` callback the optimizer's current state
 can be saved after each iteration, allowing to restart from that point at any
 time.
 
@@ -42,7 +42,7 @@ IS_RUN_WITH_SPHINX_GALLERY = main_dir != os.getcwd()
 #
 # We will use pretty much the same optimization problem as in the
 # :ref:`sphx_glr_auto_examples_bayesian-optimization.py`
-# notebook. Additionaly we will instantiate the `CheckpointSaver`
+# notebook. Additionally we will instantiate the :class:`callbacks.CheckpointSaver`
 # and pass it to the minimizer:
 
 from skopt import gp_minimize
@@ -79,14 +79,14 @@ gp_minimize(obj_fun,                       # the function to minimize
 # tells you that he had had an update scheduled for Sunday noon – who
 # doesn't like updates?
 #
-# `gp_minimize` did not finish, and there is no `res` variable with the
+# :class:`gp_minimize` did not finish, and there is no `res` variable with the
 # actual results!
 #
 # Restoring the last checkpoint
 # =============================
 #
-# Luckily we employed the `CheckpointSaver` and can now restore the latest
-# result with `skopt.load`
+# Luckily we employed the :class:`callbacks.CheckpointSaver` and can now restore the latest
+# result with :class:`skopt.load`
 # (see :ref:`sphx_glr_auto_examples_store-and-load-results.py` for more
 # information on that)
 

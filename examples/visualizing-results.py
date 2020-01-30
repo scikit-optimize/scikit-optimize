@@ -19,16 +19,16 @@ objective is evaluated. If everything is working as expected, early samples
  will be spread over the whole parameter space and later samples should
  cluster around the minimum.
 
-The `plot_evaluations()` function helps with visualizing the location and
+The :class:`plots.plot_evaluations` function helps with visualizing the location and
 order in which samples are evaluated for objectives with an arbitrary
 number of dimensions.
 
-The `plot_objective()` function plots the partial dependence of the objective,
+The :class:`plots.plot_objective` function plots the partial dependence of the objective,
 as represented by the surrogate model, for each dimension and as pairs of the
 input dimensions.
 
 All of the minimizers implemented in `skopt` return an [`OptimizeResult`]()
-instance that can be inspected. Both `plot_evaluations` and `plot_objective`
+instance that can be inspected. Both :class:`plots.plot_evaluations` and :class:`plots.plot_objective`
 are helpers that do just that
 """
 
@@ -42,15 +42,15 @@ import matplotlib.pyplot as plt
 # Toy models
 # ==========
 #
-# We will use two different toy models to demonstrate how `plot_evaluations()`
+# We will use two different toy models to demonstrate how :class:`plots.plot_evaluations`
 # works.
 #
-# The first model is the `branin` function which has two dimensions and three
+# The first model is the :class:`benchmarks.branin` function which has two dimensions and three
 # minima.
 #
 # The second model is the `hart6` function which has six dimension which makes
 # it hard to visualize. This will show off the utility of
-# `plot_evaluations()`.
+# :class:`plots.plot_evaluations`.
 
 from skopt.benchmarks import branin as branin
 from skopt.benchmarks import hart6 as hart6_
@@ -64,7 +64,7 @@ def hart6(x):
 # Starting with `branin`
 # ======================
 #
-# To start let's take advantage of the fact that `branin` is a simple
+# To start let's take advantage of the fact that :class:`benchmarks.branin` is a simple
 # function which can be visualised in two dimensions.
 
 from matplotlib.colors import LogNorm
@@ -105,8 +105,8 @@ plot_branin()
 # =================================
 #
 # Next we use an extra trees based minimizer to find one of the minima of the
-# `branin` function. Then we visualize at which points the objective is being
-# evaluated using `plot_evaluations()`.
+# :class:`benchmarks.branin` function. Then we visualize at which points the objective is being
+# evaluated using :class:`plots.plot_evaluations`.
 
 from functools import partial
 from skopt.plots import plot_evaluations
@@ -122,7 +122,7 @@ forest_res = forest_minimize(branin, bounds, n_calls=n_calls,
 _ = plot_evaluations(forest_res, bins=10)
 
 #############################################################################
-# `plot_evaluations()` creates a grid of size `n_dims` by `n_dims`.
+# :class:`plots.plot_evaluations` creates a grid of size `n_dims` by `n_dims`.
 # The diagonal shows histograms for each of the dimensions. In the lower
 # triangle (just one plot in this case) a two dimensional scatter plot of all
 # points is shown. The order in which points were evaluated is encoded in the
@@ -134,7 +134,7 @@ _ = plot_evaluations(forest_res, bins=10)
 # of the true miminum. The histograms show that the objective is evaluated
 # more often at locations near to one of the three minima.
 #
-# Using `plot_objective()` we can visualise the one dimensional partial
+# Using :class:`plots.plot_objective` we can visualise the one dimensional partial
 # dependence of the surrogate model for each dimension. The contour plot in
 # the bottom left corner shows the two dimensional partial dependence. In this
 # case this is the same as simply plotting the objective as it only has two
@@ -144,8 +144,7 @@ _ = plot_evaluations(forest_res, bins=10)
 # ------------------------
 #
 # Partial dependence plots were proposed by
-# [Friedman (2001)](http://projecteuclid.org/euclid.aos/1013203451)
-# (doi:10.1214/aos/1013203451 section 8.2)
+# [Friedman (2001)]_
 # as a method for interpreting the importance of input features used in
 # gradient boosting machines. Given a function of :math:`k`: variables
 # :math:`y=f\left(x_1, x_2, ..., x_k\right)`: the
@@ -154,7 +153,7 @@ _ = plot_evaluations(forest_res, bins=10)
 # with the sum running over a set of $N$ points drawn at random from the
 # search space.
 #
-# The idea is to visulize how the value of :math:`x_j`: influences the function
+# The idea is to visualize how the value of :math:`x_j`: influences the function
 # :math:`f`: after averaging out the influence of all other variables.
 
 from skopt.plots import plot_objective
@@ -171,7 +170,7 @@ _ = plot_objective(forest_res)
 # Random sampling
 # ===============
 #
-# Compare this to a mimizer which picks points at random. There is no
+# Compare this to a minimizer which picks points at random. There is no
 # structure visible in the order in which it evaluates the objective. Because
 # there is no model involved in the process of picking sample points at
 # random, we can not plot the partial dependence of the model.
@@ -185,12 +184,12 @@ _ = plot_evaluations(dummy_res, bins=10)
 # =========================
 #
 # Visualising what happens in two dimensions is easy, where
-# `plot_evaluations()` and `plot_objective()` start to be useful is when the
+# :class:`plots.plot_evaluations` and :class:`plots.plot_objective` start to be useful is when the
 # number of dimensions grows. They take care of many of the more mundane
 # things needed to make good plots of all combinations of the dimensions.
 #
-# The next example uses `hart6` which has six dimensions and shows both
-# `plot_evaluations()` and `plot_objective()`.
+# The next example uses class:`benchmarks.hart6` which has six dimensions and shows both
+# :class:`plots.plot_evaluations` and :class:`plots.plot_objective`.
 
 bounds = [(0., 1.),] * 6
 
@@ -207,7 +206,7 @@ _ = plot_objective(forest_res)
 # ==============================
 #
 # To make things more interesting let's add two dimension to the problem.
-# As `hart6` only depends on six dimensions we know that for this problem
+# As :class:`benchmarks.hart6` only depends on six dimensions we know that for this problem
 # the new dimensions will be "flat" or uninformative. This is clearly visible
 # in both the placement of samples and the partial dependence plots.
 
@@ -221,5 +220,4 @@ forest_res = forest_minimize(hart6, bounds, n_calls=n_calls,
 _ = plot_evaluations(forest_res)
 _ = plot_objective(forest_res)
 
-
-
+# .. [Friedman (2001)] `doi:10.1214/aos/1013203451 section 8.2 <http://projecteuclid.org/euclid.aos/1013203451>`

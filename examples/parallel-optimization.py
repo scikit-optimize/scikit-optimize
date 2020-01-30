@@ -4,9 +4,7 @@ Parallel optimization
 =====================
 
 Iaroslav Shcherbatyi, May 2017.
-
 Reviewed by Manoj Kumar and Tim Head.
-
 Reformatted by Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
@@ -18,7 +16,7 @@ For many practical black box optimization problems expensive objective can be
 evaluated in parallel at multiple points. This allows to get more objective
 evaluations per unit of time, which reduces the time necessary to reach good
 objective values when appropriate optimization algorithms are used, see for
-example results in [1] and the references therein.
+example results in [1]_ and the references therein.
 
 
 One such example task is a selection of number and activation function of a
@@ -74,11 +72,11 @@ print(min(optimizer.yi))  # print the best objective found
 # set to `None` (default value) then a single point (but not a list of points)
 # will be returned.
 #
-# The default "minimum constant liar" [1] parallelization strategy is used in
+# The default "minimum constant liar" [1]_ parallelization strategy is used in
 # the example, which allows to obtain multiple points for evaluation with a
 # single call to the `ask` method with any surrogate or acquisition function.
 # Parallelization strategy can be set using the "strategy" argument of `ask`.
 # For supported parallelization strategies see the documentation of
 # scikit-optimize.
 #
-# [1] [https://hal.archives-ouvertes.fr/hal-00732512/document](https://hal.archives-ouvertes.fr/hal-00732512/document) .
+# .. [1] `<https://hal.archives-ouvertes.fr/hal-00732512/document>`_
