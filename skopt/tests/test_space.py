@@ -47,6 +47,7 @@ def test_dimensions():
     check_dimension(Integer, (1., 4.), 2)
     check_categorical(("a", "b", "c", "d"), "b")
     check_categorical((1., 2., 3., 4.), 2.)
+    check_categorical((1, 2, 3, 4), 2)
 
 
 @pytest.mark.fast_test
@@ -271,6 +272,22 @@ def test_space_consistency():
     s3 = Space([np.array([True, False])])
     assert s1 == s2 == s3
 
+    # Categoricals Integer
+    s1 = Space([Categorical([1, 2, 3])])
+    s2 = Space([Categorical([1, 2, 3])])
+    s3 = Space([[1, 2, 3]])
+    a1 = s1.rvs(n_samples=10, random_state=0)
+    a2 = s2.rvs(n_samples=10, random_state=0)
+    a3 = s3.rvs(n_samples=10, random_state=0)
+    assert_equal(s1, s2)
+    assert_array_equal(a1, a2)
+    assert_equal(s1, s3)
+    assert_array_equal(a1, a3)
+
+    s1 = Space([(True, False)])
+    s2 = Space([Categorical([True, False])])
+    s3 = Space([np.array([True, False])])
+    assert s1 == s2 == s3
 
 @pytest.mark.fast_test
 def test_space_api():

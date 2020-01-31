@@ -1,4 +1,5 @@
 from numpy.testing import assert_array_equal
+import numpy as np
 import pytest
 
 from skopt import gp_minimize
@@ -102,3 +103,14 @@ def test_use_given_estimator_with_max_model_size():
                       model_queue_size=1)
     assert len(res['models']) == 1
     assert res['models'][-1].noise == noise_correct
+
+
+@pytest.mark.slow_test
+def test_categorical_integer():
+    def f(params):
+        return 0
+
+    dims = [[1]]
+    res = gp_minimize(f, dims, n_calls=1, n_random_starts=1,
+                      random_state=1)
+    assert np.allclose(res.x_iters, dims)
