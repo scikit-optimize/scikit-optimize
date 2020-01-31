@@ -10,6 +10,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 from .transformers import CategoricalEncoder
+from .transformers import StringEncoder
 from .transformers import Normalize
 from .transformers import Identity
 from .transformers import LogN
@@ -45,11 +46,12 @@ def check_dimension(dimension, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `transform` ["identity", "normalize", "onehot" optional]:
+    * `transform` ["identity", "normalize", "string", "onehot" optional]:
         - For `Categorical` dimensions, the following transformations are
           supported.
 
           - "onehot" (default) one-hot transformation of the original space.
+          - "string" string transformation of the original space.
           - "identity" same as the original space.
 
         - For `Real` and `Integer` dimensions, the following transformations
@@ -459,9 +461,11 @@ class Categorical(Dimension):
             Prior probabilities for each category. By default all categories
             are equally likely.
 
-        * `transform` ["onehot", "identity", default="onehot"] :
+        * `transform` ["onehot", "string", "identity", default="onehot"] :
             - "identity", the transformed space is the same as the original
               space.
+            -  "string",  the transformed space is a string encoded
+              representation of the original space.
             - "onehot", the transformed space is a one-hot encoded
               representation of the original space.
 
@@ -475,14 +479,18 @@ class Categorical(Dimension):
         if transform is None:
             transform = "onehot"
         self.transform_ = transform
-        if transform not in ["identity", "onehot"]:
-            raise ValueError("Expected transform to be 'identity' or 'onehot' "
+        if transform not in ["identity", "onehot", "string"]:
+            raise ValueError("Expected transform to be 'identity', 'string' or 'onehot' "
                              "got {}".format(transform))
         if transform == "onehot":
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
+        elif transform == "string":
+            self.transformer = StringEncoder()
+            self.transformer.fit(self.categories)
         else:
             self.transformer = Identity()
+            self.transformer.fit(self.categories)
 
         self.prior = prior
 

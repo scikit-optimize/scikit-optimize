@@ -456,6 +456,18 @@ def test_categorical_identity():
 
 
 @pytest.mark.fast_test
+def test_categorical_string():
+    categories = [1, 2, 3]
+    categories_transformed = ["1", "2", "3"]
+    cat = Categorical(categories, transform="string")
+    samples = cat.rvs(100)
+    assert all([t in categories for t in cat.rvs(100)])
+    transformed = cat.transform(samples)
+    assert all([t in categories_transformed for t in transformed])
+    assert_array_equal(samples, cat.inverse_transform(transformed))
+
+
+@pytest.mark.fast_test
 def test_categorical_distance():
     categories = ['car', 'dog', 'orange']
     cat = Categorical(categories)

@@ -131,7 +131,7 @@ def test_mixed_categoricals():
         loss = int(x) + y * z
         return loss
 
-    res = gp_minimize(objective, space, n_calls=12)
+    res = gp_minimize(objective, space, n_calls=12, random_state=1)
     assert res["x"] == ['1', 4, 1.0]
 
 
@@ -147,5 +147,5 @@ def test_mixed_categoricals2():
         loss = int(x) + y
         return loss
 
-    res = gp_minimize(objective, space, n_calls=10)
+    res = gp_minimize(objective, space, n_calls=12, random_state=1)
     assert res["x"] == ['1', 4]
