@@ -1,5 +1,4 @@
 from functools import partial
-import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 import pytest
 
@@ -66,4 +65,4 @@ def test_categorical_integer():
     dims = [[1]]
     res = forest_minimize(f, dims, n_calls=1, random_state=1,
                           n_random_starts=1)
-    assert np.allclose(res.x_iters, dims)
+    assert res.x_iters[0][0] == dims[0][0]

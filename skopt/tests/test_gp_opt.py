@@ -1,5 +1,4 @@
 from numpy.testing import assert_array_equal
-import numpy as np
 import pytest
 
 from skopt import gp_minimize
@@ -113,4 +112,4 @@ def test_categorical_integer():
     dims = [[1]]
     res = gp_minimize(f, dims, n_calls=1, n_random_starts=1,
                       random_state=1)
-    assert np.allclose(res.x_iters, dims)
+    assert res.x_iters[0][0] == dims[0][0]

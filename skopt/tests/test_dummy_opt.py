@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 from skopt import dummy_minimize
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
@@ -25,4 +24,4 @@ def test_dummy_categorical_integer():
 
     dims = [[1]]
     res = dummy_minimize(f, dims, n_calls=1, random_state=1)
-    assert np.allclose(res.x_iters, dims)
+    assert res.x_iters[0][0] == dims[0][0]
