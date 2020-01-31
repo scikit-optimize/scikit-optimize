@@ -212,7 +212,7 @@ class Real(Dimension):
         self.prior = prior
         self.name = name
         self.dtype = dtype
-        if dtype not in [float, np.float]:
+        if dtype not in [float, np.float, np.float32, np.float64]:
             raise ValueError("dtype be 'float', 'np.float'"
                              " got {}".format(self.dtype))
         if transform is None:
@@ -265,19 +265,21 @@ class Real(Dimension):
            orignal space.
         """
         inv_transform = np.clip(
-            super(Real, self).inverse_transform(Xt).astype(np.float),
+            np.array(super(Real, self).inverse_transform(Xt)).astype(np.dtype),
             self.low, self.high
             )
-         # if self.dtype == float:
-         #    return getattr(inv_transform, "tolist", lambda: value)()
-         # else:
-        return inv_transform
+        if self.dtype == float:
+            return getattr(inv_transform, "tolist", lambda: value)()
+        else:
+            return inv_transform
 
     @property
     def bounds(self):
         return (self.low, self.high)
 
     def __contains__(self, point):
+        if isinstance(point, list):
+            point = np.array(point)
         return self.low <= point <= self.high
 
     @property
@@ -333,6 +335,8 @@ class Integer(Dimension):
         * `dtype` [type]:
             integer type which will be used in inverse_transform,
             can be int, np.int16, np.uint32, np.int32, np.int64 (default).
+            When set to int, `inverse_transform` returns a list instead of
+            a numpy array
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -341,10 +345,12 @@ class Integer(Dimension):
         self.high = high
         self.name = name
         self.dtype = dtype
-        if dtype not in [int, np.int16, np.uint32, np.int32, np.int64]:
-            raise ValueError("dtype be 'int', 'np.int16', 'np.uint32',"
-                             "'np.int32' or 'np.int64'"
-                             " got {}".format(self.dtype))
+        if dtype not in [int, np.int8, np.int16, np.int32, np.int64,
+                         np.uint8, np.uint16, np.uint32, np.uint64]:
+            raise ValueError("dtype must be 'int', 'np.int8', 'np.int16',"
+                             "'np.int32', 'np.int64', 'np.uint8',"
+                             "'np.uint16', 'np.uint32', or"
+                             "'np.uint64', but got {}".format(self.dtype))
 
         if transform is None:
             transform = "identity"
@@ -371,12 +377,12 @@ class Integer(Dimension):
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
-           orignal space.
+           original space.
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        inv_transform = super(Integer,
-                              self).inverse_transform(Xt).astype(self.dtype)
+        inv_transform = np.array(super(
+            Integer, self).inverse_transform(Xt)).astype(self.dtype)
         if self.dtype == int:
             return getattr(inv_transform, "tolist", lambda: value)()
         else:
@@ -387,6 +393,8 @@ class Integer(Dimension):
         return (self.low, self.high)
 
     def __contains__(self, point):
+        if isinstance(point, list):
+            point = np.array(point)
         return self.low <= point <= self.high
 
     @property

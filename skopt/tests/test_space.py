@@ -23,7 +23,10 @@ def check_dimension(Dimension, vals, random_val):
     assert_equal(x, Dimension(*vals))
     assert x != Dimension(vals[0], vals[1] + 1)
     assert x != Dimension(vals[0] + 1, vals[1])
-    assert_equal(x.rvs(random_state=1), random_val)
+    y = x.rvs(random_state=1)
+    if isinstance(y, list):
+        y = np.array(y)
+    assert_equal(y, random_val)
 
 
 def check_categorical(vals, random_val):
@@ -47,6 +50,7 @@ def test_dimensions():
     check_dimension(Real, (1, 4), 2.251066014107722)
     check_dimension(Integer, (1, 4), 2)
     check_dimension(Integer, (1., 4.), 2)
+    check_dimension(Integer, (1, 4), 2)
     check_categorical(("a", "b", "c", "d"), "b")
     check_categorical((1., 2., 3., 4.), 2.)
 
@@ -74,7 +78,7 @@ def test_real():
         assert r in a
 
     random_values = a.rvs(random_state=0, n_samples=10)
-    assert_array_equal(random_values.shape, (10))
+    assert len(random_values) == 10
     assert_array_equal(a.transform(random_values), random_values)
     assert_array_equal(a.inverse_transform(random_values), random_values)
 
@@ -84,7 +88,7 @@ def test_real():
         random_val = log_uniform.rvs(random_state=i)
         check_limits(random_val, 10**-5, 10**5)
     random_values = log_uniform.rvs(random_state=0, n_samples=10)
-    assert_array_equal(random_values.shape, (10))
+    assert len(random_values) == 10
     transformed_vals = log_uniform.transform(random_values)
     assert_array_equal(transformed_vals, np.log10(random_values))
     assert_array_equal(
@@ -381,7 +385,7 @@ def test_normalize():
         check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
-    X = rng.randint(2, 31, dtype="int64")
+    X = rng.randint(2, 31, dtype="int")
     # Check transformed values are in [0, 1]
     assert np.all(a.transform(X) <= np.ones_like(X))
     assert np.all(np.zeros_like(X) <= a.transform(X))
