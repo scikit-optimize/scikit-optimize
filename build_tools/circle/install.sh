@@ -5,9 +5,7 @@ source activate testenv
 python -m pip install -e '.[plots]'
 export SKOPT_HOME=$(pwd)
 
-conda install --yes jupyter
-python -m pip install pygments sphinx sphinx_rtd_theme sphinx-gallery numpydoc memory_profiler
-
+python -m pip install sphinx sphinx-gallery numpydoc memory_profiler
 
 # importing matplotlib once builds the font caches. This avoids
 # having warnings in our example notebooks
