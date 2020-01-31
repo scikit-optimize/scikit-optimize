@@ -14,18 +14,15 @@ Optimization runs can take a very long time and even run for multiple days.
 If for some reason the process has to be interrupted results are irreversibly
 lost, and the routine has to start over from the beginning.
 
-With the help of the `CheckpointSaver` callback the optimizer's current state
+With the help of the :class:`callbacks.CheckpointSaver` callback the optimizer's current state
 can be saved after each iteration, allowing to restart from that point at any
 time.
 
 This is useful, for example,
 
-* if you don't know how long the process will take and cannot hog
-    computational resources forever
-* if there might be system failures due to shaky infrastructure
-    (or colleagues...)
-* if you want to adjust some parameters and continue with the already obtained
-    results
+* if you don't know how long the process will take and cannot hog computational resources forever
+* if there might be system failures due to shaky infrastructure (or colleagues...)
+* if you want to adjust some parameters and continue with the already obtained results
 
 """
 print(__doc__)
@@ -45,7 +42,7 @@ IS_RUN_WITH_SPHINX_GALLERY = main_dir != os.getcwd()
 #
 # We will use pretty much the same optimization problem as in the
 # :ref:`sphx_glr_auto_examples_bayesian-optimization.py`
-# notebook. Additionaly we will instantiate the `CheckpointSaver`
+# notebook. Additionally we will instantiate the :class:`callbacks.CheckpointSaver`
 # and pass it to the minimizer:
 
 from skopt import gp_minimize
@@ -82,14 +79,14 @@ gp_minimize(obj_fun,                       # the function to minimize
 # tells you that he had had an update scheduled for Sunday noon – who
 # doesn't like updates?
 #
-# `gp_minimize` did not finish, and there is no `res` variable with the
+# :class:`gp_minimize` did not finish, and there is no `res` variable with the
 # actual results!
 #
 # Restoring the last checkpoint
 # =============================
 #
-# Luckily we employed the `CheckpointSaver` and can now restore the latest
-# result with `skopt.load`
+# Luckily we employed the :class:`callbacks.CheckpointSaver` and can now restore the latest
+# result with :class:`skopt.load`
 # (see :ref:`sphx_glr_auto_examples_store-and-load-results.py` for more
 # information on that)
 
@@ -123,10 +120,11 @@ gp_minimize(obj_fun,            # the function to minimize
 # =================
 #
 # * **changes in search space:** You can use this technique to interrupt
-# the search, tune the search space and continue the optimization. Note
-# that the optimizers will complain if `x0` contains parameter values not
-# covered by the dimension definitions, so in many cases shrinking the
-# search space will not work without deleting the offending runs from
-# `x0` and `y0`.
+#   the search, tune the search space and continue the optimization. Note
+#   that the optimizers will complain if `x0` contains parameter values not
+#   covered by the dimension definitions, so in many cases shrinking the
+#   search space will not work without deleting the offending runs from
+#   `x0` and `y0`.
 # * see :ref:`sphx_glr_auto_examples_store-and-load-results.py`
+#
 # for more information on how the results get saved and possible caveats

@@ -146,7 +146,7 @@ plot_optimizer(opt, x, fx)
 # Let us sample a few more points and plot the optimizer again:
 
 
-for i in range(50):
+for i in range(10):
     next_x = opt.ask()
     f_val = objective(next_x)
     opt.tell(next_x, f_val)

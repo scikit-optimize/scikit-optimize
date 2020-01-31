@@ -4,9 +4,7 @@ Parallel optimization
 =====================
 
 Iaroslav Shcherbatyi, May 2017.
-
 Reviewed by Manoj Kumar and Tim Head.
-
 Reformatted by Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
@@ -18,7 +16,7 @@ For many practical black box optimization problems expensive objective can be
 evaluated in parallel at multiple points. This allows to get more objective
 evaluations per unit of time, which reduces the time necessary to reach good
 objective values when appropriate optimization algorithms are used, see for
-example results in [1] and the references therein.
+example results in [1]_ and the references therein.
 
 
 One such example task is a selection of number and activation function of a
@@ -32,11 +30,9 @@ obtain multiple points for evaluation in parallel. Intended usage of this
 interface is as follows:
 
 1. Initialize instance of the `Optimizer` class from skopt
-2. Obtain n points for evaluation in parallel by calling the `ask` method of
-    an optimizer instance with the `n_points` argument set to n > 0
+2. Obtain n points for evaluation in parallel by calling the `ask` method of an optimizer instance with the `n_points` argument set to n > 0
 3. Evaluate points
-4. Provide points and corresponding objectives using the `tell` method of
-    an optimizer instance
+4. Provide points and corresponding objectives using the `tell` method of an optimizer instance
 5. Continue from step 2 until eg maximum number of evaluations reached
 """
 
@@ -72,15 +68,15 @@ print(min(optimizer.yi))  # print the best objective found
 
 #############################################################################
 # Note that if `n_points` is set to some integer > 0 for the `ask` method, the
-# result will be a list of points, even for `n_points`=1. If the argument is
+# result will be a list of points, even for `n_points` = 1. If the argument is
 # set to `None` (default value) then a single point (but not a list of points)
 # will be returned.
 #
-# The default "minimum constant liar" [1] parallelization strategy is used in
+# The default "minimum constant liar" [1]_ parallelization strategy is used in
 # the example, which allows to obtain multiple points for evaluation with a
 # single call to the `ask` method with any surrogate or acquisition function.
-# Paralellization strategy can be set using the "strategy" argument of `ask`.
+# Parallelization strategy can be set using the "strategy" argument of `ask`.
 # For supported parallelization strategies see the documentation of
 # scikit-optimize.
 #
-# [1] [https://hal.archives-ouvertes.fr/hal-00732512/document](https://hal.archives-ouvertes.fr/hal-00732512/document) .
+# .. [1] `<https://hal.archives-ouvertes.fr/hal-00732512/document>`_

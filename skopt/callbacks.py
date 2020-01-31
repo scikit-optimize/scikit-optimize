@@ -4,14 +4,6 @@ Callbacks are callables which are invoked after each iteration of the optimizer
 and are passed the results "so far". Callbacks can monitor progress, or stop
 the optimization early by returning `True`.
 
-Monitoring callbacks
---------------------
-* VerboseCallback
-* TimerCallback
-
-Early stopping callbacks
-------------------------
-* DeltaXStopper
 """
 try:
     from collections.abc import Callable

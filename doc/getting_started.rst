@@ -1,9 +1,30 @@
-==========
-Quickstart
-==========
+.. currentmodule:: skopt
+===============
+Getting started
+===============
+Scikit-Optimize, or ``skopt``, is a simple and efficient library to
+minimize (very) expensive and noisy black-box functions. It implements
+several methods for sequential model-based optimization. ``skopt`` aims
+to be accessible and easy to use in many contexts.
+
+The library is built on top of NumPy, SciPy and Scikit-Learn.
+
+We do not perform gradient-based optimization. For gradient-based
+optimization algorithms look at
+``scipy.optimize``
+`here <http://docs.scipy.org/doc/scipy/reference/optimize.html>`_.
+
+.. figure:: https://rawgit.com/scikit-optimize/scikit-optimize/master/media/bo-objective.png
+   :alt: Approximated objective
+
+Approximated objective function after 50 iterations of :class:`gp_minimize`.
+Plot made using :class:`plots.plot_objective`.
+
+Finding a minimum
+=================
 
 Find the minimum of the noisy function ``f(x)`` over the range ``-2 < x < 2``
-with ``skopt``::
+with :class:`skopt`::
 
   import numpy as np
   from skopt import gp_minimize
@@ -14,7 +35,7 @@ with ``skopt``::
 
   res = gp_minimize(f, [(-2.0, 2.0)])
 
-For more control over the optimization loop you can use the ``skopt.Optimizer``
+For more control over the optimization loop you can use the :class:`skopt.Optimizer`
 class::
 
   from skopt import Optimizer
@@ -28,18 +49,5 @@ class::
       print('iteration:', i, suggested, y)
 
 For more read our :ref:`sphx_glr_auto_examples_bayesian-optimization.py` and the other
-`examples`_.
+`examples <auto_examples/index.html>`_.
 
-Examples
-========
-
-* :ref:`sphx_glr_auto_examples_ask-and-tell.py`
-* :ref:`sphx_glr_auto_examples_bayesian-optimization.py`
-* :ref:`sphx_glr_auto_examples_hyperparameter-optimization.py`
-* :ref:`sphx_glr_auto_examples_parallel-optimization.py`
-* :ref:`sphx_glr_auto_examples_sklearn-gridsearchcv-replacement.py`
-* :ref:`sphx_glr_auto_examples_store-and-load-results.py`
-* :ref:`sphx_glr_auto_examples_strategy-comparison.py`
-* :ref:`sphx_glr_auto_examples_visualizing-results.py`
-
-.. _examples: https://github.com/scikit-optimize/scikit-optimize/tree/master/examples
