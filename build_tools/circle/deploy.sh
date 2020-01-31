@@ -16,7 +16,12 @@ git rm -r notebooks/*
 git rm -r rtd/*
 git rm -r beta/*
 cd ..
-cp -r ${HOME}/doc/skopt/html/* deploy
+for entry in ${HOME}/doc/skopt/*
+do
+  echo "$entry"
+done
+
+cp -r ${HOME}/doc/skopt/* deploy
 # Move into deployment directory
 cd deploy
 

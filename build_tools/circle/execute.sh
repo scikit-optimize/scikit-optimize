@@ -8,5 +8,5 @@ python -c "import scipy; print('scipy %s' % scipy.__version__)"
 
 
 cd ~
-cd ${SKOPT_HOME}/doc && sphinx-build -M html -d ${SKOPT_HOME}/doc/_build/doctrees  ${SKOPT_HOME}/doc ${SKOPT_HOME}/doc/_build/html # -W --keep-going
-mv ${SKOPT_HOME}/doc/_build/html ${HOME}/doc/skopt/
+cd ${SKOPT_HOME}/doc && sphinx-build -M html ${SKOPT_HOME}/doc ${SKOPT_HOME}/doc/_build # -W --keep-going
+cp -r ${SKOPT_HOME}/doc/_build/html/* ${HOME}/doc/skopt/
