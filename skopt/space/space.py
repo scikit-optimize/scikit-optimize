@@ -73,7 +73,7 @@ def check_dimension(dimension, transform=None):
     # A `Dimension` described by a single value is assumed to be
     # a `Categorical` dimension. This can be used in `BayesSearchCV`
     # to define subspaces that fix one value, e.g. to choose the
-    # model type, see "sklearn-gridsearchcv-replacement.ipynb"
+    # model type, see "sklearn-gridsearchcv-replacement.py"
     # for examples.
     if len(dimension) == 1:
         return Categorical(dimension, transform=transform)
