@@ -292,6 +292,7 @@ class Real(Dimension):
             self.low, self.high
             )
         if self.dtype == float:
+            # necessary, otherwise the type is converted to a numpy type
             return getattr(inv_transform, "tolist", lambda: value)()
         else:
             return inv_transform
@@ -442,6 +443,7 @@ class Integer(Dimension):
         inv_transform = np.array(super(
             Integer, self).inverse_transform(Xt)).astype(self.dtype)
         if self.dtype == int:
+            # necessary, otherwise the type is converted to a numpy type
             return getattr(inv_transform, "tolist", lambda: value)()
         else:
             return inv_transform

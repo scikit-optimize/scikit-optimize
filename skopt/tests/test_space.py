@@ -396,7 +396,8 @@ def test_normalize():
     assert isinstance(X_orig, np.int64)
     assert_array_equal(X_orig, X)
 
-    a = Integer(2, 30, prior="log-uniform", base=2, transform="normalize", dtype=int)
+    a = Integer(2, 30, prior="log-uniform", base=2, transform="normalize",
+                dtype=int)
     for i in range(50):
         check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
