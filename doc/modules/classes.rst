@@ -60,7 +60,7 @@ Functions
     acquisition.gaussian_lcb
     acquisition.gaussian_pi
 
-.. _cluster_ref:
+.. _benchmarks_ref:
 
 :mod:`skopt.benchmarks`: A collection of benchmark problems.
 ============================================================
@@ -192,7 +192,7 @@ details.
     plots.plot_objective
     plots.plot_regret
 
-.. _plots_ref:
+.. _utils_ref:
 
 :mod:`skopt.utils`: Utils functions.
 ====================================

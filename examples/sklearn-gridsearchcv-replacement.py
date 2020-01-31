@@ -11,19 +11,19 @@ Introduction
 ============
 
 This example assumes basic familiarity with
-`scikit-learn <http://scikit-learn.org/stable/index.html>`.
+`scikit-learn <http://scikit-learn.org/stable/index.html>`_.
 
 Search for parameters of machine learning models that result in best
 cross-validation performance is necessary in almost all practical
 cases to get a model with best generalization estimate. A standard
-approach in scikit-learn is using `GridSearchCV` class, which takes
+approach in scikit-learn is using :obj:`sklearn.model_selection.GridSearchCV` class, which takes
 a set of values for every parameter to try, and simply enumerates all
 combinations of parameter values. The complexity of such search grows
 exponentially with the addition of new parameters. A more scalable
-approach is using `RandomizedSearchCV`, which however does not take
+approach is using :obj:`sklearn.model_selection.RandomizedSearchCV`, which however does not take
 advantage of the structure of a search space.
 
-Scikit-optimize provides a drop-in replacement for `GridSearchCV`,
+Scikit-optimize provides a drop-in replacement for :obj:`sklearn.model_selection.GridSearchCV`,
 which utilizes Bayesian Optimization where a predictive model referred
 to as "surrogate" is used to model the search space and utilized to
 arrive at good parameter values combination as soon as possible.
@@ -126,7 +126,7 @@ print("test score: %s" % opt.score(X_test, y_test))
 # Progress monitoring and control using `callback` argument of `fit` method
 # =========================================================================
 #
-# It is possible to monitor the progress of BayesSearchCV with an event
+# It is possible to monitor the progress of :class:`BayesSearchCV` with an event
 # handler that is called on every step of subspace exploration. For single job
 # mode, this is called on every evaluation of model configuration, and for
 # parallel mode, this is called when n_jobs model configurations are evaluated

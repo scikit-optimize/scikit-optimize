@@ -148,7 +148,7 @@ plot_convergence(res);
 # Let us now visually examine
 #
 # 1. The approximation of the fit gp model to the original function.
-# 2. The acquistion values that determine the next point to be queried.
+# 2. The acquisition values that determine the next point to be queried.
 
 from skopt.acquisition import gaussian_ei
 

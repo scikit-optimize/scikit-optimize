@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 # Toy model
 # =========
 #
-# We will use the `branin` function as toy model for the expensive function.
+# We will use the :class:`benchmarks.branin` function as toy model for the expensive function.
 # In a real world application this function would be unknown and expensive
 # to evaluate.
 
@@ -84,7 +84,7 @@ plot_branin()
 #
 # The objective of this example is to find one of these minima in as
 # few iterations as possible. One iteration is defined as one call
-# to the `branin` function.
+# to the :class:`benchmarks.branin` function.
 #
 # We will evaluate each model several times using a different seed for the
 # random number generator. Then compare the average performance of these
@@ -133,12 +133,12 @@ plot.legend(loc="best", prop={'size': 6}, numpoints=1)
 #############################################################################
 # This plot shows the value of the minimum found (y axis) as a function
 # of the number of iterations performed so far (x axis). The dashed red line
-# indicates the true value of the minimum of the branin function.
+# indicates the true value of the minimum of the :class:`benchmarks.branin` function.
 #
 # For the first ten iterations all methods perform equally well as they all
 # start by creating ten random samples before fitting their respective model
 # for the first time. After iteration ten the next point at which
-# to evaluate `branin` is guided by the model, which is where differences
+# to evaluate :class:`benchmarks.branin` is guided by the model, which is where differences
 # start to appear.
 #
 # Each minimizer only has access to noisy observations of the objective

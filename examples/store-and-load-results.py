@@ -15,8 +15,7 @@ for example,
 
 * if you want to share your results with colleagues;
 * if you want to archive and/or document your work;
-* or if you want to postprocess your results in a different Python instance
-    or on an another computer.
+* or if you want to postprocess your results in a different Python instance or on an another computer.
 
 The process of converting an object into a byte stream that can be stored in
 a file is called _serialization_.
@@ -68,17 +67,17 @@ res = gp_minimize(obj_fun,            # the function to minimize
 # optimization results via the `res` object.
 #
 # So how can you store this data in a file? `skopt` conveniently provides
-# functions `skopt.dump()` and `skopt.load()` that handle this for you.
+# functions :class:`skopt.dump` and :class:`skopt.load` that handle this for you.
 # These functions are essentially thin wrappers around the
-# [`joblib`](http://pythonhosted.org/joblib) module's `dump()` and `load()`.
+# `joblib <https://joblib.readthedocs.io/en/latest/>`_ module's :obj:`joblib.dump` and :obj:`joblib.load`.
 #
-# We will now show how to use `skopt.dump()` and `skopt.load()` for storing
+# We will now show how to use :class:`skopt.dump` and :class:`skopt.load` for storing
 # and loading results.
 #
 # Using `skopt.dump()` and `skopt.load()`
 # =======================================
 #
-# For storing optimization results into a file, call the `skopt.dump()`
+# For storing optimization results into a file, call the :class:`skopt.dump`
 # function:
 
 from skopt import dump, load
@@ -86,7 +85,7 @@ from skopt import dump, load
 dump(res, 'result.pkl')
 
 #############################################################################
-# And load from file using `skopt.load()`:
+# And load from file using :class:`skopt.load`:
 
 res_loaded = load('result.pkl')
 
@@ -94,11 +93,10 @@ res_loaded.fun
 
 #############################################################################
 # You can fine-tune the serialization and deserialization process by calling
-# `skopt.dump()` and `skopt.load()` with additional keyword arguments. See the
-# `joblib` documentation
-# ([dump](https://pythonhosted.org/joblib/generated/joblib.dump.html) and
-# [load](https://pythonhosted.org/joblib/generated/joblib.load.html)) for
-# the additional parameters.
+# :class:`skopt.dump` and :class:`skopt.load` with additional keyword arguments. See the
+# `joblib <https://joblib.readthedocs.io/en/latest/>`_ documentation
+# :obj:`joblib.dump` and
+# :obj:`joblib.load` for the additional parameters.
 #
 # For instance, you can specify the compression algorithm and compression
 # level (highest in this case):
@@ -114,10 +112,10 @@ print('Compressed with gz:  {} bytes'.format(getsize('result.gz')))
 # ----------------------------------
 #
 # Notice that if your objective function is non-trivial (e.g. it calls MATLAB
-# engine from Python), it might be not serializable and `skopt.dump()` will
+# engine from Python), it might be not serializable and :class:`skopt.dump` will
 # raise an exception when you try to store the optimization results.
 # In this case you should disable storing the objective function by calling
-# `skopt.dump()` with the keyword argument `store_objective=False`:
+# :class:`skopt.dump` with the keyword argument `store_objective=False`:
 
 dump(res, 'result_without_objective.pkl', store_objective=False)
 
@@ -141,10 +139,10 @@ print('Local variable:', res.specs['args'].keys())
 #   sources.
 # * **Extremely large results objects:** If your optimization results object
 #
-# is extremely large, calling `skopt.dump()` with `store_objective=False` might
+# is extremely large, calling :class:`skopt.dump` with `store_objective=False` might
 # cause performance issues. This is due to creation of a deep copy without the
 # objective function. If the objective function it is not critical to you, you
-# can simply delete it before calling `skopt.dump()`. In this case, no deep
+# can simply delete it before calling :class:`skopt.dump`. In this case, no deep
 # copy is created:
 
 del res.specs['args']['func']
