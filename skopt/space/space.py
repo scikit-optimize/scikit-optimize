@@ -287,10 +287,12 @@ class Real(Dimension):
         """Inverse transform samples from the warped space back into the
            orignal space.
         """
-        inv_transform = np.clip(
-            np.array(super(Real, self).inverse_transform(Xt)).astype(np.dtype),
-            self.low, self.high
-            )
+
+        inv_transform = super(Real, self).inverse_transform(Xt)
+        if isinstance(inv_transform, list):
+            inv_transform = np.array(inv_transform)
+        inv_transform = np.clip(inv_transform,
+                                self.low, self.high).astype(self.dtype)
         if self.dtype == float:
             # necessary, otherwise the type is converted to a numpy type
             return getattr(inv_transform, "tolist", lambda: value)()
@@ -440,13 +442,14 @@ class Integer(Dimension):
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        inv_transform = np.array(super(
-            Integer, self).inverse_transform(Xt)).astype(self.dtype)
+        inv_transform = super(Integer, self).inverse_transform(Xt)
+        if isinstance(inv_transform, list):
+            inv_transform = np.array(inv_transform)
         if self.dtype == int:
             # necessary, otherwise the type is converted to a numpy type
-            return getattr(inv_transform, "tolist", lambda: value)()
+            return getattr(inv_transform.astype(self.dtype), "tolist", lambda: value)()
         else:
-            return inv_transform
+            return inv_transform.astype(self.dtype)
 
     @property
     def bounds(self):

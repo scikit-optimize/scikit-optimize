@@ -386,7 +386,7 @@ def test_normalize():
         check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
-    X = rng.randint(2, 31, dtype="int64")
+    X = rng.randint(2, 31, dtype=np.int64)
     # Check transformed values are in [0, 1]
     assert np.all(a.transform(X) <= np.ones_like(X))
     assert np.all(np.zeros_like(X) <= a.transform(X))
@@ -402,7 +402,7 @@ def test_normalize():
         check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
-    X = rng.randint(2, 31, dtype="int")
+    X = rng.randint(2, 31, dtype=int)
     # Check transformed values are in [0, 1]
     assert np.all(a.transform(X) <= np.ones_like(X))
     assert np.all(np.zeros_like(X) <= a.transform(X))
@@ -410,6 +410,36 @@ def test_normalize():
     # Check inverse transform
     X_orig = a.inverse_transform(a.transform(X))
     assert isinstance(X_orig, int)
+    assert_array_equal(X_orig, X)
+
+    a = Real(0, 1, transform="normalize", dtype=float)
+    for i in range(50):
+        check_limits(a.rvs(random_state=i), 0, 1)
+    assert_array_equal(a.transformed_bounds, (0, 1))
+
+    X = rng.rand()
+    # Check transformed values are in [0, 1]
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
+
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, float)
+    assert_array_equal(X_orig, X)
+
+    a = Real(0, 1, transform="normalize", dtype=np.float64)
+    for i in range(50):
+        check_limits(a.rvs(random_state=i), 0, 1)
+    assert_array_equal(a.transformed_bounds, (0, 1))
+
+    X = np.float64(rng.rand())
+    # Check transformed values are in [0, 1]
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
+
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert type(X_orig) == type(np.float64(1))
     assert_array_equal(X_orig, X)
 
 
