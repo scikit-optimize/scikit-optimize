@@ -1,5 +1,4 @@
 from functools import partial
-
 from sklearn.tree import DecisionTreeClassifier
 import pytest
 
@@ -56,3 +55,14 @@ def test_tree_based_minimize(name, minimizer):
                    [(-2.0, 2.0)], 0.05, 10, 5)
     check_minimize(minimizer, bench4, 1.,
                    [("-2", "-1", "0", "1", "2")], 0.05, 5, 1)
+
+
+@pytest.mark.fast_test
+def test_categorical_integer():
+    def f(params):
+        return 0
+
+    dims = [[1]]
+    res = forest_minimize(f, dims, n_calls=1, random_state=1,
+                          n_random_starts=1)
+    assert res.x_iters[0][0] == dims[0][0]

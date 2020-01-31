@@ -17,22 +17,66 @@ class Transformer(object):
 
 class Identity(Transformer):
     """Identity transform.
-    If dtype is different from None the transform will cast everything to a
-    string and the inverse transform will cast to the type defined in dtype."""
-
-    def __init__(self, dtype=None):
-        super(Identity, self).__init__()
-        self.dtype = dtype
+    """
 
     def transform(self, X):
-        if self.dtype is None:
-            return X
-        return [str(x) for x in X]
-
+        return X
 
     def inverse_transform(self, Xt):
-        if self.dtype is None:
-            return Xt
+        return Xt
+
+
+class StringEncoder(Transformer):
+    """StringEncoder transform.
+       The transform will cast everything to a
+       string and the inverse transform will cast to the type defined in dtype.
+    """
+
+    def __init__(self, dtype=str):
+        super(StringEncoder, self).__init__()
+        self.dtype = dtype
+
+    def fit(self, X):
+        """Fit a list or array of categories. All elements must be from the
+        same type.
+
+        Parameters
+        ----------
+        * `X` [array-like, shape=(n_categories,)]:
+            List of categories.
+        """
+        if len(X) > 0:
+            self.dtype = type(X[0])
+
+    def transform(self, X):
+        """Transform an array of categories to a string encoded representation.
+
+        Parameters
+        ----------
+        * `X` [array-like, shape=(n_samples,)]:
+            List of categories.
+
+        Returns
+        -------
+        * `Xt` [array-like, shape=(n_samples,)]:
+            The string encoded categories.
+        """
+        return [str(x) for x in X]
+
+    def inverse_transform(self, Xt):
+        """Inverse transform string encoded categories back to their original
+           representation.
+
+        Parameters
+        ----------
+        * `Xt` [array-like, shape=(n_samples,)]:
+            String encoded categories.
+
+        Returns
+        -------
+        * `X` [array-like, shape=(n_samples,)]:
+            The original categories.
+        """
         return [self.dtype(x) for x in Xt]
 
 

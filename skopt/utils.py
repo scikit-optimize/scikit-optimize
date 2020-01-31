@@ -473,13 +473,13 @@ def normalize_dimensions(dimensions):
     space = Space(dimensions)
     transformed_dimensions = []
     if space.is_categorical:
-        # recreate the space and explicitly set transform to "identity"
+        # recreate the space and explicitly set transform to "string"
         # this is a special case for GP based regressors
         for dimension in space:
             transformed_dimensions.append(Categorical(dimension.categories,
                                                       dimension.prior,
                                                       name=dimension.name,
-                                                      transform="identity"))
+                                                      transform="string"))
 
     else:
         for dimension in space.dimensions:
