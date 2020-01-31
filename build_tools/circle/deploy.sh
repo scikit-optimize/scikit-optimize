@@ -16,7 +16,7 @@ git rm -r notebooks/*
 git rm -r rtd/*
 git rm -r beta/*
 cd ..
-cp -r ${HOME}/doc/skopt/* deploy
+cp -r ${HOME}/doc/skopt/html/* deploy
 # Move into deployment directory
 cd deploy
 
