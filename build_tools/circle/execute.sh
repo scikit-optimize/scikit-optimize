@@ -14,3 +14,5 @@ for entry in ${SKOPT_HOME}/doc/_build/*
 do
   echo "$entry"
 done
+
+cp -r ${SKOPT_HOME}/doc/_build/html/* ${HOME}/doc/skopt
