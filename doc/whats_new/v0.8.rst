@@ -1,0 +1,11 @@
+Version 0.8
+===========
+
+New features
+------------
+
+Bug fixes
+---------
+
+Maintenance
+-----------

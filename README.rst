@@ -1,4 +1,3 @@
-**Disclaimer**: This project is no longer actively maintained! *Help is welcome to take over*.
 
 |Logo|
 
@@ -39,7 +38,7 @@ Important links
 Install
 -------
 
-The latest released version of scikit-optimize is v0.6, which you can install
+The latest released version of scikit-optimize is v0.7, which you can install
 with:
 ::
 
@@ -137,7 +136,6 @@ The release procedure is almost completely automated. By tagging a new release
 travis will build all required packages and push them to PyPI. To make a release
 create a new issue and work through the following checklist:
 
-* update the version tag in ``setup.py``
 * update the version tag in ``__init__.py``
 * update the version tag mentioned in the README
 * check if the dependencies in ``setup.py`` are valid or need unpinning
@@ -148,7 +146,7 @@ create a new issue and work through the following checklist:
 
 Before making a release we usually create a release candidate. If the next
 release is v0.X then the release candidate should be tagged v0.Xrc1 in
-``setup.py`` and ``__init__.py``. Mark a release candidate as a "pre-release"
+``__init__.py``. Mark a release candidate as a "pre-release"
 on GitHub when you tag it.
 
 
