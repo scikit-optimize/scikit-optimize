@@ -17,7 +17,7 @@ def test_dummy_minimize():
     check_minimize(bench3, -0.9, [(-2.0, 2.0)], 0.05, 100)
 
 
-@pytest.mark.slow_test
+@pytest.mark.fast_test
 def test_dummy_categorical_integer():
     def f(params):
         return 0

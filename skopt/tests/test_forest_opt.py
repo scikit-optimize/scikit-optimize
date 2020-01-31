@@ -57,7 +57,7 @@ def test_tree_based_minimize(name, minimizer):
                    [("-2", "-1", "0", "1", "2")], 0.05, 5, 1)
 
 
-@pytest.mark.slow_test
+@pytest.mark.fast_test
 def test_categorical_integer():
     def f(params):
         return 0

@@ -105,7 +105,7 @@ def test_use_given_estimator_with_max_model_size():
     assert res['models'][-1].noise == noise_correct
 
 
-@pytest.mark.slow_test
+@pytest.mark.fast_test
 def test_categorical_integer():
     def f(params):
         return 0
