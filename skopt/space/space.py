@@ -447,7 +447,8 @@ class Integer(Dimension):
             inv_transform = np.array(inv_transform)
         if self.dtype == int:
             # necessary, otherwise the type is converted to a numpy type
-            return getattr(inv_transform.astype(self.dtype), "tolist", lambda: value)()
+            return getattr(inv_transform.astype(self.dtype),
+                           "tolist", lambda: value)()
         else:
             return inv_transform.astype(self.dtype)
 

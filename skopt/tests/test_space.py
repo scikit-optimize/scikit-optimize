@@ -439,7 +439,7 @@ def test_normalize():
 
     # Check inverse transform
     X_orig = a.inverse_transform(a.transform(X))
-    assert type(X_orig) == type(np.float64(1))
+    assert isinstance(X_orig, np.float64)
     assert_array_equal(X_orig, X)
 
 
