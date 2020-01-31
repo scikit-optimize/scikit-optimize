@@ -480,8 +480,8 @@ class Categorical(Dimension):
             transform = "onehot"
         self.transform_ = transform
         if transform not in ["identity", "onehot", "string"]:
-            raise ValueError("Expected transform to be 'identity', 'string' or 'onehot' "
-                             "got {}".format(transform))
+            raise ValueError("Expected transform to be 'identity', 'string' or"
+                             "'onehot' got {}".format(transform))
         if transform == "onehot":
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
