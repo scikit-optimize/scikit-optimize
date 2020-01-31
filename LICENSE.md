@@ -1,6 +1,6 @@
 New BSD License
 
-Copyright (c) 2016 - scikit-optimize developers.
+Copyright (c) 2016-2020 The scikit-optimize developers.
 
 All rights reserved.
 

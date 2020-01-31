@@ -36,14 +36,17 @@ class Identity(Transformer):
         return [self.dtype(x) for x in Xt]
 
 
-class Log10(Transformer):
-    """Base 10 logarithm transform."""
+class LogN(Transformer):
+    """Base N logarithm transform."""
+
+    def __init__(self, base):
+        self._base = base
 
     def transform(self, X):
-        return np.log10(np.asarray(X, dtype=np.float))
+        return np.log10(np.asarray(X, dtype=np.float)) / np.log10(self._base)
 
     def inverse_transform(self, Xt):
-        return 10.0 ** np.asarray(Xt, dtype=np.float)
+        return self._base ** np.asarray(Xt, dtype=np.float)
 
 
 class CategoricalEncoder(Transformer):
