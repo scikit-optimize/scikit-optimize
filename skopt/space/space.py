@@ -468,10 +468,7 @@ class Categorical(Dimension):
         * `name` [str or None]:
             Name associated with dimension, e.g., "colors".
         """
-        if transform == 'identity':
-            self.categories = tuple([str(c) for c in categories])
-        else:
-            self.categories = tuple(categories)
+        self.categories = tuple(categories)
 
         self.name = name
 
@@ -485,7 +482,7 @@ class Categorical(Dimension):
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
         else:
-            self.transformer = Identity(dtype=type(categories[0]))
+            self.transformer = Identity()
 
         self.prior = prior
 

@@ -17,23 +17,13 @@ class Transformer(object):
 
 class Identity(Transformer):
     """Identity transform.
-    If dtype is different from None the transform will cast everything to a
-    string and the inverse transform will cast to the type defined in dtype."""
-
-    def __init__(self, dtype=None):
-        super(Identity, self).__init__()
-        self.dtype = dtype
+    """
 
     def transform(self, X):
-        if self.dtype is None:
-            return X
-        return [str(x) for x in X]
-
+        return X
 
     def inverse_transform(self, Xt):
-        if self.dtype is None:
-            return Xt
-        return [self.dtype(x) for x in Xt]
+        return Xt
 
 
 class LogN(Transformer):
