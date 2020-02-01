@@ -163,7 +163,8 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
 
-    .. seealso:: functions :class:`skopt.gp_minimize`, :class:`skopt.dummy_minimize`
+    .. seealso:: functions :class:`skopt.gp_minimize`,
+        :class:`skopt.dummy_minimize`
     """
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,

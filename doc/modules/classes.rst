@@ -210,7 +210,6 @@ details.
    :toctree: generated/
    :template: function.rst
 
-    utils.check_x_in_space
     utils.cook_estimator
     utils.dimensions_aslist
     utils.expected_minimum
