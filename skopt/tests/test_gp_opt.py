@@ -7,6 +7,7 @@ from skopt.benchmarks import bench2
 from skopt.benchmarks import bench3
 from skopt.benchmarks import bench4
 from skopt.benchmarks import branin
+from skopt.space.space import Real, Integer, Categorical, Space
 from skopt.utils import cook_estimator
 
 
@@ -102,3 +103,49 @@ def test_use_given_estimator_with_max_model_size():
                       model_queue_size=1)
     assert len(res['models']) == 1
     assert res['models'][-1].noise == noise_correct
+
+
+@pytest.mark.fast_test
+def test_categorical_integer():
+    def f(params):
+        return 0
+
+    dims = [[1]]
+    res = gp_minimize(f, dims, n_calls=1, n_random_starts=1,
+                      random_state=1)
+    assert res.x_iters[0][0] == dims[0][0]
+
+
+def test_mixed_categoricals():
+
+    space = Space([
+        Categorical(name="x", categories=["1", "2", "3"]),
+        Categorical(name="y", categories=[4, 5, 6]),
+        Real(name="z", low=1.0, high=5.0)
+    ])
+
+    def objective(param_list):
+        x = param_list[0]
+        y = param_list[1]
+        z = param_list[2]
+        loss = int(x) + y * z
+        return loss
+
+    res = gp_minimize(objective, space, n_calls=12, random_state=1)
+    assert res["x"] == ['1', 4, 1.0]
+
+
+def test_mixed_categoricals2():
+    space = Space([
+        Categorical(name="x", categories=["1", "2", "3"]),
+        Categorical(name="y", categories=[4, 5, 6])
+    ])
+
+    def objective(param_list):
+        x = param_list[0]
+        y = param_list[1]
+        loss = int(x) + y
+        return loss
+
+    res = gp_minimize(objective, space, n_calls=12, random_state=1)
+    assert res["x"] == ['1', 4]

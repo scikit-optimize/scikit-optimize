@@ -10,6 +10,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 from .transformers import CategoricalEncoder
+from .transformers import StringEncoder
 from .transformers import Normalize
 from .transformers import Identity
 from .transformers import LogN
@@ -45,11 +46,12 @@ def check_dimension(dimension, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `transform` ["identity", "normalize", "onehot" optional]:
+    * `transform` ["identity", "normalize", "string", "onehot" optional]:
         - For `Categorical` dimensions, the following transformations are
           supported.
 
           - "onehot" (default) one-hot transformation of the original space.
+          - "string" string transformation of the original space.
           - "identity" same as the original space.
 
         - For `Real` and `Integer` dimensions, the following transformations
@@ -184,7 +186,7 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 class Real(Dimension):
     def __init__(self, low, high, prior="uniform", base=10, transform=None,
-                 name=None):
+                 name=None, dtype=np.float):
         """Search space dimension that can take on any real value.
 
         Parameters
@@ -217,6 +219,10 @@ class Real(Dimension):
 
         * `name` [str or None]:
             Name associated with the dimension, e.g., "learning rate".
+
+        * `dtype` [str or dtype, default=np.float]:
+            float type which will be used in inverse_transform,
+            can be float.
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -227,6 +233,16 @@ class Real(Dimension):
         self.base = base
         self.log_base = np.log10(base)
         self.name = name
+        self.dtype = dtype
+        if isinstance(self.dtype, str) and self.dtype\
+                not in ['float', 'float16', 'float32', 'float64']:
+            raise ValueError("dtype must be 'float', 'float16', 'float32'"
+                             "or 'float64'"
+                             " got {}".format(self.dtype))
+        elif isinstance(self.dtype, type) and self.dtype\
+                not in [float, np.float, np.float16, np.float32, np.float64]:
+            raise ValueError("dtype must be float, np.float"
+                             " got {}".format(self.dtype))
 
         if transform is None:
             transform = "identity"
@@ -280,16 +296,25 @@ class Real(Dimension):
         """Inverse transform samples from the warped space back into the
            orignal space.
         """
-        return np.clip(
-            super(Real, self).inverse_transform(Xt).astype(np.float),
-            self.low, self.high
-        )
+
+        inv_transform = super(Real, self).inverse_transform(Xt)
+        if isinstance(inv_transform, list):
+            inv_transform = np.array(inv_transform)
+        inv_transform = np.clip(inv_transform,
+                                self.low, self.high).astype(self.dtype)
+        if self.dtype == float or self.dtype == 'float':
+            # necessary, otherwise the type is converted to a numpy type
+            return getattr(inv_transform, "tolist", lambda: value)()
+        else:
+            return inv_transform
 
     @property
     def bounds(self):
         return (self.low, self.high)
 
     def __contains__(self, point):
+        if isinstance(point, list):
+            point = np.array(point)
         return self.low <= point <= self.high
 
     @property
@@ -321,7 +346,7 @@ class Real(Dimension):
 
 class Integer(Dimension):
     def __init__(self, low, high, prior="uniform", base=10, transform=None,
-                 name=None):
+                 name=None, dtype=np.int64):
         """Search space dimension that can take on integer values.
 
         Parameters
@@ -355,6 +380,12 @@ class Integer(Dimension):
 
         * `name` [str or None]:
             Name associated with dimension, e.g., "number of trees".
+
+        * `dtype` [str or dtype, default=np.int64]:
+            integer type which will be used in inverse_transform,
+            can be int, np.int16, np.uint32, np.int32, np.int64 (default).
+            When set to int, `inverse_transform` returns a list instead of
+            a numpy array
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -365,6 +396,21 @@ class Integer(Dimension):
         self.base = base
         self.log_base = np.log10(base)
         self.name = name
+        self.dtype = dtype
+        if isinstance(self.dtype, str) and self.dtype\
+            not in ['int', 'int8', 'int16', 'int32', 'int64',
+                    'uint8', 'uint16', 'uint32', 'uint64']:
+            raise ValueError("dtype must be 'int', 'int8', 'int16',"
+                             "'int32', 'int64', 'uint8',"
+                             "'uint16', 'uint32', or"
+                             "'uint64', but got {}".format(self.dtype))
+        elif isinstance(self.dtype, type) and self.dtype\
+                not in [int, np.int8, np.int16, np.int32, np.int64,
+                        np.uint8, np.uint16, np.uint32, np.uint64]:
+            raise ValueError("dtype must be 'int', 'np.int8', 'np.int16',"
+                             "'np.int32', 'np.int64', 'np.uint8',"
+                             "'np.uint16', 'np.uint32', or"
+                             "'np.uint64', but got {}".format(self.dtype))
 
         if transform is None:
             transform = "identity"
@@ -409,17 +455,27 @@ class Integer(Dimension):
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
-           orignal space.
+           original space.
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        return super(Integer, self).inverse_transform(Xt).astype(np.int64)
+        inv_transform = super(Integer, self).inverse_transform(Xt)
+        if isinstance(inv_transform, list):
+            inv_transform = np.array(inv_transform)
+        if self.dtype == int or self.dtype == 'int':
+            # necessary, otherwise the type is converted to a numpy type
+            return getattr(np.round(inv_transform).astype(self.dtype),
+                           "tolist", lambda: value)()
+        else:
+            return np.round(inv_transform).astype(self.dtype)
 
     @property
     def bounds(self):
         return (self.low, self.high)
 
     def __contains__(self, point):
+        if isinstance(point, list):
+            point = np.array(point)
         return self.low <= point <= self.high
 
     @property
@@ -459,33 +515,36 @@ class Categorical(Dimension):
             Prior probabilities for each category. By default all categories
             are equally likely.
 
-        * `transform` ["onehot", "identity", default="onehot"] :
+        * `transform` ["onehot", "string", "identity", default="onehot"] :
             - "identity", the transformed space is the same as the original
               space.
+            -  "string",  the transformed space is a string encoded
+              representation of the original space.
             - "onehot", the transformed space is a one-hot encoded
               representation of the original space.
 
         * `name` [str or None]:
             Name associated with dimension, e.g., "colors".
         """
-        if transform == 'identity':
-            self.categories = tuple([str(c) for c in categories])
-        else:
-            self.categories = tuple(categories)
+        self.categories = tuple(categories)
 
         self.name = name
 
         if transform is None:
             transform = "onehot"
         self.transform_ = transform
-        if transform not in ["identity", "onehot"]:
-            raise ValueError("Expected transform to be 'identity' or 'onehot' "
-                             "got {}".format(transform))
+        if transform not in ["identity", "onehot", "string"]:
+            raise ValueError("Expected transform to be 'identity', 'string' or"
+                             "'onehot' got {}".format(transform))
         if transform == "onehot":
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
+        elif transform == "string":
+            self.transformer = StringEncoder()
+            self.transformer.fit(self.categories)
         else:
-            self.transformer = Identity(dtype=type(categories[0]))
+            self.transformer = Identity()
+            self.transformer.fit(self.categories)
 
         self.prior = prior
 
