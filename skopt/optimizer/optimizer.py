@@ -39,7 +39,7 @@ class Optimizer(object):
 
     Parameters
     ----------
-    * `dimensions` [list, shape=(n_dims,)]:
+    dimensions : list, shape (n_dims,)
         List of search space dimensions.
         Each search dimension can be defined either as
 
@@ -51,7 +51,7 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
+    base_estimator : "GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
@@ -59,16 +59,16 @@ class Optimizer(object):
         surrogate model of the corresponding type is used corresponding to what
         is used in the minimize functions.
 
-    * `n_random_starts` [int, default=10]:
+    n_random_starts : int, default=10
         DEPRECATED, use `n_initial_points` instead.
 
-    * `n_initial_points` [int, default=10]:
+    n_initial_points : int, default=10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Points provided as
         `x0` count as initialization points. If len(x0) < n_initial_points
         additional points are sampled at random.
 
-    * `acq_func` [string, default=`"gp_hedge"`]:
+    acq_func : string, default=`"gp_hedge"`
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -81,9 +81,9 @@ class Optimizer(object):
                 - Each acquisition function is optimised independently to
                   propose an candidate point `X_i`.
                 - Out of all these candidate points, the next point `X_best` is
-                  chosen by $softmax(\eta g_i)$
+                  chosen by :math:`softmax(\eta g_i)`
                 - After fitting the surrogate model with `(X_best, y_best)`,
-                  the gains are updated such that $g_i -= \mu(X_i)$
+                  the gains are updated such that :math:`g_i -= \mu(X_i)`
         - `"EIps" for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
@@ -92,7 +92,7 @@ class Optimizer(object):
           return type of the objective function is assumed to be similar to
           that of `"EIps
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default=`"auto"`
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
@@ -109,30 +109,30 @@ class Optimizer(object):
                 points to find local minima.
               - The optimal of these local minima is used to update the prior.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
 
-    * `acq_func_kwargs` [dict]:
+    acq_func_kwargs : dict
         Additional arguments to be passed to the acquistion function.
 
-    * `acq_optimizer_kwargs` [dict]:
+    acq_optimizer_kwargs : dict
         Additional arguments to be passed to the acquistion optimizer.
 
-    * `model_queue_size` [int or None, default=None]
+    model_queue_size : int or None, default=None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
     Attributes
     ----------
-    * `Xi` [list]:
+    Xi : list
         Points at which objective has been evaluated.
-    * `yi` [scalar]:
+    yi : scalar
         Values of objective at corresponding points in `Xi`.
-    * `models` [list]:
+    models : list
         Regression models used to fit observations and compute acquisition
         function.
-    * `space`
+    space : Space
         An instance of `skopt.space.Space`. Stores parameter search space used
         to sample points, bounds, and type of parameters.
 
@@ -426,13 +426,13 @@ class Optimizer(object):
 
         Parameters
         ----------
-        * `x` [list or list-of-lists]:
+        x : list or list-of-lists
             Point at which objective was evaluated.
 
-        * `y` [scalar or list]:
+        y : scalar or list
             Value of objective at `x`.
 
-        * `fit` [bool, default=True]
+        fit : bool, default=True
             Fit a model to observed evaluations of the objective. A model will
             only be fitted after `n_initial_points` points have been told to
             the optimizer irrespective of the value of `fit`.

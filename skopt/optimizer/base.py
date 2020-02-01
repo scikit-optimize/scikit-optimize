@@ -26,10 +26,10 @@ def base_minimize(func, dimensions, base_estimator,
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
                   xi=0.01, kappa=1.96, n_jobs=1, model_queue_size=None):
-    """
+    """Base optimizer class
     Parameters
     ----------
-    * `func` [callable]:
+    func : callable
         Function to minimize. Should take a single list of parameters
         and return the objective value.
     
@@ -38,7 +38,7 @@ def base_minimize(func, dimensions, base_estimator,
         on your objective function, in order to call it directly
         with the named arguments. See `use_named_args` for an example.
 
-    * `dimensions` [list, shape=(n_dims,)]:
+    dimensions : list, shape (n_dims,)
         List of search space dimensions.
         Each search dimension can be defined either as
 
@@ -53,21 +53,21 @@ def base_minimize(func, dimensions, base_estimator,
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
 
-    * `base_estimator` [sklearn regressor]:
+    base_estimator : sklearn regressor
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition, should have an optional `return_std` argument,
         which returns `std(Y | x)`` along with `E[Y | x]`.
 
-    * `n_calls` [int, default=100]:
+    n_calls : int, default=100
         Maximum number of calls to `func`. An objective fucntion will
         always be evaluated this number of times; Various options to
         supply initialization points do not affect this value.
 
-    * `n_random_starts` [int, default=10]:
+    n_random_starts : int, default=10
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-    * `acq_func` [string, default=`"EI"`]:
+    acq_func : string, default=`"EI"`
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound,
@@ -81,7 +81,7 @@ def base_minimize(func, dimensions, base_estimator,
           return type of the objective function is assumed to be similar to
           that of `"EIps
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
@@ -96,7 +96,7 @@ def base_minimize(func, dimensions, base_estimator,
                 points to find local minima.
               - The optimal of these local minima is used to update the prior.
 
-    * `x0` [list, list of lists or `None`]:
+    x0 : list, list of lists or `None`
         Initial input points.
 
         - If it is a list of lists, use it as a list of input points. If no
@@ -110,7 +110,7 @@ def base_minimize(func, dimensions, base_estimator,
           outputs are not provided.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list, scalar or `None`]
+    y0 : list, scalar or `None`
         Objective values at initial input points.
 
         - If it is a list, then it corresponds to evaluations of the function
@@ -121,51 +121,51 @@ def base_minimize(func, dimensions, base_estimator,
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
 
-    * `verbose` [boolean, default=False]:
+    verbose : boolean, default=False
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, list of callables, optional]
+    callback : callable, list of callables, optional
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
-    * `n_points` [int, default=10000]:
+    n_points : int, default=10000
         If `acq_optimizer` is set to `"sampling"`, then `acq_func` is
         optimized by computing `acq_func` at `n_points` randomly sampled
         points.
 
-    * `n_restarts_optimizer` [int, default=5]:
+    n_restarts_optimizer : int, default=5
         The number of restarts of the optimizer when `acq_optimizer`
         is `"lbfgs"`.
 
-    * `xi` [float, default=0.01]:
+    xi : float, default=0.01
         Controls how much improvement one wants over the previous best
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
-    * `kappa` [float, default=1.96]:
+    kappa : float, default=1.96
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `n_jobs` [int, default=1]:
+    n_jobs : int, default=1
         Number of cores to run in parallel while running the lbfgs
         optimizations over the acquisition function. Valid only when
         `acq_optimizer` is set to "lbfgs."
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
-    * `model_queue_size` [int or None, default=None]
+    model_queue_size : int or None, default=None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
     Returns
     -------
-    * `res` [`OptimizeResult`, scipy object]:
+    res : `OptimizeResult`, scipy object
         The optimization result returned as a OptimizeResult object.
         Important attributes are:
 
