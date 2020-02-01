@@ -396,6 +396,18 @@ def test_normalize():
     assert isinstance(X_orig, np.int64)
     assert_array_equal(X_orig, X)
 
+    a = Integer(2, 30, transform="normalize", dtype=int)
+    X = rng.randint(2, 31, dtype=int)
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, int)
+
+    a = Integer(2, 30, transform="normalize", dtype='int')
+    X = rng.randint(2, 31, dtype=int)
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, int)
+
     a = Integer(2, 30, prior="log-uniform", base=2, transform="normalize",
                 dtype=int)
     for i in range(50):
@@ -427,20 +439,40 @@ def test_normalize():
     assert isinstance(X_orig, float)
     assert_array_equal(X_orig, X)
 
-    a = Real(0, 1, transform="normalize", dtype=np.float64)
-    for i in range(50):
-        check_limits(a.rvs(random_state=i), 0, 1)
-    assert_array_equal(a.transformed_bounds, (0, 1))
-
+    a = Real(0, 1, transform="normalize", dtype='float64')
     X = np.float64(rng.rand())
-    # Check transformed values are in [0, 1]
-    assert np.all(a.transform(X) <= np.ones_like(X))
-    assert np.all(np.zeros_like(X) <= a.transform(X))
-
     # Check inverse transform
     X_orig = a.inverse_transform(a.transform(X))
     assert isinstance(X_orig, np.float64)
-    assert_array_equal(X_orig, X)
+
+    a = Real(0, 1, transform="normalize", dtype=np.float64)
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+    a = Real(0, 1, transform="normalize", dtype='float64')
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+
+@pytest.mark.fast_test
+def test_normalize_integer():
+    for dtype in ['int', 'int8', 'int16', 'int32', 'int64',
+                  'uint8', 'uint16', 'uint32', 'uint64']:
+        a = Integer(2, 30, transform="normalize", dtype=dtype)
+        for X in range(2, 31):
+            X_orig = a.inverse_transform(a.transform(X))
+            assert_array_equal(X_orig, X)
+    for dtype in [int, np.int8, np.int16, np.int32, np.int64,
+                  np.uint8, np.uint16, np.uint32, np.uint64]:
+        a = Integer(2, 30, transform="normalize", dtype=dtype)
+        for X in range(2, 31):
+            X_orig = a.inverse_transform(a.transform(X))
+            assert_array_equal(X_orig, X)
+            assert isinstance(X_orig, dtype)
 
 
 def check_valid_transformation(klass):

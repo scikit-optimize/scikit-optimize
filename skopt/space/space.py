@@ -218,9 +218,9 @@ class Real(Dimension):
         * `name` [str or None]:
             Name associated with the dimension, e.g., "learning rate".
 
-        * `dtype` [type]:
+        * `dtype` [str or dtype, default=np.float]:
             float type which will be used in inverse_transform,
-            can be float, np.float (default).
+            can be float.
         """
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
@@ -232,9 +232,16 @@ class Real(Dimension):
         self.log_base = np.log10(base)
         self.name = name
         self.dtype = dtype
-        if dtype not in [float, np.float, np.float32, np.float64]:
-            raise ValueError("dtype be 'float', 'np.float'"
+        if isinstance(self.dtype, str) and self.dtype\
+                not in ['float', 'float16', 'float32', 'float64']:
+            raise ValueError("dtype must be 'float', 'float16', 'float32'"
+                             "or 'float64'"
                              " got {}".format(self.dtype))
+        elif isinstance(self.dtype, type) and self.dtype\
+                not in [float, np.float, np.float16, np.float32, np.float64]:
+            raise ValueError("dtype must be float, np.float"
+                             " got {}".format(self.dtype))
+
         if transform is None:
             transform = "identity"
 
@@ -293,7 +300,7 @@ class Real(Dimension):
             inv_transform = np.array(inv_transform)
         inv_transform = np.clip(inv_transform,
                                 self.low, self.high).astype(self.dtype)
-        if self.dtype == float:
+        if self.dtype == float or self.dtype == 'float':
             # necessary, otherwise the type is converted to a numpy type
             return getattr(inv_transform, "tolist", lambda: value)()
         else:
@@ -372,7 +379,7 @@ class Integer(Dimension):
         * `name` [str or None]:
             Name associated with dimension, e.g., "number of trees".
 
-        * `dtype` [type]:
+        * `dtype` [str or dtype, default=np.int64]:
             integer type which will be used in inverse_transform,
             can be int, np.int16, np.uint32, np.int32, np.int64 (default).
             When set to int, `inverse_transform` returns a list instead of
@@ -388,8 +395,16 @@ class Integer(Dimension):
         self.log_base = np.log10(base)
         self.name = name
         self.dtype = dtype
-        if dtype not in [int, np.int8, np.int16, np.int32, np.int64,
-                         np.uint8, np.uint16, np.uint32, np.uint64]:
+        if isinstance(self.dtype, str) and self.dtype\
+            not in ['int', 'int8', 'int16', 'int32', 'int64',
+                    'uint8', 'uint16', 'uint32', 'uint64']:
+            raise ValueError("dtype must be 'int', 'int8', 'int16',"
+                             "'int32', 'int64', 'uint8',"
+                             "'uint16', 'uint32', or"
+                             "'uint64', but got {}".format(self.dtype))
+        elif isinstance(self.dtype, type) and self.dtype\
+                not in [int, np.int8, np.int16, np.int32, np.int64,
+                        np.uint8, np.uint16, np.uint32, np.uint64]:
             raise ValueError("dtype must be 'int', 'np.int8', 'np.int16',"
                              "'np.int32', 'np.int64', 'np.uint8',"
                              "'np.uint16', 'np.uint32', or"
@@ -445,12 +460,12 @@ class Integer(Dimension):
         inv_transform = super(Integer, self).inverse_transform(Xt)
         if isinstance(inv_transform, list):
             inv_transform = np.array(inv_transform)
-        if self.dtype == int:
+        if self.dtype == int or self.dtype == 'int':
             # necessary, otherwise the type is converted to a numpy type
-            return getattr(inv_transform.astype(self.dtype),
+            return getattr(np.round(inv_transform).astype(self.dtype),
                            "tolist", lambda: value)()
         else:
-            return inv_transform.astype(self.dtype)
+            return np.round(inv_transform).astype(self.dtype)
 
     @property
     def bounds(self):
