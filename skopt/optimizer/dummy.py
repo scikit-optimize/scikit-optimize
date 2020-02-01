@@ -75,12 +75,18 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
+
         - `fun` [float]: function value at the minimum.
+
         - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
+
         - `func_vals` [array]: function value for each iteration.
+
         - `space` [Space]: the optimisation space.
+
         - `specs` [dict]: the call specifications.
+
         - `rng` [RandomState instance]: State of the random state
            at the end of minimization.
 

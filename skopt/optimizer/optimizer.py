@@ -51,8 +51,9 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    base_estimator : "GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"
-        Should inherit from `sklearn.base.RegressorMixin`.
+    base_estimator : `"GP"`, `"RF"`, `"ET"`, `"GBRT"` or sklearn regressor,
+    default=`"GP"`
+        Should inherit from :obj:`sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
         If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
@@ -60,7 +61,8 @@ class Optimizer(object):
         is used in the minimize functions.
 
     n_random_starts : int, default=10
-        DEPRECATED, use `n_initial_points` instead.
+        .. deprecated::
+            use `n_initial_points` instead.
 
     n_initial_points : int, default=10
         Number of evaluations of `func` with initialization points
@@ -133,8 +135,8 @@ class Optimizer(object):
         Regression models used to fit observations and compute acquisition
         function.
     space : Space
-        An instance of `skopt.space.Space`. Stores parameter search space used
-        to sample points, bounds, and type of parameters.
+        An instance of :class:`skopt.space.Space`. Stores parameter search
+        space used to sample points, bounds, and type of parameters.
 
     """
     def __init__(self, dimensions, base_estimator="gp",
@@ -272,7 +274,7 @@ class Optimizer(object):
 
         Parameters
         ----------
-        * `random_state` [int, RandomState instance, or None (default)]:
+        random_state : int, RandomState instance, or None (default)
             Set the random state of the copy.
         """
 
@@ -298,7 +300,7 @@ class Optimizer(object):
     def ask(self, n_points=None, strategy="cl_min"):
         """Query point or multiple points at which objective should be evaluated.
 
-        * `n_points` [int or None, default=None]:
+        n_points : int or None, default=None
             Number of points returned by the ask method.
             If the value is None, a single point to evaluate is returned.
             Otherwise a list of points to evaluate is returned of size
@@ -306,12 +308,12 @@ class Optimizer(object):
             parallel, and thus obtain more objective function evaluations per
             unit of time.
 
-        * `strategy` [string, default=`"cl_min"`]:
+        strategy : string, default="cl_min"
             Method to use to sample multiple points (see also `n_points`
             description). This parameter is ignored if n_points = None.
             Supported options are `"cl_min"`, `"cl_mean"` or `"cl_max"`.
 
-            - If set to `"cl_min"`, then constant liar strtategy is used
+            - If set to `"cl_min"`, then constant liar strategy is used
                with lie objective value being minimum of observed objective
                values. `"cl_mean"` and `"cl_max"` means mean and max of values
                respectively. For details on this strategy see:

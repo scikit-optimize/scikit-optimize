@@ -46,7 +46,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         and return the objective value.
     
         If you have a search-space where all dimensions have names,
-        then you can use `skopt.utils.use_named_args` as a decorator
+        then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
         with the named arguments. See `use_named_args` for an example.
 
@@ -56,21 +56,27 @@ def gp_minimize(func, dimensions, base_estimator=None,
 
         - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
           dimensions),
+
         - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
           dimensions),
+
         - as a list of categories (for `Categorical` dimensions), or
+
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-         NOTE: The upper and lower bounds are inclusive for `Integer`
+         .. note:: The upper and lower bounds are inclusive for `Integer`
          dimensions.
 
     base_estimator : a Gaussian process estimator
         The Gaussian process estimator to use for optimization.
         By default, a Matern kernel is used with the following
         hyperparameters tuned.
+
         - All the length scales of the Matern kernel.
+
         - The covariance amplitude that each element is multiplied with.
+
         - Noise that is added to the matern kernel. The noise is assumed
           to be iid gaussian.
 
@@ -85,23 +91,34 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Function to minimize over the gaussian prior. Can be either
 
         - `"LCB"` for lower confidence bound.
+
         - `"EI"` for negative expected improvement.
+
         - `"PI"` for negative probability of improvement.
+
         - `"gp_hedge"` Probabilistically choose one of the above three
           acquisition functions at every iteration. The weightage
-          given to these gains can be set by `\eta` through `acq_func_kwargs`.
+          given to these gains can be set by :math:`\eta` through
+          `acq_func_kwargs`.
+
             - The gains `g_i` are initialized to zero.
+
             - At every iteration,
+
                 - Each acquisition function is optimised independently to
                   propose an candidate point `X_i`.
+
                 - Out of all these candidate points, the next point `X_best` is
-                  chosen by `softmax(\eta g_i)`
+                  chosen by :math:`softmax(\eta g_i)`
+
                 - After fitting the surrogate model with `(X_best, y_best)`,
-                  the gains are updated such that `g_i -= \mu(X_i)`
+                  the gains are updated such that :math:`g_i -= \mu(X_i)`
+
         - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
+
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
           that of `"EIps
@@ -116,20 +133,27 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - If set to `"auto"`, then `acq_optimizer` is configured on the
           basis of the space searched over.
           If the space is Categorical then this is set to be "sampling"`.
+
         - If set to `"sampling"`, then the point among these `n_points`
           where the `acq_func` is minimum is the next candidate minimum.
+
         - If set to `"lbfgs"`, then
+
               - The `n_restarts_optimizer` no. of points which the acquisition
                 function is least are taken as start points.
+
               - `"lbfgs"` is run for 20 iterations with these points as initial
                 points to find local minima.
+
               - The optimal of these local minima is used to update the prior.
 
     x0 : list, list of lists or `None`
         Initial input points.
 
         - If it is a list of lists, use it as a list of input points.
+
         - If it is a list, use it as a single initial input point.
+
         - If it is `None`, no initial input points are used.
 
     y0 : list, scalar or `None`
@@ -138,8 +162,10 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - If it is a list, then it corresponds to evaluations of the function
           at each element of `x0` : the i-th element of `y0` corresponds
           to the function evaluated at the i-th element of `x0`.
+
         - If it is a scalar, then it corresponds to the evaluation of the
           function at `x0`.
+
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
@@ -174,11 +200,14 @@ def gp_minimize(func, dimensions, base_estimator=None,
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
     noise : float, default="gaussian"
+
         - Use noise="gaussian" if the objective returns noisy observations.
           The noise of each observation is assumed to be iid with
           mean zero and a fixed variance.
+
         - If the variance is known before-hand, this can be set directly
           to the variance of the noise.
+
         - Set this to a value close to zero (1e-10) if the function is
           noise-free. Setting to zero might cause stability issues.
 
@@ -200,18 +229,27 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
+
         - `fun` [float]: function value at the minimum.
+
         - `models`: surrogate models used for each iteration.
+
         - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
+
         - `func_vals` [array]: function value for each iteration.
+
         - `space` [Space]: the optimization space.
+
         - `specs` [dict]`: the call specifications.
+
         - `rng` [RandomState instance]: State of the random state
            at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
+
+    .. seealso:: functions :class:`skopt.forest_minimize`, :class:`skopt.dummy_minimize`
     """
     # Check params
     rng = check_random_state(random_state)

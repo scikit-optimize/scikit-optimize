@@ -527,37 +527,40 @@ def use_named_args(dimensions):
     also reduces the risk of bugs if you change the number of dimensions
     or their order in the search-space.
 
-    Example Usage
-    -------------
-    # Define the search-space dimensions. They must all have names!
-    dim1 = Real(name='foo', low=0.0, high=1.0)
-    dim2 = Real(name='bar', low=0.0, high=1.0)
-    dim3 = Real(name='baz', low=0.0, high=1.0)
-
-    # Gather the search-space dimensions in a list.
-    dimensions = [dim1, dim2, dim3]
-
-    # Define the objective function with named arguments
-    # and use this function-decorator to specify the search-space dimensions.
-    @use_named_args(dimensions=dimensions)
-    def my_objective_function(foo, bar, baz):
-        return foo ** 2 + bar ** 4 + baz ** 8
-
-    # Now the function is callable from the outside as
-    # `my_objective_function(x)` where `x` is a list of unnamed arguments,
-    # which then wraps your objective function that is callable as
-    # `my_objective_function(foo, bar, baz)`.
-    # The conversion from a list `x` to named parameters `foo`, `bar`, `baz`
-    # is done automatically.
-
-    # Run the optimizer on the wrapped objective function which is called as
-    # `my_objective_function(x)` as expected by `forest_minimize()`.
-    result = forest_minimize(func=my_objective_function, dimensions=dimensions,
-                             n_calls=20, base_estimator="ET", random_state=4)
-
-    # Print the best-found results.
-    print("Best fitness:", result.fun)
-    print("Best parameters:", result.x)
+    Example
+    -------
+    >>> # Define the search-space dimensions. They must all have names!
+    >>> from skopt.space.Space import Real
+    >>> from skopt import forest_minimize
+    >>> from skopt.utils import use_named_args
+    >>> dim1 = Real(name='foo', low=0.0, high=1.0)
+    >>> dim2 = Real(name='bar', low=0.0, high=1.0)
+    >>> dim3 = Real(name='baz', low=0.0, high=1.0)
+    >>>
+    >>> # Gather the search-space dimensions in a list.
+    >>> dimensions = [dim1, dim2, dim3]
+    >>>
+    >>> # Define the objective function with named arguments
+    >>> # and use this function-decorator to specify the search-space dimensions.
+    >>> @use_named_args(dimensions=dimensions)
+    >>> def my_objective_function(foo, bar, baz):
+    >>>     return foo ** 2 + bar ** 4 + baz ** 8
+    >>>
+    >>> # Not the function is callable from the outside as
+    >>> # `my_objective_function(x)` where `x` is a list of unnamed arguments,
+    >>> # which then wraps your objective function that is callable as
+    >>> # `my_objective_function(foo, bar, baz)`.
+    >>> # The conversion from a list `x` to named parameters `foo`, `bar`, `baz`
+    >>> # is done automatically.
+    >>>
+    >>> # Run the optimizer on the wrapped objective function which is called as
+    >>> # `my_objective_function(x)` as expected by `forest_minimize()`.
+    >>> result = forest_minimize(func=my_objective_function, dimensions=dimensions,
+    >>>                          n_calls=20, base_estimator="ET", random_state=4)
+    >>>
+    >>> # Print the best-found results.
+    >>> print("Best fitness:", result.fun)
+    >>> print("Best parameters:", result.x)
 
     Parameters
     ----------

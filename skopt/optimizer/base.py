@@ -73,7 +73,7 @@ def base_minimize(func, dimensions, base_estimator,
         - `"LCB"` for lower confidence bound,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
-        - `"EIps" for negated expected improvement per second to take into
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
@@ -170,13 +170,20 @@ def base_minimize(func, dimensions, base_estimator,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
+
         - `fun` [float]: function value at the minimum.
+
         - `models`: surrogate models used for each iteration.
+
         - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
+
         - `func_vals` [array]: function value for each iteration.
+
         - `space` [Space]: the optimization space.
+
         - `specs` [dict]`: the call specifications.
+
         - `rng` [RandomState instance]: State of the random state
            at the end of minimization.
 

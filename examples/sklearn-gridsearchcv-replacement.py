@@ -7,6 +7,7 @@ Iaroslav Shcherbatyi, Tim Head and Gilles Louppe. June 2017.
 Reformatted by Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
+
 Introduction
 ============
 

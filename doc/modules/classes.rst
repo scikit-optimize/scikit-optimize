@@ -218,6 +218,7 @@ details.
     utils.load
     utils.point_asdict
     utils.point_aslist
+    utils.use_named_args
 
 
 .. _space_ref:

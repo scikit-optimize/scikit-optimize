@@ -130,13 +130,20 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
+
         - `fun` [float]: function value at the minimum.
+
         - `models`: surrogate models used for each iteration.
+
         - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
+
         - `func_vals` [array]: function value for each iteration.
+
         - `space` [Space]: the optimization space.
+
         - `specs` [dict]`: the call specifications.
+
         - `rng` [RandomState instance]: State of the random state
            at the end of minimization.
 

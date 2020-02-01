@@ -35,9 +35,10 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         and return the objective value.
     
         If you have a search-space where all dimensions have names,
-        then you can use `skopt.utils.use_named_args` as a decorator
+        then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
-        with the named arguments. See `use_named_args` for an example.
+        with the named arguments. See :func:`skopt.utils.use_named_args`
+         for an example.
 
     dimensions : list, shape (n_dims,)
         List of search space dimensions.
@@ -54,7 +55,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
          NOTE: The upper and lower bounds are inclusive for `Integer`
          dimensions.
 
-    base_estimator : string or `Regressor`, default=`"ET"`
+    base_estimator : string or `Regressor`, default="ET"
         The regressor to use as surrogate model. Can be either
 
         - `"RF"` for random forest regressor
@@ -62,7 +63,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         - instance of regressor with support for `return_std` in its predict
           method
 
-        The predefined models are initilized with good defaults. If you
+        The predefined models are initialized with good defaults. If you
         want to adjust the model parameters pass your own instance of
         a regressor which returns the mean and standard deviation when
         making predictions.
@@ -74,13 +75,13 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-    acq_func : string, default=`"LCB"`
+    acq_func : string, default="LCB"
         Function to minimize over the forest posterior. Can be either
 
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
-        - `"EIps" for negated expected improvement per second to take into
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
@@ -145,16 +146,24 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
+
         - `fun` [float]: function value at the minimum.
+
         - `models`: surrogate models used for each iteration.
+
         - `x_iters` [list of lists]: location of function evaluation for each
            iteration.
+
         - `func_vals` [array]: function value for each iteration.
+
         - `space` [Space]: the optimization space.
+
         - `specs` [dict]`: the call specifications.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
+
+    .. seealso:: functions :class:`skopt.gp_minimize`, :class:`skopt.dummy_minimize`
     """
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
