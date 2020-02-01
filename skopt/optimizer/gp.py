@@ -249,7 +249,8 @@ def gp_minimize(func, dimensions, base_estimator=None,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
 
-    .. seealso:: functions :class:`skopt.forest_minimize`, :class:`skopt.dummy_minimize`
+    .. seealso:: functions :class:`skopt.forest_minimize`,
+        :class:`skopt.dummy_minimize`
     """
     # Check params
     rng = check_random_state(random_state)

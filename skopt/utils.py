@@ -557,7 +557,8 @@ def use_named_args(dimensions):
     >>> dimensions = [dim1, dim2, dim3]
     >>>
     >>> # Define the objective function with named arguments
-    >>> # and use this function-decorator to specify the search-space dimensions.
+    >>> # and use this function-decorator to specify the
+    >>> # search-space dimensions.
     >>> @use_named_args(dimensions=dimensions)
     >>> def my_objective_function(foo, bar, baz):
     >>>     return foo ** 2 + bar ** 4 + baz ** 8
@@ -566,13 +567,16 @@ def use_named_args(dimensions):
     >>> # `my_objective_function(x)` where `x` is a list of unnamed arguments,
     >>> # which then wraps your objective function that is callable as
     >>> # `my_objective_function(foo, bar, baz)`.
-    >>> # The conversion from a list `x` to named parameters `foo`, `bar`, `baz`
+    >>> # The conversion from a list `x` to named parameters `foo`,
+    >>> # `bar`, `baz`
     >>> # is done automatically.
     >>>
-    >>> # Run the optimizer on the wrapped objective function which is called as
-    >>> # `my_objective_function(x)` as expected by `forest_minimize()`.
-    >>> result = forest_minimize(func=my_objective_function, dimensions=dimensions,
-    >>>                          n_calls=20, base_estimator="ET", random_state=4)
+    >>> # Run the optimizer on the wrapped objective function which is called
+    >>> # as `my_objective_function(x)` as expected by `forest_minimize()`.
+    >>> result = forest_minimize(func=my_objective_function,
+    ...                          dimensions=dimensions,
+    ...                          n_calls=20, base_estimator="ET",
+    ...                          random_state=4)
     >>>
     >>> # Print the best-found results.
     >>> print("Best fitness:", result.fun)
