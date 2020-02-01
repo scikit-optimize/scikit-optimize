@@ -54,7 +54,7 @@ class Kernel(sk_Kernel):
         x: array-like, shape=(n_features,)
             A single test point.
 
-        Y: array-like, shape=(n_samples, n_features)
+        X_train: array-like, shape=(n_samples, n_features)
             Training data used to fit the gaussian process.
 
         Returns

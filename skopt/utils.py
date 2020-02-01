@@ -363,15 +363,21 @@ def dimensions_aslist(search_space):
     search_space : dict
         Represents search space. The keys are dimension names (strings)
         and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
+        :class:`skopt.space.Dimension` (Real, Integer or Categorical)
 
     Returns
     -------
-    params_space_list: list of skopt.space.Dimension instances.
-        Example output with example inputs:
-            [Real(0,1), Integer(2,4), Real(-1,1)]
+    params_space_list: list
+        list of skopt.space.Dimension instances.
+
+    Examples
+    --------
+    >>> from skopt.space.space import Real, Integer
+    >>> from skopt.utils import dimensions_aslist
+    >>> search_space = {'name1': Real(0,1),
+    ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
+    >>> dimensions_aslist(search_space)
+    [Real(0,1), Integer(2,4), Real(-1,1)]
     """
     params_space_list = [
         search_space[k] for k in sorted(search_space.keys())
@@ -384,30 +390,34 @@ def point_asdict(search_space, point_as_list):
     to the dictionary representation, where keys are dimension names
     and values are corresponding to the values of dimensions in the list.
 
-    Counterpart to parameters_aslist.
+    .. seealso:: :class:`skopt.utils.point_aslist`
 
     Parameters
     ----------
     search_space : dict
         Represents search space. The keys are dimension names (strings)
         and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
+        :class:`skopt.space.Dimension` (Real, Integer or Categorical)
 
     point_as_list : list
         list with parameter values.The order of parameters in the list
         is given by sorted(params_space.keys()).
-        Example:
-            [0.66, 3, -0.15]
 
     Returns
     -------
     params_dict : dict
         dictionary with parameter names as keys to which
         corresponding parameter values are assigned.
-        Example output with inputs:
-            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+
+    Examples
+    --------
+    >>> from skopt.space.space import Real, Integer
+    >>> from skopt.utils import point_asdict
+    >>> search_space = {'name1': Real(0,1),
+    ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
+    >>> point_as_list = [0.66, 3, -0.15]
+    >>> point_asdict(search_space, point_as_list)
+    {'name1': 0.66, 'name2': 3, 'name3': -0.15}
     """
     params_dict = {
         k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
@@ -420,30 +430,34 @@ def point_aslist(search_space, point_as_dict):
     the list representation. The list of values is created from the values of
     the dictionary, sorted by the names of dimensions used as keys.
 
-    Counterpart to parameters_asdict.
+    .. seealso:: :class:`skopt.utils.point_asdict`
 
     Parameters
     ----------
     search_space : dict
         Represents search space. The keys are dimension names (strings)
         and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
+        :class:`skopt.space.Dimension` (Real, Integer or Categorical)
 
     point_as_dict : dict
         dict with parameter names as keys to which corresponding
         parameter values are assigned.
-        Example:
-            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
 
     Returns
     -------
     point_as_list : list
         list with point values.The order of
         parameters in the list is given by sorted(params_space.keys()).
-        Example output with example inputs:
-            [0.66, 3, -0.15]
+
+    Examples
+    --------
+    >>> from skopt.space.space import Real, Integer
+    >>> from skopt.utils import point_aslist
+    >>> search_space = {'name1': Real(0,1),
+    ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
+    >>> point_as_dict = {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+    >>> point_aslist(search_space, point_as_dict)
+    [0.66, 3, -0.15]
     """
     point_as_list = [
         point_as_dict[k] for k in sorted(search_space.keys())
@@ -529,8 +543,8 @@ def use_named_args(dimensions):
     also reduces the risk of bugs if you change the number of dimensions
     or their order in the search-space.
 
-    Example
-    -------
+    Examples
+    --------
     >>> # Define the search-space dimensions. They must all have names!
     >>> from skopt.space.Space import Real
     >>> from skopt import forest_minimize

@@ -3,8 +3,9 @@ import numpy as np
 from sklearn.preprocessing import LabelBinarizer
 
 
-# Base class for all 1-D transformers.
 class Transformer(object):
+    """Base class for all 1-D transformers.
+    """
     def fit(self, X):
         return self
 
@@ -42,7 +43,7 @@ class StringEncoder(Transformer):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_categories,)]:
+        X : array-like, shape=(n_categories,)
             List of categories.
         """
         if len(X) > 0:
@@ -53,12 +54,12 @@ class StringEncoder(Transformer):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples,)]:
+        X : array-like, shape=(n_samples,)
             List of categories.
 
         Returns
         -------
-        * `Xt` [array-like, shape=(n_samples,)]:
+        Xt : array-like, shape=(n_samples,)
             The string encoded categories.
         """
         return [str(x) for x in X]
@@ -69,12 +70,12 @@ class StringEncoder(Transformer):
 
         Parameters
         ----------
-        * `Xt` [array-like, shape=(n_samples,)]:
+        Xt : array-like, shape=(n_samples,)
             String encoded categories.
 
         Returns
         -------
-        * `X` [array-like, shape=(n_samples,)]:
+        X : array-like, shape=(n_samples,)
             The original categories.
         """
         return [self.dtype(x) for x in Xt]
@@ -105,7 +106,7 @@ class CategoricalEncoder(Transformer):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_categories,)]:
+        X : array-like, shape=(n_categories,)
             List of categories.
         """
         self.mapping_ = {v: i for i, v in enumerate(X)}
@@ -120,12 +121,12 @@ class CategoricalEncoder(Transformer):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples,)]:
+        X : array-like, shape=(n_samples,)
             List of categories.
 
         Returns
         -------
-        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+        Xt : array-like, shape=(n_samples, n_categories)
             The one-hot encoded categories.
         """
         return self._lb.transform([self.mapping_[v] for v in X])
@@ -136,12 +137,12 @@ class CategoricalEncoder(Transformer):
 
         Parameters
         ----------
-        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+        Xt : array-like, shape=(n_samples, n_categories)
             One-hot encoded categories.
 
         Returns
         -------
-        * `X` [array-like, shape=(n_samples,)]:
+        X : array-like, shape=(n_samples,)
             The original categories.
         """
         Xt = np.asarray(Xt)
@@ -156,13 +157,13 @@ class Normalize(Transformer):
 
     Parameters
     ----------
-    * `low` [float]:
+    low : float
         Lower bound.
 
-    * `high` [float]:
+    high : float
         Higher bound.
 
-    * `is_int` [bool, default=True]
+    is_int : bool, default=True
         Round and cast the return value of `inverse_transform` to integer. Set
         to `True` when applying this transform to integers.
     """
@@ -197,7 +198,7 @@ class Pipeline(Transformer):
 
     Parameters
     ----------
-    * 'transformers' [list]:
+    transformers : list
         A list of Transformer instances.
     """
     def __init__(self, transformers):

@@ -20,20 +20,20 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    * `quantiles` [array-like]:
+    quantiles : array-like
         Quantiles to predict. By default the 16, 50 and 84%
         quantiles are predicted.
 
-    * `base_estimator` [GradientBoostingRegressor instance or None (default)]:
+    base_estimator : GradientBoostingRegressor instance or None (default)
         Quantile regressor used to make predictions. Only instances
         of `GradientBoostingRegressor` are supported. Use this to change
         the hyper-parameters of the estimator.
 
-    * `n_jobs` [int, default=1]:
+    n_jobs : int, default=1
         The number of jobs to run in parallel for `fit`.
         If -1, then the number of jobs is set to the number of cores.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
     """
@@ -50,11 +50,11 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples, n_features)]:
+        X : array-like, shape=(n_samples, n_features)
             Training vectors, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        * `y` [array-like, shape=(n_samples,)]:
+        y : array-like, shape=(n_samples,)
             Target values (real numbers in regression)
         """
         rng = check_random_state(self.random_state)
@@ -98,7 +98,7 @@ class GradientBoostingQuantileRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples, n_features)]:
+        X : array-like, shape=(n_samples, n_features)
             where `n_samples` is the number of samples
             and `n_features` is the number of features.
         """

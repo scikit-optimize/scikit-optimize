@@ -254,12 +254,11 @@ class DeadlineStopper(EarlyStopper):
 
 class CheckpointSaver(object):
     """
-    Save current state after each iteration with `skopt.dump`.
+    Save current state after each iteration with :class:`skopt.dump`.
 
 
-    Example
-    -------
-
+    Examples
+    --------
     >>> import skopt
     >>>
     >>> checkpoint_callback = skopt.callbacks.CheckpointSaver("./result.pkl")
