@@ -1,7 +1,7 @@
 
 |Logo|
 
-|Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
+|pypi| |conda| |Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
 
 Scikit-Optimize
 ===============
@@ -38,7 +38,7 @@ Important links
 Install
 -------
 
-The latest released version of scikit-optimize is v0.7, which you can install
+The latest released version of scikit-optimize is v0.7.1, which you can install
 with:
 ::
 
@@ -183,6 +183,10 @@ If your employer allows you to work on scikit-optimize during the day and would 
 recognition, feel free to add them to the "Made possible by" list.
 
 
+.. |pypi| image:: https://img.shields.io/pypi/v/scikit-optimize.svg
+   :target: https://pypi.python.org/pypi/scikit-optimize
+.. |conda| image:: https://anaconda.org/conda-forge/scikit-optimize/badges/version.svg
+   :target: https://anaconda.org/conda-forge/scikit-optimize
 .. |Travis Status| image:: https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master
    :target: https://travis-ci.org/scikit-optimize/scikit-optimize
 .. |CircleCI Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token

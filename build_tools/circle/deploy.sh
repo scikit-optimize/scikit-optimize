@@ -13,9 +13,9 @@ MSG="Pushing the docs for revision for branch: $CIRCLE_BRANCH, commit $CIRCLE_SH
 echo "Copying built files"
 git clone -b master "git@github.com:scikit-optimize/scikit-optimize.github.io" deploy
 cd deploy
-git rm -r notebooks/*
-git rm -r rtd/*
-git rm -r beta/*
+git rm -r space
+git rm -r optimizer
+git rm -r learning
 cd ..
 for entry in ${HOME}/doc/skopt/*
 do
