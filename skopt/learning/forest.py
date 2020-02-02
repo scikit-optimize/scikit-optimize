@@ -12,20 +12,20 @@ def _return_std(X, trees, predictions, min_variance):
 
     Parameters
     ----------
-    * `X` [array-like, shape=(n_samples, n_features)]:
+    X : array-like, shape=(n_samples, n_features)
         Input data.
 
-    * `trees` [list, shape=(n_estimators,)]:
+    trees : list, shape=(n_estimators,)
         List of fit sklearn trees as obtained from the ``estimators_``
         attribute of a fit RandomForestRegressor or ExtraTreesRegressor.
 
-    * `predictions` [array-like, shape=(n_samples,)]:
+    predictions : array-like, shape=(n_samples,)
         Prediction of each data point as returned by RandomForestRegressor
         or ExtraTreesRegressor.
 
     Returns
     -------
-    * `std` [array-like, shape=(n_samples,)]:
+    std : array-like, shape=(n_samples,)
         Standard deviation of `y` at `X`. If criterion
         is set to "mse", then `std[i] ~= std(y | X[i])`.
     """

@@ -23,7 +23,10 @@ def check_dimension(Dimension, vals, random_val):
     assert_equal(x, Dimension(*vals))
     assert x != Dimension(vals[0], vals[1] + 1)
     assert x != Dimension(vals[0] + 1, vals[1])
-    assert_equal(x.rvs(random_state=1), random_val)
+    y = x.rvs(random_state=1)
+    if isinstance(y, list):
+        y = np.array(y)
+    assert_equal(y, random_val)
 
 
 def check_categorical(vals, random_val):
@@ -35,6 +38,8 @@ def check_categorical(vals, random_val):
 
 def check_limits(value, low, high):
     # check if low <= value <= high
+    if isinstance(value, list):
+        value = np.array(value)
     assert low <= value
     assert high >= value
 
@@ -45,8 +50,10 @@ def test_dimensions():
     check_dimension(Real, (1, 4), 2.251066014107722)
     check_dimension(Integer, (1, 4), 2)
     check_dimension(Integer, (1., 4.), 2)
+    check_dimension(Integer, (1, 4), 2)
     check_categorical(("a", "b", "c", "d"), "b")
     check_categorical((1., 2., 3., 4.), 2.)
+    check_categorical((1, 2, 3, 4), 2)
 
 
 @pytest.mark.fast_test
@@ -72,7 +79,7 @@ def test_real():
         assert r in a
 
     random_values = a.rvs(random_state=0, n_samples=10)
-    assert_array_equal(random_values.shape, (10))
+    assert len(random_values) == 10
     assert_array_equal(a.transform(random_values), random_values)
     assert_array_equal(a.inverse_transform(random_values), random_values)
 
@@ -82,7 +89,7 @@ def test_real():
         random_val = log_uniform.rvs(random_state=i)
         check_limits(random_val, 10**-5, 10**5)
     random_values = log_uniform.rvs(random_state=0, n_samples=10)
-    assert_array_equal(random_values.shape, (10))
+    assert len(random_values) == 10
     transformed_vals = log_uniform.transform(random_values)
     assert_array_equal(transformed_vals, np.log10(random_values))
     assert_array_equal(
@@ -271,6 +278,22 @@ def test_space_consistency():
     s3 = Space([np.array([True, False])])
     assert s1 == s2 == s3
 
+    # Categoricals Integer
+    s1 = Space([Categorical([1, 2, 3])])
+    s2 = Space([Categorical([1, 2, 3])])
+    s3 = Space([[1, 2, 3]])
+    a1 = s1.rvs(n_samples=10, random_state=0)
+    a2 = s2.rvs(n_samples=10, random_state=0)
+    a3 = s3.rvs(n_samples=10, random_state=0)
+    assert_equal(s1, s2)
+    assert_array_equal(a1, a2)
+    assert_equal(s1, s3)
+    assert_array_equal(a1, a3)
+
+    s1 = Space([(True, False)])
+    s2 = Space([Categorical([True, False])])
+    s3 = Space([np.array([True, False])])
+    assert s1 == s2 == s3
 
 @pytest.mark.fast_test
 def test_space_api():
@@ -380,7 +403,7 @@ def test_normalize():
         check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
-    X = rng.randint(2, 31, dtype="int64")
+    X = rng.randint(2, 31, dtype=np.int64)
     # Check transformed values are in [0, 1]
     assert np.all(a.transform(X) <= np.ones_like(X))
     assert np.all(np.zeros_like(X) <= a.transform(X))
@@ -390,20 +413,83 @@ def test_normalize():
     assert isinstance(X_orig, np.int64)
     assert_array_equal(X_orig, X)
 
-    a = Integer(2, 30, prior="log-uniform", base=2, transform="normalize")
+    a = Integer(2, 30, transform="normalize", dtype=int)
+    X = rng.randint(2, 31, dtype=int)
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, int)
+
+    a = Integer(2, 30, transform="normalize", dtype='int')
+    X = rng.randint(2, 31, dtype=int)
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, int)
+
+    a = Integer(2, 30, prior="log-uniform", base=2, transform="normalize",
+                dtype=int)
     for i in range(50):
         check_limits(a.rvs(random_state=i), 2, 30)
     assert_array_equal(a.transformed_bounds, (0, 1))
 
-    X = rng.randint(2, 31)
+    X = rng.randint(2, 31, dtype=int)
     # Check transformed values are in [0, 1]
     assert np.all(a.transform(X) <= np.ones_like(X))
     assert np.all(np.zeros_like(X) <= a.transform(X))
 
     # Check inverse transform
     X_orig = a.inverse_transform(a.transform(X))
-    assert isinstance(X_orig, np.int64)
+    assert isinstance(X_orig, int)
     assert_array_equal(X_orig, X)
+
+    a = Real(0, 1, transform="normalize", dtype=float)
+    for i in range(50):
+        check_limits(a.rvs(random_state=i), 0, 1)
+    assert_array_equal(a.transformed_bounds, (0, 1))
+
+    X = rng.rand()
+    # Check transformed values are in [0, 1]
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
+
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, float)
+    assert_array_equal(X_orig, X)
+
+    a = Real(0, 1, transform="normalize", dtype='float64')
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+    a = Real(0, 1, transform="normalize", dtype=np.float64)
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+    a = Real(0, 1, transform="normalize", dtype='float64')
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+
+@pytest.mark.fast_test
+def test_normalize_integer():
+    for dtype in ['int', 'int8', 'int16', 'int32', 'int64',
+                  'uint8', 'uint16', 'uint32', 'uint64']:
+        a = Integer(2, 30, transform="normalize", dtype=dtype)
+        for X in range(2, 31):
+            X_orig = a.inverse_transform(a.transform(X))
+            assert_array_equal(X_orig, X)
+    for dtype in [int, np.int8, np.int16, np.int32, np.int64,
+                  np.uint8, np.uint16, np.uint32, np.uint64]:
+        a = Integer(2, 30, transform="normalize", dtype=dtype)
+        for X in range(2, 31):
+            X_orig = a.inverse_transform(a.transform(X))
+            assert_array_equal(X_orig, X)
+            assert isinstance(X_orig, dtype)
 
 
 def check_valid_transformation(klass):
@@ -435,6 +521,18 @@ def test_categorical_identity():
     assert all([t in categories for t in cat.rvs(100)])
     transformed = cat.transform(samples)
     assert_array_equal(transformed, samples)
+    assert_array_equal(samples, cat.inverse_transform(transformed))
+
+
+@pytest.mark.fast_test
+def test_categorical_string():
+    categories = [1, 2, 3]
+    categories_transformed = ["1", "2", "3"]
+    cat = Categorical(categories, transform="string")
+    samples = cat.rvs(100)
+    assert all([t in categories for t in cat.rvs(100)])
+    transformed = cat.transform(samples)
+    assert all([t in categories_transformed for t in transformed])
     assert_array_equal(samples, cat.inverse_transform(transformed))
 
 

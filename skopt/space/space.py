@@ -10,6 +10,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.fixes import sp_version
 
 from .transformers import CategoricalEncoder
+from .transformers import StringEncoder
 from .transformers import Normalize
 from .transformers import Identity
 from .transformers import LogN
@@ -33,7 +34,7 @@ def check_dimension(dimension, transform=None):
 
     Parameters
     ----------
-    * `dimension`:
+    dimension : Dimension
         Search space Dimension.
         Each search dimension can be defined either as
 
@@ -45,11 +46,12 @@ def check_dimension(dimension, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `transform` ["identity", "normalize", "onehot" optional]:
+    transform : "identity", "normalize", "string", "onehot" optional
         - For `Categorical` dimensions, the following transformations are
           supported.
 
           - "onehot" (default) one-hot transformation of the original space.
+          - "string" string transformation of the original space.
           - "identity" same as the original space.
 
         - For `Real` and `Integer` dimensions, the following transformations
@@ -61,7 +63,7 @@ def check_dimension(dimension, transform=None):
 
     Returns
     -------
-    * `dimension`:
+    dimension : Dimension
         Dimension instance.
     """
     if isinstance(dimension, Dimension):
@@ -73,7 +75,7 @@ def check_dimension(dimension, transform=None):
     # A `Dimension` described by a single value is assumed to be
     # a `Categorical` dimension. This can be used in `BayesSearchCV`
     # to define subspaces that fix one value, e.g. to choose the
-    # model type, see "sklearn-gridsearchcv-replacement.ipynb"
+    # model type, see "sklearn-gridsearchcv-replacement.py"
     # for examples.
     if len(dimension) == 1:
         return Categorical(dimension, transform=transform)
@@ -126,10 +128,10 @@ class Dimension(object):
 
         Parameters
         ----------
-        * `n_samples` [int or None]:
+        n_samples : int or None
             The number of samples to be drawn.
 
-        * `random_state` [int, RandomState instance, or None (default)]:
+        random_state : int, RandomState instance, or None (default)
             Set random state to something other than None for reproducible
             results.
         """
@@ -183,41 +185,45 @@ def _uniform_inclusive(loc=0.0, scale=1.0):
 
 
 class Real(Dimension):
+    """Search space dimension that can take on any real value.
+
+    Parameters
+    ----------
+    low : float
+        Lower bound (inclusive).
+
+    high : float
+        Upper bound (inclusive).
+
+    prior : "uniform" or "log-uniform", default="uniform"
+        Distribution to use when sampling random points for this dimension.
+        - If `"uniform"`, points are sampled uniformly between the lower
+          and upper bounds.
+        - If `"log-uniform"`, points are sampled uniformly between
+          `log(lower, base)` and `log(upper, base)` where log
+          has base `base`.
+
+    base : int
+        The logarithmic base to use for a log-uniform prior.
+        - Default 10, otherwise commonly 2.
+
+    transform : "identity", "normalize", optional
+        The following transformations are supported.
+
+        - "identity", (default) the transformed space is the same as the
+          original space.
+        - "normalize", the transformed space is scaled to be between
+          0 and 1.
+
+    name : str or None
+        Name associated with the dimension, e.g., "learning rate".
+
+    dtype : str or dtype, default=np.float
+        float type which will be used in inverse_transform,
+        can be float.
+    """
     def __init__(self, low, high, prior="uniform", base=10, transform=None,
-                 name=None):
-        """Search space dimension that can take on any real value.
-
-        Parameters
-        ----------
-        * `low` [float]:
-            Lower bound (inclusive).
-
-        * `high` [float]:
-            Upper bound (inclusive).
-
-        * `prior` ["uniform" or "log-uniform", default="uniform"]:
-            Distribution to use when sampling random points for this dimension.
-            - If `"uniform"`, points are sampled uniformly between the lower
-              and upper bounds.
-            - If `"log-uniform"`, points are sampled uniformly between
-              `log(lower, base)` and `log(upper, base)` where log
-              has base `base`.
-
-        * `base` [int]:
-            The logarithmic base to use for a log-uniform prior.
-            - Default 10, otherwise commonly 2.
-
-        * `transform` ["identity", "normalize", optional]:
-            The following transformations are supported.
-
-            - "identity", (default) the transformed space is the same as the
-              original space.
-            - "normalize", the transformed space is scaled to be between
-              0 and 1.
-
-        * `name` [str or None]:
-            Name associated with the dimension, e.g., "learning rate".
-        """
+                 name=None, dtype=np.float):
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
                              " upper bound {}".format(low, high))
@@ -227,6 +233,16 @@ class Real(Dimension):
         self.base = base
         self.log_base = np.log10(base)
         self.name = name
+        self.dtype = dtype
+        if isinstance(self.dtype, str) and self.dtype\
+                not in ['float', 'float16', 'float32', 'float64']:
+            raise ValueError("dtype must be 'float', 'float16', 'float32'"
+                             "or 'float64'"
+                             " got {}".format(self.dtype))
+        elif isinstance(self.dtype, type) and self.dtype\
+                not in [float, np.float, np.float16, np.float32, np.float64]:
+            raise ValueError("dtype must be float, np.float"
+                             " got {}".format(self.dtype))
 
         if transform is None:
             transform = "identity"
@@ -278,18 +294,27 @@ class Real(Dimension):
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
-           orignal space.
+           original space.
         """
-        return np.clip(
-            super(Real, self).inverse_transform(Xt).astype(np.float),
-            self.low, self.high
-        )
+
+        inv_transform = super(Real, self).inverse_transform(Xt)
+        if isinstance(inv_transform, list):
+            inv_transform = np.array(inv_transform)
+        inv_transform = np.clip(inv_transform,
+                                self.low, self.high).astype(self.dtype)
+        if self.dtype == float or self.dtype == 'float':
+            # necessary, otherwise the type is converted to a numpy type
+            return getattr(inv_transform, "tolist", lambda: value)()
+        else:
+            return inv_transform
 
     @property
     def bounds(self):
         return (self.low, self.high)
 
     def __contains__(self, point):
+        if isinstance(point, list):
+            point = np.array(point)
         return self.low <= point <= self.high
 
     @property
@@ -307,10 +332,10 @@ class Real(Dimension):
 
         Parameters
         ----------
-        * `a` [float]
+        a : float
             First point.
 
-        * `b` [float]
+        b : float
             Second point.
         """
         if not (a in self and b in self):
@@ -320,42 +345,48 @@ class Real(Dimension):
 
 
 class Integer(Dimension):
+    """Search space dimension that can take on integer values.
+
+    Parameters
+    ----------
+    low : int
+        Lower bound (inclusive).
+
+    high : int
+        Upper bound (inclusive).
+
+    prior : "uniform" or "log-uniform", default="uniform"
+        Distribution to use when sampling random integers for
+        this dimension.
+        - If `"uniform"`, intgers are sampled uniformly between the lower
+          and upper bounds.
+        - If `"log-uniform"`, intgers are sampled uniformly between
+          `log(lower, base)` and `log(upper, base)` where log
+          has base `base`.
+
+    base : int
+        The logarithmic base to use for a log-uniform prior.
+        - Default 10, otherwise commonly 2.
+
+    transform : "identity", "normalize", optional
+        The following transformations are supported.
+
+        - "identity", (default) the transformed space is the same as the
+          original space.
+        - "normalize", the transformed space is scaled to be between
+          0 and 1.
+
+    name : str or None
+        Name associated with dimension, e.g., "number of trees".
+
+    dtype : str or dtype, default=np.int64
+        integer type which will be used in inverse_transform,
+        can be int, np.int16, np.uint32, np.int32, np.int64 (default).
+        When set to int, `inverse_transform` returns a list instead of
+        a numpy array
+    """
     def __init__(self, low, high, prior="uniform", base=10, transform=None,
-                 name=None):
-        """Search space dimension that can take on integer values.
-
-        Parameters
-        ----------
-        * `low` [int]:
-            Lower bound (inclusive).
-
-        * `high` [int]:
-            Upper bound (inclusive).
-
-        * `prior` ["uniform" or "log-uniform", default="uniform"]:
-            Distribution to use when sampling random integers for
-            this dimension.
-            - If `"uniform"`, intgers are sampled uniformly between the lower
-              and upper bounds.
-            - If `"log-uniform"`, intgers are sampled uniformly between
-              `log(lower, base)` and `log(upper, base)` where log
-              has base `base`.
-
-        * `base` [int]:
-            The logarithmic base to use for a log-uniform prior.
-            - Default 10, otherwise commonly 2.
-
-        * `transform` ["identity", "normalize", optional]:
-            The following transformations are supported.
-
-            - "identity", (default) the transformed space is the same as the
-              original space.
-            - "normalize", the transformed space is scaled to be between
-              0 and 1.
-
-        * `name` [str or None]:
-            Name associated with dimension, e.g., "number of trees".
-        """
+                 name=None, dtype=np.int64):
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
                              " upper bound {}".format(low, high))
@@ -365,6 +396,21 @@ class Integer(Dimension):
         self.base = base
         self.log_base = np.log10(base)
         self.name = name
+        self.dtype = dtype
+        if isinstance(self.dtype, str) and self.dtype\
+            not in ['int', 'int8', 'int16', 'int32', 'int64',
+                    'uint8', 'uint16', 'uint32', 'uint64']:
+            raise ValueError("dtype must be 'int', 'int8', 'int16',"
+                             "'int32', 'int64', 'uint8',"
+                             "'uint16', 'uint32', or"
+                             "'uint64', but got {}".format(self.dtype))
+        elif isinstance(self.dtype, type) and self.dtype\
+                not in [int, np.int8, np.int16, np.int32, np.int64,
+                        np.uint8, np.uint16, np.uint32, np.uint64]:
+            raise ValueError("dtype must be 'int', 'np.int8', 'np.int16',"
+                             "'np.int32', 'np.int64', 'np.uint8',"
+                             "'np.uint16', 'np.uint32', or"
+                             "'np.uint64', but got {}".format(self.dtype))
 
         if transform is None:
             transform = "identity"
@@ -409,17 +455,27 @@ class Integer(Dimension):
 
     def inverse_transform(self, Xt):
         """Inverse transform samples from the warped space back into the
-           orignal space.
+           original space.
         """
         # The concatenation of all transformed dimensions makes Xt to be
         # of type float, hence the required cast back to int.
-        return super(Integer, self).inverse_transform(Xt).astype(np.int64)
+        inv_transform = super(Integer, self).inverse_transform(Xt)
+        if isinstance(inv_transform, list):
+            inv_transform = np.array(inv_transform)
+        if self.dtype == int or self.dtype == 'int':
+            # necessary, otherwise the type is converted to a numpy type
+            return getattr(np.round(inv_transform).astype(self.dtype),
+                           "tolist", lambda: value)()
+        else:
+            return np.round(inv_transform).astype(self.dtype)
 
     @property
     def bounds(self):
         return (self.low, self.high)
 
     def __contains__(self, point):
+        if isinstance(point, list):
+            point = np.array(point)
         return self.low <= point <= self.high
 
     @property
@@ -434,10 +490,10 @@ class Integer(Dimension):
 
         Parameters
         ----------
-        * `a` [int]
+        a : int
             First point.
 
-        * `b` [int]
+        b : int
             Second point.
         """
         if not (a in self and b in self):
@@ -447,45 +503,48 @@ class Integer(Dimension):
 
 
 class Categorical(Dimension):
+    """Search space dimension that can take on categorical values.
+
+    Parameters
+    ----------
+    categories : list, shape=(n_categories,)
+        Sequence of possible categories.
+
+    prior : list, shape=(categories,), default=None
+        Prior probabilities for each category. By default all categories
+        are equally likely.
+
+    transform : "onehot", "string", "identity", default="onehot"
+        - "identity", the transformed space is the same as the original
+          space.
+        -  "string",  the transformed space is a string encoded
+          representation of the original space.
+        - "onehot", the transformed space is a one-hot encoded
+          representation of the original space.
+
+    name : str or None
+        Name associated with dimension, e.g., "colors".
+    """
     def __init__(self, categories, prior=None, transform=None, name=None):
-        """Search space dimension that can take on categorical values.
-
-        Parameters
-        ----------
-        * `categories` [list, shape=(n_categories,)]:
-            Sequence of possible categories.
-
-        * `prior` [list, shape=(categories,), default=None]:
-            Prior probabilities for each category. By default all categories
-            are equally likely.
-
-        * `transform` ["onehot", "identity", default="onehot"] :
-            - "identity", the transformed space is the same as the original
-              space.
-            - "onehot", the transformed space is a one-hot encoded
-              representation of the original space.
-
-        * `name` [str or None]:
-            Name associated with dimension, e.g., "colors".
-        """
-        if transform == 'identity':
-            self.categories = tuple([str(c) for c in categories])
-        else:
-            self.categories = tuple(categories)
+        self.categories = tuple(categories)
 
         self.name = name
 
         if transform is None:
             transform = "onehot"
         self.transform_ = transform
-        if transform not in ["identity", "onehot"]:
-            raise ValueError("Expected transform to be 'identity' or 'onehot' "
-                             "got {}".format(transform))
+        if transform not in ["identity", "onehot", "string"]:
+            raise ValueError("Expected transform to be 'identity', 'string' or"
+                             "'onehot' got {}".format(transform))
         if transform == "onehot":
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
+        elif transform == "string":
+            self.transformer = StringEncoder()
+            self.transformer.fit(self.categories)
         else:
-            self.transformer = Identity(dtype=type(categories[0]))
+            self.transformer = Identity()
+            self.transformer.fit(self.categories)
 
         self.prior = prior
 
@@ -557,10 +616,10 @@ class Categorical(Dimension):
 
         Parameters
         ----------
-        * `a` [category]
+        a : category
             First category.
 
-        * `b` [category]
+        b : category
             Second category.
         """
         if not (a in self and b in self):
@@ -570,28 +629,27 @@ class Categorical(Dimension):
 
 
 class Space(object):
-    """Search space."""
+    """Initialize a search space from given specifications.
 
-    def __init__(self, dimensions):
-        """Initialize a search space from given specifications.
+    Parameters
+    ----------
+    dimensions : list, shape=(n_dims,)
+        List of search space dimensions.
+        Each search dimension can be defined either as
 
-        Parameters
-        ----------
-        * `dimensions` [list, shape=(n_dims,)]:
-            List of search space dimensions.
-            Each search dimension can be defined either as
+        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
+          dimensions),
+        - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
+          dimensions),
+        - as a list of categories (for `Categorical` dimensions), or
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
 
-            - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
-              dimensions),
-            - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
-              dimensions),
-            - as a list of categories (for `Categorical` dimensions), or
-            - an instance of a `Dimension` object (`Real`, `Integer` or
-              `Categorical`).
-
-            NOTE: The upper and lower bounds are inclusive for `Integer`
+        .. note::
+            The upper and lower bounds are inclusive for `Integer`
             dimensions.
-        """
+    """
+    def __init__(self, dimensions):
         self.dimensions = [check_dimension(dim) for dim in dimensions]
 
     def __eq__(self, other):
@@ -620,7 +678,7 @@ class Space(object):
 
         Parameters
         ----------
-        * `yml_path` [str]:
+        yml_path : str
             Full path to yaml configuration file, example YaML below:
             Space:
               - Integer:
@@ -634,13 +692,13 @@ class Space(object):
                   low: 1.0
                   high: 5.0
                   prior: log-uniform
-        * `namespace` [str, default=None]:
+        namespace : str, default=None
            Namespace within configuration file to use, will use first
              namespace if not provided
 
         Returns
         -------
-        * `space` [Space]:
+        space : Space
            Instantiated Space object
         """
         with open(yml_path, 'rb') as f:
@@ -685,16 +743,16 @@ class Space(object):
 
         Parameters
         ----------
-        * `n_samples` [int, default=1]:
+        n_samples : int, default=1
             Number of samples to be drawn from the space.
 
-        * `random_state` [int, RandomState instance, or None (default)]:
+        random_state : int, RandomState instance, or None (default)
             Set random state to something other than None for reproducible
             results.
 
         Returns
         -------
-        * `points`: [list of lists, shape=(n_points, n_dims)]
+        points : list of lists, shape=(n_points, n_dims)
            Points sampled from the space.
         """
         rng = check_random_state(random_state)
@@ -728,12 +786,12 @@ class Space(object):
 
         Parameters
         ----------
-        * `X` [list of lists, shape=(n_samples, n_dims)]:
+        X : list of lists, shape=(n_samples, n_dims)
             The samples to transform.
 
         Returns
         -------
-        * `Xt` [array of floats, shape=(n_samples, transformed_n_dims)]
+        Xt : array of floats, shape=(n_samples, transformed_n_dims)
             The transformed samples.
         """
         # Pack by dimension
@@ -760,12 +818,12 @@ class Space(object):
 
         Parameters
         ----------
-        * `Xt` [array of floats, shape=(n_samples, transformed_n_dims)]:
+        Xt : array of floats, shape=(n_samples, transformed_n_dims)
             The samples to inverse transform.
 
         Returns
         -------
-        * `X` [list of lists, shape=(n_samples, n_dims)]
+        X : list of lists, shape=(n_samples, n_dims)
             The original samples.
         """
         # Inverse transform
@@ -849,10 +907,10 @@ class Space(object):
 
         Parameters
         ----------
-        * `a` [array]
+        point_a : array
             First point.
 
-        * `b` [array]
+        point_b : array
             Second point.
         """
         distance = 0.

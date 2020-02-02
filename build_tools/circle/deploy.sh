@@ -1,5 +1,6 @@
 #!/bin/bash
 # Almost copied verbatim from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/push_doc.sh
+export SKOPT_HOME=$(pwd)
 
 if [ -z $CIRCLE_PROJECT_USERNAME ];
 then USERNAME="skoptci";
@@ -16,6 +17,11 @@ git rm -r notebooks/*
 git rm -r rtd/*
 git rm -r beta/*
 cd ..
+for entry in ${HOME}/doc/skopt/*
+do
+  echo "$entry"
+done
+
 cp -r ${HOME}/doc/skopt/* deploy
 # Move into deployment directory
 cd deploy

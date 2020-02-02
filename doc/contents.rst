@@ -15,5 +15,6 @@ Table Of Contents
     :maxdepth: 2
 
     getting_started
+    user_guide
     auto_examples/index
     modules/classes

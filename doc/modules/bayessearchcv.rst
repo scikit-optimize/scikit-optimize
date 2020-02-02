@@ -1,4 +1,5 @@
 .. _bayessearchcv:
+
 BayesSearchCV, a GridSearchCV compatible estimator
 ==================================================
 

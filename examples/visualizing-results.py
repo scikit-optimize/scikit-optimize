@@ -16,8 +16,8 @@ objective next.
 To help understand why the optimization process is proceeding the way it is,
 it is useful to plot the location and order of the points at which the
 objective is evaluated. If everything is working as expected, early samples
- will be spread over the whole parameter space and later samples should
- cluster around the minimum.
+will be spread over the whole parameter space and later samples should
+cluster around the minimum.
 
 The :class:`plots.plot_evaluations` function helps with visualizing the location and
 order in which samples are evaluated for objectives with an arbitrary
