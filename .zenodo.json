@@ -1,0 +1,129 @@
+{
+  "title": "scikit-optimize/scikit-optimize",
+  "description": "Scikit-Optimize, or skopt, is a simple and efficient library to minimize (very) expensive and noisy black-box functions. It implements several methods for sequential model-based optimization. skopt aims to be accessible and easy to use in many contexts.",
+  "creators": [
+    {
+      "affiliation": "Wild Tree Tech",
+      "name": "Head, Tim"
+    },
+    {
+      "affiliation": "Google Brain",
+      "name": "Kumar, Manoj"
+    },
+    {
+      "name": "Nahrstaedt, Holger",
+      "orcid": "0000-0002-4796-1082"
+    },
+    {
+      "affiliation": "ULi\u00e8ge",
+      "name": "Louppe, Gilles"
+    },
+    {
+      "affiliation": "Saarland University",
+      "name": "Shcherbatyi, Iaroslav"
+    },
+    {
+      "name": "fcharras"
+    },
+    {
+      "name": "Z\u00e9 Vin\u00edcius"
+    },
+    {
+      "name": "cmmalone"
+    },
+    {
+      "name": "Christopher Schr\u00f6der"
+    },
+    {
+      "name": "nel215"
+    },
+    {
+      "affiliation": "@yldio",
+      "name": "Nuno Campos"
+    },
+    {
+      "name": "Todd Young"
+    },
+    {
+      "affiliation": "Politecnico di Milano",
+      "name": "Stefano Cereda"
+    },
+    {
+      "name": "Thomas Fan"
+    },
+    {
+      "name": "rene-rex"
+    },
+    {
+      "affiliation": "Columbia University",
+      "name": "Kejia (KJ) Shi"
+    },
+    {
+      "affiliation": "Biomedical Informatics Department, Emory School of Medicine",
+      "name": "Justus Schwabedal"
+    },
+    {
+      "name": "carlosdanielcsantos"
+    },
+    {
+      "affiliation": "Hvass Laboratories",
+      "name": "Hvass-Labs"
+    },
+    {
+      "affiliation": "Technical University of Munich",
+      "name": "Mikhail Pak"
+    },
+    {
+      "name": "SoManyUsernamesTaken"
+    },
+    {
+      "affiliation": "UC Berkeley",
+      "name": "Fred Callaway"
+    },
+    {
+      "name": "Lo\u00efc Est\u00e8ve"
+    },
+    {
+      "affiliation": "ENS de Cachan - Paris Saclay University",
+      "name": "Lilian Besson"
+    },
+    {
+      "name": "Mehdi Cherti"
+    },
+    {
+      "affiliation": "Paderborn University",
+      "name": "Karlson Pfannschmidt"
+    },
+    {
+      "affiliation": "Toptal",
+      "name": "Fabian Linzberger"
+    },
+    {
+      "affiliation": "@point8",
+      "name": "Christophe Cauet"
+    },
+    {
+      "affiliation": "10clouds",
+      "name": "Anna Gut"
+    },
+    {
+      "affiliation": "Columbia University Data Science Institute",
+      "name": "Andreas Mueller"
+    },
+    {
+      "affiliation": "DFKI",
+      "name": "Alexander Fabisch"
+    }
+  ],
+  "keywords": [
+    "bayesopt",
+    "optimization",
+    "scientific-computing",
+    "python",
+    "machine-learning",
+    "hyperparameter",
+    "bayesian-optimization"
+  ],
+  "license": "bsd-license",
+  "upload_type": "software"
+}
