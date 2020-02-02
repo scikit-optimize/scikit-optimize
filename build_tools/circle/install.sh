@@ -2,7 +2,7 @@ conda update -n base conda
 conda create -n testenv --yes python pip pytest nose
 source activate testenv
 
-python -m pip install -e '.[plots]'
+python -m pip install -e '.[plots,distributed]'
 export SKOPT_HOME=$(pwd)
 
 python -m pip install sphinx sphinx-gallery numpydoc memory_profiler

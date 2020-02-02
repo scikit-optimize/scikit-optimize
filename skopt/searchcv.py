@@ -1,29 +1,92 @@
-try:
-    from collections.abc import Sized
-except ImportError:
-    from collections import Sized
+'''
+TODO BEFORE CONSIDERING IF THIS IS WORTH MERGING
+
+- Decide how to manage retrocompatibility. Retrocompatibility is a huge issue
+on this PR because:
+    1) it adds dask[distributed] as a dependency, which in turns have a lot of
+    dependencies, which could create conflicts, which users want to avoid.
+    2) it removes joblib. For some users this is transparent, but it would
+    break the workflow of people using BayesSearchCV within a joblib context
+    manager to change the backend (for e.g, dask).
+    3) Is is also complicated because the PR changes significantly the logic
+    within BayesSearchCV internals, and (although it makes it simpler and
+    closer to sklearn BaseSearchCV) a specific development is yet to be made
+    to support both backends. For now it only works with dask.
+Because of 1), dask[distributed] should be added as an extra dependency first,
+and only made mandatory if joblib.Parallel is completely dropped from
+BayesSearchCV.
+For 2), an extra argument "backend" should be added to let the user choose
+between joblib and dask (taking two values "joblib" or "dask", first defaulting
+to "joblib" and as long as "dask" is an extra dependency). A planning should be
+prepared to deprecate joblib, add dask as a mandatory dependency, make joblib
+non-default, and finally remove it.
+3) is yet to be investigated, it is not clear wether what would be better:
+either maintaining side by side the new and the old version of BayesSearchCV or
+trying to make joblib work within the current logic.
+
+- Compared to the old (synchronous) version, it will be harder to enforce
+determinism with this one whenever `n_jobs` > 1. Indeed, depending on the load
+of the workers, tasks can be sometimes slower, sometimes faster, and the
+optimizer might not be told the same sequences of points. I don't think this
+should be an issue outside of testing (given most estimators rely on random
+initializations anyway).
+
+- there are a few TODOs to solve in the code. Especially, the output of the
+function _call_and_get_cfg must be structured for a better readability.
+
+'''
+
+import warnings
 from collections import defaultdict
 from functools import partial
+from operator import itemgetter
 
 import numpy as np
 from scipy.stats import rankdata
 
-import sklearn
 from sklearn.base import is_classifier, clone
-from joblib import Parallel, delayed
+from joblib import cpu_count
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
+from sklearn.model_selection._validation import check_cv
+from sklearn.model_selection._validation import _fit_and_score
 try:
     from sklearn.metrics import check_scoring
 except ImportError:
     from sklearn.metrics.scorer import check_scoring
 
+from dask.distributed import Client, as_completed
+
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
 from .callbacks import check_callback
+
+
+# TODO: this return format is awful, there is a lot of informations of
+# different nature in a tuple that is too long. The manipulations that follow
+# are hard to read. Need for a more structured output.
+def _call_and_get_cfg(f, cfg, *args, **kwargs):
+    return (*f(*args, **kwargs), *cfg)
+
+
+class _ManageBackend:
+
+    def __init__(self, client=None, **default_kwargs):
+        self.client = client
+        self.default_kwargs = default_kwargs
+
+    def __enter__(self):
+        self.managed = self.client is None
+        if self.managed:
+            self.client = Client(**self.default_kwargs)
+        return self.client
+
+    def __exit__(self, type, value, traceback):
+        if self.managed:
+            self.client.close()
 
 
 class BayesSearchCV(BaseSearchCV):
@@ -53,7 +116,7 @@ class BayesSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     search_spaces : dict, list of dict or list of tuple containing
-        (dict, int).
+        (dict, int) or (dict, dict).
         One of these cases:
         1. dictionary, where keys are parameter names (strings)
         and values are skopt.space.Dimension instances (Real, Integer
@@ -64,12 +127,17 @@ class BayesSearchCV(BaseSearchCV):
         dictionary fits the description given in case 1 above.
         If a list of dictionary objects is given, then the search is
         performed sequentially for every parameter space with maximum
-        number of evaluations set to self.n_iter.
-        3. list of (dict, int > 0): an extension of case 2 above,
+        number of evaluations set to self.n_iter and number of initial
+        points set to self.n_initial_points.
+        3. list of (dict, dict): an extension of case 2 above,
         where first element of every tuple is a dictionary representing
         some search subspace, similarly as in case 2, and second element
-        is a number of iterations that will be spent optimizing over
-        this subspace.
+        can override global parameters for specific subspace. Currently
+        support overriding `n_iter`, `n_initial_points` and
+        `n_points`.
+        4. list of (dict, int > 0): this case is deprecated.
+        It is equivalent to case 3 where the second dictionary contains only
+        the key `n_iter` with the value set to this integer.
 
     n_iter : int, default=50
         Number of parameter settings that are sampled. n_iter trades
@@ -100,22 +168,18 @@ class BayesSearchCV(BaseSearchCV):
         not align with ``n_iter``, the last iteration will sample less
         points. See also :func:`~Optimizer.ask`
 
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
+    n_initial_points : int, optional
+        If None, will be set to `n_points` for all search spaces. Else, must be
+        >= n_points for all search spaces. This parameter could be leveraged
+        to exploit the asynchronous backend performances and ensure workers do
+        not ever starve (by setting n_initial_points slightly greater than
+        n_points).)
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+    client: dask.distributed.Client, optional
+        By default, BayesSearchCV will use dask.distributed backend with a
+        LocalCluster. If another client is passed it will be used instead. It
+        will override the parameter `n_jobs` (using instead the configuration
+        of the client).
 
     iid : boolean, default=True
         If True, the data is assumed to be identically distributed across
@@ -284,16 +348,18 @@ class BayesSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
-                 n_iter=50, scoring=None, fit_params=None, n_jobs=1,
-                 n_points=1, iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', random_state=None,
+                 n_iter=50, scoring=None, fit_params=None,
+                 n_initial_points=None, n_points=1, n_jobs=1, client=None,
+                 iid=True, refit=True, cv=None, verbose=0, random_state=None,
                  error_score='raise', return_train_score=False):
 
         self.search_spaces = search_spaces
         self.n_iter = n_iter
+        self.n_initial_points = n_initial_points
         self.n_points = n_points
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
+        self.client = client
         self._check_search_space(self.search_spaces)
         # Temporary fix for compatibility with sklearn 0.20 and 0.21
         # See scikit-optimize#762
@@ -304,7 +370,7 @@ class BayesSearchCV(BaseSearchCV):
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-             pre_dispatch=pre_dispatch, error_score=error_score,
+             pre_dispatch=None, error_score=error_score,
              return_train_score=return_train_score)
 
     def _check_search_space(self, search_space):
@@ -331,15 +397,24 @@ class BayesSearchCV(BaseSearchCV):
                     if len(elem) != 2:
                         raise ValueError(
                             "All tuples in list of search spaces should have"
-                            "length 2, and contain (dict, int), got %s" % elem
+                            "length 2, and contain (dict, dict), got %s" % elem
                         )
-                    subspace, n_iter = elem
+                    subspace, param_override = elem
 
-                    if (not isinstance(n_iter, int)) or n_iter < 0:
+                    if isinstance(param_override, int):
+                        warnings.warn(
+                            "Overriding n_iter for a particular search pass "
+                            "with an integer passed within a tuple is "
+                            "deprecated. Instead of this integer, you should "
+                            "pass a dictionary with the key 'n_iter' and the "
+                            "integer should be the value", DeprecationWarning)
+                        param_override = dict(n_iter=param_override)
+
+                    if (not isinstance(param_override, dict)):
                         raise ValueError(
-                            "Number of iterations in search space should be"
-                            "positive integer, got %s in tuple %s " %
-                            (n_iter, elem)
+                            "Parameter overriding in search space should be"
+                            "given as a dict, got %s in tuple %s " %
+                            (param_override, elem)
                         )
 
                     # save subspaces here for further checking
@@ -349,7 +424,7 @@ class BayesSearchCV(BaseSearchCV):
                 else:
                     raise TypeError(
                         "A search space should be provided as a dict or"
-                        "tuple (dict, int), got %s" % elem)
+                        "tuple (dict, dict), got %s" % elem)
 
             # 2. check all the dicts for correctness of contents
             for subspace in dicts_only:
@@ -359,6 +434,32 @@ class BayesSearchCV(BaseSearchCV):
             raise TypeError(
                 "Search space should be provided as a dict or list of dict,"
                 "got %s" % search_space)
+
+    def _init_search_spaces(self):
+        # check if space is a single dict, convert to list if so
+        search_spaces = self.search_spaces
+        if isinstance(search_spaces, dict):
+            search_spaces = [search_spaces]
+
+        search_spaces_, n_iters, n_initial_points, n_points = [], [], [], []
+        for space in search_spaces:
+            space, params = space if isinstance(space, tuple) else (space, {})
+            if isinstance(params, int):  # deprecated
+                params = dict(n_iter=params)
+            n_iter = params.get('n_iter', self.n_iter)
+            points = params.get('n_points', self.n_points)
+            n_initial = params.get('n_initial', self.n_initial_points)
+            if n_initial is None:
+                n_initial = points
+            if n_initial < points:
+                raise ValueError("Number of initial points must be at least "
+                                 "equal to n_points")
+            search_spaces_.append(space)
+            n_initial_points.append(n_initial)
+            n_iters.append(n_iter + n_initial)
+            n_points.append(points)
+
+        return search_spaces_, n_initial_points, n_iters, n_points
 
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     @property
@@ -372,49 +473,230 @@ class BayesSearchCV(BaseSearchCV):
         check_is_fitted(self, 'cv_results_')
         return self.cv_results_['params'][self.best_index_]
 
-    # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
-    def _fit(self, X, y, groups, parameter_iterable):
+    def _make_optimizers(self, search_spaces):
+        """Instantiate skopt Optimizer class.
+
+        Parameters
+        ----------
+        search_spaces : dict
+            Represents parameter search spaces. The keys are parameter
+            names (strings) and values are skopt.space.Dimension instances,
+            one of Real, Integer or Categorical.
         """
-        Actual fitting,  performing the search over parameters.
-        Taken from https://github.com/scikit-learn/scikit-learn/blob/0.18.X
-                    .../sklearn/model_selection/_search.py
+
+        if self.optimizer_kwargs is None:
+            self.optimizer_kwargs_ = {}
+        else:
+            self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
+        random_state = check_random_state(self.random_state)
+        if random_state is not None:
+            self.optimizer_kwargs_['random_state'] = random_state
+
+        # Instantiate optimizers for all the search spaces.
+        optimizers = []
+        for search_space in search_spaces:
+            if isinstance(search_space, tuple):
+                search_space = search_space[0]
+
+            # TODO: different optimizer_kwargs per search space ?
+            kwargs = self.optimizer_kwargs_.copy()
+            kwargs['dimensions'] = dimensions_aslist(search_space)
+            optimizers.append(Optimizer(**kwargs))
+
+        # will save the states of the optimizers
+        # TODO: do not attach optimizers to the object by default. Make it
+        # configurable. It might not be useful to the user.
+        self.optimizers_ = optimizers
+
+    def _ask_new_tasks(self, point_idx, space_idx, space, n_points, X, y,
+                       base_estimator, n_splits, point_logs, cv_iter):
+        '''
+        Generate new points from the optimizer and add them to the queue of
+        points to evaluate.
+        '''
+        params = self.optimizers_[space_idx].ask(n_points=n_points)
+
+        # convert parameters to python native types
+        # ???: why ?
+        params = [[np.array(v).item() for v in p] for p in params]
+
+        new_tasks = []
+
+        for point_idx, param in enumerate(params, point_idx + 1):
+
+            point_logs[point_idx] = [None] * n_splits
+            p_dict = point_asdict(space, param)
+            for split_i, (train, test) in cv_iter:
+
+                args = (base_estimator, X, y, self.scorer_, train, test,
+                        self.verbose, p_dict)
+
+                cfg = (space_idx, point_idx, split_i, param)
+
+                new_tasks.append((_fit_and_score, cfg, *args))
+
+        return zip(*new_tasks), point_idx
+
+    def _compute(self, client, base_estimator, n_initial_points, n_iters,
+                 n_points, X, y, n_splits, search_spaces, cv_iter, callbacks):
+        """Generate points asynchronously and log the results.
         """
+
+        optimizers = self.optimizers_
+        point_logs = {}  # save the scores for each candidate and each split
+        point_idx = -1  # index of points
+
+        _fit_and_score_kwargs = dict(
+            fit_params=self.fit_params,
+            return_train_score=self.return_train_score,
+            return_n_test_samples=True,
+            return_times=True, return_parameters=True,
+            error_score=self.error_score)
+
+        # initialize initial points for each search space
+        for space_idx, space in enumerate(search_spaces):
+            dispatched, point_idx = self._ask_new_tasks(
+                point_idx, space_idx, space, n_initial_points[space_idx], X, y,
+                base_estimator, n_splits, point_logs, cv_iter)
+            dispatched = client.map(_call_and_get_cfg, *dispatched, pure=False,
+                                    **_fit_and_score_kwargs)
+            dispatched = as_completed(dispatched, with_results=True)
+
+        # now get asynchronously the result and create new tasks from them
+        # save the params and the mean scores for each search space
+        space_arriving_results = [([], []) for space in search_spaces]
+        n_iters_queued = n_initial_points
+        while n_iters_queued < n_iters:
+            res = dispatched.next()[1]
+            (space_idx, point_idx_out, split_idx, param) = res[-4:]
+            point_log = point_logs[point_idx_out]
+            point_log[split_idx] = res
+            # if all scores for all splits for all points of a batch
+            # are available we can compute the means, tell the
+            # optimizer and ask for a new batch.
+            scores = [res[-9] for res in point_log if res is not None]
+            if len(scores) == n_splits:
+                mean_score = np.mean(scores)
+                params, scores = space_arriving_results[space_idx]
+                params.append(param)
+                scores.append(-mean_score)
+                remaining_iter = n_iters[space_idx] - n_iters_queued[space_idx]
+                if len(scores) == n_points[space_idx] and remaining_iter > 0:
+                    space_arriving_results[space_idx] = ([], [])
+                    optim_result = optimizers[space_idx].tell(params, scores)
+                    if eval_callbacks(callbacks, optim_result):
+                        # TODO: we should also cancel the futures that are
+                        # still dispatched for this search_space.
+                        n_iters_queued[space_idx] = n_iters[space_idx]
+                        continue
+                    n_points_ = min(n_points[space_idx], remaining_iter)
+                    point_idx = self._ask_new_tasks(
+                        point_idx, space_idx, search_spaces[space_idx],
+                        n_points_, X, y, base_estimator, n_splits, point_logs,
+                        cv_iter)
+                    dispatched.update(client.map(
+                        _call_and_get_cfg, *point_idx[0], pure=False,
+                        **_fit_and_score_kwargs))
+                    point_idx = point_idx[1]
+                    n_iters_queued[space_idx] += n_points_
+
+        for res in dispatched:
+            res = res[1]
+            (space_idx, point_idx_out, split_idx, param) = res[-4:]
+            point_logs[point_idx_out][split_idx] = res
+
+        return [res for point in point_logs.values() for res in point]
+
+    @property
+    def total_iterations(self):
+        """
+        Count total iterations that will be taken to explore
+        all subspaces with `fit` method.
+
+        Returns
+        -------
+        max_iter: int, total number of iterations to explore
+        """
+        total_iter = 0
+        for elem in self.search_spaces:
+            n_iter = self.n_iter
+            if isinstance(elem, tuple):
+                n_iter = elem[1]
+                if isinstance(n_iter, dict):  # are other cases are deprecated
+                    n_iter = elem[1]['n_iter']
+            total_iter += n_iter
+        return total_iter
+
+    def _run_search(self, x):
+        # ???: surely this could be removed ?
+        pass
+
+    def fit(self, X, y=None, groups=None, callback=None):
+        """Run fit on the estimator with randomly drawn parameters.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output]
+            Target relative to X for classification or regression (class
+            labels should be integers or strings).
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        callback: [callable, list of callables, optional]
+            If callable then `callback(res)` is called after each parameter
+            combination tested. If list of callables, then each callable in
+            the list is called.
+        """
+
+        search_spaces, n_initial_points, n_iters, n_points = \
+            self._init_search_spaces()
+
+        callbacks = check_callback(callback)
+
+        self._make_optimizers(search_spaces)
 
         estimator = self.estimator
-        cv = sklearn.model_selection._validation.check_cv(
-            self.cv, y, classifier=is_classifier(estimator))
-        self.scorer_ = check_scoring(
-            self.estimator, scoring=self.scoring)
+        cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
+        self.multimetric_ = False
 
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
-        if self.verbose > 0 and isinstance(parameter_iterable, Sized):
-            n_candidates = len(parameter_iterable)
+        n_candidates = sum(n_iters)
+        if self.verbose > 0:
             print("Fitting {0} folds for each of {1} candidates, totalling"
                   " {2} fits".format(n_splits, n_candidates,
                                      n_candidates * n_splits))
+        n_jobs = self.n_jobs
+        # account for case n_jobs < 0
+        if n_jobs < 0:
+            n_jobs = max(1, cpu_count() + n_jobs + 1)
 
         base_estimator = clone(self.estimator)
-        pre_dispatch = self.pre_dispatch
 
-        cv_iter = list(cv.split(X, y, groups))
-        out = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch
-        )(delayed(sklearn.model_selection._validation._fit_and_score)(
-                clone(base_estimator),
-                X, y, self.scorer_,
-                train, test, self.verbose, parameters,
-                fit_params=self.fit_params,
-                return_train_score=self.return_train_score,
-                return_n_test_samples=True,
-                return_times=True, return_parameters=True,
-                error_score=self.error_score
-            )
-            for parameters in parameter_iterable
-            for train, test in cv_iter)
+        with _ManageBackend(self.client, n_workers=n_jobs) as client:
+            # XXX: should we also scatter all the constant parameters of
+            # _call_and_get_cfg ?
+            cv_iter = [(idx, client.scatter([train, test]))
+                       for idx, (train, test)
+                       in enumerate(cv.split(X, y, groups))]
+            X_, y_, groups = client.scatter([X, y, groups])
+            out = self._compute(
+                client, base_estimator, n_initial_points, n_iters, n_points,
+                X_, y_, n_splits, search_spaces, cv_iter, callbacks)
 
-        # if one choose to see train score, "out" will contain train score info
+        # sort by candidate and then by split.
+        out = map(itemgetter(slice(None, -4)),
+                  sorted(out, key=itemgetter(-3, -2)))
+
+        # All the following is copy/pasted from sklearn. Beware to
+        # retrocompatibility.
+        # If one choose to see train score, "out" will contain train score info
         if self.return_train_score:
             (train_scores, test_scores, test_sample_counts,
              fit_time, score_time, parameters) = zip(*out)
@@ -423,14 +705,15 @@ class BayesSearchCV(BaseSearchCV):
              fit_time, score_time, parameters) = zip(*out)
 
         candidate_params = parameters[::n_splits]
-        n_candidates = len(candidate_params)
+        n_candidates_fitted = len(candidate_params)
+        print("%d candidates were fitted successfully" % n_candidates_fitted)
 
         results = dict()
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
-            array = np.array(array, dtype=np.float64).reshape(n_candidates,
-                                                              n_splits)
+            array = np.array(array, dtype=np.float64).reshape(
+                             n_candidates_fitted, n_splits)
             if splits:
                 for split_i in range(n_splits):
                     results["split%d_%s"
@@ -467,10 +750,11 @@ class BayesSearchCV(BaseSearchCV):
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
         param_results = defaultdict(partial(
-                                            MaskedArray,
-                                            np.empty(n_candidates,),
-                                            mask=True,
-                                            dtype=object))
+            MaskedArray,
+            np.empty(n_candidates_fitted,),
+            mask=True,
+            dtype=object))
+
         for cand_i, params in enumerate(candidate_params):
             for name, value in params.items():
                 # An all masked empty array gets created for the key
@@ -493,192 +777,9 @@ class BayesSearchCV(BaseSearchCV):
             best_estimator = clone(base_estimator).set_params(
                 **best_parameters)
             if y is not None:
-                best_estimator.fit(X, y, **self.fit_params)
+                best_estimator.fit(X, y, **(self.fit_params or {}))
             else:
-                best_estimator.fit(X, **self.fit_params)
+                best_estimator.fit(X, **(self.fit_params or {}))
             self.best_estimator_ = best_estimator
-        return self
-
-    def _fit_best_model(self, X, y):
-        """Fit the estimator copy with best parameters found to the
-        provided data.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Input data, where n_samples is the number of samples and
-            n_features is the number of features.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_output],
-            Target relative to X for classification or regression.
-
-        Returns
-        -------
-        self
-        """
-        self.best_estimator_ = clone(self.estimator)
-        self.best_estimator_.set_params(**self.best_params_)
-        self.best_estimator_.fit(X, y, **(self.fit_params or {}))
-        return self
-
-    def _make_optimizer(self, params_space):
-        """Instantiate skopt Optimizer class.
-
-        Parameters
-        ----------
-        params_space : dict
-            Represents parameter search space. The keys are parameter
-            names (strings) and values are skopt.space.Dimension instances,
-            one of Real, Integer or Categorical.
-
-        Returns
-        -------
-        optimizer: Instance of the `Optimizer` class used for for search
-            in some parameter space.
-
-        """
-
-        kwargs = self.optimizer_kwargs_.copy()
-        kwargs['dimensions'] = dimensions_aslist(params_space)
-        optimizer = Optimizer(**kwargs)
-
-        return optimizer
-
-    def _step(self, X, y, search_space, optimizer, groups=None, n_points=1):
-        """Generate n_jobs parameters and evaluate them in parallel.
-        """
-
-        # get parameter values to evaluate
-        params = optimizer.ask(n_points=n_points)
-
-        # convert parameters to python native types
-        params = [[np.array(v).item() for v in p] for p in params]
-
-        # make lists into dictionaries
-        params_dict = [point_asdict(search_space, p) for p in params]
-
-        # HACK: self.cv_results_ is reset at every call to _fit, keep current
-        all_cv_results = self.cv_results_
-
-        # HACK: this adds compatibility with different versions of sklearn
-        refit = self.refit
-        self.refit = False
-        self._fit(X, y, groups, params_dict)
-        self.refit = refit
-
-        # merge existing and new cv_results_
-        for k in self.cv_results_:
-            all_cv_results[k].extend(self.cv_results_[k])
-
-        self.cv_results_ = all_cv_results
-        self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
-
-        # feed the point and objective back into optimizer
-        local_results = self.cv_results_['mean_test_score'][-len(params):]
-
-        # optimizer minimizes objective, hence provide negative score
-        return optimizer.tell(params, [-score for score in local_results])
-
-    @property
-    def total_iterations(self):
-        """
-        Count total iterations that will be taken to explore
-        all subspaces with `fit` method.
-
-        Returns
-        -------
-        max_iter: int, total number of iterations to explore
-        """
-        total_iter = 0
-
-        for elem in self.search_spaces:
-
-            if isinstance(elem, tuple):
-                space, n_iter = elem
-            else:
-                n_iter = self.n_iter
-
-            total_iter += n_iter
-
-        return total_iter
-
-    def _run_search(self, x):
-        pass
-
-    def fit(self, X, y=None, groups=None, callback=None):
-        """Run fit on the estimator with randomly drawn parameters.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The training input samples.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_output]
-            Target relative to X for classification or regression (class
-            labels should be integers or strings).
-
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
-
-        callback: [callable, list of callables, optional]
-            If callable then `callback(res)` is called after each parameter
-            combination tested. If list of callables, then each callable in
-            the list is called.
-        """
-
-        # check if space is a single dict, convert to list if so
-        search_spaces = self.search_spaces
-        if isinstance(search_spaces, dict):
-            search_spaces = [search_spaces]
-
-        callbacks = check_callback(callback)
-
-        if self.optimizer_kwargs is None:
-            self.optimizer_kwargs_ = {}
-        else:
-            self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
-        random_state = check_random_state(self.random_state)
-        self.optimizer_kwargs_['random_state'] = random_state
-
-        # Instantiate optimizers for all the search spaces.
-        optimizers = []
-        for search_space in search_spaces:
-            if isinstance(search_space, tuple):
-                search_space = search_space[0]
-            optimizers.append(self._make_optimizer(search_space))
-        self.optimizers_ = optimizers  # will save the states of the optimizers
-
-        self.cv_results_ = defaultdict(list)
-        self.best_index_ = None
-        self.multimetric_ = False
-
-        n_points = self.n_points
-
-        for search_space, optimizer in zip(search_spaces, optimizers):
-            # if not provided with search subspace, n_iter is taken as
-            # self.n_iter
-            if isinstance(search_space, tuple):
-                search_space, n_iter = search_space
-            else:
-                n_iter = self.n_iter
-
-            # do the optimization for particular search space
-            while n_iter > 0:
-                # when n_iter < n_points points left for evaluation
-                n_points_adjusted = min(n_iter, n_points)
-
-                optim_result = self._step(
-                    X, y, search_space, optimizer,
-                    groups=groups, n_points=n_points_adjusted
-                )
-                n_iter -= n_points
-
-                if eval_callbacks(callbacks, optim_result):
-                    break
-
-        # Refit the best model on the the whole dataset
-        if self.refit:
-            self._fit_best_model(X, y)
 
         return self
