@@ -23,7 +23,7 @@ def plot_convergence(*args, **kwargs):
 
     Parameters
     ----------
-    * `args[i]` [`OptimizeResult`, list of `OptimizeResult`, or tuple]:
+    args[i] :  `OptimizeResult`, list of `OptimizeResult`, or tuple
         The result(s) for which to plot the convergence trace.
 
         - if `OptimizeResult`, then draw the corresponding single trace;
@@ -32,19 +32,19 @@ def plot_convergence(*args, **kwargs):
         - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
           an `OptimizeResult` or a list of `OptimizeResult`.
 
-    * `ax` [`Axes`, optional]:
+    ax : `Axes`, optional
         The matplotlib axes on which to draw the plot, or `None` to create
         a new one.
 
-    * `true_minimum` [float, optional]:
+    true_minimum : float, optional
         The true minimum value of the function, if known.
 
-    * `yscale` [None or string, optional]:
+    yscale : None or string, optional
         The scale for the y-axis.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : `Axes`
         The matplotlib axes.
     """
     # <3 legacy python
@@ -106,7 +106,7 @@ def plot_regret(*args, **kwargs):
 
     Parameters
     ----------
-    * `args[i]` [`OptimizeResult`, list of `OptimizeResult`, or tuple]:
+    args[i] : `OptimizeResult`, list of `OptimizeResult`, or tuple
         The result(s) for which to plot the cumulative regret trace.
 
         - if `OptimizeResult`, then draw the corresponding single trace;
@@ -116,19 +116,19 @@ def plot_regret(*args, **kwargs):
         - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
           an `OptimizeResult` or a list of `OptimizeResult`.
 
-    * `ax` [`Axes`, optional]:
+    ax : Axes`, optional
         The matplotlib axes on which to draw the plot, or `None` to create
         a new one.
 
-    * `true_minimum` [float, optional]:
+    true_minimum : float, optional
         The true minimum value of the function, if known.
 
-    * `yscale` [None or string, optional]:
+    yscale : None or string, optional
         The scale for the y-axis.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : `Axes`
         The matplotlib axes.
     """
     # <3 legacy python
@@ -288,28 +288,28 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
     Parameters
     ----------
-    * `space` [`Space`]
+    space : `Space`
         The parameter space over which the minimization was performed.
 
-    * `model`
+    model
         Surrogate model for the objective function.
 
-    * `i` [int]
+    i : int
         The first dimension for which to calculate the partial dependence.
 
-    * `j` [int, default=None]
+    j : int, default=None
         The second dimension for which to calculate the partial dependence.
         To calculate the 1D partial dependence on `i` alone set `j=None`.
 
-    * `sample_points` [np.array, shape=(n_points, n_dims), default=None]
+    sample_points : np.array, shape=(n_points, n_dims), default=None
         Randomly sampled and transformed points to use when averaging
         the model function at each of the `n_points`.
 
-    * `n_samples` [int, default=100]
+    n_samples : int, default=100
         Number of random samples to use for averaging the model function
         at each of the `n_points`. Only used when `sample_points=None`.
 
-    * `n_points` [int, default=40]
+    n_points : int, default=40
         Number of points at which to evaluate the partial dependence
         along each dimension `i` and `j`.
 
@@ -317,19 +317,19 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     -------
     For 1D partial dependence:
 
-    * `xi`: [np.array]:
+    xi : np.array
         The points at which the partial dependence was evaluated.
 
-    * `yi`: [np.array]:
+    yi : np.array
         The value of the model at each point `xi`.
 
     For 2D partial dependence:
 
-    * `xi`: [np.array, shape=n_points]:
+    xi : np.array, shape=n_points
         The points at which the partial dependence was evaluated.
-    * `yi`: [np.array, shape=n_points]:
+    yi : np.array, shape=n_points
         The points at which the partial dependence was evaluated.
-    * `zi`: [np.array, shape=(n_points, n_points)]:
+    zi : np.array, shape=(n_points, n_points)
         The value of the model at each point `(xi, yi)`.
 
     For Categorical variables, the `xi` (and `yi` for 2D) returned are
@@ -391,35 +391,36 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : `OptimizeResult`
         The result for which to create the scatter plot matrix.
 
-    * `levels` [int, default=10]
+    levels : int, default=10
         Number of levels to draw on the contour plot, passed directly
         to `plt.contour()`.
 
-    * `n_points` [int, default=40]
+    n_points : int, default=40
         Number of points at which to evaluate the partial dependence
         along each dimension.
 
-    * `n_samples` [int, default=250]
+    n_samples : int, default=250
         Number of random samples to use for averaging the model function
         at each of the `n_points`.
 
-    * `size` [float, default=2]
+    size : float, default=2
         Height (in inches) of each facet.
 
-    * `zscale` [str, default='linear']
+    zscale : str, default='linear'
         Scale to use for the z axis of the contour plots. Either 'linear'
         or 'log'.
 
-    * `dimensions` [list of str, default=None] Labels of the dimension
+    dimensions : list of str, default=None
+        Labels of the dimension
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : `Axes`
         The matplotlib axes.
     """
     space = result.space
@@ -480,19 +481,20 @@ def plot_evaluations(result, bins=20, dimensions=None):
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : `OptimizeResult`
         The result for which to create the scatter plot matrix.
 
-    * `bins` [int, bins=20]:
+    bins : int, bins=20
         Number of bins to use for histograms on the diagonal.
 
-    * `dimensions` [list of str, default=None] Labels of the dimension
+    dimensions : list of str, default=None
+        Labels of the dimension
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : `Axes`
         The matplotlib axes.
     """
     space = result.space
@@ -538,15 +540,15 @@ def _map_categories(space, points, minimum):
 
     Returns
     -------
-    * `mapped_points` [np.array, shape=points.shape]:
+   mapped_points : np.array, shape=points.shape
         A copy of `points` with categoricals replaced with their indices in
         the corresponding `Dimension`.
 
-    * `mapped_minimum` [np.array, shape=(space.n_dims,)]:
+    mapped_minimum : np.array, shape (space.n_dims,)
         A copy of `minimum` with categoricals replaced with their indices in
         the corresponding `Dimension`.
 
-    * `iscat` [np.array, shape=(space.n_dims,)]:
+    iscat : np.array, shape (space.n_dims,)
        Boolean array indicating whether dimension `i` in the `space` is
        categorical.
     """
@@ -571,22 +573,22 @@ def _evenly_sample(dim, n_points):
 
     Parameters
     ----------
-    * `dim` [`Dimension`]
+    dim : `Dimension`
         The Dimension to sample from.  Can be categorical; evenly-spaced
         category indices are chosen in order without replacement (result
         may be smaller than `n_points`).
 
-    * `n_points` [int]
+    n_points : int
         The number of points to sample from `dim`.
 
     Returns
     -------
-    * `xi`: [np.array]:
+    xi : np.array
         The sampled points in the Dimension.  For Categorical
         dimensions, returns the index of the value in
         `dim.categories`.
 
-    * `xi_transformed`: [np.array]:
+    xi_transformed : np.array
         The transformed values of `xi`, for feeding to a model.
     """
     cats = np.array(getattr(dim, 'categories', []), dtype=object)

@@ -1,4 +1,5 @@
 .. currentmodule:: skopt
+
 ===============
 Getting started
 ===============

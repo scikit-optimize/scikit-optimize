@@ -19,4 +19,4 @@ Maintenance
 
 * joblib instead of sklearn.externals.joblib
 * Improve travis CI unit tests (Different sklearn version are checked)
-* Added `versioneer` support, to keep things simple and to fix pypi deploy
+* Removed `versioneer` support, to keep things simple and to fix pypi deploy

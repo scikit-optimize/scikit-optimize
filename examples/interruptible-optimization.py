@@ -7,6 +7,7 @@ Christian Schell, Mai 2018
 Reformatted by Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
+
 Problem statement
 =================
 

@@ -31,27 +31,27 @@ def create_result(Xi, yi, space=None, rng=None, specs=None, models=None):
 
     Parameters
     ----------
-    * `Xi` [list of lists, shape=(n_iters, n_features)]:
+    Xi : list of lists, shape (n_iters, n_features)
         Location of the minimum at every iteration.
 
-    * `yi` [array-like, shape=(n_iters,)]:
+    yi : array-like, shape (n_iters,)
         Minimum value obtained at every iteration.
 
-    * `space` [Space instance, optional]:
+    space : Space instance, optional
         Search space.
 
-    * `rng` [RandomState instance, optional]:
+    rng : RandomState instance, optional
         State of the random state.
 
-    * `specs` [dict, optional]:
+    specs : dict, optional
         Call specifications.
 
-    * `models` [list, optional]:
+    models : list, optional
         List of fit surrogate models.
 
     Returns
     -------
-    * `res` [`OptimizeResult`, scipy object]:
+    res : `OptimizeResult`, scipy object
         OptimizeResult instance with the required information.
     """
     res = OptimizeResult()
@@ -80,15 +80,15 @@ def eval_callbacks(callbacks, result):
 
     Parameters
     ----------
-    * `callbacks` [list of callables]:
+    callbacks : list of callables
         Callbacks to evaluate.
 
-    * `result` [`OptimizeResult`, scipy object]:
+    result : `OptimizeResult`, scipy object
         Optimization result object to be stored.
 
     Returns
     -------
-    * `decision` [bool]:
+    decision : bool
         Decision of the callbacks whether or not to keep optimizing
     """
     stop = False
@@ -107,15 +107,15 @@ def dump(res, filename, store_objective=True, **kwargs):
 
     Parameters
     ----------
-    * `res` [`OptimizeResult`, scipy object]:
+    res : `OptimizeResult`, scipy object
         Optimization result object to be stored.
 
-    * `filename` [string or `pathlib.Path`]:
+    filename : string or `pathlib.Path`
         The path of the file in which it is to be stored. The compression
         method corresponding to one of the supported filename extensions ('.z',
         '.gz', '.bz2', '.xz' or '.lzma') will be used automatically.
 
-    * `store_objective` [boolean, default=True]:
+    store_objective : boolean, default=True
         Whether the objective function should be stored. Set `store_objective`
         to `False` if your objective function (`.specs['args']['func']`) is
         unserializable (i.e. if an exception is raised when trying to serialize
@@ -127,7 +127,7 @@ def dump(res, filename, store_objective=True, **kwargs):
         critical, one can delete it before calling `skopt.dump()` and thus
         avoid deep copying of `res`.
 
-    * `**kwargs` [other keyword arguments]:
+    **kwargs : other keyword arguments
         All other keyword arguments will be passed to `joblib.dump`.
     """
     if store_objective:
@@ -158,15 +158,15 @@ def load(filename, **kwargs):
 
     Parameters
     ----------
-    * `filename` [string or `pathlib.Path`]:
+    filename : string or `pathlib.Path`
         The path of the file from which to load the optimization result.
 
-    * `**kwargs` [other keyword arguments]:
+    **kwargs : other keyword arguments
         All other keyword arguments will be passed to `joblib.load`.
 
     Returns
     -------
-    * `res` [`OptimizeResult`, scipy object]:
+    res : `OptimizeResult`, scipy object
         Reconstructed OptimizeResult instance.
     """
     return load_(filename, **kwargs)
@@ -207,22 +207,23 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
 
     Parameters
     ----------
-    * `res`  [`OptimizeResult`, scipy object]:
+    res : `OptimizeResult`, scipy object
         The optimization result returned by a `skopt` minimizer.
 
-    * `n_random_starts` [int, default=20]:
+    n_random_starts : int, default=20
         The number of random starts for the minimization of the surrogate
         model.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
 
     Returns
     -------
-    * `x` [list]: location of the minimum.
-
-    * `fun` [float]: the surrogate function value at the minimum.
+    x : list]
+        location of the minimum.
+    fun : float
+        the surrogate function value at the minimum.
     """
     def func(x):
         reg = res.models[-1]
@@ -252,7 +253,8 @@ def has_gradients(estimator):
 
     Parameters
     ----------
-    estimator: sklearn BaseEstimator instance.
+    estimator :
+        sklearn BaseEstimator instance.
     """
     tree_estimators = (
             ExtraTreesRegressor, RandomForestRegressor,
@@ -287,8 +289,8 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
     Parameters
     ----------
-    * `base_estimator` ["GP", "RF", "ET", "GBRT", "DUMMY"
-                        or sklearn regressor, default="GP"]:
+    base_estimator : "GP", "RF", "ET", "GBRT", "DUMMY"
+                        or sklearn regressor, default="GP"
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
@@ -296,11 +298,11 @@ def cook_estimator(base_estimator, space=None, **kwargs):
         surrogate model corresponding to the relevant `X_minimize` function
         is created.
 
-    * `space` [Space instance]:
+    space : Space instance
         Has to be provided if the base_estimator is a gaussian process.
         Ignored otherwise.
 
-    * `kwargs` [dict]:
+    kwargs : dict
         Extra parameters provided to the base_estimator at init time.
     """
     if isinstance(base_estimator, str):
@@ -361,15 +363,21 @@ def dimensions_aslist(search_space):
     search_space : dict
         Represents search space. The keys are dimension names (strings)
         and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
+        :class:`skopt.space.Dimension` (Real, Integer or Categorical)
 
     Returns
     -------
-    params_space_list: list of skopt.space.Dimension instances.
-        Example output with example inputs:
-            [Real(0,1), Integer(2,4), Real(-1,1)]
+    params_space_list: list
+        list of skopt.space.Dimension instances.
+
+    Examples
+    --------
+    >>> from skopt.space.space import Real, Integer
+    >>> from skopt.utils import dimensions_aslist
+    >>> search_space = {'name1': Real(0,1),
+    ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
+    >>> dimensions_aslist(search_space)
+    [Real(0,1), Integer(2,4), Real(-1,1)]
     """
     params_space_list = [
         search_space[k] for k in sorted(search_space.keys())
@@ -382,29 +390,34 @@ def point_asdict(search_space, point_as_list):
     to the dictionary representation, where keys are dimension names
     and values are corresponding to the values of dimensions in the list.
 
-    Counterpart to parameters_aslist.
+    .. seealso:: :class:`skopt.utils.point_aslist`
 
     Parameters
     ----------
     search_space : dict
         Represents search space. The keys are dimension names (strings)
         and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
+        :class:`skopt.space.Dimension` (Real, Integer or Categorical)
 
     point_as_list : list
         list with parameter values.The order of parameters in the list
         is given by sorted(params_space.keys()).
-        Example:
-            [0.66, 3, -0.15]
 
     Returns
     -------
-    params_dict: dictionary with parameter names as keys to which
+    params_dict : dict
+        dictionary with parameter names as keys to which
         corresponding parameter values are assigned.
-        Example output with inputs:
-            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+
+    Examples
+    --------
+    >>> from skopt.space.space import Real, Integer
+    >>> from skopt.utils import point_asdict
+    >>> search_space = {'name1': Real(0,1),
+    ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
+    >>> point_as_list = [0.66, 3, -0.15]
+    >>> point_asdict(search_space, point_as_list)
+    {'name1': 0.66, 'name2': 3, 'name3': -0.15}
     """
     params_dict = {
         k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
@@ -417,29 +430,34 @@ def point_aslist(search_space, point_as_dict):
     the list representation. The list of values is created from the values of
     the dictionary, sorted by the names of dimensions used as keys.
 
-    Counterpart to parameters_asdict.
+    .. seealso:: :class:`skopt.utils.point_asdict`
 
     Parameters
     ----------
     search_space : dict
         Represents search space. The keys are dimension names (strings)
         and values are instances of classes that inherit from the class
-        skopt.space.Dimension (Real, Integer or Categorical)
-        Example:
-            {'name1': Real(0,1), 'name2': Integer(2,4), 'name3': Real(-1,1)}
+        :class:`skopt.space.Dimension` (Real, Integer or Categorical)
 
     point_as_dict : dict
         dict with parameter names as keys to which corresponding
         parameter values are assigned.
-        Example:
-            {'name1': 0.66, 'name2': 3, 'name3': -0.15}
 
     Returns
     -------
-    point_as_list: list with point values.The order of
+    point_as_list : list
+        list with point values.The order of
         parameters in the list is given by sorted(params_space.keys()).
-        Example output with example inputs:
-            [0.66, 3, -0.15]
+
+    Examples
+    --------
+    >>> from skopt.space.space import Real, Integer
+    >>> from skopt.utils import point_aslist
+    >>> search_space = {'name1': Real(0,1),
+    ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
+    >>> point_as_dict = {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+    >>> point_aslist(search_space, point_as_dict)
+    [0.66, 3, -0.15]
     """
     point_as_list = [
         point_as_dict[k] for k in sorted(search_space.keys())
@@ -455,7 +473,7 @@ def normalize_dimensions(dimensions):
 
     Parameters
     ----------
-    * `dimensions` [list, shape=(n_dims,)]:
+    dimensions : list, shape (n_dims,)
         List of search space dimensions.
         Each search dimension can be defined either as
 
@@ -525,46 +543,53 @@ def use_named_args(dimensions):
     also reduces the risk of bugs if you change the number of dimensions
     or their order in the search-space.
 
-    Example Usage
-    -------------
-    # Define the search-space dimensions. They must all have names!
-    dim1 = Real(name='foo', low=0.0, high=1.0)
-    dim2 = Real(name='bar', low=0.0, high=1.0)
-    dim3 = Real(name='baz', low=0.0, high=1.0)
-
-    # Gather the search-space dimensions in a list.
-    dimensions = [dim1, dim2, dim3]
-
-    # Define the objective function with named arguments
-    # and use this function-decorator to specify the search-space dimensions.
-    @use_named_args(dimensions=dimensions)
-    def my_objective_function(foo, bar, baz):
-        return foo ** 2 + bar ** 4 + baz ** 8
-
-    # Now the function is callable from the outside as
-    # `my_objective_function(x)` where `x` is a list of unnamed arguments,
-    # which then wraps your objective function that is callable as
-    # `my_objective_function(foo, bar, baz)`.
-    # The conversion from a list `x` to named parameters `foo`, `bar`, `baz`
-    # is done automatically.
-
-    # Run the optimizer on the wrapped objective function which is called as
-    # `my_objective_function(x)` as expected by `forest_minimize()`.
-    result = forest_minimize(func=my_objective_function, dimensions=dimensions,
-                             n_calls=20, base_estimator="ET", random_state=4)
-
-    # Print the best-found results.
-    print("Best fitness:", result.fun)
-    print("Best parameters:", result.x)
+    Examples
+    --------
+    >>> # Define the search-space dimensions. They must all have names!
+    >>> from skopt.space.Space import Real
+    >>> from skopt import forest_minimize
+    >>> from skopt.utils import use_named_args
+    >>> dim1 = Real(name='foo', low=0.0, high=1.0)
+    >>> dim2 = Real(name='bar', low=0.0, high=1.0)
+    >>> dim3 = Real(name='baz', low=0.0, high=1.0)
+    >>>
+    >>> # Gather the search-space dimensions in a list.
+    >>> dimensions = [dim1, dim2, dim3]
+    >>>
+    >>> # Define the objective function with named arguments
+    >>> # and use this function-decorator to specify the
+    >>> # search-space dimensions.
+    >>> @use_named_args(dimensions=dimensions)
+    >>> def my_objective_function(foo, bar, baz):
+    >>>     return foo ** 2 + bar ** 4 + baz ** 8
+    >>>
+    >>> # Not the function is callable from the outside as
+    >>> # `my_objective_function(x)` where `x` is a list of unnamed arguments,
+    >>> # which then wraps your objective function that is callable as
+    >>> # `my_objective_function(foo, bar, baz)`.
+    >>> # The conversion from a list `x` to named parameters `foo`,
+    >>> # `bar`, `baz`
+    >>> # is done automatically.
+    >>>
+    >>> # Run the optimizer on the wrapped objective function which is called
+    >>> # as `my_objective_function(x)` as expected by `forest_minimize()`.
+    >>> result = forest_minimize(func=my_objective_function,
+    ...                          dimensions=dimensions,
+    ...                          n_calls=20, base_estimator="ET",
+    ...                          random_state=4)
+    >>>
+    >>> # Print the best-found results.
+    >>> print("Best fitness:", result.fun)
+    >>> print("Best parameters:", result.x)
 
     Parameters
     ----------
-    * `dimensions` [list(Dimension)]:
+    dimensions : list(Dimension)
         List of `Dimension`-objects for the search-space dimensions.
 
     Returns
     -------
-    * `wrapped_func` [callable]
+    wrapped_func : callable
         Wrapped objective function.
     """
 
@@ -579,7 +604,7 @@ def use_named_args(dimensions):
 
         Parameters
         ----------
-        * `func` [callable]:
+        func : callable
             Function to minimize. Should take *named arguments*
             and return the objective value.
         """
@@ -615,14 +640,14 @@ def use_named_args(dimensions):
 
             Parameters
             ----------
-            * `x` [list]:
+            x : list
                 A single list of parameters e.g. `[123, 3.0, 'linear']`
                 which will be converted to named arguments and passed
                 to `func`.
 
             Returns
             -------
-            * `objective_value`
+            objective_value
                 The objective value returned by `func`.
             """
 
