@@ -64,7 +64,7 @@ if [[ "$COVERAGE" == "true" ]]; then
     pip install pytest-cov coverage coveralls
 fi
 
-pip install -e '.[plots]'
+pip install -e '.[plots,distributed]'
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"

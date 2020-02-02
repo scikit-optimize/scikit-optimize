@@ -25,6 +25,7 @@
 * Models queue has now a customizable size (model_queue_size).
 * Add log-uniform prior to Integer space
 * Support for plotting categorical dimensions
+* Asynchronous dispatching of the tasks using dask
 
 ### Bug fixes
 
