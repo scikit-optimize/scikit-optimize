@@ -124,6 +124,13 @@
     "hyperparameter",
     "bayesian-optimization"
   ],
-  "license": "bsd-license",
+  "license": "BSD-3-Clause",
+  "related_identifiers": [
+    {
+      "identifier": "https://scikit-optimize.github.io",
+      "relation": "documents",
+      "scheme": "url"
+    }
+  ],
   "upload_type": "software"
 }
