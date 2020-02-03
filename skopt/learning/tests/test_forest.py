@@ -42,7 +42,7 @@ def test_random_forest():
                                 max_features="auto", max_leaf_nodes=None,
                                 min_impurity_decrease=0., bootstrap=True,
                                 oob_score=False,
-                                n_jobs=None, random_state=1,
+                                n_jobs=1, random_state=1,
                                 verbose=0, warm_start=False)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
@@ -86,7 +86,7 @@ def test_extra_forest():
                               max_features="auto", max_leaf_nodes=None,
                               min_impurity_decrease=0., bootstrap=False,
                               oob_score=False,
-                              n_jobs=None, random_state=1,
+                              n_jobs=1, random_state=1,
                               verbose=0, warm_start=False)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
