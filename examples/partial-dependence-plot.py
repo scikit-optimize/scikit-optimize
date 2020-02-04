@@ -37,12 +37,13 @@ def funny_func(x):
 #############################################################################
 
 # We run forest_minimize on the function
-bounds = [(-1, 1.), ] * 4
+bounds = [(-1, 1.), ] * 3
 n_calls = 150
 
 result = forest_minimize(funny_func, bounds, n_calls=n_calls, base_estimator="ET",
                          random_state=4)
 
+#############################################################################
 # Here we see an example of using partial dependence. Even when setting
 # n_points all the way down to 10 from the default of 40, this method is
 # still very slow. This is because partial dependence calculates 250 extra
@@ -79,7 +80,7 @@ _ = plot_objective(result, n_points=10,
 # Lastly we can also define these parameters ourselfs by parsing a list
 # as the minimum argument:
 
-_ = plot_objective(result, n_points=10, minimum=[1, -0.5, 0.5, 0])
+_ = plot_objective(result, n_points=10, minimum=[1, -0.5, 0.5])
 
 #############################################################################
 # We can also specify how many intial samples are used for the two different
