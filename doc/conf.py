@@ -19,16 +19,15 @@
 import warnings
 import os
 import re
+from packaging.version import parse
 # import pkg_resources
 import sys
 import skopt
 
 sys.path.insert(0, os.path.abspath('sphinxext'))
-
 from github_link import make_linkcode_resolve
 import sphinx_gallery
 
-__version__ = ".".join(skopt.__version__.split(".")[:2])
 #  __version__ = pkg_resources.get_distribution('skopt').version
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -39,9 +38,10 @@ copyright = '2017 - 2020, The scikit-optimize contributors.'
 author = 'The scikit-optimize contributors'
 
 # The short X.Y version
-version = __version__
+version = parse(skopt.__version__).base_version
+version = ".".join(version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
-release = __version__
+release = skopt.__version__
 
 # -- General configuration ---------------------------------------------------
 
