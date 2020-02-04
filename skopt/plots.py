@@ -315,7 +315,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
     n_samples : int, default=100
         Number of random samples to use for averaging the model function
-        at each of the `n_points` when using partial dependence. Only used 
+        at each of the `n_points` when using partial dependence. Only used
         when `sample_points=None` and `x_eval=None`.
 
     n_points : int, default=40
@@ -324,7 +324,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
     x_eval : list, default=None
         `x_eval` is a list of parameter values or None. In case `x_eval`
-        is not None, the parsed dependence will be calculated using these values.
+        is not None, the parsed dependence will be calculated using these
+        values.
         Otherwise, random selected samples will be used.
 
     Returns
@@ -350,7 +351,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     the indices of the variable in `Dimension.categories`.
     """
     # The idea is to step through one dimension and evaluating the model with
-    # that dimension fixed.  (Or step through 2 dimensions when i and j are given.)
+    # that dimension fixed.  (Or step through 2 dimensions when i and j are
+    # given.)
     # Categorical dimensions make this interesting, because they are one-
     # hot-encoded, so there is a one-to-many mapping of input dimensions
     # to transformed (model) dimensions.
@@ -361,8 +363,10 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     elif sample_points is None:
         sample_points = space.transform([x_eval])
 
-    # dim_locs[i] is the (column index of the) start of dim i in sample_points.
-    # This is usefull when we are using one hot encoding, i.e using categorical values
+    # dim_locs[i] is the (column index of the) start of dim i in
+    # sample_points.
+    # This is usefull when we are using one hot encoding, i.e using
+    # categorical values
     dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
 
     if j is None:
@@ -372,7 +376,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         yi = []
         for x_ in xi_transformed:
             rvs_ = np.array(sample_points)  # copy
-            # We replace the values in the dimension that we want to keep fixed
+            # We replace the values in the dimension that we want to keep
+            # fixed
             rvs_[:, dim_locs[i]:dim_locs[i + 1]] = x_
             # In case of `x_eval=None` rvs conists of random samples.
             # Calculating the mean of these samples is how partial dependence
@@ -403,16 +408,16 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    minimum='result', expected_minimum_samples=None):
     """Pairwise dependence plot of the objective function.
 
-    The diagonal shows the dependence for dimension `i` with
+    The diagonal shows the partial dependence for dimension `i` with
     respect to the objective function. The off-diagonal shows the
-    dependence for dimensions `i` and `j` with
+    partial dependence for dimensions `i` and `j` with
     respect to the objective function. The objective function is
     approximated by `result.model.`
 
     Pairwise scatter plots of the points at which the objective
     function was directly evaluated are shown on the off-diagonal.
     A red point indicates per default the best observed minimum, but
-    this can be changed by changing argument ´eval_min_params´.
+    this can be changed by changing argument ´minimum´.
 
     Parameters
     ----------
@@ -448,41 +453,47 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         at each of the `n_points`.
         Valid strings:  'random' - `n_random` samples will used
                         'result' - Use best observed parameters
-                        'expected_minimum' - Parameters that gives the best minimum
-                            Calculated using scipy's minimize method. This method
-                            currently does not work with categorical values.
-                        'expected_minimum_random' - Parameters that gives the best minimum
-                            when using naive random sampling. Works with categorical values
+                        'expected_minimum' - Parameters that gives the best
+                            minimum Calculated using scipy's minimize method.
+                            This method currently does not work with
+                            categorical values.
+                        'expected_minimum_random' - Parameters that gives the
+                            best minimum when using naive random sampling.
+                            Works with categorical values
 
     minimum : str or list of floats, default = 'result'
-        Defines the values for the red
-        points in the plots, and if `partialdependence` is false, this argument also
-        defines values for all other parameters when calculating dependence.
+        Defines the values for the red points in the plots.
         Valid strings:  'result' - Use best observed parameters
-                        'expected_minimum' - Parameters that gives the best minimum
-                            Calculated using scipy's minimize method. This method
-                            currently does not work with categorical values.
-                        'expected_minimum_random' - Parameters that gives the best minimum
-                            when using naive random sampling. Works with categorical values
+                        'expected_minimum' - Parameters that gives the best
+                            minimum Calculated using scipy's minimize method.
+                            This method currently does not work with
+                            categorical values.
+                        'expected_minimum_random' - Parameters that gives the
+                            best minimum when using naive random sampling.
+                            Works with categorical values
 
     expected_minimum_samples : int, default = None
         Determines how many points should be evaluated
-        to find the minimum when using 'expected_minimum' or 'expected_minimum_random'
+        to find the minimum when using 'expected_minimum' or
+        'expected_minimum_random'
 
     Returns
     -------
     ax : `Axes`
         The matplotlib axes.
     """
-    # Here we define the values for which to plot the red dot (2d plot) and the red dotted line (1d plot).
-    # These same values will be used for evaluating the plots when calculating dependence. (Unless partial
+    # Here we define the values for which to plot the red dot (2d plot) and
+    # the red dotted line (1d plot).
+    # These same values will be used for evaluating the plots when
+    # calculating dependence. (Unless partial
     # dependence is to be used instead).
     space = result.space
     x_vals = evaluate_min_params(result, minimum, expected_minimum_samples)
     if samples == "random":
         x_eval = None
     else:
-        x_eval = evaluate_min_params(result, samples, expected_minimum_samples)
+        x_eval = evaluate_min_params(result, samples,
+                                     expected_minimum_samples)
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
     samples, minimum, _ = _map_categories(space, result.x_iters, x_vals)
 
@@ -515,7 +526,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
             elif i > j:
                 xi, yi, zi = partial_dependence(space, result.models[-1],
                                                 i, j,
-                                                rvs_transformed, n_points, x_eval=x_eval)
+                                                rvs_transformed, n_points,
+                                                x_eval=x_eval)
                 ax[i, j].contourf(xi, yi, zi, levels,
                                   locator=locator, cmap='viridis_r')
                 ax[i, j].scatter(samples[:, j], samples[:, i],
@@ -652,7 +664,8 @@ def _evenly_sample(dim, n_points):
     """
     cats = np.array(getattr(dim, 'categories', []), dtype=object)
     if len(cats):  # Sample categoricals while maintaining order
-        xi = np.linspace(0, len(cats) - 1, min(len(cats), n_points), dtype=int)
+        xi = np.linspace(0, len(cats) - 1, min(len(cats), n_points),
+                         dtype=int)
         xi_transformed = dim.transform(cats[xi])
     else:
         bounds = dim.bounds
@@ -684,7 +697,8 @@ def expected_min_random_sampling(model, space, n_samples=100000):
     return min_x
 
 
-def evaluate_min_params(result, params='result', expected_minimum_samples=None):
+def evaluate_min_params(result, params='result',
+                        expected_minimum_samples=None):
     x_vals = None
     space = result.space
     if isinstance(params, str):
@@ -713,7 +727,8 @@ def evaluate_min_params(result, params='result', expected_minimum_samples=None):
             if expected_minimum_samples:
                 # If a value for
                 # expected_minimum_samples has been parsed
-                x_vals = expected_min_random_sampling(result.models[-1], space,
+                x_vals = expected_min_random_sampling(result.models[-1],
+                                                      space,
                                                       n_samples=expected_minimum_samples)
             else:
                 # Use standard of 10^n_parameters. Note this
@@ -730,5 +745,6 @@ def evaluate_min_params(result, params='result', expected_minimum_samples=None):
         # Using defined x_values
         x_vals = params
     else:
-        raise ValueError('Argument ´eval_min_params´ must be a string or a list')
+        raise ValueError('Argument ´eval_min_params´ must'
+                         'be a string or a list')
     return x_vals

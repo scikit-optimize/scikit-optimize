@@ -56,21 +56,21 @@ _ = plot_objective(result, samples='result', n_points=10)
 # which is the parameter set of the best observed value so far. In the case
 # of funny_func this is close to 0 for all parameters.
 
-_ = plot_objective(result,  n_points=10)
+_ = plot_objective(result, n_points=10)
 
 # Here we try with setting the other parameters to something other than
 # "result". First we try with "expected_minimum" which is the set of
 # parameters that gives the miniumum value of the surogate function,
 # using scipys minimum search method.
 
-_ = plot_objective(result,  n_points=10,
-                   miminum='expected_minimum')
+_ = plot_objective(result, n_points=10,
+                   mininum='expected_minimum')
 
 # "expected_minimum_random" is a naive way of finding the minimum of the
 # surogate by only using random sampling:
 
 _ = plot_objective(result, n_points=10,
-                   miminum='expected_minimum_random')
+                   mininum='expected_minimum_random')
 
 # Lastly we can also define these parameters ourselfs by parsing a list
 # as the minimum argument:
@@ -82,10 +82,10 @@ _ = plot_objective(result, n_points=10, minimum=[1, -0.5, 0.5, 0])
 # to showcase how it affects the minimum for the two methods.
 
 _ = plot_objective(result, n_points=10,
-                   miminum='expected_minimum_random',
+                   mininum='expected_minimum_random',
                    expected_minimum_samples=10)
 
 #############################################################################
 
 _ = plot_objective(result, n_points=10,
-                   miminum='expected_minimum', expected_minimum_samples=1)
+                   mininum='expected_minimum', expected_minimum_samples=1)
