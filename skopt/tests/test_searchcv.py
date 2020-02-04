@@ -13,7 +13,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 from sklearn.base import BaseEstimator
 from joblib import cpu_count
-
+from scipy.stats import rankdata
+import numpy as np
+from numpy.testing import assert_array_equal
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
 
@@ -267,6 +269,43 @@ def test_searchcv_reproducibility():
     assert getattr(best_est, 'gamma') == getattr(best_est2, 'gamma')
     assert getattr(best_est, 'degree') == getattr(best_est2, 'degree')
     assert getattr(best_est, 'kernel') == getattr(best_est2, 'kernel')
+
+
+@pytest.mark.fast_test
+def test_searchcv_rank():
+    """
+    Test whether results of BayesSearchCV can be reproduced with a fixed
+    random state.
+    """
+
+    X, y = load_iris(True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    random_state = 42
+
+    opt = BayesSearchCV(
+        SVC(random_state=random_state),
+        {
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
+        },
+        n_iter=11, random_state=random_state, return_train_score=True
+    )
+
+    opt.fit(X_train, y_train)
+    results = opt.cv_results_
+
+    test_rank = np.asarray(rankdata(-np.array(results["mean_test_score"]),
+                                    method='min'), dtype=np.int32)
+    train_rank = np.asarray(rankdata(-np.array(results["mean_train_score"]),
+                                     method='min'), dtype=np.int32)
+
+    assert_array_equal(np.array(results['rank_test_score']), test_rank)
+    assert_array_equal(np.array(results['rank_train_score']), train_rank)
 
 
 def test_searchcv_refit():
