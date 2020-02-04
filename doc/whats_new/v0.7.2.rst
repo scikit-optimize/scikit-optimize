@@ -1,0 +1,18 @@
+Version 0.7.2
+=============
+**Not released**
+New features
+------------
+
+
+Bug fixes
+---------
+
+* Fix searchcv rank (issue #830)
+* Fix random forest regressor (issue #766)
+
+Maintenance
+-----------
+
+* Fix license detection in github
+
