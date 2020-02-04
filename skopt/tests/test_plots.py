@@ -43,8 +43,6 @@ def test_plots_work():
     plots.plot_objective(res,
                          minimum='expected_minimum_random')
     plots.plot_objective(res,
-                         minimum='expected_minimum')
-    plots.plot_objective(res,
                          samples='result')
     plots.plot_regret(res)
 
