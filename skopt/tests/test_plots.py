@@ -41,11 +41,11 @@ def test_plots_work():
     plots.plot_evaluations(res)
     plots.plot_objective(res)
     plots.plot_objective(res,
-                         eval_min_params='expected_minimum_random')
+                         minimum='expected_minimum_random')
     plots.plot_objective(res,
-                         eval_min_params='expected_minimum')
+                         minimum='expected_minimum')
     plots.plot_objective(res,
-                         usepartialdependence=True)
+                         samples='result')
     plots.plot_regret(res)
 
     # TODO: Compare plots to known good results?

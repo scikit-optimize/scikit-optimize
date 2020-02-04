@@ -281,12 +281,15 @@ def _format_scatter_plot_axes(ax, space, ylabel, dim_labels=None):
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
                        n_samples=250, n_points=40, x_eval=None):
-    """Calculate the (partial-) dependence for dimensions `i` and `j` with
+    """Calculate the partial dependence for dimensions `i` and `j` with
     respect to the objective value, as approximated by `model`.
-    If x_eval is set to "None", the partial dependence will be calculated.
 
-    The dependence plot shows how the value of the dimensions
-    `i` and `j` influence the `model`.
+    The partial dependence plot shows how the value of the dimensions
+    `i` and `j` influence the `model` predictions after "averaging out"
+    the influence of all other dimensions.
+
+    When `x_eval` is not `None`, the given values are used instead of
+    random samples. In this case, `n_samples` will be ignored.
 
     Parameters
     ----------
@@ -320,9 +323,9 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
         along each dimension `i` and `j`.
 
     x_eval : list, default=None
-        x_eval is a list of parameter values or None. In case `x_eval`
+        `x_eval` is a list of parameter values or None. In case `x_eval`
         is not None, the parsed dependence will be calculated using these values.
-        Otherwise, the partial dependence is calculated.
+        Otherwise, random selected samples will be used.
 
     Returns
     -------
@@ -353,9 +356,9 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     # to transformed (model) dimensions.
 
     # If we haven't parsed an x_eval list we use random sampled values instead
-    if x_eval is None:
+    if x_eval is None and sample_points is None:
         sample_points = space.transform(space.rvs(n_samples=n_samples))
-    else:
+    elif sample_points is None:
         sample_points = space.transform([x_eval])
 
     # dim_locs[i] is the (column index of the) start of dim i in sample_points.
@@ -396,9 +399,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None, usepartialdependence=True,
-                   eval_min_params='result',
-                   expected_minimum_samples=None):
+                   zscale='linear', dimensions=None, samples='random',
+                   minimum='result', expected_minimum_samples=None):
     """Pairwise dependence plot of the objective function.
 
     The diagonal shows the dependence for dimension `i` with
@@ -441,14 +443,20 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
 
-    usepartialdependence : bool, default=false
-        Whether to use partial
-        dependence or not when calculating dependence. If false plot_objective
-        will parse values to the dependence function, defined by the pars argument
+    samples : str or list of floats, default='random'
+        Defines to samples generation to use for averaging the model function
+        at each of the `n_points`.
+        Valid strings:  'random' - `n_random` samples will used
+                        'result' - Use best observed parameters
+                        'expected_minimum' - Parameters that gives the best minimum
+                            Calculated using scipy's minimize method. This method
+                            currently does not work with categorical values.
+                        'expected_minimum_random' - Parameters that gives the best minimum
+                            when using naive random sampling. Works with categorical values
 
-    eval_min_params : str, default = 'result' or list of floats
+    minimum : str or list of floats, default = 'result'
         Defines the values for the red
-        points in the plots, and if partialdependence is false, this argument also 
+        points in the plots, and if `partialdependence` is false, this argument also
         defines values for all other parameters when calculating dependence.
         Valid strings:  'result' - Use best observed parameters
                         'expected_minimum' - Parameters that gives the best minimum
@@ -456,7 +464,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                             currently does not work with categorical values.
                         'expected_minimum_random' - Parameters that gives the best minimum
                             when using naive random sampling. Works with categorical values
-    expected_minimum_samples : float, default = None
+
+    expected_minimum_samples : int, default = None
         Determines how many points should be evaluated
         to find the minimum when using 'expected_minimum' or 'expected_minimum_random'
 
@@ -469,55 +478,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     # These same values will be used for evaluating the plots when calculating dependence. (Unless partial
     # dependence is to be used instead).
     space = result.space
-    if isinstance(eval_min_params, str):
-        if eval_min_params == 'result':
-            # Using the best observed result
-            x_vals = result.x
-        elif eval_min_params == 'expected_minimum':
-            if result.space.is_partly_categorical:
-                # space is also categorical
-                raise ValueError('expected_minimum does not support any'
-                                 'categorical values')
-            # Do a gradient based minimum search using scipys own minimizer
-            if expected_minimum_samples:
-                # If a value for
-                # expected_minimum_samples has been parsed
-                x_vals, _ = expected_minimum(result,
-                                             n_random_starts=expected_minimum_samples,
-                                             random_state=None)
-            else:  # Use standard of 20 random starting points
-                x_vals, _ = expected_minimum(result,
-                                             n_random_starts=20,
-                                             random_state=None)
-        elif eval_min_params == 'expected_minimum_random':
-            # Do a minimum search by evaluating the function with
-            # n_samples sample values
-            if expected_minimum_samples:
-                # If a value for
-                # expected_minimum_samples has been parsed
-                x_vals = expected_min_random_sampling(result.models[-1], space,
-                                                      n_samples=expected_minimum_samples)
-            else:
-                # Use standard of 10^n_parameters. Note this
-                # becomes very slow for many parameters
-                x_vals = expected_min_random_sampling(result.models[-1], space,
-                                                      n_samples=10 ** len(result.x))
-        else:
-            raise ValueError('Argument ´eval_min_params´ must be a valid'
-                             'string (´result´)')
-    elif isinstance(eval_min_params, list):
-        assert len(eval_min_params) == len(result.x), 'Argument' \
-            '´eval_min_params´ of type list must have same length as' \
-            'number of features'
-        # Using defined x_values
-        x_vals = eval_min_params
-    else:
-        raise ValueError('Argument ´eval_min_params´ must be a string or a list')
-
-    if usepartialdependence:
+    x_vals = evaluate_min_params(result, minimum, expected_minimum_samples)
+    if samples == "random":
         x_eval = None
     else:
-        x_eval = x_vals
+        x_eval = evaluate_min_params(result, samples, expected_minimum_samples)
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
     samples, minimum, _ = _map_categories(space, result.x_iters, x_vals)
 
@@ -557,10 +522,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                                  c='k', s=10, lw=0.)
                 ax[i, j].scatter(minimum[j], minimum[i],
                                  c=['r'], s=20, lw=0.)
-    if usepartialdependence:
-        ylabel = "Partial dependence"
-    else:
-        ylabel = "Dependence"
+    ylabel = "Partial dependence"
     return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
                                      dim_labels=dimensions)
 
@@ -720,3 +682,53 @@ def expected_min_random_sampling(model, space, n_samples=100000):
     min_x = random_samples[index_best_objective]
 
     return min_x
+
+
+def evaluate_min_params(result, params='result', expected_minimum_samples=None):
+    x_vals = None
+    space = result.space
+    if isinstance(params, str):
+        if params == 'result':
+            # Using the best observed result
+            x_vals = result.x
+        elif params == 'expected_minimum':
+            if result.space.is_partly_categorical:
+                # space is also categorical
+                raise ValueError('expected_minimum does not support any'
+                                 'categorical values')
+            # Do a gradient based minimum search using scipys own minimizer
+            if expected_minimum_samples:
+                # If a value for
+                # expected_minimum_samples has been parsed
+                x_vals, _ = expected_minimum(result,
+                                             n_random_starts=expected_minimum_samples,
+                                             random_state=None)
+            else:  # Use standard of 20 random starting points
+                x_vals, _ = expected_minimum(result,
+                                             n_random_starts=20,
+                                             random_state=None)
+        elif params == 'expected_minimum_random':
+            # Do a minimum search by evaluating the function with
+            # n_samples sample values
+            if expected_minimum_samples:
+                # If a value for
+                # expected_minimum_samples has been parsed
+                x_vals = expected_min_random_sampling(result.models[-1], space,
+                                                      n_samples=expected_minimum_samples)
+            else:
+                # Use standard of 10^n_parameters. Note this
+                # becomes very slow for many parameters
+                x_vals = expected_min_random_sampling(result.models[-1], space,
+                                                      n_samples=10 ** len(result.x))
+        else:
+            raise ValueError('Argument ´eval_min_params´ must be a valid'
+                             'string (´result´)')
+    elif isinstance(params, list):
+        assert len(params) == len(result.x), 'Argument' \
+            '´eval_min_params´ of type list must have same length as' \
+            'number of features'
+        # Using defined x_values
+        x_vals = params
+    else:
+        raise ValueError('Argument ´eval_min_params´ must be a string or a list')
+    return x_vals
