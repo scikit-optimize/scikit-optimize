@@ -52,6 +52,7 @@ def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
         print("Std func_calls to reach min: " + str(std_fcalls))
         print("Fastest no of func_calls to reach min: " + str(best_fcalls))
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
