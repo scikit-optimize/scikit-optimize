@@ -64,29 +64,29 @@ _ = plot_objective(result, usepartialdependence=False, n_points=10)
 # using scipys minimum search method.
 
 _ = plot_objective(result, usepartialdependence=False, n_points=10,
-                   pars='expected_minimum')
+                   eval_min_params='expected_minimum')
 
 # "expected_minimum_random" is a naive way of finding the minimum of the
 # surogate by only using random sampling:
 
 _ = plot_objective(result, usepartialdependence=False, n_points=10,
-                   pars='expected_minimum_random')
+                   eval_min_params='expected_minimum_random')
 
 # Lastly we can also define these parameters ourselfs by parsing a list
-# as the pars argument:
+# as the eval_min_params argument:
 
 _ = plot_objective(result, usepartialdependence=False,
-                   n_points=10, pars=[1, -0.5, 0.5, 0])
+                   n_points=10, eval_min_params=[1, -0.5, 0.5, 0])
 
 # We can also specify how many intial samples are used for the two different
 # "expected_minimum" methods. We set it to a low value in the next examples
 # to showcase how it affects the minimum for the two methods.
 
 _ = plot_objective(result, usepartialdependence=False, n_points=10,
-                   pars='expected_minimum_random',
+                   eval_min_params='expected_minimum_random',
                    expected_minimum_samples=10)
 
 #############################################################################
 
 _ = plot_objective(result, usepartialdependence=False, n_points=10,
-                   pars='expected_minimum', expected_minimum_samples=1)
+                   eval_min_params='expected_minimum', expected_minimum_samples=1)

@@ -40,6 +40,12 @@ def test_plots_work():
     plots.plot_convergence(res)
     plots.plot_evaluations(res)
     plots.plot_objective(res)
+    plots.plot_objective(res,
+                         eval_min_params='expected_minimum_random')
+    plots.plot_objective(res,
+                         eval_min_params='expected_minimum')
+    plots.plot_objective(res,
+                         usepartialdependence=True)
     plots.plot_regret(res)
 
     # TODO: Compare plots to known good results?

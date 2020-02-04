@@ -352,7 +352,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     # hot-encoded, so there is a one-to-many mapping of input dimensions
     # to transformed (model) dimensions.
 
-    # If we havent parsed an x_eval list we use random sampled values instead
+    # If we haven't parsed an x_eval list we use random sampled values instead
     if x_eval is None:
         sample_points = space.transform(space.rvs(n_samples=n_samples))
     else:
@@ -396,7 +396,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None, usepartialdependence=True, pars='result',
+                   zscale='linear', dimensions=None, usepartialdependence=True,
+                   eval_min_params='result',
                    expected_minimum_samples=None):
     """Pairwise dependence plot of the objective function.
 
@@ -409,7 +410,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     Pairwise scatter plots of the points at which the objective
     function was directly evaluated are shown on the off-diagonal.
     A red point indicates per default the best observed minimum, but
-    this can be changed by changing argument ´pars´.
+    this can be changed by changing argument ´eval_min_params´.
 
     Parameters
     ----------
@@ -441,11 +442,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         if also `None` to `['X_0', 'X_1', ..]`.
 
     usepartialdependence : bool, default=false
-        Wether to use partial
+        Whether to use partial
         dependence or not when calculating dependence. If false plot_objective
         will parse values to the dependence function, defined by the pars argument
 
-    pars : str, default = 'result' or list of floats
+    eval_min_params : str, default = 'result' or list of floats
         Defines the values for the red
         points in the plots, and if partialdependence is false, this argument also 
         defines values for all other parameters when calculating dependence.
@@ -468,11 +469,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     # These same values will be used for evaluating the plots when calculating dependence. (Unless partial
     # dependence is to be used instead).
     space = result.space
-    if isinstance(pars, str):
-        if pars == 'result':
+    if isinstance(eval_min_params, str):
+        if eval_min_params == 'result':
             # Using the best observed result
             x_vals = result.x
-        elif pars == 'expected_minimum':
+        elif eval_min_params == 'expected_minimum':
             if result.space.is_partly_categorical:
                 # space is also categorical
                 raise ValueError('expected_minimum does not support any'
@@ -488,7 +489,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                 x_vals, _ = expected_minimum(result,
                                              n_random_starts=20,
                                              random_state=None)
-        elif pars == 'expected_minimum_random':
+        elif eval_min_params == 'expected_minimum_random':
             # Do a minimum search by evaluating the function with
             # n_samples sample values
             if expected_minimum_samples:
@@ -502,15 +503,16 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                 x_vals = expected_min_random_sampling(result.models[-1], space,
                                                       n_samples=10 ** len(result.x))
         else:
-            raise ValueError('Argument ´pars´ must be a valid'
+            raise ValueError('Argument ´eval_min_params´ must be a valid'
                              'string (´result´)')
-    elif isinstance(pars, list):
-        assert len(pars) == len(result.x), 'Argument ´pars´ of type list must' \
-                                           'have same length as number of features'
+    elif isinstance(eval_min_params, list):
+        assert len(eval_min_params) == len(result.x), 'Argument' \
+            '´eval_min_params´ of type list must have same length as' \
+            'number of features'
         # Using defined x_values
-        x_vals = pars
+        x_vals = eval_min_params
     else:
-        raise ValueError('Argument ´pars´ must be a string or a list')
+        raise ValueError('Argument ´eval_min_params´ must be a string or a list')
 
     if usepartialdependence:
         x_eval = None
