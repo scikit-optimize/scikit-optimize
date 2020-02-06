@@ -580,7 +580,7 @@ class Categorical(Dimension):
         Parameters
         ----------
         transform : str
-           Can be 'normalize' or 'identity'
+           Can be 'normalize', 'onehot', 'string' or 'identity'
 
         """
         self.transform_ = transform
@@ -594,14 +594,15 @@ class Categorical(Dimension):
             self.transformer = StringEncoder()
             self.transformer.fit(self.categories)
         elif transform == "normalize":
-            self._rvs = _uniform_inclusive(0.0, 1.0)
             self.transformer = Pipeline(
                 [IntegerEncoder(list(self.categories)),
                  Normalize(0, len(self.categories) - 1)])
         else:
             self.transformer = Identity()
             self.transformer.fit(self.categories)
-        if transform != "normalize":
+        if transform == "normalize":
+            self._rvs = _uniform_inclusive(0.0, 1.0)
+        else:
             # XXX check that sum(prior) == 1
             self._rvs = rv_discrete(
                 values=(range(len(self.categories)), self.prior_)
