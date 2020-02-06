@@ -373,7 +373,8 @@ def test_set_get_transformer():
                    ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
 
     transformer = space.get_transformer()
-    assert_array_equal(["identity", "identity", "onehot", "identity", "onehot"], transformer)
+    assert_array_equal(["identity", "identity", "onehot",
+                        "identity", "onehot"], transformer)
     space.set_transformer("normalize")
     transformer = space.get_transformer()
     assert_array_equal(["normalize"] * 5, transformer)
@@ -518,13 +519,15 @@ def test_normalize_categorical():
 
     categories = [1, 2, 3]
     a = Categorical(categories, transform="normalize")
-    assert_array_equal(categories, np.sort(np.unique(a.rvs(100, random_state=1))))
+    assert_array_equal(categories, np.sort(np.unique(a.rvs(100,
+                                                           random_state=1))))
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
     categories = [1, 2, 3]
     a = Categorical(categories, transform="string")
     a.set_transformer("normalize")
-    assert_array_equal(categories, np.sort(np.unique(a.rvs(100, random_state=1))))
+    assert_array_equal(categories, np.sort(np.unique(a.rvs(100,
+                                                           random_state=1))))
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
 @pytest.mark.fast_test
@@ -707,4 +710,3 @@ def test_purely_categorical_space():
     x = optimizer.ask()
     # before the fix this call raised an exception
     optimizer.tell(x, 1.)
-

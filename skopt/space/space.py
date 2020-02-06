@@ -170,10 +170,6 @@ class Dimension(object):
         raise NotImplementedError
 
     @property
-    def transformed_bounds(self):
-        raise NotImplementedError
-
-    @property
     def name(self):
         return self._name
 
@@ -600,7 +596,8 @@ class Categorical(Dimension):
         elif transform == "normalize":
             self._rvs = _uniform_inclusive(0.0, 1.0)
             self.transformer = Pipeline(
-                [IntegerEncoder(list(self.categories)), Normalize(0, len(self.categories) - 1)])
+                [IntegerEncoder(list(self.categories)),
+                 Normalize(0, len(self.categories) - 1)])
         else:
             self.transformer = Identity()
             self.transformer.fit(self.categories)

@@ -170,7 +170,8 @@ class IntegerEncoder(Transformer):
         return self
 
     def transform(self, X):
-        """Transform an array of categories to a one-hot encoded representation.
+        """Transform an array of categories to a one-hot encoded
+        representation.
 
         Parameters
         ----------
