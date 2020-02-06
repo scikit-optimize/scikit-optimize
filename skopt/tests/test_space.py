@@ -367,7 +367,34 @@ def test_space_from_space():
 
 
 @pytest.mark.fast_test
+def test_set_get_transformer():
+    # can you pass a Space instance to the Space constructor?
+    space = Space([(0.0, 1.0), (-5, 5),
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
+
+    transformer = space.get_transformer()
+    assert_array_equal(["identity", "identity", "onehot", "identity", "onehot"], transformer)
+    space.set_transformer("normalize")
+    transformer = space.get_transformer()
+    assert_array_equal(["normalize"] * 5, transformer)
+
+
+@pytest.mark.fast_test
 def test_normalize():
+    # can you pass a Space instance to the Space constructor?
+    space = Space([(0.0, 1.0), (-5, 5),
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e", "f")])
+    space.set_transformer("normalize")
+    X = [[0., -5, 'a', 1., 'e']]
+    Xt = np.zeros((1, 5))
+    assert_array_equal(space.transform(X), Xt)
+    assert_array_equal(space.inverse_transform(Xt), X)
+    assert_array_equal(space.inverse_transform(space.transform(X)), X)
+
+
+@pytest.mark.fast_test
+def test_normalize_real():
+
     a = Real(2.0, 30.0, transform="normalize")
     for i in range(50):
         check_limits(a.rvs(random_state=i), 2, 30)
@@ -398,6 +425,42 @@ def test_normalize():
     # Check inverse transform
     assert_array_almost_equal(a.inverse_transform(a.transform(X)), X)
 
+    a = Real(0, 1, transform="normalize", dtype=float)
+    for i in range(50):
+        check_limits(a.rvs(random_state=i), 0, 1)
+    assert_array_equal(a.transformed_bounds, (0, 1))
+
+    X = rng.rand()
+    # Check transformed values are in [0, 1]
+    assert np.all(a.transform(X) <= np.ones_like(X))
+    assert np.all(np.zeros_like(X) <= a.transform(X))
+
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, float)
+    assert_array_equal(X_orig, X)
+
+    a = Real(0, 1, transform="normalize", dtype='float64')
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+    a = Real(0, 1, transform="normalize", dtype=np.float64)
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+    a = Real(0, 1, transform="normalize", dtype='float64')
+    X = np.float64(rng.rand())
+    # Check inverse transform
+    X_orig = a.inverse_transform(a.transform(X))
+    assert isinstance(X_orig, np.float64)
+
+
+@pytest.mark.fast_test
+def test_normalize_integer():
     a = Integer(2, 30, transform="normalize")
     for i in range(50):
         check_limits(a.rvs(random_state=i), 2, 30)
@@ -441,39 +504,28 @@ def test_normalize():
     assert isinstance(X_orig, int)
     assert_array_equal(X_orig, X)
 
-    a = Real(0, 1, transform="normalize", dtype=float)
-    for i in range(50):
-        check_limits(a.rvs(random_state=i), 0, 1)
-    assert_array_equal(a.transformed_bounds, (0, 1))
 
-    X = rng.rand()
-    # Check transformed values are in [0, 1]
-    assert np.all(a.transform(X) <= np.ones_like(X))
-    assert np.all(np.zeros_like(X) <= a.transform(X))
+@pytest.mark.fast_test
+def test_normalize_categorical():
+    categories = ["cat", "dog", "rat"]
+    a = Categorical(categories, transform="normalize")
+    for i in range(len(categories)):
+        assert a.rvs(random_state=i)[0] in categories
+    assert a.inverse_transform(0.) == categories[0]
+    assert a.inverse_transform(0.5) == categories[1]
+    assert a.inverse_transform(1.0) == categories[2]
+    assert_array_equal(categories, a.inverse_transform([0., 0.5, 1]))
 
-    # Check inverse transform
-    X_orig = a.inverse_transform(a.transform(X))
-    assert isinstance(X_orig, float)
-    assert_array_equal(X_orig, X)
+    categories = [1, 2, 3]
+    a = Categorical(categories, transform="normalize")
+    assert_array_equal(categories, np.sort(np.unique(a.rvs(100, random_state=1))))
+    assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
-    a = Real(0, 1, transform="normalize", dtype='float64')
-    X = np.float64(rng.rand())
-    # Check inverse transform
-    X_orig = a.inverse_transform(a.transform(X))
-    assert isinstance(X_orig, np.float64)
-
-    a = Real(0, 1, transform="normalize", dtype=np.float64)
-    X = np.float64(rng.rand())
-    # Check inverse transform
-    X_orig = a.inverse_transform(a.transform(X))
-    assert isinstance(X_orig, np.float64)
-
-    a = Real(0, 1, transform="normalize", dtype='float64')
-    X = np.float64(rng.rand())
-    # Check inverse transform
-    X_orig = a.inverse_transform(a.transform(X))
-    assert isinstance(X_orig, np.float64)
-
+    categories = [1, 2, 3]
+    a = Categorical(categories, transform="string")
+    a.set_transformer("normalize")
+    assert_array_equal(categories, np.sort(np.unique(a.rvs(100, random_state=1))))
+    assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
 @pytest.mark.fast_test
 def test_normalize_integer():
@@ -655,3 +707,4 @@ def test_purely_categorical_space():
     x = optimizer.ask()
     # before the fix this call raised an exception
     optimizer.tell(x, 1.)
+

@@ -151,6 +151,63 @@ class CategoricalEncoder(Transformer):
         ]
 
 
+class IntegerEncoder(Transformer):
+    """IntegerEncoder that can handle categorical variables."""
+    def __init__(self, X=None):
+        if X is not None:
+            self.fit(X)
+
+    def fit(self, X):
+        """Fit a list or array of categories.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_categories,)
+            List of categories.
+        """
+        self.mapping_ = {v: i for i, v in enumerate(X)}
+        self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
+        return self
+
+    def transform(self, X):
+        """Transform an array of categories to a one-hot encoded representation.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples,)
+            List of categories.
+
+        Returns
+        -------
+        Xt : array-like, shape=(n_samples, n_categories)
+            The integer categories.
+        """
+        X = np.asarray(X)
+        return [self.mapping_[v] for v in X]
+
+    def inverse_transform(self, Xt):
+        """Inverse transform integer categories back to their original
+           representation.
+
+        Parameters
+        ----------
+        Xt : array-like, shape=(n_samples, n_categories)
+            Integer categories.
+
+        Returns
+        -------
+        X : array-like, shape=(n_samples,)
+            The original categories.
+        """
+        if isinstance(Xt, (float, np.float64)):
+            Xt = [Xt]
+        else:
+            Xt = np.asarray(Xt)
+        return [
+            self.inverse_mapping_[int(np.round(i))] for i in Xt
+        ]
+
+
 class Normalize(Transformer):
     """
     Scales each dimension into the interval [0, 1].
