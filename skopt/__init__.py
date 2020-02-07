@@ -44,6 +44,7 @@ else:
     from . import optimizer
 
     from . import space
+    from . import samples
     from .optimizer import dummy_minimize
     from .optimizer import forest_minimize
     from .optimizer import gbrt_minimize
@@ -61,6 +62,7 @@ else:
         "learning",
         "optimizer",
         "plots",
+        "samples",
         "space",
         "gp_minimize",
         "dummy_minimize",

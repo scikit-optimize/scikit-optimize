@@ -219,6 +219,28 @@ details.
     utils.point_aslist
     utils.use_named_args
 
+.. _space_ref:
+
+:mod:`skopt.samples`: Samples
+===============================
+
+.. automodule:: skopt.samples
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`space` section for further details.
+
+.. currentmodule:: skopt
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+    samples.Lhs
+    samples.Sobol
+    samples.Halton
+    samples.Hammersly
+
 
 .. _space_ref:
 
@@ -272,5 +294,7 @@ details.
     space.transformers.Normalize
     space.transformers.Pipeline
     space.transformers.Transformer
+    space.transformers.IntegerEncoder
+    space.transformers.StringEncoder
 
 
