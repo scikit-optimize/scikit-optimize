@@ -22,6 +22,7 @@ from ..utils import eval_callbacks
 
 def base_minimize(func, dimensions, base_estimator,
                   n_calls=100, n_random_starts=10,
+                  initial_point_generator="random",
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
@@ -66,6 +67,35 @@ def base_minimize(func, dimensions, base_estimator,
     n_random_starts : int, default=10
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
+
+    initial_point_generator : str, InitialPointGenerator instance,
+    default='random'
+        Sets a initial points generator. Can be either
+
+        - "random" for uniform random numbers,
+
+        - "sobol" for a Sobol sequence,
+
+        - "halton" for a Halton sequence,
+
+        - "hammersly" for a Hammersly sequence,
+
+        - "lhs" for a latin hypercube sequence,
+
+        - "lhs_center" for a centered LHS sequence,
+
+        - "lhs_maximin" for a LHS sequence which is maximized regarding
+            the minimum distance of all points to each other
+
+        - "lhs_ratio" for a LHS sequence which is maximized regarding
+            the ratio between the maximum to the minimum distance of all
+            points to each other
+
+        - "lhs_correlation" for a LHS sequence which is minimized
+            regarding the correlation coefficients
+
+        - "lhs_ese" for a LHS sequence which is optimized by an enhanced
+            stochastic evolutionary (ESE) algorithm
 
     acq_func : string, default=`"EI"`
         Function to minimize over the posterior distribution. Can be either
@@ -228,6 +258,7 @@ def base_minimize(func, dimensions, base_estimator,
     # create optimizer class
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
+                          initial_point_generator=initial_point_generator,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
                           random_state=random_state,
                           model_queue_size=model_queue_size,

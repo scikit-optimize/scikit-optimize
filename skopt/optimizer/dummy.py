@@ -3,7 +3,8 @@
 from .base import base_minimize
 
 
-def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
+def dummy_minimize(func, dimensions, n_calls=100,
+                   initial_point_generator="random", x0=None, y0=None,
                    random_state=None, verbose=False, callback=None,
                    model_queue_size=None):
     """Random search by uniform sampling within the given bounds.
@@ -33,6 +34,35 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
 
     n_calls : int, default=100
         Number of calls to `func` to find the minimum.
+
+    initial_point_generator : str, InitialPointGenerator instance,
+    default='random'
+        Sets a initial points generator. Can be either
+
+        - "random" for uniform random numbers,
+
+        - "sobol" for a Sobol sequence,
+
+        - "halton" for a Halton sequence,
+
+        - "hammersly" for a Hammersly sequence,
+
+        - "lhs" for a latin hypercube sequence,
+
+        - "lhs_center" for a centered LHS sequence,
+
+        - "lhs_maximin" for a LHS sequence which is maximized regarding
+            the minimum distance of all points to each other
+
+        - "lhs_ratio" for a LHS sequence which is maximized regarding
+            the ratio between the maximum to the minimum distance of all
+            points to each other
+
+        - "lhs_correlation" for a LHS sequence which is minimized
+            regarding the correlation coefficients
+
+        - "lhs_ese" for a LHS sequence which is optimized by an enhanced
+            stochastic evolutionary (ESE) algorithm
 
     x0 : list, list of lists or `None`
         Initial input points.
@@ -105,6 +135,7 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
                          # minimizer does not provide gradients.
                          acq_optimizer="sampling",
                          n_calls=n_calls, n_random_starts=n_random_calls,
+                         initial_point_generator=initial_point_generator,
                          x0=x0, y0=y0, random_state=random_state,
                          verbose=verbose,
                          callback=callback, model_queue_size=model_queue_size)
