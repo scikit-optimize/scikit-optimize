@@ -434,7 +434,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     n_samples : int, default=250
         Number of random samples to use for averaging the model function
-        at each of the `n_points`.
+        at each of the `n_points` when `samples` is set to 'random'.
 
     size : float, default=2
         Height (in inches) of each facet.
@@ -698,7 +698,8 @@ def expected_min_random_sampling(model, space, n_samples=100000):
 
 
 def evaluate_min_params(result, params='result',
-                        expected_minimum_samples=None):
+                        expected_minimum_samples=None,
+                        random_state=None):
     x_vals = None
     space = result.space
     if isinstance(params, str):
@@ -716,11 +717,11 @@ def evaluate_min_params(result, params='result',
                 # expected_minimum_samples has been parsed
                 x_vals, _ = expected_minimum(result,
                                              n_random_starts=expected_minimum_samples,
-                                             random_state=None)
+                                             random_state=random_state)
             else:  # Use standard of 20 random starting points
                 x_vals, _ = expected_minimum(result,
                                              n_random_starts=20,
-                                             random_state=None)
+                                             random_state=random_state)
         elif params == 'expected_minimum_random':
             # Do a minimum search by evaluating the function with
             # n_samples sample values
