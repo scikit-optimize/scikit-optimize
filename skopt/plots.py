@@ -591,8 +591,9 @@ def plot_evaluations(result, bins=20, dimensions=None):
                     bins_ = np.logspace(np.log10(low), np.log10(high), bins)
                 else:
                     bins_ = bins
-                ax[i, i].hist(samples[:, j], bins=bins_, range=None
-                    if iscat[j] else space.dimensions[j].bounds)
+                ax[i, i].hist(
+                    samples[:, j], bins=bins_,
+                    range=None if iscat[j] else space.dimensions[j].bounds)
 
             # lower triangle
             elif i > j:
@@ -715,7 +716,8 @@ def evaluate_min_params(result, params='result',
             if expected_minimum_samples:
                 # If a value for
                 # expected_minimum_samples has been parsed
-                x_vals, _ = expected_minimum(result,
+                x_vals, _ = expected_minimum(
+                    result,
                     n_random_starts=expected_minimum_samples,
                     random_state=random_state)
             else:  # Use standard of 20 random starting points
@@ -728,12 +730,14 @@ def evaluate_min_params(result, params='result',
             if expected_minimum_samples:
                 # If a value for
                 # expected_minimum_samples has been parsed
-                x_vals = expected_min_random_sampling(result.models[-1],
+                x_vals = expected_min_random_sampling(
+                    result.models[-1],
                     space, n_samples=expected_minimum_samples)
             else:
                 # Use standard of 10^n_parameters. Note this
                 # becomes very slow for many parameters
-                x_vals = expected_min_random_sampling(result.models[-1], space,
+                x_vals = expected_min_random_sampling(
+                    result.models[-1], space,
                     n_samples=10 ** len(result.x))
         else:
             raise ValueError('Argument ´eval_min_params´ must be a valid'
