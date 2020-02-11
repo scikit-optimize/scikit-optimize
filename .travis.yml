@@ -57,7 +57,7 @@ script:
     then pytest --cov=skopt --durations=10; else
     pytest --durations=10;
     fi
-- bash build_tools/travis/test_docs.sh
+  - bash build_tools/travis/test_docs.sh
 
 after_success:
   - if [ ${COVERAGE} == "true" ]; then
