@@ -53,6 +53,7 @@ else:
     from .space import Space
     from .utils import dump
     from .utils import expected_minimum
+    from .utils import expected_minimum_random_sampling
     from .utils import load
     __all__ = (
         "acquisition",
