@@ -525,6 +525,71 @@ def normalize_dimensions(dimensions):
     return Space(transformed_dimensions)
 
 
+def check_list_types(x, types):
+    """
+    Check whether all elements of a list `x` are of the correct type(s)
+    and raise a ValueError if they are not.
+    
+    Note that `types` can be either a single object-type or a tuple
+    of object-types.
+    
+    Parameters
+    ----------
+    * `x` [list]:
+        List of objects.
+
+    * `types` [object or list(object)]:
+        Either a single object-type or a tuple of object-types.
+
+    Exceptions
+    ----------
+    * `ValueError`:
+        If one or more element in the list `x` is not of the correct type(s).
+
+    Returns
+    -------
+    * Nothing.
+    """
+
+    # List of the elements in the list that are incorrectly typed.
+    err = list(filter(lambda a: not isinstance(a, types), x))
+
+    # If the list is non-empty then raise an exception.
+    if len(err) > 0:
+        msg = "All elements in list must be instances of {}, but found: {}"
+        msg = msg.format(types, err)
+        raise ValueError(msg)
+
+
+def check_dimension_names(dimensions):
+    """
+    Check whether all dimensions have names.
+
+    Parameters
+    ----------
+    * `dimensions` [list(Dimension)]:
+        List of Dimension-objects.
+
+    Exceptions
+    ----------
+    * `ValueError`:
+        If one or more dimensions are unnamed.
+
+    Returns
+    -------
+    * Nothing.
+    """
+
+    # List of the dimensions that have no names.
+    err_dims = list(filter(lambda dim: dim.name is None, dimensions))
+
+    # If the list is non-empty then raise an exception.
+    if len(err_dims) > 0:
+        msg = "All dimensions must have names, but found: {}"
+        msg = msg.format(err_dims)
+        raise ValueError(msg)
+
+
 def use_named_args(dimensions):
     """
     Wrapper / decorator for an objective function that uses named arguments
@@ -610,25 +675,10 @@ def use_named_args(dimensions):
         """
 
         # Ensure all dimensions are correctly typed.
-        if not all(isinstance(dim, Dimension) for dim in dimensions):
-            # List of the dimensions that are incorrectly typed.
-            err_dims = list(filter(lambda dim: not isinstance(dim, Dimension),
-                                   dimensions))
-
-            # Error message.
-            msg = "All dimensions must be instances of the Dimension-class, but found: {}"
-            msg = msg.format(err_dims)
-            raise ValueError(msg)
+        check_list_types(dimensions, Dimension)
 
         # Ensure all dimensions have names.
-        if any(dim.name is None for dim in dimensions):
-            # List of the dimensions that have no names.
-            err_dims = list(filter(lambda dim: dim.name is None, dimensions))
-
-            # Error message.
-            msg = "All dimensions must have names, but found: {}"
-            msg = msg.format(err_dims)
-            raise ValueError(msg)
+        check_dimension_names(dimensions)
 
         @wraps(func)
         def wrapper(x):
