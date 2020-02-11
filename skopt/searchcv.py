@@ -379,7 +379,6 @@ class BayesSearchCV(BaseSearchCV):
         Taken from https://github.com/scikit-learn/scikit-learn/blob/0.18.X
                     .../sklearn/model_selection/_search.py
         """
-
         estimator = self.estimator
         cv = sklearn.model_selection._validation.check_cv(
             self.cv, y, classifier=is_classifier(estimator))
@@ -570,6 +569,13 @@ class BayesSearchCV(BaseSearchCV):
         for k in self.cv_results_:
             all_cv_results[k].extend(self.cv_results_[k])
 
+        all_cv_results["rank_test_score"] = list(np.asarray(
+            rankdata(-np.array(all_cv_results['mean_test_score']),
+                     method='min'), dtype=np.int32))
+        if self.return_train_score:
+            all_cv_results["rank_train_score"] = list(np.asarray(
+                rankdata(-np.array(all_cv_results['mean_train_score']),
+                         method='min'), dtype=np.int32))
         self.cv_results_ = all_cv_results
         self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
 
