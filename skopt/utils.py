@@ -664,8 +664,8 @@ def use_named_args(dimensions):
     >>> # and use this function-decorator to specify the
     >>> # search-space dimensions.
     >>> @use_named_args(dimensions=dimensions)
-    >>> def my_objective_function(foo, bar, baz):
-    >>>     return foo ** 2 + bar ** 4 + baz ** 8
+    ... def my_objective_function(foo, bar, baz):
+    ...     return foo ** 2 + bar ** 4 + baz ** 8
     >>>
     >>> # Not the function is callable from the outside as
     >>> # `my_objective_function(x)` where `x` is a list of unnamed arguments,
