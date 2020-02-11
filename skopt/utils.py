@@ -427,10 +427,12 @@ def dimensions_aslist(search_space):
     >>> from skopt.utils import dimensions_aslist
     >>> search_space = {'name1': Real(0,1),
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
-    >>> dimensions_aslist(search_space)
-    [Real(low=0, high=1, prior='uniform', transform='identity'),
-        Integer(low=2, high=4, prior='uniform', transform='identity'),
-        Real(low=-1, high=1, prior='uniform', transform='identity')]
+    >>> dimensions_aslist(search_space)[0]
+    Real(low=0, high=1, prior='uniform', transform='identity')
+   >>> dimensions_aslist(search_space)[1]
+    Integer(low=2, high=4, prior='uniform', transform='identity')
+    >>> dimensions_aslist(search_space)[2]
+    Real(low=-1, high=1, prior='uniform', transform='identity')
 
     """
     params_space_list = [
