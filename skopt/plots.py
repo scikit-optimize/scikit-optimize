@@ -505,6 +505,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     # calculating dependence. (Unless partial
     # dependence is to be used instead).
     space = result.space
+    if space.n_dims == 1:
+        raise ValueError("plot_objective needs at least two variables. Found only one.")
     x_vals = _evaluate_min_params(result, minimum, n_minimum_search)
     if sample_source == "random":
         x_eval = None
