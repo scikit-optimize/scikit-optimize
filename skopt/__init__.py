@@ -37,6 +37,8 @@ if __SKOPT_SETUP__:
     # We are not importing the rest of scikit-optimize during the build
     # process, as it may not be compiled yet
 else:
+    import platform
+    import struct
     from . import acquisition
     from . import benchmarks
     from . import callbacks
@@ -74,3 +76,5 @@ else:
         "BayesSearchCV",
         "Space"
     )
+    IS_PYPY = platform.python_implementation() == 'PyPy'
+    _IS_32BIT = 8 * struct.calcsize("P") == 32

@@ -8,7 +8,7 @@ from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 from joblib import dump as dump_
 from joblib import load as load_
-
+from collections import OrderedDict
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor
 from .learning import GradientBoostingQuantileRegressor
@@ -18,6 +18,7 @@ from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
 from .space import Space, Categorical, Integer, Real, Dimension
+
 
 __all__ = (
     "load",
@@ -427,8 +428,13 @@ def dimensions_aslist(search_space):
     >>> from skopt.utils import dimensions_aslist
     >>> search_space = {'name1': Real(0,1),
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
-    >>> dimensions_aslist(search_space)
-    [Real(0,1), Integer(2,4), Real(-1,1)]
+    >>> dimensions_aslist(search_space)[0]
+    Real(low=0, high=1, prior='uniform', transform='identity')
+    >>> dimensions_aslist(search_space)[1]
+    Integer(low=2, high=4, prior='uniform', transform='identity')
+    >>> dimensions_aslist(search_space)[2]
+    Real(low=-1, high=1, prior='uniform', transform='identity')
+
     """
     params_space_list = [
         search_space[k] for k in sorted(search_space.keys())
@@ -456,7 +462,7 @@ def point_asdict(search_space, point_as_list):
 
     Returns
     -------
-    params_dict : dict
+    params_dict : OrderedDict
         dictionary with parameter names as keys to which
         corresponding parameter values are assigned.
 
@@ -468,11 +474,11 @@ def point_asdict(search_space, point_as_list):
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
     >>> point_as_list = [0.66, 3, -0.15]
     >>> point_asdict(search_space, point_as_list)
-    {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+    OrderedDict([('name1', 0.66), ('name2', 3), ('name3', -0.15)])
     """
-    params_dict = {
-        k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
-    }
+    params_dict = OrderedDict()
+    for k, v in zip(sorted(search_space.keys()), point_as_list):
+        params_dict[k] = v
     return params_dict
 
 
@@ -576,6 +582,59 @@ def normalize_dimensions(dimensions):
     return Space(transformed_dimensions)
 
 
+def check_list_types(x, types):
+    """
+    Check whether all elements of a list `x` are of the correct type(s)
+    and raise a ValueError if they are not.
+
+    Note that `types` can be either a single object-type or a tuple
+    of object-types.
+
+    Raises `ValueError`, If one or more element in the list `x` is
+    not of the correct type(s).
+
+    Parameters
+    ----------
+    x : list
+        List of objects.
+
+    types : object or list(object)
+        Either a single object-type or a tuple of object-types.
+
+    """
+
+    # List of the elements in the list that are incorrectly typed.
+    err = list(filter(lambda a: not isinstance(a, types), x))
+
+    # If the list is non-empty then raise an exception.
+    if len(err) > 0:
+        msg = "All elements in list must be instances of {}, but found: {}"
+        msg = msg.format(types, err)
+        raise ValueError(msg)
+
+
+def check_dimension_names(dimensions):
+    """
+    Check whether all dimensions have names. Raises `ValueError`,
+    if one or more dimensions are unnamed.
+
+    Parameters
+    ----------
+    dimensions : list(Dimension)
+        List of Dimension-objects.
+
+    """
+
+    # List of the dimensions that have no names.
+    err_dims = list(filter(lambda dim: dim.name is None, dimensions))
+
+    # If the list is non-empty then raise an exception.
+    if len(err_dims) > 0:
+        msg = "All dimensions must have names, but found: {}"
+        msg = msg.format(err_dims)
+        raise ValueError(msg)
+
+
 def use_named_args(dimensions):
     """
     Wrapper / decorator for an objective function that uses named arguments
@@ -611,8 +670,8 @@ def use_named_args(dimensions):
     >>> # and use this function-decorator to specify the
     >>> # search-space dimensions.
     >>> @use_named_args(dimensions=dimensions)
-    >>> def my_objective_function(foo, bar, baz):
-    >>>     return foo ** 2 + bar ** 4 + baz ** 8
+    ... def my_objective_function(foo, bar, baz):
+    ...     return foo ** 2 + bar ** 4 + baz ** 8
     >>>
     >>> # Not the function is callable from the outside as
     >>> # `my_objective_function(x)` where `x` is a list of unnamed arguments,
@@ -631,7 +690,9 @@ def use_named_args(dimensions):
     >>>
     >>> # Print the best-found results.
     >>> print("Best fitness:", result.fun)
+    Best fitness: 0.1948080835239698
     >>> print("Best parameters:", result.x)
+    Best parameters: [0.44134853091052617, 0.06570954323368307, 0.17586123323419825]
 
     Parameters
     ----------
@@ -661,25 +722,10 @@ def use_named_args(dimensions):
         """
 
         # Ensure all dimensions are correctly typed.
-        if not all(isinstance(dim, Dimension) for dim in dimensions):
-            # List of the dimensions that are incorrectly typed.
-            err_dims = list(filter(lambda dim: not isinstance(dim, Dimension),
-                                   dimensions))
-
-            # Error message.
-            msg = "All dimensions must be instances of the Dimension-class, but found: {}"
-            msg = msg.format(err_dims)
-            raise ValueError(msg)
+        check_list_types(dimensions, Dimension)
 
         # Ensure all dimensions have names.
-        if any(dim.name is None for dim in dimensions):
-            # List of the dimensions that have no names.
-            err_dims = list(filter(lambda dim: dim.name is None, dimensions))
-
-            # Error message.
-            msg = "All dimensions must have names, but found: {}"
-            msg = msg.format(err_dims)
-            raise ValueError(msg)
+        check_dimension_names(dimensions)
 
         @wraps(func)
         def wrapper(x):
