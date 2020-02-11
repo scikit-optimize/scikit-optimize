@@ -453,10 +453,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         Defines to samples generation to use for averaging the model function
         at each of the `n_points`.
 
-        A real partial dependence plot is only generated, when `sample_source`
-        is set to 'random', but as this can be slow, it can be speed up by
-        setting it to the other parameter values, which always use
-        `n_samples=1`.
+        A partial dependence plot is only generated, when `sample_source`
+        is set to 'random' and `n_samples` is sufficient.
 
         `sample_source` can also be a list of
         floats, which is then used for averaging.
