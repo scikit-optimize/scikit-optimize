@@ -8,7 +8,7 @@ from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 from joblib import dump as dump_
 from joblib import load as load_
-
+from collections import OrderedDict
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor
 from .learning import GradientBoostingQuantileRegressor
@@ -18,6 +18,7 @@ from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
 from .space import Space, Categorical, Integer, Real, Dimension
+
 
 __all__ = (
     "load",
@@ -427,8 +428,13 @@ def dimensions_aslist(search_space):
     >>> from skopt.utils import dimensions_aslist
     >>> search_space = {'name1': Real(0,1),
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
-    >>> dimensions_aslist(search_space)
-    [Real(0,1), Integer(2,4), Real(-1,1)]
+    >>> dimensions_aslist(search_space)[0]
+    Real(low=0, high=1, prior='uniform', transform='identity')
+    >>> dimensions_aslist(search_space)[1]
+    Integer(low=2, high=4, prior='uniform', transform='identity')
+    >>> dimensions_aslist(search_space)[2]
+    Real(low=-1, high=1, prior='uniform', transform='identity')
+
     """
     params_space_list = [
         search_space[k] for k in sorted(search_space.keys())
@@ -456,7 +462,7 @@ def point_asdict(search_space, point_as_list):
 
     Returns
     -------
-    params_dict : dict
+    params_dict : OrderedDict
         dictionary with parameter names as keys to which
         corresponding parameter values are assigned.
 
@@ -468,11 +474,11 @@ def point_asdict(search_space, point_as_list):
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
     >>> point_as_list = [0.66, 3, -0.15]
     >>> point_asdict(search_space, point_as_list)
-    {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+    OrderedDict([('name1', 0.66), ('name2', 3), ('name3', -0.15)])
     """
-    params_dict = {
-        k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
-    }
+    params_dict = OrderedDict()
+    for k, v in zip(sorted(search_space.keys()), point_as_list):
+        params_dict[k] = v
     return params_dict
 
 
@@ -664,8 +670,8 @@ def use_named_args(dimensions):
     >>> # and use this function-decorator to specify the
     >>> # search-space dimensions.
     >>> @use_named_args(dimensions=dimensions)
-    >>> def my_objective_function(foo, bar, baz):
-    >>>     return foo ** 2 + bar ** 4 + baz ** 8
+    ... def my_objective_function(foo, bar, baz):
+    ...     return foo ** 2 + bar ** 4 + baz ** 8
     >>>
     >>> # Not the function is callable from the outside as
     >>> # `my_objective_function(x)` where `x` is a list of unnamed arguments,
@@ -684,7 +690,9 @@ def use_named_args(dimensions):
     >>>
     >>> # Print the best-found results.
     >>> print("Best fitness:", result.fun)
+    Best fitness: 0.1948080835239698
     >>> print("Best parameters:", result.x)
+    Best parameters: [0.44134853091052617, 0.06570954323368307, 0.17586123323419825]
 
     Parameters
     ----------

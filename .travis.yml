@@ -9,7 +9,7 @@ cache:
 env:
   global:
     # Directory where tests are run from
-    - TEST_DIR=/tmp/sklearn
+    - TEST_DIR=/tmp/skopt
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
 
@@ -51,19 +51,10 @@ matrix:
 
 
 install: source build_tools/travis/install.sh
-
 script:
-  - if [ ${COVERAGE} == "true" ];
-    then pytest --cov=skopt --durations=10; else
-    pytest --durations=10;
-    fi
-
-after_success:
-  - if [ ${COVERAGE} == "true" ]; then
-    pip install codecov;
-    codecov;
-    fi
-
+  - bash build_tools/travis/test_script.sh
+  # - bash build_tools/travis/test_docs.sh
+after_success: source build_tools/travis/after_success.sh
 deploy:
   provider: pypi
   user: __token__

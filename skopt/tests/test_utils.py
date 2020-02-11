@@ -269,6 +269,20 @@ def test_use_named_args():
 
 
 @pytest.mark.fast_test
+def test_space_names_in_use_named_args():
+    space = [Integer(250, 2000, name='n_estimators')]
+
+    @use_named_args(space)
+    def objective(n_estimators):
+        return n_estimators
+
+    res = gp_minimize(objective, space, n_calls=10, random_state=0)
+    best_params = dict(zip((s.name for s in res.space), res.x))
+    assert 'n_estimators' in best_params
+    assert res.space.dimensions[0].name == 'n_estimators'
+
+
+@pytest.mark.fast_test
 def test_check_dimension_names():
     # Define the search-space dimensions. They must all have names!
     dim1 = Real(name='foo', low=0.0, high=1.0)
