@@ -42,6 +42,8 @@ def test_multiple_asks():
     assert_equal(len(opt.models), 3)
     assert_equal(len(opt.Xi), 3)
     assert_equal(opt.ask(), opt.ask())
+    opt.update_next()
+    assert_equal(opt.ask(), opt.ask())
 
 
 @pytest.mark.fast_test
@@ -166,7 +168,8 @@ def test_dimension_checking_2D_multiple_points():
     assert "dimensions as the space" in str(e.value)
     # within bounds but one dimension too much
     with pytest.raises(ValueError) as e:
-        opt.tell([[low + 1, low + 1, low + 1], [low + 1, low + 2], [low + 1, low + 3]], 2.)
+        opt.tell([[low + 1, low + 1, low + 1], [low + 1, low + 2],
+                  [low + 1, low + 3]], 2.)
     assert "dimensions as the space" in str(e.value)
 
 
@@ -312,6 +315,8 @@ def test_defaults_are_equivalent():
         x = opt.ask()
         res_opt = opt.tell(x, branin(x))
 
+
+
     #res_min = forest_minimize(branin, space, n_calls=12, random_state=1)
     res_min = gp_minimize(branin, space, n_calls=12, random_state=1)
 
@@ -319,3 +324,7 @@ def test_defaults_are_equivalent():
     # tolerate small differences in the points sampled
     assert np.allclose(res_min.x_iters, res_opt.x_iters)#, atol=1e-5)
     assert np.allclose(res_min.x, res_opt.x)#, atol=1e-5)
+
+    res_opt2 = opt.get_result()
+    assert np.allclose(res_min.x_iters, res_opt2.x_iters)  # , atol=1e-5)
+    assert np.allclose(res_min.x, res_opt2.x)  # , atol=1e-5)

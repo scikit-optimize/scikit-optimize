@@ -5,10 +5,10 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 import numpy as np
 
-from skopt import gp_minimize
+from skopt import gp_minimize, forest_minimize
 from skopt import load
 from skopt import dump
-from skopt import expected_minimum
+from skopt import expected_minimum, expected_minimum_random_sampling
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
 from skopt.learning import ExtraTreesRegressor
@@ -22,6 +22,9 @@ from skopt.utils import cook_estimator
 from skopt.utils import normalize_dimensions
 from skopt.utils import use_named_args
 from skopt.space import Real, Integer, Categorical
+from sklearn.datasets import load_breast_cancer
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_score
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -96,6 +99,24 @@ def test_expected_minimum():
 
     x_min, f_min = expected_minimum(res, random_state=1)
     x_min2, f_min2 = expected_minimum(res, random_state=1)
+
+    assert f_min <= res.fun  # true since noise ~= 0.0
+    assert x_min == x_min2
+    assert f_min == f_min2
+
+
+@pytest.mark.fast_test
+def test_expected_minimum_random_sampling():
+    res = gp_minimize(bench3,
+                      [(-2.0, 2.0)],
+                      x0=[0.],
+                      noise=1e-8,
+                      n_calls=8,
+                      n_random_starts=3,
+                      random_state=1)
+
+    x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
+    x_min2, f_min2 = expected_minimum_random_sampling(res, random_state=1)
 
     assert f_min <= res.fun  # true since noise ~= 0.0
     assert x_min == x_min2
