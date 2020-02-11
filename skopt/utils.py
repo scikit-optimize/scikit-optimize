@@ -152,9 +152,10 @@ def load(filename, **kwargs):
     Reconstruct a skopt optimization result from a file
     persisted with skopt.dump.
 
-    Notice that the loaded optimization result can be missing
-    the objective function (`.specs['args']['func']`) if `skopt.dump`
-    was called with `store_objective=False`.
+    .. note::
+        Notice that the loaded optimization result can be missing
+        the objective function (`.specs['args']['func']`) if `skopt.dump`
+        was called with `store_objective=False`.
 
     Parameters
     ----------
@@ -223,7 +224,7 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
 
     Returns
     -------
-    x : list]
+    x : list
         location of the minimum.
     fun : float
         the surrogate function value at the minimum.
@@ -279,7 +280,7 @@ def expected_minimum_random_sampling(res, n_random_starts=100000,
 
     Returns
     -------
-    x : list]
+    x : list
         location of the minimum.
     fun : float
         the surrogate function value at the minimum.

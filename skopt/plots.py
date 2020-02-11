@@ -459,26 +459,33 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         `sample_source` can also be a list of
         floats, which is then used for averaging.
 
-        Valid strings:  'random' - `n_samples` random samples will used
-                        'result' - Use only the best observed parameters
-                        'expected_minimum' - Parameters that gives the best
-                            minimum Calculated using scipy's minimize method.
-                            This method currently does not work with
-                            categorical values.
-                        'expected_minimum_random' - Parameters that gives the
-                            best minimum when using naive random sampling.
-                            Works with categorical values
+        Valid strings:
+
+            - 'random' - `n_samples` random samples will used
+
+            - 'result' - Use only the best observed parameters
+
+            - 'expected_minimum' - Parameters that gives the best
+                  minimum Calculated using scipy's minimize method.
+                  This method currently does not work with categorical values.
+
+            - 'expected_minimum_random' - Parameters that gives the
+                  best minimum when using naive random sampling.
+                  Works with categorical values.
 
     minimum : str or list of floats, default = 'result'
         Defines the values for the red points in the plots.
-        Valid strings:  'result' - Use best observed parameters
-                        'expected_minimum' - Parameters that gives the best
-                            minimum Calculated using scipy's minimize method.
-                            This method currently does not work with
-                            categorical values.
-                        'expected_minimum_random' - Parameters that gives the
-                            best minimum when using naive random sampling.
-                            Works with categorical values
+        Valid strings:
+
+            - 'result' - Use best observed parameters
+
+            - 'expected_minimum' - Parameters that gives the best
+                  minimum Calculated using scipy's minimize method.
+                  This method currently does not work with categorical values.
+
+            - 'expected_minimum_random' - Parameters that gives the
+                  best minimum when using naive random sampling.
+                  Works with categorical values
 
     n_minimum_search : int, default = None
         Determines how many points should be evaluated
