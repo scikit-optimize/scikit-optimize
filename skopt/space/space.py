@@ -455,7 +455,7 @@ class Integer(Dimension):
             self._rvs = _uniform_inclusive(0.0, 1.0)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
-                    [Identity(), Normalize(self.low, self.high)])
+                    [Identity(), Normalize(self.low, self.high, is_int=True)])
             else:
 
                 self.transformer = Pipeline(
@@ -989,6 +989,11 @@ class Space(object):
     def is_categorical(self):
         """Space contains exclusively categorical dimensions"""
         return all([isinstance(dim, Categorical) for dim in self.dimensions])
+
+    @property
+    def is_partly_categorical(self):
+        """Space contains any categorical dimensions"""
+        return any([isinstance(dim, Categorical) for dim in self.dimensions])
 
     def distance(self, point_a, point_b):
         """Compute distance between two points in this space.

@@ -710,3 +710,14 @@ def test_purely_categorical_space():
     x = optimizer.ask()
     # before the fix this call raised an exception
     optimizer.tell(x, 1.)
+
+
+@pytest.mark.fast_test
+def test_partly_categorical_space():
+    dims = Space([Categorical(['a', 'b', 'c']), Categorical(['A', 'B', 'C'])])
+    assert dims.is_partly_categorical
+    dims = Space([Categorical(['a', 'b', 'c']), Integer(1, 2)])
+    assert dims.is_partly_categorical
+    assert not dims.is_categorical
+    dims = Space([Integer(1, 2), Integer(1, 2)])
+    assert not dims.is_partly_categorical
