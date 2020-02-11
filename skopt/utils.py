@@ -462,7 +462,7 @@ def point_asdict(search_space, point_as_list):
 
     Returns
     -------
-    params_dict : dict
+    params_dict : OrderedDict
         dictionary with parameter names as keys to which
         corresponding parameter values are assigned.
 
@@ -474,7 +474,7 @@ def point_asdict(search_space, point_as_list):
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
     >>> point_as_list = [0.66, 3, -0.15]
     >>> point_asdict(search_space, point_as_list)
-    {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+    OrderedDict([('name1', 0.66), ('name2', 3), ('name3', -0.15)])
     """
     params_dict = OrderedDict()
     for k, v in zip(sorted(search_space.keys()), point_as_list):
