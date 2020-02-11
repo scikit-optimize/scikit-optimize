@@ -9,7 +9,7 @@ cache:
 env:
   global:
     # Directory where tests are run from
-    - TEST_DIR=/tmp/sklearn
+    - TEST_DIR=/tmp/skopt
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
 
@@ -57,6 +57,7 @@ script:
     then pytest --cov=skopt --durations=10; else
     pytest --durations=10;
     fi
+- bash build_tools/travis/test_docs.sh
 
 after_success:
   - if [ ${COVERAGE} == "true" ]; then
