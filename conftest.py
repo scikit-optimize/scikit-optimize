@@ -12,7 +12,7 @@ import os
 
 import pytest
 from _pytest.doctest import DoctestItem
-from sklearn.utils import _IS_32BIT
+from skopt import _IS_32BIT
 
 
 PYTEST_MIN_VERSION = '3.3.0'

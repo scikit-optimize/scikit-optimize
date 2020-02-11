@@ -61,7 +61,6 @@ script:
 
 after_success:
   - if [ ${COVERAGE} == "true" ]; then
-    pip install codecov;
     codecov;
     fi
 
