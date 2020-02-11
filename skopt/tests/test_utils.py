@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 import numpy as np
 
-from skopt import gp_minimize
+from skopt import gp_minimize, forest_minimize
 from skopt import load
 from skopt import dump
 from skopt import expected_minimum
@@ -22,6 +22,9 @@ from skopt.utils import cook_estimator
 from skopt.utils import normalize_dimensions
 from skopt.utils import use_named_args
 from skopt.space import Real, Integer, Categorical
+from sklearn.datasets import load_breast_cancer
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_score
 
 
 def check_optimization_results_equality(res_1, res_2):
