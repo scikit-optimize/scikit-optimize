@@ -428,7 +428,10 @@ def dimensions_aslist(search_space):
     >>> search_space = {'name1': Real(0,1),
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
     >>> dimensions_aslist(search_space)
-    [Real(0,1), Integer(2,4), Real(-1,1)]
+    [Real(low=0, high=1, prior='uniform', transform='identity'),
+        Integer(low=2, high=4, prior='uniform', transform='identity'),
+        Real(low=-1, high=1, prior='uniform', transform='identity')]
+
     """
     params_space_list = [
         search_space[k] for k in sorted(search_space.keys())
@@ -684,7 +687,9 @@ def use_named_args(dimensions):
     >>>
     >>> # Print the best-found results.
     >>> print("Best fitness:", result.fun)
+    Best fitness: 0.1948080835239698
     >>> print("Best parameters:", result.x)
+    Best parameters: [0.44134853091052617, 0.06570954323368307, 0.17586123323419825]
 
     Parameters
     ----------

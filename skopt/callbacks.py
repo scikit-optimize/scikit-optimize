@@ -264,7 +264,7 @@ class CheckpointSaver(object):
     ...     return x[0]**2
     >>> checkpoint_callback = skopt.callbacks.CheckpointSaver("./result.pkl")
     >>> skopt.gp_minimize(obj_fun, [(-2, 2)], n_calls=10,
-    ...                   callback=[checkpoint_callback])
+    ...                   callback=[checkpoint_callback]) # doctest: +SKIP
 
     Parameters
     ----------
