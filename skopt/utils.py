@@ -529,26 +529,21 @@ def check_list_types(x, types):
     """
     Check whether all elements of a list `x` are of the correct type(s)
     and raise a ValueError if they are not.
-    
+
     Note that `types` can be either a single object-type or a tuple
     of object-types.
-    
+
+    Raises `ValueError`, If one or more element in the list `x` is
+    not of the correct type(s).
+
     Parameters
     ----------
-    * `x` [list]:
+    x : list
         List of objects.
 
-    * `types` [object or list(object)]:
+    types : object or list(object)
         Either a single object-type or a tuple of object-types.
 
-    Exceptions
-    ----------
-    * `ValueError`:
-        If one or more element in the list `x` is not of the correct type(s).
-
-    Returns
-    -------
-    * Nothing.
     """
 
     # List of the elements in the list that are incorrectly typed.
@@ -563,21 +558,14 @@ def check_list_types(x, types):
 
 def check_dimension_names(dimensions):
     """
-    Check whether all dimensions have names.
+    Check whether all dimensions have names. Raises `ValueError`,
+    if one or more dimensions are unnamed.
 
     Parameters
     ----------
-    * `dimensions` [list(Dimension)]:
+    dimensions : list(Dimension)
         List of Dimension-objects.
 
-    Exceptions
-    ----------
-    * `ValueError`:
-        If one or more dimensions are unnamed.
-
-    Returns
-    -------
-    * Nothing.
     """
 
     # List of the dimensions that have no names.
@@ -611,7 +599,7 @@ def use_named_args(dimensions):
     Examples
     --------
     >>> # Define the search-space dimensions. They must all have names!
-    >>> from skopt.space.Space import Real
+    >>> from skopt.space import Real
     >>> from skopt import forest_minimize
     >>> from skopt.utils import use_named_args
     >>> dim1 = Real(name='foo', low=0.0, high=1.0)

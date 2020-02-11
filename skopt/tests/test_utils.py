@@ -3,6 +3,7 @@ import tempfile
 
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
+from numpy.testing import assert_raises
 import numpy as np
 
 from skopt import gp_minimize
@@ -14,6 +15,7 @@ from skopt.benchmarks import bench3
 from skopt.learning import ExtraTreesRegressor
 from skopt import Optimizer
 from skopt import Space
+from skopt.space import Dimension
 from skopt.utils import point_asdict
 from skopt.utils import point_aslist
 from skopt.utils import dimensions_aslist
@@ -21,6 +23,8 @@ from skopt.utils import has_gradients
 from skopt.utils import cook_estimator
 from skopt.utils import normalize_dimensions
 from skopt.utils import use_named_args
+from skopt.utils import check_list_types
+from skopt.utils import check_dimension_names
 from skopt.space import Real, Integer, Categorical
 
 
@@ -241,3 +245,31 @@ def test_use_named_args():
     # argument that is an unnamed numpy array.
     res = func(np.array(default_parameters))
     assert (isinstance(res, float))
+
+
+@pytest.mark.fast_test
+def test_check_dimension_names():
+    # Define the search-space dimensions. They must all have names!
+    dim1 = Real(name='foo', low=0.0, high=1.0)
+    dim2 = Real(name='bar', low=0.0, high=1.0)
+    dim3 = Real(name='baz', low=0.0, high=1.0)
+
+    # Gather the search-space dimensions in a list.
+    dimensions = [dim1, dim2, dim3]
+    check_dimension_names(dimensions)
+    dimensions = [dim1, dim2, dim3, Real(-1, 1)]
+    assert_raises(ValueError, check_dimension_names, dimensions)
+
+
+@pytest.mark.fast_test
+def test_check_list_types():
+    # Define the search-space dimensions. They must all have names!
+    dim1 = Real(name='foo', low=0.0, high=1.0)
+    dim2 = Real(name='bar', low=0.0, high=1.0)
+    dim3 = Real(name='baz', low=0.0, high=1.0)
+
+    # Gather the search-space dimensions in a list.
+    dimensions = [dim1, dim2, dim3]
+    check_list_types(dimensions, Dimension)
+    dimensions = [dim1, dim2, dim3, "test"]
+    assert_raises(ValueError, check_list_types, dimensions, Dimension)
