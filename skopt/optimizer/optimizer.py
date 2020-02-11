@@ -604,3 +604,26 @@ class Optimizer(object):
 
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+
+    def update_next(self):
+        """Updates the value returned by opt.ask(). Useful if a parameter
+        was updated after ask was called."""
+        self.cache_ = {}
+        # Ask for a new next_x.
+        # We only need to overwrite _next_x if it exists.
+        if hasattr(self, '_next_x'):
+            opt = self.copy(random_state=self.rng)
+            self._next_x = opt._next_x
+
+    def get_result(self):
+        """Returns the same result that would be returned by opt.tell()
+        but without calling tell
+
+        Returns
+        -------
+        res : `OptimizeResult`, scipy object
+            OptimizeResult instance with the required information.
+
+        """
+        return create_result(self.Xi, self.yi, self.space, self.rng,
+                             models=self.models)
