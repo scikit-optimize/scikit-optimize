@@ -51,19 +51,10 @@ matrix:
 
 
 install: source build_tools/travis/install.sh
-
 script:
-  - if [ ${COVERAGE} == "true" ];
-    then pytest --cov=skopt --durations=10; else
-    pytest --durations=10;
-    fi
-  - bash build_tools/travis/test_docs.sh
-
-after_success:
-  - if [ ${COVERAGE} == "true" ]; then
-    codecov;
-    fi
-
+  - bash build_tools/travis/test_script.sh
+  # - bash build_tools/travis/test_docs.sh
+after_success: source build_tools/travis/after_success.sh
 deploy:
   provider: pypi
   user: __token__
