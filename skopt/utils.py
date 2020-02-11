@@ -8,7 +8,7 @@ from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 from joblib import dump as dump_
 from joblib import load as load_
-
+from collections import OrderedDict
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor
 from .learning import GradientBoostingQuantileRegressor
@@ -18,6 +18,7 @@ from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
 from .space import Space, Categorical, Integer, Real, Dimension
+
 
 __all__ = (
     "load",
@@ -475,9 +476,9 @@ def point_asdict(search_space, point_as_list):
     >>> point_asdict(search_space, point_as_list)
     {'name1': 0.66, 'name2': 3, 'name3': -0.15}
     """
-    params_dict = {
-        k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
-    }
+    params_dict = OrderedDict()
+    for k, v in zip(sorted(search_space.keys()), point_as_list):
+        params_dict[k] = v
     return params_dict
 
 
