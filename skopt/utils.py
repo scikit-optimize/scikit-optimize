@@ -254,7 +254,8 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
     return [v for v in best_x], best_fun
 
 
-def expected_minimum_random_sampling(res, n_random_starts=100000, random_state=None):
+def expected_minimum_random_sampling(res, n_random_starts=100000,
+                                     random_state=None):
     """Minimum search by doing naive random sampling, Returns the parameters
     that gave the minimum function value. Can be used when the space
     contains any categorical values.
@@ -283,7 +284,6 @@ def expected_minimum_random_sampling(res, n_random_starts=100000, random_state=N
     fun : float
         the surrogate function value at the minimum.
     """
-
 
     # sample points from search space
     random_samples = res.space.rvs(n_random_starts, random_state=random_state)

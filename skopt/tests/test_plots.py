@@ -107,7 +107,8 @@ def test_evaluate_min_params():
                       random_state=1)
 
     x_min, f_min = expected_minimum(res, random_state=1)
-    x_min2, f_min2 = expected_minimum_random_sampling(res, n_random_starts=1000,
+    x_min2, f_min2 = expected_minimum_random_sampling(res,
+                                                      n_random_starts=1000,
                                                       random_state=1)
 
     assert _evaluate_min_params(res, params='result') == res.x

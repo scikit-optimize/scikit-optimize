@@ -695,8 +695,8 @@ def _cat_format(dimension, x, _):
 
 
 def _evaluate_min_params(result, params='result',
-                        n_minimum_search=None,
-                        random_state=None):
+                         n_minimum_search=None,
+                         random_state=None):
     """Returns the minimum based on `params`"""
     x_vals = None
     space = result.space

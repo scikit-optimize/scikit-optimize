@@ -425,7 +425,7 @@ class Integer(Dimension):
             self._rvs = _uniform_inclusive(0.0, 1.0)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
-                    [Identity(), Normalize(low, high)])
+                    [Identity(), Normalize(low, high, is_int=True)])
             else:
 
                 self.transformer = Pipeline(
