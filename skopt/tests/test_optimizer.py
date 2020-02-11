@@ -328,3 +328,23 @@ def test_defaults_are_equivalent():
     res_opt2 = opt.get_result()
     assert np.allclose(res_min.x_iters, res_opt2.x_iters)  # , atol=1e-5)
     assert np.allclose(res_min.x, res_opt2.x)  # , atol=1e-5)
+
+
+@pytest.mark.fast_test
+def test_dimensions_names():
+    from skopt.space import Real, Categorical, Integer
+    # create search space and optimizer
+    space = [Real(0, 1, name='real'),
+             Categorical(['a', 'b', 'c'], name='cat'),
+             Integer(0, 1, name='int')]
+    opt = Optimizer(space, n_initial_points=1)
+    # result of the optimizer missing dimension names
+    result = opt.tell([(0.5, 'a', 0.5)], [3])
+    names = []
+    for d in result.space.dimensions:
+        names.append(d.name)
+    assert len(names) == 3
+    assert "real" in names
+    assert "cat" in names
+    assert "int" in names
+    assert None not in names

@@ -4,13 +4,14 @@ import pytest
 from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
-
+from numpy.testing import assert_raises
 from skopt.space import Integer, Categorical
 from skopt import plots, gp_minimize
 import matplotlib.pyplot as plt
 from skopt.benchmarks import bench3
 from skopt import expected_minimum, expected_minimum_random_sampling
 from skopt.plots import _evaluate_min_params
+from skopt import Optimizer
 
 
 def save_axes(ax, filename):
@@ -121,3 +122,22 @@ def test_evaluate_min_params():
     assert _evaluate_min_params(res, params='expected_minimum_random',
                                 n_minimum_search=1000,
                                 random_state=1) == x_min2
+
+
+def test_names_dimensions():
+    # Define objective
+    def objective(x, noise_level=0.1):
+        return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) +\
+               np.random.randn() * noise_level
+
+    # Initialize Optimizer
+    opt = Optimizer([(-2.0, 2.0)], n_initial_points=1)
+
+    # Optimize
+    for i in range(2):
+        next_x = opt.ask()
+        f_val = objective(next_x)
+        res = opt.tell(next_x, f_val)
+
+    # Plot results
+    assert_raises(ValueError, plots.plot_objective, res)
