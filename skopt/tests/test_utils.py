@@ -8,7 +8,7 @@ import numpy as np
 from skopt import gp_minimize, forest_minimize
 from skopt import load
 from skopt import dump
-from skopt import expected_minimum
+from skopt import expected_minimum, expected_minimum_random_sampling
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
 from skopt.learning import ExtraTreesRegressor
@@ -99,6 +99,24 @@ def test_expected_minimum():
 
     x_min, f_min = expected_minimum(res, random_state=1)
     x_min2, f_min2 = expected_minimum(res, random_state=1)
+
+    assert f_min <= res.fun  # true since noise ~= 0.0
+    assert x_min == x_min2
+    assert f_min == f_min2
+
+
+@pytest.mark.fast_test
+def test_expected_minimum_random_sampling():
+    res = gp_minimize(bench3,
+                      [(-2.0, 2.0)],
+                      x0=[0.],
+                      noise=1e-8,
+                      n_calls=8,
+                      n_random_starts=3,
+                      random_state=1)
+
+    x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
+    x_min2, f_min2 = expected_minimum_random_sampling(res, random_state=1)
 
     assert f_min <= res.fun  # true since noise ~= 0.0
     assert x_min == x_min2

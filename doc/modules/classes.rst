@@ -33,6 +33,7 @@ Functions
     dummy_minimize
     dump
     expected_minimum
+    expected_minimum_random_sampling
     forest_minimize
     gbrt_minimize
     gp_minimize
@@ -213,6 +214,7 @@ details.
     utils.cook_estimator
     utils.dimensions_aslist
     utils.expected_minimum
+    utils.expected_minimum_random_sampling
     utils.dump
     utils.load
     utils.point_asdict

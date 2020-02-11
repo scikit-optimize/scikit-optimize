@@ -40,6 +40,7 @@ def test_normalize_integer():
     assert_raises(ValueError, transformer.inverse_transform, 1. + 1e-8)
     assert_raises(ValueError, transformer.transform, 0. - 1e-8)
 
+
 @pytest.mark.fast_test
 def test_normalize():
     transformer = Normalize(1, 20, is_int=False)

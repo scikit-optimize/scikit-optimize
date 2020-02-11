@@ -5,7 +5,7 @@ from itertools import count
 from functools import partial
 from scipy.optimize import OptimizeResult
 
-from skopt import expected_minimum
+from skopt import expected_minimum, expected_minimum_random_sampling
 from .space import Categorical
 
 # For plot tests, matplotlib must be set to headless mode early
@@ -350,9 +350,10 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     For Categorical variables, the `xi` (and `yi` for 2D) returned are
     the indices of the variable in `Dimension.categories`.
     """
-    # The idea is to step through one dimension and evaluating the model with
-    # that dimension fixed.  (Or step through 2 dimensions when i and j are
-    # given.)
+    # The idea is to step through one dimension, evaluating the model with
+    # that dimension fixed and averaging either over random values or over
+    # the given ones in x_val in all other dimensions.
+    # (Or step through 2 dimensions when i and j are given.)
     # Categorical dimensions make this interesting, because they are one-
     # hot-encoded, so there is a one-to-many mapping of input dimensions
     # to transformed (model) dimensions.
@@ -404,8 +405,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                   zscale='linear', dimensions=None, samples='random',
-                   minimum='result', expected_minimum_samples=None):
+                   zscale='linear', dimensions=None, sample_source='random',
+                   minimum='result', n_minimum_search=None):
     """Pairwise dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -433,8 +434,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         along each dimension.
 
     n_samples : int, default=250
-        Number of random samples to use for averaging the model function
-        at each of the `n_points` when `samples` is set to 'random'.
+        Number of samples to use for averaging the model function
+        at each of the `n_points` when `sample_method` is set to 'random'.
 
     size : float, default=2
         Height (in inches) of each facet.
@@ -448,11 +449,20 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
 
-    samples : str or list of floats, default='random'
+    sample_source : str or list of floats, default='random'
         Defines to samples generation to use for averaging the model function
         at each of the `n_points`.
-        Valid strings:  'random' - `n_random` samples will used
-                        'result' - Use best observed parameters
+
+        A real partial dependence plot is only generated, when `sample_source`
+        is set to 'random', but as this can be slow, it can be speed up by
+        setting it to the other parameter values, which always use
+        `n_samples=1`.
+
+        `sample_source` can also be a list of
+        floats, which is then used for averaging.
+
+        Valid strings:  'random' - `n_samples` random samples will used
+                        'result' - Use only the best observed parameters
                         'expected_minimum' - Parameters that gives the best
                             minimum Calculated using scipy's minimize method.
                             This method currently does not work with
@@ -472,10 +482,12 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                             best minimum when using naive random sampling.
                             Works with categorical values
 
-    expected_minimum_samples : int, default = None
+    n_minimum_search : int, default = None
         Determines how many points should be evaluated
         to find the minimum when using 'expected_minimum' or
-        'expected_minimum_random'
+        'expected_minimum_random'. Parameter is used when
+        `sample_source` and/or `minimum` is set to
+        'expected_minimum' or 'expected_minimum_random'.
 
     Returns
     -------
@@ -488,12 +500,12 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     # calculating dependence. (Unless partial
     # dependence is to be used instead).
     space = result.space
-    x_vals = evaluate_min_params(result, minimum, expected_minimum_samples)
-    if samples == "random":
+    x_vals = _evaluate_min_params(result, minimum, n_minimum_search)
+    if sample_source == "random":
         x_eval = None
     else:
-        x_eval = evaluate_min_params(result, samples,
-                                     expected_minimum_samples)
+        x_eval = _evaluate_min_params(result, sample_source,
+                                      n_minimum_search)
     rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
     samples, minimum, _ = _map_categories(space, result.x_iters, x_vals)
 
@@ -682,25 +694,10 @@ def _cat_format(dimension, x, _):
     return str(dimension.categories[int(x)])
 
 
-def expected_min_random_sampling(model, space, n_samples=100000):
-    """Minimum search by doing naive random sampling, Returns the parameters
-    that gave the minimum function value"""
-    if n_samples > 100000:
-        n_samples = 100000
-    # sample points from search space
-    random_samples = space.rvs(n_samples=n_samples)
-
-    # make estimations with surrogate
-    y_random = model.predict(space.transform(random_samples))
-    index_best_objective = np.argmin(y_random)
-    min_x = random_samples[index_best_objective]
-
-    return min_x
-
-
-def evaluate_min_params(result, params='result',
-                        expected_minimum_samples=None,
+def _evaluate_min_params(result, params='result',
+                        n_minimum_search=None,
                         random_state=None):
+    """Returns the minimum based on `params`"""
     x_vals = None
     space = result.space
     if isinstance(params, str):
@@ -713,12 +710,12 @@ def evaluate_min_params(result, params='result',
                 raise ValueError('expected_minimum does not support any'
                                  'categorical values')
             # Do a gradient based minimum search using scipys own minimizer
-            if expected_minimum_samples:
+            if n_minimum_search:
                 # If a value for
                 # expected_minimum_samples has been parsed
                 x_vals, _ = expected_minimum(
                     result,
-                    n_random_starts=expected_minimum_samples,
+                    n_random_starts=n_minimum_search,
                     random_state=random_state)
             else:  # Use standard of 20 random starting points
                 x_vals, _ = expected_minimum(result,
@@ -727,18 +724,20 @@ def evaluate_min_params(result, params='result',
         elif params == 'expected_minimum_random':
             # Do a minimum search by evaluating the function with
             # n_samples sample values
-            if expected_minimum_samples:
+            if n_minimum_search:
                 # If a value for
-                # expected_minimum_samples has been parsed
-                x_vals = expected_min_random_sampling(
-                    result.models[-1],
-                    space, n_samples=expected_minimum_samples)
+                # n_minimum_samples has been parsed
+                x_vals, _ = expected_minimum_random_sampling(
+                    result,
+                    n_random_starts=n_minimum_search,
+                    random_state=random_state)
             else:
                 # Use standard of 10^n_parameters. Note this
                 # becomes very slow for many parameters
-                x_vals = expected_min_random_sampling(
-                    result.models[-1], space,
-                    n_samples=10 ** len(result.x))
+                x_vals, _ = expected_minimum_random_sampling(
+                    result,
+                    n_random_starts=10 ** len(result.x),
+                    random_state=random_state)
         else:
             raise ValueError('Argument ´eval_min_params´ must be a valid'
                              'string (´result´)')

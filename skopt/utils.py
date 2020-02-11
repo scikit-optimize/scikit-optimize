@@ -201,9 +201,12 @@ def check_x_in_space(x, space):
 def expected_minimum(res, n_random_starts=20, random_state=None):
     """
     Compute the minimum over the predictions of the last surrogate model.
+    Uses `expected_minimum_random_sampling` with `n_random_starts`=100000,
+    when the space contains any categorical values.
 
-    Note that the returned minimum may not necessarily be an accurate
-    prediction of the minimum of the true objective function.
+    .. note::
+        The returned minimum may not necessarily be an accurate
+        prediction of the minimum of the true objective function.
 
     Parameters
     ----------
@@ -225,6 +228,10 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
     fun : float
         the surrogate function value at the minimum.
     """
+    if res.space.is_partly_categorical:
+        return expected_minimum_random_sampling(res, n_random_starts=100000,
+                                                random_state=random_state)
+
     def func(x):
         reg = res.models[-1]
         x = res.space.transform(x.reshape(1, -1))
@@ -245,6 +252,49 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
             best_fun = r.fun
 
     return [v for v in best_x], best_fun
+
+
+def expected_minimum_random_sampling(res, n_random_starts=100000, random_state=None):
+    """Minimum search by doing naive random sampling, Returns the parameters
+    that gave the minimum function value. Can be used when the space
+    contains any categorical values.
+
+    .. note::
+        The returned minimum may not necessarily be an accurate
+        prediction of the minimum of the true objective function.
+
+    Parameters
+    ----------
+    res : `OptimizeResult`, scipy object
+        The optimization result returned by a `skopt` minimizer.
+
+    n_random_starts : int, default=100000
+        The number of random starts for the minimization of the surrogate
+        model.
+
+    random_state : int, RandomState instance, or None (default)
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    x : list]
+        location of the minimum.
+    fun : float
+        the surrogate function value at the minimum.
+    """
+
+
+    # sample points from search space
+    random_samples = res.space.rvs(n_random_starts, random_state=random_state)
+
+    # make estimations with surrogate
+    model = res.models[-1]
+    y_random = model.predict(res.space.transform(random_samples))
+    index_best_objective = np.argmin(y_random)
+    min_x = random_samples[index_best_objective]
+
+    return min_x, y_random[index_best_objective]
 
 
 def has_gradients(estimator):
@@ -546,7 +596,7 @@ def use_named_args(dimensions):
     Examples
     --------
     >>> # Define the search-space dimensions. They must all have names!
-    >>> from skopt.space.Space import Real
+    >>> from skopt.space import Real
     >>> from skopt import forest_minimize
     >>> from skopt.utils import use_named_args
     >>> dim1 = Real(name='foo', low=0.0, high=1.0)

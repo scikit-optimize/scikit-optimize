@@ -4,7 +4,7 @@ Partial Dependence Plots
 ========================
 
 Sigurd Carlsen Feb 2019
-Reformatted by Holger Nahrstaedt 2020
+Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
 
@@ -40,7 +40,8 @@ def funny_func(x):
 bounds = [(-1, 1.), ] * 3
 n_calls = 150
 
-result = forest_minimize(funny_func, bounds, n_calls=n_calls, base_estimator="ET",
+result = forest_minimize(funny_func, bounds, n_calls=n_calls,
+                         base_estimator="ET",
                          random_state=4)
 
 #############################################################################
@@ -53,12 +54,19 @@ result = forest_minimize(funny_func, bounds, n_calls=n_calls, base_estimator="ET
 _ = plot_objective(result, n_points=10)
 
 #############################################################################
+# It is possible to change the location of the red dot, which normally shows
+# the position of the found minimum. We can set it 'expected_minimum',
+# which is the minimum value of the surrogate function, obtained by a
+# minimum search method.
+
+_ = plot_objective(result, n_points=10, minimum='expected_minimum')
+#############################################################################
 # Here we plot without partial dependence. We see that it is a lot faster.
 # Also the values for the other parameters are set to the default "result"
 # which is the parameter set of the best observed value so far. In the case
 # of funny_func this is close to 0 for all parameters.
 
-_ = plot_objective(result,  samples='result', n_points=10)
+_ = plot_objective(result,  sample_source='result', n_points=10)
 
 #############################################################################
 # Here we try with setting the `minimum` parameters to something other than
@@ -66,32 +74,33 @@ _ = plot_objective(result,  samples='result', n_points=10)
 # parameters that gives the miniumum value of the surrogate function,
 # using scipys minimum search method.
 
-_ = plot_objective(result, n_points=10,
+_ = plot_objective(result, n_points=10, sample_source='expected_minimum',
                    minimum='expected_minimum')
 
 #############################################################################
 # "expected_minimum_random" is a naive way of finding the minimum of the
 # surrogate by only using random sampling:
 
-_ = plot_objective(result, n_points=10,
+_ = plot_objective(result, n_points=10, sample_source='expected_minimum_random',
                    minimum='expected_minimum_random')
 
 #############################################################################
-# Lastly we can also define these parameters ourselfs by parsing a list
+# Lastly we can also define these parameters ourself by parsing a list
 # as the minimum argument:
 
-_ = plot_objective(result, n_points=10, minimum=[1, -0.5, 0.5])
+_ = plot_objective(result, n_points=10, sample_source=[1, -0.5, 0.5],
+                   minimum=[1, -0.5, 0.5])
 
 #############################################################################
-# We can also specify how many intial samples are used for the two different
+# We can also specify how many initial samples are used for the two different
 # "expected_minimum" methods. We set it to a low value in the next examples
 # to showcase how it affects the minimum for the two methods.
 
-_ = plot_objective(result, n_points=10,
+_ = plot_objective(result, n_points=10, sample_source='expected_minimum_random',
                    minimum='expected_minimum_random',
-                   expected_minimum_samples=10)
+                   n_minimum_search=10)
 
 #############################################################################
 
 _ = plot_objective(result, n_points=10,
-                   minimum='expected_minimum', expected_minimum_samples=1)
+                   minimum='expected_minimum', n_minimum_search=1)

@@ -9,8 +9,8 @@ from skopt.space import Integer, Categorical
 from skopt import plots, gp_minimize
 import matplotlib.pyplot as plt
 from skopt.benchmarks import bench3
-from skopt import expected_minimum
-from skopt.plots import evaluate_min_params
+from skopt import expected_minimum, expected_minimum_random_sampling
+from skopt.plots import _evaluate_min_params
 
 
 def save_axes(ax, filename):
@@ -40,16 +40,23 @@ def test_plots_work():
         return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
+
+    x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
+    x_min2, f_min2 = expected_minimum(res, random_state=1)
+
+    assert x_min == x_min2
+    assert f_min == f_min2
+
     plots.plot_convergence(res)
     plots.plot_evaluations(res)
     plots.plot_objective(res)
     plots.plot_objective(res,
                          minimum='expected_minimum_random')
     plots.plot_objective(res,
-                         samples='expected_minimum_random',
-                         expected_minimum_samples=10)
+                         sample_source='expected_minimum_random',
+                         n_minimum_search=10000)
     plots.plot_objective(res,
-                         samples='result')
+                         sample_source='result')
     plots.plot_regret(res)
 
     # TODO: Compare plots to known good results?
@@ -80,10 +87,9 @@ def test_plots_work_without_cat():
     plots.plot_objective(res,
                          minimum='expected_minimum')
     plots.plot_objective(res,
-                         samples='expected_minimum',
-                         expected_minimum_samples=10)
-    plots.plot_objective(res,
-                         samples='result')
+                         sample_source='expected_minimum',
+                         n_minimum_search=10)
+    plots.plot_objective(res, sample_source='result')
     plots.plot_regret(res)
 
     # TODO: Compare plots to known good results?
@@ -101,11 +107,16 @@ def test_evaluate_min_params():
                       random_state=1)
 
     x_min, f_min = expected_minimum(res, random_state=1)
+    x_min2, f_min2 = expected_minimum_random_sampling(res, n_random_starts=1000,
+                                                      random_state=1)
 
-    assert evaluate_min_params(res, params='result') == res.x
-    assert evaluate_min_params(res, params=[1.]) == [1.]
-    assert evaluate_min_params(res, params='expected_minimum',
-                               random_state=1) == x_min
-    assert evaluate_min_params(res, params='expected_minimum',
-                               expected_minimum_samples=20,
-                               random_state=1) == x_min
+    assert _evaluate_min_params(res, params='result') == res.x
+    assert _evaluate_min_params(res, params=[1.]) == [1.]
+    assert _evaluate_min_params(res, params='expected_minimum',
+                                random_state=1) == x_min
+    assert _evaluate_min_params(res, params='expected_minimum',
+                                n_minimum_search=20,
+                                random_state=1) == x_min
+    assert _evaluate_min_params(res, params='expected_minimum_random',
+                                n_minimum_search=1000,
+                                random_state=1) == x_min2
