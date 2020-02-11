@@ -274,7 +274,6 @@ def test_space_names_in_use_named_args():
 
     @use_named_args(space)
     def objective(n_estimators):
-        print(f'score: {n_estimators}')
         return n_estimators
 
     res = gp_minimize(objective, space, n_calls=10, random_state=0)
