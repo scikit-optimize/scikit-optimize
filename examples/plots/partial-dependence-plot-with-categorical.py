@@ -8,8 +8,8 @@ Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
 
-This notebook serves to showcase the new features that are being added to
-the scikit-optimize toolbox.
+Plot objective now supports optional use of partial dependence as well as
+different methods of defining parameter values for dependency plots.
 """
 print(__doc__)
 import sys
@@ -38,7 +38,8 @@ def objective(params):
     return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
 
 #############################################################################
-
+# Bayesian optimization
+# =====================
 SPACE = [
     Integer(1, 20, name='max_depth'),
     Integer(2, 100, name='min_samples_split'),
@@ -49,15 +50,11 @@ SPACE = [
     Categorical(list('def'), name='dummy'),
 ]
 
-#############################################################################
-
 result = gp_minimize(objective, SPACE, n_calls=20)
 
 #############################################################################
-# plot_objective
-# --------------
-# Plot objective now supports optional use of partial dependence as well as
-# different methods of defining parameter values for dependency plots
+# Partial dependence plot
+# =======================
 #
 # Here we see an example of using partial dependence. Even when setting
 # n_points all the way down to 10 from the default of 40, this method is
@@ -67,6 +64,8 @@ result = gp_minimize(objective, SPACE, n_calls=20)
 _ = plot_objective(result, n_points=10)
 
 #############################################################################
+# Plot without partial dependence
+# ===============================
 # Here we plot without partial dependence. We see that it is a lot faster.
 # Also the values for the other parameters are set to the default "result"
 # which is the parameter set of the best observed value so far. In the case
@@ -75,7 +74,8 @@ _ = plot_objective(result, n_points=10)
 _ = plot_objective(result,  sample_source='result', n_points=10)
 
 #############################################################################
-#
+# Modify the shown minimum
+# ========================
 # Here we try with setting the other parameters to something other than
 # "result". When dealing with categorical dimensions we can't use
 # 'expected_minimum'. Therefore we try with "expected_minimum_random"
@@ -87,6 +87,8 @@ _ = plot_objective(result, n_points=10, sample_source='expected_minimum_random',
                    minimum='expected_minimum_random', n_minimum_search=10000)
 
 #############################################################################
+# Set a minimum location
+# ======================
 # Lastly we can also define these parameters ourselfs by
 # parsing a list as the pars argument:
 

@@ -8,8 +8,8 @@ Holger Nahrstaedt 2020
 
 .. currentmodule:: skopt
 
-This notebook serves to showcase the new features that are being added to
-the scikit-optimize toolbox.
+Plot objective now supports optional use of partial dependence as well as
+different methods of defining parameter values for dependency plots.
 """
 print(__doc__)
 import sys
@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 
 
 #############################################################################
-# plot_objective
-# ==============
+# Objective function
+# ==================
 # Plot objective now supports optional use of partial dependence as well as
 # different methods of defining parameter values for dependency plots
 
@@ -35,7 +35,8 @@ def funny_func(x):
 
 
 #############################################################################
-
+# Optimisation using decision trees
+# =================================
 # We run forest_minimize on the function
 bounds = [(-1, 1.), ] * 3
 n_calls = 150
@@ -45,6 +46,8 @@ result = forest_minimize(funny_func, bounds, n_calls=n_calls,
                          random_state=4)
 
 #############################################################################
+# Partial dependence plot
+# =======================
 # Here we see an example of using partial dependence. Even when setting
 # n_points all the way down to 10 from the default of 40, this method is
 # still very slow. This is because partial dependence calculates 250 extra
@@ -61,6 +64,8 @@ _ = plot_objective(result, n_points=10)
 
 _ = plot_objective(result, n_points=10, minimum='expected_minimum')
 #############################################################################
+# Plot without partial dependence
+# ===============================
 # Here we plot without partial dependence. We see that it is a lot faster.
 # Also the values for the other parameters are set to the default "result"
 # which is the parameter set of the best observed value so far. In the case
@@ -69,6 +74,8 @@ _ = plot_objective(result, n_points=10, minimum='expected_minimum')
 _ = plot_objective(result,  sample_source='result', n_points=10)
 
 #############################################################################
+# Modify the shown minimum
+# ========================
 # Here we try with setting the `minimum` parameters to something other than
 # "result". First we try with "expected_minimum" which is the set of
 # parameters that gives the miniumum value of the surrogate function,
@@ -85,13 +92,6 @@ _ = plot_objective(result, n_points=10, sample_source='expected_minimum_random',
                    minimum='expected_minimum_random')
 
 #############################################################################
-# Lastly we can also define these parameters ourself by parsing a list
-# as the minimum argument:
-
-_ = plot_objective(result, n_points=10, sample_source=[1, -0.5, 0.5],
-                   minimum=[1, -0.5, 0.5])
-
-#############################################################################
 # We can also specify how many initial samples are used for the two different
 # "expected_minimum" methods. We set it to a low value in the next examples
 # to showcase how it affects the minimum for the two methods.
@@ -102,5 +102,16 @@ _ = plot_objective(result, n_points=10, sample_source='expected_minimum_random',
 
 #############################################################################
 
-_ = plot_objective(result, n_points=10,
-                   minimum='expected_minimum', n_minimum_search=1)
+_ = plot_objective(result, n_points=10, sample_source="expected_minimum",
+                   minimum='expected_minimum', n_minimum_search=2)
+
+#############################################################################
+# Set a minimum location
+# ======================
+# Lastly we can also define these parameters ourself by parsing a list
+# as the minimum argument:
+
+_ = plot_objective(result, n_points=10, sample_source=[1, -0.5, 0.5],
+                   minimum=[1, -0.5, 0.5])
+
+
