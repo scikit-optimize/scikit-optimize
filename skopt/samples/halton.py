@@ -8,7 +8,8 @@ from .utils import InitialPointGenerator
 
 
 class Halton(InitialPointGenerator):
-    """ In statistics, Halton sequences are sequences used to generate
+    """Creates `Halton` sequence samples.
+    In statistics, Halton sequences are sequences used to generate
     points in space for numerical methods such as Monte Carlo simulations.
     Although these sequences are deterministic, they are of low discrepancy,
     that is, appear to be random
@@ -72,7 +73,6 @@ class Halton(InitialPointGenerator):
 
 def _van_der_corput_samples(idx, number_base=2):
     """
-    Van der Corput samples.
     Create `Van Der Corput` low discrepancy sequence samples.
 
     A van der Corput sequence is an example of the simplest one-dimensional

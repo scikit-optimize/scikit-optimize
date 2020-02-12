@@ -218,8 +218,8 @@ class Lhs(InitialPointGenerator):
                                 n_improved += 1
 
                     # Accept/Reject as Best Solution for convergence checking
-                    if ((obj_func_best_old - obj_func_best)
-                        / obj_func_best) > 1e-6:
+                    if ((obj_func_best_old - obj_func_best) /
+                        obj_func_best) > 1e-6:
                         # Improvement found
                         obj_func_best_old = obj_func_best
                         # Reset the explore flag after new best found

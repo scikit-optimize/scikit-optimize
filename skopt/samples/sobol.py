@@ -40,33 +40,34 @@ class Sobol(InitialPointGenerator):
     randomize : bool, default=False
         When set to True, random shift is applied
 
-    Reference:
-      Antonov, Saleev,
-      USSR Computational Mathematics and Mathematical Physics,
-      Volume 19, 1980, pages 252 - 256.
+    References
+    ----------
+    Antonov, Saleev,
+    USSR Computational Mathematics and Mathematical Physics,
+    Volume 19, 1980, pages 252 - 256.
 
-      Paul Bratley, Bennett Fox,
-      Algorithm 659:
-      Implementing Sobol's Quasirandom Sequence Generator,
-      ACM Transactions on Mathematical Software,
-      Volume 14, Number 1, pages 88-100, 1988.
+    Paul Bratley, Bennett Fox,
+    Algorithm 659:
+    Implementing Sobol's Quasirandom Sequence Generator,
+    ACM Transactions on Mathematical Software,
+    Volume 14, Number 1, pages 88-100, 1988.
 
-      Bennett Fox,
-      Algorithm 647:
-      Implementation and Relative Efficiency of Quasirandom
-      Sequence Generators,
-      ACM Transactions on Mathematical Software,
-      Volume 12, Number 4, pages 362-376, 1986.
+    Bennett Fox,
+    Algorithm 647:
+    Implementation and Relative Efficiency of Quasirandom
+    Sequence Generators,
+    ACM Transactions on Mathematical Software,
+    Volume 12, Number 4, pages 362-376, 1986.
 
-      Ilya Sobol,
-      USSR Computational Mathematics and Mathematical Physics,
-      Volume 16, pages 236-242, 1977.
+    Ilya Sobol,
+    USSR Computational Mathematics and Mathematical Physics,
+    Volume 16, pages 236-242, 1977.
 
-      Ilya Sobol, Levitan,
-      The Production of Points Uniformly Distributed in a Multidimensional
-      Cube (in Russian),
-      Preprint IPM Akad. Nauk SSSR,
-      Number 40, Moscow 1976.
+    Ilya Sobol, Levitan,
+    The Production of Points Uniformly Distributed in a Multidimensional
+    Cube (in Russian),
+    Preprint IPM Akad. Nauk SSSR,
+    Number 40, Moscow 1976.
     """
     def __init__(self, min_skip=0, max_skip=1000, randomize=False):
 
@@ -156,7 +157,8 @@ class Sobol(InitialPointGenerator):
                 j //= 2
                 m += 1
 
-            #  Expand this bit pattern to separate components of the logical array INCLUD.
+            #  Expand this bit pattern to separate components
+            #  of the logical array INCLUD.
             j = self.poly[i - 1]
             includ = np.zeros(m)
             for k in range(m, 0, -1):

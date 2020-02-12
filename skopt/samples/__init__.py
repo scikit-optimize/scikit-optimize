@@ -1,5 +1,5 @@
 """
-Utilities to define somples
+Utilities for generating initial sequences
 """
 from .lhs import Lhs
 from .sobol import Sobol

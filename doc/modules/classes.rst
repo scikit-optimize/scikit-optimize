@@ -221,7 +221,7 @@ details.
     utils.point_aslist
     utils.use_named_args
 
-.. _space_ref:
+.. _samples_ref:
 
 :mod:`skopt.samples`: Samples
 ===============================
@@ -230,7 +230,7 @@ details.
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`space` section for further details.
+**User guide:** See the :ref:`sample` section for further details.
 
 .. currentmodule:: skopt
 

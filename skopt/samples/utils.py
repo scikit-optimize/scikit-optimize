@@ -124,12 +124,14 @@ def _bit_lo0(n):
 
 def random_shift(dm, random_state=None):
     """Random shifting of a vector
-    Randomization of the quasi-MC samples can be achieved in the easiest manner by
+    Randomization of the quasi-MC samples can be achieved
+    in the easiest manner by
     random shift (or the Cranley-Patterson rotation).
-    **Reference:**
-    (1) C. Lemieux, "Monte Carlo and Quasi-Monte Carlo Sampling," Springer
-        Series in Statistics 692, Springer Science+Business Media, New York,
-        2009
+    Refereences
+    -----------
+    C. Lemieux, "Monte Carlo and Quasi-Monte Carlo Sampling," Springer
+    Series in Statistics 692, Springer Science+Business Media, New York,
+    2009
 
     Parameters
     ----------

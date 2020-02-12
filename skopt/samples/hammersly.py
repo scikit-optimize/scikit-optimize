@@ -8,12 +8,15 @@ from .utils import InitialPointGenerator
 
 
 class Hammersly(InitialPointGenerator):
-    """The Hammersley set is equivalent to the Halton sequence, except for one
+    """Creates `Hammersley` sequence samples.
+    The Hammersley set is equivalent to the Halton sequence, except for one
     dimension is replaced with a regular grid. It is not recommended to
     generate a Hammersley sequence more than 10 dimension.
 
     For ``dim == 1`` the sequence falls back to Van Der Corput sequence.
 
+    References
+    ----------
     T-T. Wong, W-S. Luk, and P-A. Heng, "Sampling with Hammersley and Halton
     Points," Journal of Graphics Tools, vol. 2, no. 2, 1997, pp. 9 - 24.
 
@@ -38,10 +41,12 @@ class Hammersly(InitialPointGenerator):
         n_dim : int
            The number of dimension
         n_samples : int
-            The order of the Hammersley sequence. Defines the number of samples.
+            The order of the Hammersley sequence.
+            Defines the number of samples.
         random_state : int, RandomState instance, or None (default)
             Set random state to something other than None for reproducible
             results.
+
         Returns
         -------
         np.array, shape=(n_dim, n_samples)
