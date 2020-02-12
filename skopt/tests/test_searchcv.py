@@ -41,22 +41,8 @@ def _fit_svc(n_jobs=1, n_points=1, cv=None):
     )
 
     opt.fit(X, y)
+
     assert opt.score(X, y) > 0.9
-
-    opt2 = BayesSearchCV(
-        SVC(),
-        {
-            'C': Real(1e-3, 1e+3, prior='log-uniform'),
-            'gamma': Real(1e-3, 1e+1, prior='log-uniform'),
-            'degree': Integer(1, 3),
-        },
-        n_jobs=n_jobs, n_iter=11, n_points=n_points, cv=cv,
-        random_state=42,
-    )
-
-    opt2.fit(X, y)
-
-    assert opt.score(X, y) == opt2.score(X, y)
 
 
 def test_raise_errors():
