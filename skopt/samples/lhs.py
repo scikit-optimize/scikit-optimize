@@ -27,10 +27,14 @@ class Lhs(InitialPointGenerator):
     criterion : str or None, default=None
         When set to None, the LHS is not optimized
 
-            - `correlation` : optimized LHS by minimizing the correlation
-            - `maximin` : optimized LHS by maximizing the minimal pdist
-            - `ratio` : optimized LHS by minimizing the ratio `max(pdist) / min(pdist)`
-            - `ese` : optimized LHS using Enhanced Stochastic Evolutionary Alg.
+        - `correlation` : optimized LHS by minimizing the correlation
+
+        - `maximin` : optimized LHS by maximizing the minimal pdist
+
+        - `ratio` : optimized LHS by minimizing the ratio
+        `max(pdist) / min(pdist)`
+
+        - `ese` : optimized LHS using Enhanced Stochastic Evolutionary Alg.
 
     iterations : int
         Defines the number of iterations for optimizing LHS
@@ -93,12 +97,14 @@ class Lhs(InitialPointGenerator):
             return random_permute_matrix(h, random_state=random_state)
         else:
             internal_lhs = Lhs(lhs_type=self.lhs_type, criterion=None)
-            h_opt = internal_lhs.generate(n_dim, n_samples, random_state=random_state)
+            h_opt = internal_lhs.generate(n_dim, n_samples,
+                                          random_state=random_state)
             if self.criterion == "correlation":
                 mincorr = np.inf
                 for i in range(self.iterations):
                     # Generate a random LHS
-                    h = internal_lhs.generate(n_dim, n_samples, random_state=random_state)
+                    h = internal_lhs.generate(n_dim, n_samples,
+                                              random_state=random_state)
                     r = np.corrcoef(h.T)
                     if np.max(np.abs(r[r != 1])) < mincorr:
                         mincorr = np.max(np.abs(r - np.eye(r.shape[0])))
@@ -108,7 +114,8 @@ class Lhs(InitialPointGenerator):
                 maxdist = 0
                 # Maximize the minimum distance between points
                 for i in range(self.iterations):
-                    h = internal_lhs.generate(n_dim, n_samples, random_state=random_state)
+                    h = internal_lhs.generate(n_dim, n_samples,
+                                              random_state=random_state)
                     d = spatial.distance.pdist(h, 'euclidean')
                     if maxdist < np.min(d):
                         maxdist = np.min(d)
@@ -119,7 +126,8 @@ class Lhs(InitialPointGenerator):
 
                 # Maximize the minimum distance between points
                 for i in range(self.iterations):
-                    h = internal_lhs.generate(n_dim, n_samples, random_state=random_state)
+                    h = internal_lhs.generate(n_dim, n_samples,
+                                              random_state=random_state)
                     p = spatial.distance.pdist(h, 'euclidean')
                     ratio = np.max(p) / np.min(p)
                     if minratio > ratio:
@@ -127,7 +135,8 @@ class Lhs(InitialPointGenerator):
                         h_opt = h.copy()
             elif self.criterion == "ese":
 
-                dm_init = internal_lhs.generate(n_dim, n_samples, random_state=random_state)
+                dm_init = internal_lhs.generate(n_dim, n_samples,
+                                                random_state=random_state)
 
                 if self.ese_threshold_init <= 0.0:
                     threshold = 0.005 * w2_discrepancy_fast(dm_init)
@@ -137,14 +146,17 @@ class Lhs(InitialPointGenerator):
                     num_exchanges = calc_num_candidate(n_samples)
                 else:
                     num_exchanges = self.ese_num_exchanges
-                if self.ese_max_inner <= 0:  # maximum number of inner iterations
+                # maximum number of inner iterations
+                if self.ese_max_inner <= 0:
                     max_inner = calc_max_inner(n_samples, n_dim)
                 else:
                     max_inner = self.ese_max_inner
 
                 dm = dm_init.copy()  # the current design
-                obj_func_best = w2_discrepancy_fast(dm)  # the best value of obj.func. so far
-                obj_func_best_old = w2_discrepancy_fast(dm)  # the old value of obj.func.
+                # the best value of obj.func. so far
+                obj_func_best = w2_discrepancy_fast(dm)
+                # the old value of obj.func.
+                obj_func_best_old = w2_discrepancy_fast(dm)
                 flag_explore = False  # improved flag
 
                 best_evol = []  # Keep track the best solution
@@ -164,26 +176,36 @@ class Lhs(InitialPointGenerator):
                         import itertools
 
                         # Create pairs of all possible combination
-                        pairs = list(itertools.combinations([_ for _ in range(n_samples)], 2))
-                        # Create random choices for the pair of perturbation, w/o replacement
-                        rand_choices = rng.choice(len(pairs), num_exchanges, replace=False)
+                        pairs = list(itertools.combinations(
+                            [_ for _ in range(n_samples)], 2))
+                        # Create random choices for the pair of
+                        # perturbation, w/o replacement
+                        rand_choices = rng.choice(len(pairs), num_exchanges,
+                                                  replace=False)
                         # Initialize the search
                         obj_func_current = np.inf
                         dm_current = dm.copy()
                         for i in rand_choices:
-                            dm_try = dm.copy()  # Always perturb from the design passed in argument
-                            # Do column-wise operation in a given column 'num_dimension'
-                            dm_try[pairs[i][0], num_dimension] = dm[pairs[i][1], num_dimension]
-                            dm_try[pairs[i][1], num_dimension] = dm[pairs[i][0], num_dimension]
+                            # Always perturb from the design passed
+                            # in argument
+                            dm_try = dm.copy()
+                            # Do column-wise operation in a given
+                            # column 'num_dimension'
+                            dm_try[pairs[i][0], num_dimension] = dm[
+                                pairs[i][1], num_dimension]
+                            dm_try[pairs[i][1], num_dimension] = dm[
+                                pairs[i][0], num_dimension]
                             obj_func_try = w2_discrepancy_fast(dm_try)
                             if obj_func_try < obj_func_current:
-                                # Select the best trial from all the perturbation trials
+                                # Select the best trial from all the
+                                # perturbation trials
                                 obj_func_current = obj_func_try
                                 dm_current = dm_try.copy()
 
                         obj_func_try = w2_discrepancy_fast(dm_current)
                         # Check whether solution is acceptable
-                        if (obj_func_try - obj_func) <= threshold * rng.rand():
+                        if (obj_func_try - obj_func) <=\
+                                threshold * rng.rand():
                             # Accept solution
                             dm = dm_current.copy()
                             n_accepted += 1
@@ -196,10 +218,12 @@ class Lhs(InitialPointGenerator):
                                 n_improved += 1
 
                     # Accept/Reject as Best Solution for convergence checking
-                    if ((obj_func_best_old - obj_func_best) / obj_func_best) > 1e-6:
+                    if ((obj_func_best_old - obj_func_best)
+                        / obj_func_best) > 1e-6:
                         # Improvement found
                         obj_func_best_old = obj_func_best
-                        flag_explore = False  # Reset the explore flag after new best found
+                        # Reset the explore flag after new best found
+                        flag_explore = False
                         flag_imp = True
                     else:
                         # Improvement not found
@@ -207,31 +231,43 @@ class Lhs(InitialPointGenerator):
 
                     # Improve vs. Explore Phase and Threshold Update
                     if flag_imp:  # Improve
-                        # New best solution found, carry out improvement process
-                        if (float(n_accepted / num_exchanges) > self.ese_improving_params[0]) & \
+                        # New best solution found, carry out
+                        # improvement process
+                        if (float(n_accepted / num_exchanges) >
+                            self.ese_improving_params[0]) & \
                                 (n_accepted > n_improved):
-                            # Lots acceptance but not all of them is improvement,
-                            # reduce threshold, make it harder to accept a trial
+                            # Lots acceptance but not all of them
+                            # is improvement,
+                            # reduce threshold, make it harder to
+                            # accept a trial
                             threshold *= self.ese_improving_params[1]
                         else:
-                            # Few acceptance or all trials are improvement, increase threshold
+                            # Few acceptance or all trials are improvement,
+                            # increase threshold
                             # make it easier to accept a trial
                             threshold /= self.ese_improving_params[1]
-
-                    else:  # Explore, No new best solution found during last iteration
+                    # Explore, No new best solution found
+                    # during last iteration
+                    else:
                         # Exploring process, warming up vs. cooling down
-                        if n_accepted < self.ese_exploring_params[0] * num_exchanges:
-                            # Reach below limit, increase threshold ("warming up")
+                        if n_accepted < self.ese_exploring_params[0] *\
+                                num_exchanges:
+                            # Reach below limit, increase threshold
+                            # ("warming up")
                             flag_explore = True
-                        elif n_accepted > self.ese_exploring_params[1] * num_exchanges:
-                            # Reach above limit, decrease threshold ("cooling down")
+                        elif n_accepted > self.ese_exploring_params[1] *\
+                                num_exchanges:
+                            # Reach above limit, decrease threshold
+                            # ("cooling down")
                             flag_explore = False
 
                         if flag_explore:
-                            # Ramp up exploration and below upper limit, increase threshold
+                            # Ramp up exploration and below upper limit,
+                            # increase threshold
                             threshold /= self.ese_exploring_params[3]
                         elif not flag_explore:
-                            # Slow down exploration and above lower limit, decrease threshold
+                            # Slow down exploration and above lower limit,
+                            # decrease threshold
                             threshold *= self.ese_exploring_params[2]
 
             return h_opt

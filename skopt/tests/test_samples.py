@@ -23,6 +23,7 @@ from skopt.samples.halton import _van_der_corput_samples
 from skopt.samples import Hammersly, Halton
 from skopt.samples.lhs import Lhs
 
+
 @pytest.mark.fast_test
 def test_lhs_type():
     lhs = Lhs(lhs_type="classic")
@@ -104,7 +105,8 @@ def test_halton():
 
     h = Halton()
     x = h.generate(2, 4)
-    y = np.array([[0.125, 0.625, 0.375, 0.875], [0.4444, 0.7778, 0.2222, 0.5556]]).T
+    y = np.array([[0.125, 0.625, 0.375, 0.875],
+                  [0.4444, 0.7778, 0.2222, 0.5556]]).T
     assert_array_almost_equal(x, y, 1e-3)
 
     samples = h.generate(2, 200)

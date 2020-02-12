@@ -321,7 +321,8 @@ class Optimizer(object):
                                 "generator function")
             transformer = self.space.get_transformer()
             self.space.set_transformer("normalize")
-            self._initial_samples = self.space.inverse_transform(inv_initial_samples)
+            self._initial_samples = self.space.inverse_transform(
+                inv_initial_samples)
             self.space.set_transformer(transformer)
 
         # record categorical and non-categorical indices
@@ -479,7 +480,8 @@ class Optimizer(object):
                 return self.space.rvs(random_state=self.rng)[0]
             else:
                 # The samples are evaluated starting form initial_samples[0]
-                return self._initial_samples[len(self._initial_samples) - self._n_initial_points]
+                return self._initial_samples[
+                    len(self._initial_samples) - self._n_initial_points]
 
         else:
             if not self.models:
@@ -499,8 +501,8 @@ class Optimizer(object):
     def tell(self, x, y, fit=True):
         """Record an observation (or several) of the objective function.
 
-        Provide values of the objective function at points suggested by `ask()`
-        or other points. By default a new model will be fit to all
+        Provide values of the objective function at points suggested by
+        `ask()` or other points. By default a new model will be fit to all
         observations. The new model is used to suggest the next point at
         which to evaluate the objective. This point can be retrieved by calling
         `ask()`.

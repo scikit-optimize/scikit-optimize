@@ -168,21 +168,21 @@ class Sobol(InitialPointGenerator):
             #  in Bratley and Fox, section 2.
             for j in range(m + 1, self.maxcol + 1):
                 newv = self.v[i - 1, j - m - 1]
-                l = 1
+                p2 = 1
                 for k in range(1, m + 1):
-                    l *= 2
+                    p2 *= 2
                     if includ[k - 1]:
                         newv = np.bitwise_xor(
-                            int(newv), int(l * self.v[i - 1, j - k - 1]))
+                            int(newv), int(p2 * self.v[i - 1, j - k - 1]))
                 self.v[i - 1, j - 1] = newv
         #  Multiply columns of V by appropriate power of 2.
-        l = 1
+        p2 = 1
         for j in range(self.maxcol - 1, 0, -1):
-            l *= 2
-            self.v[0:dim_num, j - 1] = self.v[0:dim_num, j - 1] * l
+            p2 *= 2
+            self.v[0:dim_num, j - 1] = self.v[0:dim_num, j - 1] * p2
 
         #  RECIPD is 1/(common denominator of the elements in V).
-        self.recipd = 1.0 / (2 * l)
+        self.recipd = 1.0 / (2 * p2)
         self.lastq = np.zeros(dim_num)
 
     def generate(self, n_dim, n_samples, random_state=None):
@@ -230,7 +230,8 @@ class Sobol(InitialPointGenerator):
           value to be generated.  On output, SEED has been set to the
           appropriate next value, usually simply SEED+1.
           If SEED is less than 0 on input, it is treated as though it were 0.
-          An input value of 0 requests the first (0-th) element of the sequence.
+          An input value of 0 requests the first (0-th) element of
+          the sequence.
 
         Returns
         -------
@@ -246,14 +247,14 @@ class Sobol(InitialPointGenerator):
         if seed < 0:
             seed = 0
 
-        l = 1
+        pos_lo0 = 1
         if seed == 0:
             self.lastq = np.zeros(dim_num)
 
         elif seed == self.seed_save + 1:
 
             #  Find the position of the right-hand zero in SEED.
-            l = _bit_lo0(seed)
+            pos_lo0 = _bit_lo0(seed)
 
         elif seed <= self.seed_save:
 
@@ -261,29 +262,31 @@ class Sobol(InitialPointGenerator):
             self.lastq = np.zeros(dim_num)
 
             for seed_temp in range(int(self.seed_save), int(seed)):
-                l = _bit_lo0(seed_temp)
+                pos_lo0 = _bit_lo0(seed_temp)
                 for i in range(1, dim_num + 1):
                     self.lastq[i - 1] = np.bitwise_xor(
-                        int(self.lastq[i - 1]), int(self.v[i - 1, l - 1]))
+                        int(self.lastq[i - 1]),
+                        int(self.v[i - 1, pos_lo0 - 1]))
 
-            l = _bit_lo0(seed)
+            pos_lo0 = _bit_lo0(seed)
 
         elif self.seed_save + 1 < seed:
 
             for seed_temp in range(int(self.seed_save + 1), int(seed)):
-                l = _bit_lo0(seed_temp)
+                pos_lo0 = _bit_lo0(seed_temp)
                 for i in range(1, dim_num + 1):
                     self.lastq[i - 1] = np.bitwise_xor(
-                        int(self.lastq[i - 1]), int(self.v[i - 1, l - 1]))
+                        int(self.lastq[i - 1]),
+                        int(self.v[i - 1, pos_lo0 - 1]))
 
-            l = _bit_lo0(seed)
+            pos_lo0 = _bit_lo0(seed)
 
         #  Check that the user is not calling too many times!
-        if self.maxcol < l:
+        if self.maxcol < pos_lo0:
             print('I4_SOBOL - Fatal error!')
             print('  Too many calls!')
             print('  MAXCOL = %d\n' % self.maxcol)
-            print('  L =      %d\n' % l)
+            print('  L =      %d\n' % pos_lo0)
             return
 
         #  Calculate the new components of QUASI.
@@ -291,11 +294,9 @@ class Sobol(InitialPointGenerator):
         for i in range(1, dim_num + 1):
             quasi[i - 1] = self.lastq[i - 1] * self.recipd
             self.lastq[i - 1] = np.bitwise_xor(
-                int(self.lastq[i - 1]), int(self.v[i - 1, l - 1]))
+                int(self.lastq[i - 1]), int(self.v[i - 1, pos_lo0 - 1]))
 
         self.seed_save = seed
         seed += 1
 
         return [quasi, seed]
-
-

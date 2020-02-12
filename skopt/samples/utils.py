@@ -41,11 +41,13 @@ def create_primes(threshold):
 
 
 def w2_discrepancy_fast(D):
-    """The vectorized version of wrap-around L2-discrepancy calculation, faster!
+    """The vectorized version of wrap-around L2-discrepancy
+    calculation, faster!
     The formula for the Wrap-Around L2-Discrepancy is taken from Eq.5 of (1)
     :math:`WD^2(D) = -(4/3)^K + 1/N^2 \Sigma_{i,j=1}^{N} \
     Pi_{k=1}^K [3/2 - |x_k^1 - x_k^2| * (1 - |x_k^1 - x_k^2|)]`
-    The implementation below uses a vector operation of numpy array to avoid the
+    The implementation below uses a vector operation of numpy array to
+    avoid the
     nested loop in the more straightforward implementation
 
     Parameters
@@ -62,7 +64,8 @@ def w2_discrepancy_fast(D):
     k = D.shape[1]      # the number of dimension
     delta = [None] * k
     for i in range(k):
-        # loop over dimension to calculate the absolute difference between point
+        # loop over dimension to calculate the absolute difference
+        # between point
         # in a given dimension, note the vectorized operation
         delta[i] = np.abs(D[:, i] - np.reshape(D[:, i], (len(D[:, i]), 1)))
 
@@ -149,8 +152,8 @@ def random_shift(dm, random_state=None):
 
 def calc_num_candidate(n):
     """Calculate the number of candidates from perturbing the current design
-    Recommended in the article is the maximum number of pair combination from a
-    given column divided by a factor of 5.
+    Recommended in the article is the maximum number of pair combination
+    from a given column divided by a factor of 5.
     It is also recommended that the number of candidates to be evaluated does
     not exceed 50
 

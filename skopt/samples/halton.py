@@ -8,12 +8,13 @@ from .utils import InitialPointGenerator
 
 
 class Halton(InitialPointGenerator):
-    """ In statistics, Halton sequences are sequences used to generate points in space
-    for numerical methods such as Monte Carlo simulations. Although these sequences
-    are deterministic, they are of low discrepancy, that is, appear to be random
-    for many purposes. They were first introduced in 1960 and are an example of
-    a quasi-random number sequence. They generalise the one-dimensional van der
-    Corput sequences.
+    """ In statistics, Halton sequences are sequences used to generate
+    points in space for numerical methods such as Monte Carlo simulations.
+    Although these sequences are deterministic, they are of low discrepancy,
+    that is, appear to be random
+    for many purposes. They were first introduced in 1960 and are an example
+    of a quasi-random number sequence. They generalise the one-dimensional
+    van der Corput sequences.
 
     For ``dim == 1`` the sequence falls back to Van Der Corput sequence.
 
@@ -69,16 +70,16 @@ class Halton(InitialPointGenerator):
         return np.transpose(out)
 
 
-
 def _van_der_corput_samples(idx, number_base=2):
     """
     Van der Corput samples.
     Create `Van Der Corput` low discrepancy sequence samples.
 
     A van der Corput sequence is an example of the simplest one-dimensional
-    low-discrepancy sequence over the unit interval; it was first described in 1935
-    by the Dutch mathematician J. G. van der Corput. It is constructed by reversing
-    the base-n representation of the sequence of natural numbers (1, 2, 3, ...).
+    low-discrepancy sequence over the unit interval; it was first described in
+    1935 by the Dutch mathematician J. G. van der Corput. It is constructed by
+    reversing the base-n representation of the sequence of natural numbers
+    (1, 2, 3, ...).
 
     In practice, use Halton sequence instead of Van Der Corput, as it is the
     same, but generalized to work in multiple dimensions.
