@@ -29,6 +29,7 @@ setup(name='scikit-optimize',
       install_requires=['joblib', 'pyaml', 'numpy', 'scipy>=0.14.0',
                         'scikit-learn>=0.19.1'],
       extras_require={
-        'plots':  ["matplotlib"]
+        'plots':  ["matplotlib"],
+        'bokeh': ["bokeh", "matplotlib"]
         }
       )
