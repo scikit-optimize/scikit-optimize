@@ -7,12 +7,19 @@ from skopt.space.constraints import Constraints, Single, Exclusive, Inclusive, S
 from skopt import Optimizer
 from skopt.space import Real, Integer, Categorical, Space
 
-from sklearn.utils.testing import assert_false, assert_not_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 
 # Combination of base estimators and acquisition optimizers
 ACQ_OPTIMIZERS = ['sampling', 'lbfgs']
+
+
+def assert_false(condition):
+    assert not condition
+
+
+def assert_not_equal(x1, x2):
+    assert x1 != x2
 
 
 @pytest.mark.fast_test

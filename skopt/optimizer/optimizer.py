@@ -635,7 +635,8 @@ class Optimizer(object):
                 # If constraints is a Constraints object we simply add it
                 self._constraints = constraints
             else:
-                # If it is a list of constraints we initialize a Constraints object.
+                # If it is a list of constraints we initialize
+                # a Constraints object.
                 self._constraints = Constraints(constraints, self.space)
         else:
             self._constraints = None
