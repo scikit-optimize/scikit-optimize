@@ -18,6 +18,7 @@ from ..acquisition import gaussian_acquisition_1D
 from ..learning import GaussianProcessRegressor
 from ..space import Categorical
 from ..space import Space
+from ..space.constraints import Constraints
 from ..utils import check_x_in_space
 from ..utils import cook_estimator
 from ..utils import create_result
@@ -245,6 +246,8 @@ class Optimizer(object):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
 
+        # Default is no constraints
+        self._constraints = None
         # record categorical and non-categorical indices
         self._cat_inds = []
         self._non_cat_inds = []
@@ -266,7 +269,8 @@ class Optimizer(object):
         # Initialize cache for `ask` method responses
 
         # This ensures that multiple calls to `ask` with n_points set
-        # return same sets of points. Reset to {} at every call to `tell`.
+        # return same sets of points. Reset to {} at every call to `tell`
+        # and `set_constrains`.
         self.cache_ = {}
 
     def copy(self, random_state=None):
@@ -288,6 +292,10 @@ class Optimizer(object):
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
             random_state=random_state,
         )
+
+        # It is important to copy the constraints so that a call to
+        # '_tell()' will create a valid _next_x
+        optimizer._constraints = self._constraints
 
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
@@ -395,6 +403,9 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
+            if self._constraints:
+                # We use another sampling method when constraints are added
+                return self._constraints.rvs(random_state=self.rng)[0]
             return self.space.rvs(random_state=self.rng)[0]
 
         else:
@@ -509,8 +520,13 @@ class Optimizer(object):
 
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
-            X = self.space.transform(self.space.rvs(
-                n_samples=self.n_points, random_state=self.rng))
+            if self._constraints:
+                # We use another sampling method if constraints have been added
+                X = self.space.transform(self._constraints.rvs(
+                    n_samples=self.n_points, random_state=self.rng))
+            else:
+                X = self.space.transform(self.space.rvs(
+                    n_samples=self.n_points, random_state=self.rng))
 
             self.next_xs_ = []
             for cand_acq_func in self.cand_acq_funcs_:
@@ -520,7 +536,9 @@ class Optimizer(object):
                     acq_func_kwargs=self.acq_func_kwargs)
                 # Find the minimum of the acquisition function by randomly
                 # sampling points from the space
-                if self.acq_optimizer == "sampling":
+                # If constraints are present
+                # we use this strategy
+                if self.acq_optimizer == "sampling" or self._constraints:
                     next_x = X[np.argmin(values)]
 
                 # Use BFGS to find the mimimum of the acquisition function, the
@@ -604,6 +622,34 @@ class Optimizer(object):
 
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+
+    def set_constraints(self, constraints):
+        """Sets the constraints for the optimizer
+        Parameters
+        ----------
+        * `constraints` [list] or [Constraints]:
+            Can either be a list of Constraint objects or a Constraints object
+        """
+        if constraints:
+            if isinstance(constraints, Constraints):
+                # If constraints is a Constraints object we simply add it
+                self._constraints = constraints
+            else:
+                # If it is a list of constraints we initialize
+                # a Constraints object.
+                self._constraints = Constraints(constraints, self.space)
+        else:
+            self._constraints = None
+
+        self.update_next()
+
+    def remove_constraints(self):
+        """Sets constraints to None"""
+        self.set_constraints(None)
+
+    def get_constraints(self):
+        """Returns constraints"""
+        return self._constraints
 
     def update_next(self):
         """Updates the value returned by opt.ask(). Useful if a parameter
