@@ -109,23 +109,29 @@ def plot_convergence(*args, **kwargs):
 
 def plot_regret(*args, **kwargs):
     """Plot one or several cumulative regret traces.
+
     Parameters
     ----------
     args[i] : `OptimizeResult`, list of `OptimizeResult`, or tuple
         The result(s) for which to plot the cumulative regret trace.
+
         - if `OptimizeResult`, then draw the corresponding single trace;
         - if list of `OptimizeResult`, then draw the corresponding cumulative
             regret traces in transparency, along with the average cumulative
             regret trace;
         - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
           an `OptimizeResult` or a list of `OptimizeResult`.
+
     ax : Axes`, optional
         The matplotlib axes on which to draw the plot, or `None` to create
         a new one.
+
     true_minimum : float, optional
         The true minimum value of the function, if known.
+
     yscale : None or string, optional
         The scale for the y-axis.
+
     Returns
     -------
     ax : `Axes`
@@ -199,12 +205,12 @@ def _get_ylim_diagonal(ax):
 
     Parameters
     ----------
-    * `ax` [`Matplotlib.Axes`]:
+    ax : `Matplotlib.Axes`
         2-dimensional matrix with Matplotlib Axes objects.
 
     Returns
     -------
-    * `ylim_diagonal` [list(int)]
+    ylim_diagonal : list(int)
         The common min and max ylim for the diagonal plots.
     """
 
@@ -236,20 +242,20 @@ def _adjust_fig(fig, ax, space, ylabel, dimensions):
     
     Parameters
     ----------
-    * `fig` [`Matplotlib.Figure`]:
+    fig : `Matplotlib.Figure`
         Figure-object for the plots.
 
-    * `ax` [`Matplotlib.Axes`]:
+    ax : `Matplotlib.Axes`
         2-dimensional matrix with Matplotlib Axes objects.
 
-    * `space` [`Space`]:
+    space : `Space`
         Search-space object.
 
-    * `ylabel` [`str`]:
+    ylabel : `str`
         String to be printed on the top-left diagonal plot
         e.g. 'Sample Count'.
 
-    * `dimensions` [`list(Dimension)`]:
+    dimensions : `list(Dimension)`
         List of `Dimension` objects used in the plots.
 
     Returns
@@ -364,19 +370,19 @@ def _map_bins(bins, bounds, prior):
 
     Parameters
     ----------
-    * `bins` [int]
+    bins : int
         Number of bins in the histogram.
 
-    * `bounds` [(int, int)]
+    bounds : (int, int)
         Tuple or list with lower- and upper-bounds for a search-space dimension.
 
-    * `prior` [str or None]
+    prior : str or None
         If 'log-uniform' then use log-scaling for the bins,
         otherwise use the original number of bins.
 
     Returns
     -------
-    * `bins_mapped`: [int or np.array(int)]:
+    bins_mapped : int or np.array(int)
          Number of bins for a histogram if no mapping,
          or a log-scaled array of bin-points if mapping is needed.
     """
@@ -408,18 +414,18 @@ def partial_dependence_1D(model, dimension, samples, n_points=40):
 
     Parameters
     ----------
-    * `model`
+    model
         Surrogate model for the objective function.
 
-    * `dimension` [Dimension]
+    dimension : Dimension
         The `Dimension`-object for which to calculate the partial dependence.
 
-    * `samples` [np.array, shape=(n_points, n_dims)]
+    samples : np.array, shape=(n_points, n_dims)
         Randomly sampled and transformed points to use when averaging
         the model function at each of the `n_points` when using partial
         dependence.
 
-    * `n_points` [int, default=40]
+    n_points : int, default=40
         Number of points along each dimension where the partial dependence
         is evaluated.
 
@@ -431,10 +437,10 @@ def partial_dependence_1D(model, dimension, samples, n_points=40):
 
     Returns
     -------
-    * `xi`: [np.array]:
+    xi : np.array
         The points at which the partial dependence was evaluated.
 
-    * `yi`: [np.array]:
+    yi : np.array
         The average value of the modelled objective function at each point `xi`.
     """
 
@@ -491,34 +497,34 @@ def partial_dependence_2D(model, dimension1, dimension2, samples, n_points=40):
 
     Parameters
     ----------
-    * `model`
+    model
         Surrogate model for the objective function.
 
-    * `dimension1` [Dimension]
+    dimension1 : Dimension
         The first `Dimension`-object for which to calculate the
         partial dependence.
 
-    * `dimension2` [Dimension]
+    dimension2 : Dimension
         The second `Dimension`-object for which to calculate the
         partial dependence.
 
-    * `samples` [np.array, shape=(n_points, n_dims)]
+    samples : np.array, shape=(n_points, n_dims)
         Randomly sampled and transformed points to use when averaging
         the model function at each of the `n_points`.
 
-    * `n_points` [int, default=40]
+    n_points : int, default=40
         Number of points along each dimension where the partial dependence
         is evaluated.
 
     Returns
     -------
-    * `xi`: [np.array, shape=n_points]:
+    xi : np.array, shape=n_points
         The points at which the partial dependence was evaluated.
 
-    * `yi`: [np.array, shape=n_points]:
+    yi : np.array, shape=n_points
         The points at which the partial dependence was evaluated.
 
-    * `zi`: [np.array, shape=(n_points, n_points)]:
+    zi : np.array, shape=(n_points, n_points)
         The average value of the objective function at each point `(xi, yi)`.
     """
 
@@ -947,37 +953,37 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : `OptimizeResult`
         The optimization results e.g. from calling `gp_minimize()`.
 
-    * `dimension_name1` [str]:
+    dimension_name1 : str
         Name of a dimension in the search-space.
 
-    * `dimension_name2` [str]:
+    dimension_name2 : str
         Name of a dimension in the search-space.
 
-    * `n_samples` [int, default=250]
+    n_samples : int, default=250
         Number of random samples used for estimating the contour-plot
         of the objective function.
 
-    * `n_points` [int, default=40]
+    n_points : int, default=40
         Number of points along each dimension where the partial dependence
         is evaluated when generating the contour-plots.
 
-    * `levels` [int, default=10]
+    levels : int, default=10
         Number of levels to draw on the contour plot.
 
-    * `zscale` [str, default='linear']
+    zscale : str, default='linear'
         Scale to use for the z axis of the contour plots.
         Either 'log' or linear for all other choices.
 
     Returns
     -------
-    * `fig`: [`Matplotlib.Figure`]:
+    fig : `Matplotlib.Figure`
         The Matplotlib Figure-object.
         For example, you can save the plot by calling `fig.savefig('file.png')` 
 
-    * `ax`: [`Matplotlib.Axes`]:
+    ax : `Matplotlib.Axes`
         The Matplotlib Figure-object.
         For example, you can save the plot by calling `fig.savefig('file.png')` 
     """
@@ -1062,16 +1068,16 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : `OptimizeResult`
         The optimization results e.g. from calling `gp_minimize()`.
 
-    * `dimension_name` [str]:
+    dimension_name : str
         Name of a dimension in the search-space.
 
-    * `bins` [int, bins=20]:
+    bins : int, bins=20
         Number of bins in the histogram.
 
-    * `rotate_labels` [int, rotate_labels=0]:
+    rotate_labels : int, rotate_labels=0
         Degree to rotate category-names on the x-axis.
         Only used for Categorical dimensions.
 
