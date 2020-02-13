@@ -181,7 +181,8 @@ class BayesSearchCV(BaseSearchCV):
     ...         'degree': Integer(1,8),
     ...         'kernel': Categorical(['linear', 'poly', 'rbf']),
     ...     },
-    ...     n_iter=32
+    ...     n_iter=32,
+    ...     random_state=0
     ... )
     >>>
     >>> # executes bayesian optimization
