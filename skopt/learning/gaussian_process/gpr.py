@@ -55,12 +55,12 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
     Parameters
     ----------
-    * `kernel` [kernel object]:
+    kernel : kernel object
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    * `alpha` [float or array-like, optional (default: 1e-10)]:
+    alpha : float or array-like, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
         Larger values correspond to increased noise level in the observations
         and reduce potential numerical issue during fitting. If an array is
@@ -70,7 +70,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         the noise level directly as a parameter is mainly for convenience and
         for consistency with Ridge.
 
-    * `optimizer` [string or callable, optional (default: "fmin_l_bfgs_b")]:
+    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -95,7 +95,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
             'fmin_l_bfgs_b'
 
-    * `n_restarts_optimizer` [int, optional (default: 0)]:
+    n_restarts_optimizer : int, optional (default: 0)
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -104,7 +104,7 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    * `normalize_y` [boolean, optional (default: False)]:
+    normalize_y : boolean, optional (default: False)
         Whether the target values y are normalized, i.e., the mean of the
         observed target values become zero. This parameter should be set to
         True if the target values' mean is expected to differ considerable from
@@ -112,43 +112,43 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         prior based on the data, which contradicts the likelihood principle;
         normalization is thus disabled per default.
 
-    * `copy_X_train` [bool, optional (default: True)]:
+    copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
         which might cause predictions to change if the data is modified
         externally.
 
-    * `random_state` [integer or numpy.RandomState, optional]:
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    * `noise` [string, "gaussian", optional]:
+    noise : string, "gaussian", optional
         If set to "gaussian", then it is assumed that `y` is a noisy
         estimate of `f(x)` where the noise is gaussian.
 
     Attributes
     ----------
-    * `X_train_` [array-like, shape = (n_samples, n_features)]:
+    X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    * `y_train_` [array-like, shape = (n_samples, [n_output_dims])]:
+    y_train_ : array-like, shape = (n_samples, [n_output_dims])
         Target values in training data (also required for prediction)
 
-    * `kernel_` [kernel object]:
+    kernel_ kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    * `L_` [array-like, shape = (n_samples, n_samples)]:
+    L_ : array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
-    * `alpha_` [array-like, shape = (n_samples,)]:
+    alpha_ : array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
 
-    * `log_marginal_likelihood_value_` [float]:
+    log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
-    * `noise_` [float]:
+    noise_ : float
         Estimate of the gaussian noise. Useful only when noise is set to
         "gaussian".
     """
@@ -168,15 +168,15 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
         Parameters
         ----------
-        * `X` [array-like, shape = (n_samples, n_features)]:
+        X : array-like, shape = (n_samples, n_features)
             Training data
 
-        * `y` [array-like, shape = (n_samples, [n_output_dims])]:
+        y : array-like, shape = (n_samples, [n_output_dims])
             Target values
 
         Returns
         -------
-        * `self`:
+        self
             Returns an instance of self.
         """
         if isinstance(self.noise, str) and self.noise != "gaussian":
@@ -243,42 +243,42 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
         Parameters
         ----------
-        * `X` [array-like, shape = (n_samples, n_features)]:
+        X : array-like, shape = (n_samples, n_features)
             Query points where the GP is evaluated.
 
-        * `return_std` [bool, default: False]:
+        return_std : bool, default: False
             If True, the standard-deviation of the predictive distribution at
             the query points is returned along with the mean.
 
-        * `return_cov` [bool, default: False]:
+        return_cov : bool, default: False
             If True, the covariance of the joint predictive distribution at
             the query points is returned along with the mean.
 
-        * `return_mean_grad` [bool, default: False]:
+        return_mean_grad : bool, default: False
             Whether or not to return the gradient of the mean.
             Only valid when X is a single point.
 
-        * `return_std_grad` [bool, default: False]:
+        return_std_grad : bool, default: False
             Whether or not to return the gradient of the std.
             Only valid when X is a single point.
 
         Returns
         -------
-        * `y_mean` [array, shape = (n_samples, [n_output_dims]):
+        y_mean : array, shape = (n_samples, [n_output_dims])
             Mean of predictive distribution a query points
 
-        * `y_std` [array, shape = (n_samples,), optional]:
+        y_std : array, shape = (n_samples,), optional
             Standard deviation of predictive distribution at query points.
             Only returned when return_std is True.
 
-        * `y_cov` [array, shape = (n_samples, n_samples), optional]:
+        y_cov : array, shape = (n_samples, n_samples), optional
             Covariance of joint predictive distribution a query points.
             Only returned when return_cov is True.
 
-        * `y_mean_grad` [shape = (n_samples, n_features)]:
+        y_mean_grad : shape = (n_samples, n_features)
             The gradient of the predicted mean
 
-        * `y_std_grad` [shape = (n_samples, n_features)]:
+        y_std_grad : shape = (n_samples, n_features)
             The gradient of the predicted std.
         """
         if return_std and return_cov:

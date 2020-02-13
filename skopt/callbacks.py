@@ -4,20 +4,17 @@ Callbacks are callables which are invoked after each iteration of the optimizer
 and are passed the results "so far". Callbacks can monitor progress, or stop
 the optimization early by returning `True`.
 
-Monitoring callbacks
---------------------
-* VerboseCallback
-* TimerCallback
-
-Early stopping callbacks
-------------------------
-* DeltaXStopper
 """
-from collections import Callable
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
+
 from time import time
 
 import numpy as np
 
+from skopt.utils import dump
 
 def check_callback(callback):
     """
@@ -44,19 +41,19 @@ class VerboseCallback(object):
 
     Parameters
     ----------
-    * `n_init` [int, optional]:
+    n_init : int, optional
         Number of points provided by the user which are yet to be
         evaluated. This is equal to `len(x0)` when `y0` is None
 
-    * `n_random` [int, optional]:
+    n_random : int, optional
         Number of points randomly chosen.
 
-    * `n_total` [int]:
+    n_total : int
         Total number of func calls.
 
     Attributes
     ----------
-    * `iter_no`: [int]:
+    iter_no : int
         Number of iterations of the optimization routine.
     """
 
@@ -97,7 +94,7 @@ class VerboseCallback(object):
         """
         Parameters
         ----------
-        * `res` [`OptimizeResult`, scipy object]:
+        res : `OptimizeResult`, scipy object
             The optimization as a OptimizeResult object.
         """
         time_taken = time() - self._start_time
@@ -125,7 +122,7 @@ class TimerCallback(object):
 
     Attributes
     ----------
-    * `iter_time`: [list, shape=(n_iter,)]:
+    iter_time : list, shape (n_iter,)
         `iter_time[i-1]` gives the time taken to complete iteration `i`
     """
     def __init__(self):
@@ -136,7 +133,7 @@ class TimerCallback(object):
         """
         Parameters
         ----------
-        * `res` [`OptimizeResult`, scipy object]:
+        res : `OptimizeResult`, scipy object
             The optimization as a OptimizeResult object.
         """
         elapsed_time = time() - self._time
@@ -153,7 +150,7 @@ class EarlyStopper(object):
         """
         Parameters
         ----------
-        * `result` [`OptimizeResult`, scipy object]:
+        result : `OptimizeResult`, scipy object
             The optimization as a OptimizeResult object.
         """
         return self._criterion(result)
@@ -166,12 +163,12 @@ class EarlyStopper(object):
 
         Parameters
         ----------
-        * `result` [`OptimizeResult`, scipy object]:
+        result : `OptimizeResult`, scipy object
             The optimization as a OptimizeResult object.
 
         Returns
         -------
-        * `decision`:
+        decision : boolean or None
             Return True/False if the criterion can make a decision or `None` if
             there is not enough data yet to make a decision.
         """
@@ -180,7 +177,7 @@ class EarlyStopper(object):
 
 
 class DeltaXStopper(EarlyStopper):
-    """Stop the optimization when |x1 - x2| < `delta`
+    """Stop the optimization when ``|x1 - x2| < delta``
 
     If the last two positions at which the objective has been evaluated
     are less than `delta` apart stop the optimization procedure.
@@ -228,12 +225,13 @@ class DeadlineStopper(EarlyStopper):
 
     Attributes
     ----------
-    * `iter_time`: [list, shape=(n_iter,)]:
+    iter_time : list, shape (n_iter,)
         `iter_time[i-1]` gives the time taken to complete iteration `i`
 
     Parameters
     ----------
-    * `total_time`: fixed budget of time (seconds) that the optimization must
+    total_time : float
+        fixed budget of time (seconds) that the optimization must
         finish within.
     """
     def __init__(self, total_time):
@@ -252,3 +250,38 @@ class DeadlineStopper(EarlyStopper):
             return time_remaining <= np.max(self.iter_time)
         else:
             return None
+
+
+class CheckpointSaver(object):
+    """
+    Save current state after each iteration with :class:`skopt.dump`.
+
+
+    Examples
+    --------
+    >>> import skopt
+    >>> def obj_fun(x):
+    ...     return x[0]**2
+    >>> checkpoint_callback = skopt.callbacks.CheckpointSaver("./result.pkl")
+    >>> skopt.gp_minimize(obj_fun, [(-2, 2)], n_calls=10,
+    ...                   callback=[checkpoint_callback]) # doctest: +SKIP
+
+    Parameters
+    ----------
+    checkpoint_path : string
+        location where checkpoint will be saved to;
+    dump_options : string
+        options to pass on to `skopt.dump`, like `compress=9`
+    """
+    def __init__(self, checkpoint_path, **dump_options):
+        self.checkpoint_path = checkpoint_path
+        self.dump_options = dump_options
+
+    def __call__(self, res):
+        """
+        Parameters
+        ----------
+        res : `OptimizeResult`, scipy object
+            The optimization as a OptimizeResult object.
+        """
+        dump(res, self.checkpoint_path, **self.dump_options)

@@ -26,7 +26,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
     # Check inputs
     X = np.asarray(X)
     if X.ndim != 2:
-        raise ValueError("X should be 2-dimensional.")
+        raise ValueError("X is {}-dimensional, however,"
+                         " it must be 2-dimensional.".format(X.ndim))
 
     if acq_func_kwargs is None:
         acq_func_kwargs = dict()
@@ -96,16 +97,16 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
 
     Parameters
     ----------
-    * `X` [array-like, shape=(n_samples, n_features)]:
+    X : array-like, shape (n_samples, n_features)
         Values where the acquisition function should be computed.
 
-    * `model` [sklearn estimator that implements predict with ``return_std``]:
+    model : sklearn estimator that implements predict with ``return_std``
         The fit estimator that approximates the function through the
         method ``predict``.
         It should have a ``return_std`` parameter that returns the standard
         deviation.
 
-    * `kappa`: [float, default 1.96 or 'inf']:
+    kappa : float, default 1.96 or 'inf'
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
@@ -113,16 +114,16 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
         which is useful in a pure exploration setting.
         Useless if ``method`` is set to "LCB".
 
-    * `return_grad`: [boolean, optional]:
+    return_grad : boolean, optional
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
 
     Returns
     -------
-    * `values`: [array-like, shape=(X.shape[0],)]:
+    values : array-like, shape (X.shape[0],)
         Acquisition function values computed at X.
 
-    * `grad`: [array-like, shape=(n_samples, n_features)]:
+    grad : array-like, shape (n_samples, n_features)
         Gradient at X.
     """
     # Compute posterior.
@@ -149,7 +150,7 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the probability of improvement to calculate the acquisition values.
 
-    The conditional probability `P(y=f(x) | x)`form a gaussian with a
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a
     certain mean and standard deviation approximated by the model.
 
     The PI condition is derived by computing ``E[u(f(x))]``
@@ -165,29 +166,29 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
 
     Parameters
     ----------
-    * `X` [array-like, shape=(n_samples, n_features)]:
+    X : array-like, shape=(n_samples, n_features)
         Values where the acquisition function should be computed.
 
-    * `model` [sklearn estimator that implements predict with ``return_std``]:
+    model : sklearn estimator that implements predict with ``return_std``
         The fit estimator that approximates the function through the
         method ``predict``.
         It should have a ``return_std`` parameter that returns the standard
         deviation.
 
-    * `y_opt` [float, default 0]:
+    y_opt : float, default 0
         Previous minimum value which we would like to improve upon.
 
-    * `xi`: [float, default=0.01]:
+    xi : float, default=0.01
         Controls how much improvement one wants over the previous best
         values. Useful only when ``method`` is set to "EI"
 
-    * `return_grad`: [boolean, optional]:
+    return_grad : boolean, optional
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
 
     Returns
     -------
-    * `values`: [array-like, shape=(X.shape[0],)]:
+    values : [array-like, shape=(X.shape[0],)
         Acquisition function values computed at X.
     """
     with warnings.catch_warnings():
@@ -199,6 +200,14 @@ def gaussian_pi(X, model, y_opt=0.0, xi=0.01, return_grad=False):
                 return_std_grad=True)
         else:
             mu, std = model.predict(X, return_std=True)
+
+    # check dimensionality of mu, std so we can divide them below
+    if (mu.ndim != 1) or (std.ndim != 1):
+        raise ValueError("mu and std are {}-dimensional and {}-dimensional, "
+                         "however both must be 1-dimensional. Did you train "
+                         "your model with an (N, 1) vector instead of an "
+                         "(N,) vector?"
+                         .format(mu.ndim, std.ndim))
 
     values = np.zeros_like(mu)
     mask = std > 0
@@ -224,7 +233,7 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the expected improvement to calculate the acquisition values.
 
-    The conditional probability `P(y=f(x) | x)`form a gaussian with a certain
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a certain
     mean and standard deviation approximated by the model.
 
     The EI condition is derived by computing ``E[u(f(x))]``
@@ -239,29 +248,29 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
 
     Parameters
     ----------
-    * `X` [array-like, shape=(n_samples, n_features)]:
+    X : array-like, shape=(n_samples, n_features)
         Values where the acquisition function should be computed.
 
-    * `model` [sklearn estimator that implements predict with ``return_std``]:
+    model : sklearn estimator that implements predict with ``return_std``
         The fit estimator that approximates the function through the
         method ``predict``.
         It should have a ``return_std`` parameter that returns the standard
         deviation.
 
-    * `y_opt` [float, default 0]:
+    y_opt : float, default 0
         Previous minimum value which we would like to improve upon.
 
-    * `xi`: [float, default=0.01]:
+    xi : float, default=0.01
         Controls how much improvement one wants over the previous best
         values. Useful only when ``method`` is set to "EI"
 
-    * `return_grad`: [boolean, optional]:
+    return_grad : boolean, optional
         Whether or not to return the grad. Implemented only for the case where
         ``X`` is a single sample.
 
     Returns
     -------
-    * `values`: [array-like, shape=(X.shape[0],)]:
+    values : array-like, shape=(X.shape[0],)
         Acquisition function values computed at X.
     """
     with warnings.catch_warnings():
@@ -274,6 +283,14 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
 
         else:
             mu, std = model.predict(X, return_std=True)
+
+    # check dimensionality of mu, std so we can divide them below
+    if (mu.ndim != 1) or (std.ndim != 1):
+        raise ValueError("mu and std are {}-dimensional and {}-dimensional, "
+                         "however both must be 1-dimensional. Did you train "
+                         "your model with an (N, 1) vector instead of an "
+                         "(N,) vector?"
+                         .format(mu.ndim, std.ndim))
 
     values = np.zeros_like(mu)
     mask = std > 0

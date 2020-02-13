@@ -5,10 +5,9 @@ import pytest
 from scipy import optimize
 
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_raises
 
 from skopt.acquisition import _gaussian_acquisition
 from skopt.acquisition import gaussian_acquisition_1D
@@ -135,13 +134,20 @@ def test_acquisition_per_second(acq_func):
     indices = np.arange(6)
     vals = _gaussian_acquisition(X_pred, cgpr, y_opt=1.0, acq_func=acq_func)
     for fast, slow in zip(indices[:-1], indices[1:]):
-        assert_greater(vals[slow], vals[fast])
+        assert vals[slow] > vals[fast]
 
     acq_wo_time = _gaussian_acquisition(
         X, cgpr.estimators_[0], y_opt=1.2, acq_func=acq_func[:2])
     acq_with_time = _gaussian_acquisition(
         X, cgpr, y_opt=1.2, acq_func=acq_func)
     assert_array_almost_equal(acq_wo_time / acq_with_time, np.ravel(X), 2)
+
+
+def test_gaussian_acquisition_check_inputs():
+    model = ConstantGPRSurrogate(Space(((1.0, 9.0),)))
+    with pytest.raises(ValueError) as err:
+        vals = _gaussian_acquisition(np.arange(1, 5), model)
+    assert("it must be 2-dimensional" in err.value.args[0])
 
 
 @pytest.mark.fast_test

@@ -1,13 +1,23 @@
 """Plotting functions."""
-
+import sys
 import numpy as np
+from itertools import count
+from functools import partial
+from scipy.optimize import OptimizeResult
+
+from skopt import expected_minimum, expected_minimum_random_sampling
+from .space import Categorical
+
+# For plot tests, matplotlib must be set to headless mode early
+if 'pytest' in sys.modules:
+    import matplotlib
+
+    matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
-from matplotlib.ticker import MaxNLocator
-
-from scipy.optimize import OptimizeResult
+from matplotlib.ticker import MaxNLocator, FuncFormatter  # noqa: E402
 
 from skopt.space import Categorical
 from skopt.utils import get_samples_dimension
@@ -19,7 +29,7 @@ def plot_convergence(*args, **kwargs):
 
     Parameters
     ----------
-    * `args[i]` [`OptimizeResult`, list of `OptimizeResult`, or tuple]:
+    args[i] :  `OptimizeResult`, list of `OptimizeResult`, or tuple
         The result(s) for which to plot the convergence trace.
 
         - if `OptimizeResult`, then draw the corresponding single trace;
@@ -28,19 +38,19 @@ def plot_convergence(*args, **kwargs):
         - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
           an `OptimizeResult` or a list of `OptimizeResult`.
 
-    * `ax` [`Axes`, optional]:
+    ax : `Axes`, optional
         The matplotlib axes on which to draw the plot, or `None` to create
         a new one.
 
-    * `true_minimum` [float, optional]:
+    true_minimum : float, optional
         The true minimum value of the function, if known.
 
-    * `yscale` [None or string, optional]:
+    yscale : None or string, optional
         The scale for the y-axis.
 
     Returns
     -------
-    * `ax`: [`Axes`]:
+    ax : `Axes`
         The matplotlib axes.
     """
 
@@ -265,6 +275,9 @@ def _map_bins(bins, bounds, prior):
     For use when plotting histograms.
     Maps the number of bins to a log-scale between the bounds, if necessary.
 
+    When `x_eval` is not `None`, the given values are used instead of
+    random samples. In this case, `n_samples` will be ignored.
+
     Parameters
     ----------
     * `bins` [int]
@@ -319,11 +332,18 @@ def partial_dependence_1D(model, dimension, samples, n_points=40):
 
     * `samples` [np.array, shape=(n_points, n_dims)]
         Randomly sampled and transformed points to use when averaging
-        the model function at each of the `n_points`.
+        the model function at each of the `n_points` when using partial
+        dependence.
 
     * `n_points` [int, default=40]
         Number of points along each dimension where the partial dependence
         is evaluated.
+
+    x_eval : list, default=None
+        `x_eval` is a list of parameter values or None. In case `x_eval`
+        is not None, the parsed dependence will be calculated using these
+        values.
+        Otherwise, random selected samples will be used.
 
     Returns
     -------
@@ -640,7 +660,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
     * `result` [`OptimizeResult`]
         The optimization results from calling e.g. `gp_minimize()`.
 
-    * `levels` [int, default=10]
+    levels : int, default=10
         Number of levels to draw on the contour plot, passed directly
         to `plt.contour()`.
 
@@ -660,6 +680,51 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
         List of names for search-space dimensions to be used in the plot.
         You can omit `Categorical` dimensions here as they are not supported.
         If `None` then use all dimensions from the search-space.
+
+    sample_source : str or list of floats, default='random'
+        Defines to samples generation to use for averaging the model function
+        at each of the `n_points`.
+
+        A partial dependence plot is only generated, when `sample_source`
+        is set to 'random' and `n_samples` is sufficient.
+
+        `sample_source` can also be a list of
+        floats, which is then used for averaging.
+
+        Valid strings:
+
+            - 'random' - `n_samples` random samples will used
+
+            - 'result' - Use only the best observed parameters
+
+            - 'expected_minimum' - Parameters that gives the best
+                  minimum Calculated using scipy's minimize method.
+                  This method currently does not work with categorical values.
+
+            - 'expected_minimum_random' - Parameters that gives the
+                  best minimum when using naive random sampling.
+                  Works with categorical values.
+
+    minimum : str or list of floats, default = 'result'
+        Defines the values for the red points in the plots.
+        Valid strings:
+
+            - 'result' - Use best observed parameters
+
+            - 'expected_minimum' - Parameters that gives the best
+                  minimum Calculated using scipy's minimize method.
+                  This method currently does not work with categorical values.
+
+            - 'expected_minimum_random' - Parameters that gives the
+                  best minimum when using naive random sampling.
+                  Works with categorical values
+
+    n_minimum_search : int, default = None
+        Determines how many points should be evaluated
+        to find the minimum when using 'expected_minimum' or
+        'expected_minimum_random'. Parameter is used when
+        `sample_source` and/or `minimum` is set to
+        'expected_minimum' or 'expected_minimum_random'.
 
     Returns
     -------

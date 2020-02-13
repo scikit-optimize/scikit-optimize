@@ -12,20 +12,20 @@ def _return_std(X, trees, predictions, min_variance):
 
     Parameters
     ----------
-    * `X` [array-like, shape=(n_samples, n_features)]:
+    X : array-like, shape=(n_samples, n_features)
         Input data.
 
-    * `trees` [list, shape=(n_estimators,)]:
+    trees : list, shape=(n_estimators,)
         List of fit sklearn trees as obtained from the ``estimators_``
         attribute of a fit RandomForestRegressor or ExtraTreesRegressor.
 
-    * `predictions` [array-like, shape=(n_samples,)]:
+    predictions : array-like, shape=(n_samples,)
         Prediction of each data point as returned by RandomForestRegressor
         or ExtraTreesRegressor.
 
     Returns
     -------
-    * `std` [array-like, shape=(n_samples,)]:
+    std : array-like, shape=(n_samples,)
         Standard deviation of `y` at `X`. If criterion
         is set to "mse", then `std[i] ~= std(y | X[i])`.
     """
@@ -187,7 +187,8 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
     def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
                  min_weight_fraction_leaf=0.0, max_features='auto',
-                 max_leaf_nodes=None, bootstrap=True, oob_score=False,
+                 max_leaf_nodes=None, min_impurity_decrease=0.,
+                 bootstrap=True, oob_score=False,
                  n_jobs=1, random_state=None, verbose=0, warm_start=False,
                  min_variance=0.0):
         self.min_variance = min_variance
@@ -198,6 +199,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
             bootstrap=bootstrap, oob_score=oob_score,
             n_jobs=n_jobs, random_state=random_state,
             verbose=verbose, warm_start=warm_start)
@@ -371,7 +373,8 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
     def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
                  min_weight_fraction_leaf=0.0, max_features='auto',
-                 max_leaf_nodes=None, bootstrap=False, oob_score=False,
+                 max_leaf_nodes=None, min_impurity_decrease=0.,
+                 bootstrap=False, oob_score=False,
                  n_jobs=1, random_state=None, verbose=0, warm_start=False,
                  min_variance=0.0):
         self.min_variance = min_variance
@@ -382,6 +385,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
             bootstrap=bootstrap, oob_score=oob_score,
             n_jobs=n_jobs, random_state=random_state,
             verbose=verbose, warm_start=warm_start)

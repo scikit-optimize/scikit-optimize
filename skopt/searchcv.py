@@ -1,4 +1,8 @@
-from collections import defaultdict, Sized
+try:
+    from collections.abc import Sized
+except ImportError:
+    from collections import Sized
+from collections import defaultdict
 from functools import partial
 
 import numpy as np
@@ -6,12 +10,15 @@ from scipy.stats import rankdata
 
 import sklearn
 from sklearn.base import is_classifier, clone
-from sklearn.externals.joblib import Parallel, delayed, cpu_count
+from joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
-from sklearn.metrics.scorer import check_scoring
+try:
+    from sklearn.metrics import check_scoring
+except ImportError:
+    from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
@@ -64,9 +71,11 @@ class BayesSearchCV(BaseSearchCV):
         is a number of iterations that will be spent optimizing over
         this subspace.
 
-    n_iter : int, default=128
+    n_iter : int, default=50
         Number of parameter settings that are sampled. n_iter trades
-        off runtime vs quality of the solution.
+        off runtime vs quality of the solution. Consider increasing
+        ``n_points`` if you want to try more parameter settings in
+        parallel.
 
     optimizer_kwargs : dict, optional
         Dict of arguments passed to :class:`Optimizer`.  For example,
@@ -83,7 +92,13 @@ class BayesSearchCV(BaseSearchCV):
         Parameters to pass to the fit method.
 
     n_jobs : int, default=1
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. At maximum there are
+        ``n_points`` times ``cv`` jobs available during each iteration.
+
+    n_points : int, default=1
+        Number of parameter settings to sample in parallel. If this does
+        not align with ``n_iter``, the last iteration will sample less
+        points. See also :func:`~Optimizer.ask`
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -119,9 +134,6 @@ class BayesSearchCV(BaseSearchCV):
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
-
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
@@ -144,38 +156,41 @@ class BayesSearchCV(BaseSearchCV):
         If ``'True'``, the ``cv_results_`` attribute will include training
         scores.
 
-    Example
-    -------
+    Examples
+    --------
 
-    from skopt import BayesSearchCV
-    # parameter ranges are specified by one of below
-    from skopt.space import Real, Categorical, Integer
-
-    from sklearn.datasets import load_iris
-    from sklearn.svm import SVC
-    from sklearn.model_selection import train_test_split
-
-    X, y = load_iris(True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75,
-                                                        random_state=0)
-
-    # log-uniform: understand as search over p = exp(x) by varying x
-    opt = BayesSearchCV(
-        SVC(),
-        {
-            'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            'degree': Integer(1,8),
-            'kernel': Categorical(['linear', 'poly', 'rbf']),
-        },
-        n_iter=32
-    )
-
-    # executes bayesian optimization
-    opt.fit(X_train, y_train)
-
-    # model can be saved, used for predictions or scoring
-    print(opt.score(X_test, y_test))
+    >>> from skopt import BayesSearchCV
+    >>> # parameter ranges are specified by one of below
+    >>> from skopt.space import Real, Categorical, Integer
+    >>>
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.model_selection import train_test_split
+    >>>
+    >>> X, y = load_iris(True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     train_size=0.75,
+    ...                                                     random_state=0)
+    >>>
+    >>> # log-uniform: understand as search over p = exp(x) by varying x
+    >>> opt = BayesSearchCV(
+    ...     SVC(),
+    ...     {
+    ...         'C': Real(1e-6, 1e+6, prior='log-uniform'),
+    ...         'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+    ...         'degree': Integer(1,8),
+    ...         'kernel': Categorical(['linear', 'poly', 'rbf']),
+    ...     },
+    ...     n_iter=32,
+    ...     random_state=0
+    ... )
+    >>>
+    >>> # executes bayesian optimization
+    >>> _ = opt.fit(X_train, y_train)
+    >>>
+    >>> # model can be saved, used for predictions or scoring
+    >>> print(opt.score(X_test, y_test))
+    0.973...
 
     Attributes
     ----------
@@ -271,18 +286,24 @@ class BayesSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
-                 iid=True, refit=True, cv=None, verbose=0,
+                 n_points=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=False):
 
         self.search_spaces = search_spaces
         self.n_iter = n_iter
+        self.n_points = n_points
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
         self._check_search_space(self.search_spaces)
+        # Temporary fix for compatibility with sklearn 0.20 and 0.21
+        # See scikit-optimize#762
+        # To be consistent with sklearn 0.21+, fit_params should be deprecated
+        # in the constructor and be passed in ``fit``.
+        self.fit_params = fit_params
 
         super(BayesSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
+             estimator=estimator, scoring=scoring,
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
              return_train_score=return_train_score)
@@ -359,7 +380,6 @@ class BayesSearchCV(BaseSearchCV):
         Taken from https://github.com/scikit-learn/scikit-learn/blob/0.18.X
                     .../sklearn/model_selection/_search.py
         """
-
         estimator = self.estimator
         cv = sklearn.model_selection._validation.check_cv(
             self.cv, y, classifier=is_classifier(estimator))
@@ -498,7 +518,7 @@ class BayesSearchCV(BaseSearchCV):
         """
         self.best_estimator_ = clone(self.estimator)
         self.best_estimator_.set_params(**self.best_params_)
-        self.best_estimator_.fit(X, y)
+        self.best_estimator_.fit(X, y, **(self.fit_params or {}))
         return self
 
     def _make_optimizer(self, params_space):
@@ -524,12 +544,17 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def _step(self, X, y, search_space, optimizer, groups=None, n_jobs=1):
+    def _step(self, X, y, search_space, optimizer, groups=None, n_points=1):
         """Generate n_jobs parameters and evaluate them in parallel.
         """
 
         # get parameter values to evaluate
-        params = optimizer.ask(n_points=n_jobs)
+        params = optimizer.ask(n_points=n_points)
+
+        # convert parameters to python native types
+        params = [[np.array(v).item() for v in p] for p in params]
+
+        # make lists into dictionaries
         params_dict = [point_asdict(search_space, p) for p in params]
 
         # HACK: self.cv_results_ is reset at every call to _fit, keep current
@@ -545,6 +570,13 @@ class BayesSearchCV(BaseSearchCV):
         for k in self.cv_results_:
             all_cv_results[k].extend(self.cv_results_[k])
 
+        all_cv_results["rank_test_score"] = list(np.asarray(
+            rankdata(-np.array(all_cv_results['mean_test_score']),
+                     method='min'), dtype=np.int32))
+        if self.return_train_score:
+            all_cv_results["rank_train_score"] = list(np.asarray(
+                rankdata(-np.array(all_cv_results['mean_train_score']),
+                         method='min'), dtype=np.int32))
         self.cv_results_ = all_cv_results
         self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
 
@@ -576,6 +608,9 @@ class BayesSearchCV(BaseSearchCV):
             total_iter += n_iter
 
         return total_iter
+
+    def _run_search(self, x):
+        pass
 
     def fit(self, X, y=None, groups=None, callback=None):
         """Run fit on the estimator with randomly drawn parameters.
@@ -625,11 +660,7 @@ class BayesSearchCV(BaseSearchCV):
         self.best_index_ = None
         self.multimetric_ = False
 
-        n_jobs = self.n_jobs
-
-        # account for case n_jobs < 0
-        if n_jobs < 0:
-            n_jobs = max(1, cpu_count() + n_jobs + 1)
+        n_points = self.n_points
 
         for search_space, optimizer in zip(search_spaces, optimizers):
             # if not provided with search subspace, n_iter is taken as
@@ -641,14 +672,14 @@ class BayesSearchCV(BaseSearchCV):
 
             # do the optimization for particular search space
             while n_iter > 0:
-                # when n_iter < n_jobs points left for evaluation
-                n_jobs_adjusted = min(n_iter, n_jobs)
+                # when n_iter < n_points points left for evaluation
+                n_points_adjusted = min(n_iter, n_points)
 
                 optim_result = self._step(
                     X, y, search_space, optimizer,
-                    groups=groups, n_jobs=n_jobs_adjusted
+                    groups=groups, n_points=n_points_adjusted
                 )
-                n_iter -= n_jobs
+                n_iter -= n_points
 
                 if eval_callbacks(callbacks, optim_result):
                     break

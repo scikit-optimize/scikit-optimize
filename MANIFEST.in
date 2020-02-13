@@ -1,2 +1,5 @@
 include *.md
 include *.rst
+recursive-include doc *
+recursive-include examples *
+include README.rst

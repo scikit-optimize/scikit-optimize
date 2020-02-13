@@ -1,10 +1,104 @@
 # Release history
+## Version 0.7.2
+
+## New features
+* Add expected_minimum_random_sampling
+* New plot examples
+* Add more parameter to plot_objective 
+* Return ordereddict in point_asdict
+* update_next() and get_results() added to Optimize
+
+## Bug fixes
+
+* Fix searchcv rank (issue #831)
+* Fix random forest regressor (issue #766)
+* Fix doc examples
+* Fix integer normalize by using round()
+* Fix random forest regressor (Add missing min_impurity_decrease)
+
+## Maintenance
+* Fix license detection in github
+* Add doctest to CI
+
+## Version 0.7.1
+
+### New features
+
+* Sphinx documentation
+* notebooks are replaced by sphinx-gallery
+* New StringEncoder, can be used in Categoricals
+* Remove string conversion in Identity
+* dtype can be set in Integer and Real
+
+### Bug fixes
+
+* Fix categorical space (issue #821)
+* int can be set as dtype to fix issue #790
+
+### Maintenance
+
+* Old pdoc scripts are removed and replaced by sphinx
+
+## Version 0.7
+
+### New features
+
+* Models queue has now a customizable size (model_queue_size).
+* Add log-uniform prior to Integer space
+* Support for plotting categorical dimensions
+
+### Bug fixes
+
+* Allow BayesSearchCV to work with sklearn 0.21 
+* Reduce the amount of deprecation warnings in unit tests
+
+### Maintenance
+
+* joblib instead of sklearn.externals.joblib 
+* Improve travis CI unit tests (Different sklearn version are checked)
+* Added `versioneer` support, to keep things simple and to fix pypi deploy
+
+## Version 0.6
+
+Highly composite six.
+
+### New features
+
+* `plot_regret` function for plotting the cumulative regret; 
+The purpose of such plot is to access how much an optimizer 
+is effective at picking good points.
+* `CheckpointSaver` that can be used to save a 
+checkpoint after each iteration with skopt.dump
+* `Space.from_yaml()`
+ to allow for external file to define Space parameters
+
+### Bug fixes
+
+* Fixed numpy broadcasting issues in gaussian_ei, gaussian_pi 
+* Fixed build with newest scikit-learn 
+* Use native python types inside BayesSearchCV
+* Include fit_params in BayesSearchCV refit 
+
+### Maintenance
+
+* Added `versioneer` support, to reduce changes with new version of the `skopt`
+
+## Version 0.5.2
+
+### Bug fixes
+
+* Separated `n_points` from `n_jobs` in `BayesSearchCV`.
+* Dimensions now support boolean np.arrays.
+
+### Maintenance
+
+* `matplotlib` is now an optional requirement (install with `pip install 'scikit-optimize[plots]'`)
 
 ## Version 0.5
 
 High five!
 
-## New features
+### New features
 
 * Single element dimension definition, which can be used to
 fix the value of a dimension during optimization.

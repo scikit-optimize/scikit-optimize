@@ -8,7 +8,12 @@ dist/
 *.egg-info/
 .idea/
 .cache/
-
+.pytest_cache/
+doc/_build
+doc/modules/generated/
+*.pkl
+*.gz
+doc/auto_examples
 # mac OS users
 .DS_Store
 

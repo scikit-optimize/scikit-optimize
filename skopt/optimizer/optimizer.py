@@ -9,7 +9,7 @@ from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.utils import check_random_state
 
@@ -39,7 +39,7 @@ class Optimizer(object):
 
     Parameters
     ----------
-    * `dimensions` [list, shape=(n_dims,)]:
+    dimensions : list, shape (n_dims,)
         List of search space dimensions.
         Each search dimension can be defined either as
 
@@ -51,24 +51,26 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    * `base_estimator` ["GP", "RF", "ET", "GBRT" or sklearn regressor, default="GP"]:
-        Should inherit from `sklearn.base.RegressorMixin`.
+    base_estimator : `"GP"`, `"RF"`, `"ET"`, `"GBRT"` or sklearn regressor,
+    default=`"GP"`
+        Should inherit from :obj:`sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
         If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
         surrogate model of the corresponding type is used corresponding to what
         is used in the minimize functions.
 
-    * `n_random_starts` [int, default=10]:
-        DEPRECATED, use `n_initial_points` instead.
+    n_random_starts : int, default=10
+        .. deprecated::
+            use `n_initial_points` instead.
 
-    * `n_initial_points` [int, default=10]:
+    n_initial_points : int, default=10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Points provided as
         `x0` count as initialization points. If len(x0) < n_initial_points
         additional points are sampled at random.
 
-    * `acq_func` [string, default=`"gp_hedge"`]:
+    acq_func : string, default=`"gp_hedge"`
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -81,9 +83,9 @@ class Optimizer(object):
                 - Each acquisition function is optimised independently to
                   propose an candidate point `X_i`.
                 - Out of all these candidate points, the next point `X_best` is
-                  chosen by $softmax(\eta g_i)$
+                  chosen by :math:`softmax(\eta g_i)`
                 - After fitting the surrogate model with `(X_best, y_best)`,
-                  the gains are updated such that $g_i -= \mu(X_i)$
+                  the gains are updated such that :math:`g_i -= \mu(X_i)`
         - `"EIps" for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
@@ -92,7 +94,7 @@ class Optimizer(object):
           return type of the objective function is assumed to be similar to
           that of `"EIps
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"auto"`]:
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default=`"auto"`
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
@@ -109,46 +111,57 @@ class Optimizer(object):
                 points to find local minima.
               - The optimal of these local minima is used to update the prior.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
 
-    * `acq_func_kwargs` [dict]:
+    acq_func_kwargs : dict
         Additional arguments to be passed to the acquistion function.
 
-    * `acq_optimizer_kwargs` [dict]:
+    acq_optimizer_kwargs : dict
         Additional arguments to be passed to the acquistion optimizer.
 
+    model_queue_size : int or None, default=None
+        Keeps list of models only as long as the argument given. In the
+        case of None, the list has no capped length.
 
     Attributes
     ----------
-    * `Xi` [list]:
+    Xi : list
         Points at which objective has been evaluated.
-    * `yi` [scalar]:
+    yi : scalar
         Values of objective at corresponding points in `Xi`.
-    * `models` [list]:
+    models : list
         Regression models used to fit observations and compute acquisition
         function.
-    * `space`
-        An instance of `skopt.space.Space`. Stores parameter search space used
-        to sample points, bounds, and type of parameters.
+    space : Space
+        An instance of :class:`skopt.space.Space`. Stores parameter search
+        space used to sample points, bounds, and type of parameters.
 
     """
     def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
-                 random_state=None, acq_func_kwargs=None,
+                 random_state=None,
+                 model_queue_size=None,
+                 acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
-        # Arguments that are just stored not checked
-        self.acq_func = acq_func
+
         self.rng = check_random_state(random_state)
+
+        # Configure acquisition function
+
+        # Store and creat acquisition function set
+        self.acq_func = acq_func
         self.acq_func_kwargs = acq_func_kwargs
 
         allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
+
+        # treat hedging method separately
         if self.acq_func == "gp_hedge":
             self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
             self.gains_ = np.zeros(3)
@@ -159,66 +172,14 @@ class Optimizer(object):
             acq_func_kwargs = dict()
         self.eta = acq_func_kwargs.get("eta", 1.0)
 
-        if acq_optimizer_kwargs is None:
-            acq_optimizer_kwargs = dict()
+        # Configure counters of points
 
-        self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
-        self.n_restarts_optimizer = acq_optimizer_kwargs.get(
-            "n_restarts_optimizer", 5)
-        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
-        self.acq_optimizer_kwargs = acq_optimizer_kwargs
-
+        # Check `n_random_starts` deprecation first
         if n_random_starts is not None:
             warnings.warn(("n_random_starts will be removed in favour of "
                            "n_initial_points."),
                           DeprecationWarning)
             n_initial_points = n_random_starts
-
-        self._check_arguments(base_estimator, n_initial_points, acq_optimizer,
-                              dimensions)
-
-        if isinstance(self.base_estimator_, GaussianProcessRegressor):
-            dimensions = normalize_dimensions(dimensions)
-
-        self.space = Space(dimensions)
-        self.models = []
-        self.Xi = []
-        self.yi = []
-
-        self._cat_inds = []
-        self._non_cat_inds = []
-        for ind, dim in enumerate(self.space.dimensions):
-            if isinstance(dim, Categorical):
-                self._cat_inds.append(ind)
-            else:
-                self._non_cat_inds.append(ind)
-
-        self.n_jobs = n_jobs
-
-        # The cache of responses of `ask` method for n_points not None.
-        # This ensures that multiple calls to `ask` with n_points set
-        # return same sets of points.
-        # The cache is reset to {} at every call to `tell`.
-        self.cache_ = {}
-
-    def _check_arguments(self, base_estimator, n_initial_points,
-                         acq_optimizer, dimensions):
-        """Check arguments for sanity."""
-
-        if isinstance(base_estimator, str):
-            base_estimator = cook_estimator(
-                base_estimator, space=dimensions,
-                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
-
-        if not is_regressor(base_estimator) and base_estimator is not None:
-            raise ValueError(
-                "%s has to be a regressor." % base_estimator)
-
-        is_multi_regressor = isinstance(base_estimator, MultiOutputRegressor)
-        if "ps" in self.acq_func and not is_multi_regressor:
-            self.base_estimator_ = MultiOutputRegressor(base_estimator)
-        else:
-            self.base_estimator_ = base_estimator
 
         if n_initial_points < 0:
             raise ValueError(
@@ -226,6 +187,29 @@ class Optimizer(object):
         self._n_initial_points = n_initial_points
         self.n_initial_points_ = n_initial_points
 
+        # Configure estimator
+
+        # build base_estimator if doesn't exist
+        if isinstance(base_estimator, str):
+            base_estimator = cook_estimator(
+                base_estimator, space=dimensions,
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+
+        # check if regressor
+        if not is_regressor(base_estimator) and base_estimator is not None:
+            raise ValueError(
+                "%s has to be a regressor." % base_estimator)
+
+        # treat per second acqusition function specially
+        is_multi_regressor = isinstance(base_estimator, MultiOutputRegressor)
+        if "ps" in self.acq_func and not is_multi_regressor:
+            self.base_estimator_ = MultiOutputRegressor(base_estimator)
+        else:
+            self.base_estimator_ = base_estimator
+
+        # Configure optimizer
+
+        # decide optimizer based on gradient information
         if acq_optimizer == "auto":
             if has_gradients(self.base_estimator_):
                 acq_optimizer = "lbfgs"
@@ -241,15 +225,56 @@ class Optimizer(object):
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
-
         self.acq_optimizer = acq_optimizer
+
+        # record other arguments
+        if acq_optimizer_kwargs is None:
+            acq_optimizer_kwargs = dict()
+
+        self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
+        self.n_restarts_optimizer = acq_optimizer_kwargs.get(
+            "n_restarts_optimizer", 5)
+        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
+        self.n_jobs = n_jobs
+        self.acq_optimizer_kwargs = acq_optimizer_kwargs
+
+        # Configure search space
+
+        # normalize space if GP regressor
+        if isinstance(self.base_estimator_, GaussianProcessRegressor):
+            dimensions = normalize_dimensions(dimensions)
+        self.space = Space(dimensions)
+
+        # record categorical and non-categorical indices
+        self._cat_inds = []
+        self._non_cat_inds = []
+        for ind, dim in enumerate(self.space.dimensions):
+            if isinstance(dim, Categorical):
+                self._cat_inds.append(ind)
+            else:
+                self._non_cat_inds.append(ind)
+
+        # Initialize storage for optimization
+        if not isinstance(model_queue_size, (int, type(None))):
+            raise TypeError("model_queue_size should be an int or None, "
+                            "got {}".format(type(model_queue_size)))
+        self.max_model_queue_size = model_queue_size
+        self.models = []
+        self.Xi = []
+        self.yi = []
+
+        # Initialize cache for `ask` method responses
+
+        # This ensures that multiple calls to `ask` with n_points set
+        # return same sets of points. Reset to {} at every call to `tell`.
+        self.cache_ = {}
 
     def copy(self, random_state=None):
         """Create a shallow copy of an instance of the optimizer.
 
         Parameters
         ----------
-        * `random_state` [int, RandomState instance, or None (default)]:
+        random_state : int, RandomState instance, or None (default)
             Set the random state of the copy.
         """
 
@@ -275,7 +300,7 @@ class Optimizer(object):
     def ask(self, n_points=None, strategy="cl_min"):
         """Query point or multiple points at which objective should be evaluated.
 
-        * `n_points` [int or None, default=None]:
+        n_points : int or None, default=None
             Number of points returned by the ask method.
             If the value is None, a single point to evaluate is returned.
             Otherwise a list of points to evaluate is returned of size
@@ -283,12 +308,12 @@ class Optimizer(object):
             parallel, and thus obtain more objective function evaluations per
             unit of time.
 
-        * `strategy` [string, default=`"cl_min"`]:
+        strategy : string, default="cl_min"
             Method to use to sample multiple points (see also `n_points`
             description). This parameter is ignored if n_points = None.
             Supported options are `"cl_min"`, `"cl_mean"` or `"cl_max"`.
 
-            - If set to `"cl_min"`, then constant liar strtategy is used
+            - If set to `"cl_min"`, then constant liar strategy is used
                with lie objective value being minimum of observed objective
                values. `"cl_mean"` and `"cl_max"` means mean and max of values
                respectively. For details on this strategy see:
@@ -403,13 +428,13 @@ class Optimizer(object):
 
         Parameters
         ----------
-        * `x` [list or list-of-lists]:
+        x : list or list-of-lists
             Point at which objective was evaluated.
 
-        * `y` [scalar or list]:
+        y : scalar or list
             Value of objective at `x`.
 
-        * `fit` [bool, default=True]
+        fit : bool, default=True
             Fit a model to observed evaluations of the objective. A model will
             only be fitted after `n_initial_points` points have been told to
             the optimizer irrespective of the value of `fit`.
@@ -472,7 +497,15 @@ class Optimizer(object):
 
             if hasattr(self, "next_xs_") and self.acq_func == "gp_hedge":
                 self.gains_ -= est.predict(np.vstack(self.next_xs_))
-            self.models.append(est)
+
+            if self.max_model_queue_size is None:
+                self.models.append(est)
+            elif len(self.models) < self.max_model_queue_size:
+                self.models.append(est)
+            else:
+                # Maximum list size obtained, remove oldest model.
+                self.models.pop(0)
+                self.models.append(est)
 
             # even with BFGS as optimizer we want to sample a large number
             # of points and then pick the best ones as starting points
@@ -569,5 +602,28 @@ class Optimizer(object):
             x = self.ask()
             self.tell(x, func(x))
 
+        return create_result(self.Xi, self.yi, self.space, self.rng,
+                             models=self.models)
+
+    def update_next(self):
+        """Updates the value returned by opt.ask(). Useful if a parameter
+        was updated after ask was called."""
+        self.cache_ = {}
+        # Ask for a new next_x.
+        # We only need to overwrite _next_x if it exists.
+        if hasattr(self, '_next_x'):
+            opt = self.copy(random_state=self.rng)
+            self._next_x = opt._next_x
+
+    def get_result(self):
+        """Returns the same result that would be returned by opt.tell()
+        but without calling tell
+
+        Returns
+        -------
+        res : `OptimizeResult`, scipy object
+            OptimizeResult instance with the required information.
+
+        """
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)

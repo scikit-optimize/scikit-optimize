@@ -1,0 +1,5 @@
+matplotlib
+pandas
+sphinx-gallery
+scikit-learn
+scikit-optimize

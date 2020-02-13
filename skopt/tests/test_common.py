@@ -6,14 +6,12 @@ from scipy.optimize import OptimizeResult
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns_message
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_less
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_equal
+from numpy.testing import assert_raises
 
 from skopt import dummy_minimize
 from skopt import gp_minimize
@@ -90,11 +88,9 @@ def call_single(res):
 
 
 @pytest.mark.fast_test
-@pytest.mark.parametrize("verbose, call",
-                         product(
-                            [True, False],
-                            [call_single, [call_single,
-                                           check_result_callable]]))
+@pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.parametrize("call",
+                         [call_single, [call_single, check_result_callable]])
 def test_minimizer_api_dummy_minimize(verbose, call):
     # dummy_minimize is special as it does not support all parameters
     # and does not fit any models
@@ -106,18 +102,15 @@ def test_minimizer_api_dummy_minimize(verbose, call):
     assert result.models == []
     check_minimizer_api(result, n_calls)
     check_minimizer_bounds(result, n_calls)
-    assert_raise_message(ValueError,
-                         "return a scalar",
-                         dummy_minimize, lambda x: x, [[-5, 10]])
+    with pytest.raises(ValueError):
+        dummy_minimize(lambda x: x, [[-5, 10]])
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("verbose, call, minimizer",
-                         product(
-                            [True, False],
-                            [call_single, [call_single,
-                                           check_result_callable]],
-                            MINIMIZERS))
+@pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.parametrize("call",
+                         [call_single, [call_single, check_result_callable]])
+@pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_minimizer_api(verbose, call, minimizer):
     n_calls = 7
     n_random_starts = 3
@@ -131,9 +124,8 @@ def test_minimizer_api(verbose, call, minimizer):
 
     check_minimizer_api(result, n_calls, n_models)
     check_minimizer_bounds(result, n_calls)
-    assert_raise_message(ValueError,
-                         "return a scalar",
-                         minimizer, lambda x: x, [[-5, 10]])
+    with pytest.raises(ValueError):
+        minimizer(lambda x: x, [[-5, 10]])
 
 
 @pytest.mark.fast_test
@@ -196,11 +188,9 @@ def test_minimizer_with_space(minimizer):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 1, 2, 3, 4],
-                                 [gp_minimize,
-                                  forest_minimize,
-                                  gbrt_minimize]))
+@pytest.mark.parametrize("n_random_starts", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("optimizer_func",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_init_vals_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points, y0 values
     # and random starts
@@ -217,11 +207,9 @@ def test_init_vals_and_models(n_random_starts, optimizer_func):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 1, 2, 3, 4],
-                                 [gp_minimize,
-                                  forest_minimize,
-                                  gbrt_minimize]))
+@pytest.mark.parametrize("n_random_starts", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("optimizer_func",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_init_points_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points and random
     # starts (no y0 in this case)
@@ -236,11 +224,9 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize("n_random_starts, optimizer_func",
-                         product([0, 5],
-                                 [gp_minimize,
-                                  forest_minimize,
-                                  gbrt_minimize]))
+@pytest.mark.parametrize("n_random_starts", [0, 5])
+@pytest.mark.parametrize("optimizer_func",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_init_vals(n_random_starts, optimizer_func):
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
@@ -334,53 +320,50 @@ def check_init_vals(optimizer, func, space, x0, n_calls):
 @pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_invalid_n_calls_arguments(minimizer):
-    assert_raise_message(ValueError,
-                         "Expected `n_calls` >= 10, got 0",
-                         minimizer,
-                         branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_calls=0,
-                         random_state=1)
+    with pytest.raises(ValueError):
+        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                  n_calls=0, random_state=1)
 
-    assert_raise_message(ValueError,
-                         "set `n_random_starts` > 0, or provide `x0`",
-                         minimizer,
-                         branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_random_starts=0,
-                         random_state=1)
+    with pytest.raises(ValueError):
+        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                  n_random_starts=0, random_state=1)
 
     # n_calls >= n_random_starts
-    assert_raise_message(ValueError,
-                         "Expected `n_calls` >= 10",
-                         minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_calls=1, n_random_starts=10, random_state=1)
+    with pytest.raises(ValueError):
+        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+                  n_calls=1, n_random_starts=10, random_state=1)
 
     # n_calls >= n_random_starts + len(x0)
-    assert_raise_message(ValueError,
-                         "Expected `n_calls` >= 10",
-                         minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
-                         random_state=1, n_random_starts=7)
+    with pytest.raises(ValueError):
+        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=1,
+                  x0=[[-1, 2], [-3, 3], [2, 5]], random_state=1,
+                  n_random_starts=7)
 
     # n_calls >= n_random_starts
-    assert_raise_message(ValueError,
-                         "Expected `n_calls` >= 7",
-                         minimizer, branin, [(-5.0, 10.0), (0.0, 15.0)],
-                         n_calls=1, x0=[[-1, 2], [-3, 3], [2, 5]],
-                         y0=[2.0, 3.0, 5.0],
-                         random_state=1, n_random_starts=7)
+    with pytest.raises(ValueError):
+        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=1,
+                  x0=[[-1, 2], [-3, 3], [2, 5]], y0=[2.0, 3.0, 5.0],
+                  random_state=1, n_random_starts=7)
 
 
 @pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_repeated_x(minimizer):
-    assert_warns_message(
-        UserWarning, "has been evaluated at", minimizer, lambda x: x[0],
-        dimensions=[[0, 1]], x0=[[0], [1]], n_random_starts=0, n_calls=3)
+    with pytest.warns(None) as record:
+        minimizer(lambda x: x[0], dimensions=[[0, 1]], x0=[[0], [1]],
+                  n_random_starts=0, n_calls=3)
+    assert len(record) > 0
+    w = record.pop(UserWarning)
+    assert issubclass(w.category, UserWarning)
+    assert "has been evaluated at" in str(w.message)
 
-    assert_warns_message(
-        UserWarning, "has been evaluated at", minimizer, bench4,
-        dimensions=[("0", "1")], x0=[["0"], ["1"]], n_calls=3,
-        n_random_starts=0)
+    with pytest.warns(None) as record:
+        minimizer(bench4, dimensions=[("0", "1")], x0=[["0"], ["1"]],
+                  n_calls=3, n_random_starts=0)
+        assert len(record) > 0
+        w = record.pop(UserWarning)
+        assert issubclass(w.category, UserWarning)
+        assert "has been evaluated at" in str(w.message)
 
 
 @pytest.mark.fast_test
@@ -403,15 +386,13 @@ def test_consistent_x_iter_dimensions(minimizer):
     assert len(set(len(x) for x in res.x_iters)) == 1
     assert len(res.x_iters[0]) == 1
 
-    assert_raise_message(RuntimeError,
-                         "use inconsistent dimensions",
-                         minimizer, bench1, dimensions=[(0, 1)],
-                         x0=[[0, 1]], n_calls=3, n_random_starts=0)
+    with pytest.raises(RuntimeError):
+        minimizer(bench1, dimensions=[(0, 1)],
+                  x0=[[0, 1]], n_calls=3, n_random_starts=0)
 
-    assert_raise_message(RuntimeError,
-                         "use inconsistent dimensions",
-                         minimizer, bench1, dimensions=[(0, 1)],
-                         x0=[0, 1], n_calls=3, n_random_starts=0)
+    with pytest.raises(RuntimeError):
+        minimizer(bench1, dimensions=[(0, 1)],
+                  x0=[0, 1], n_calls=3, n_random_starts=0)
 
 
 @pytest.mark.slow_test
@@ -443,10 +424,9 @@ def test_early_stopping_delta_x_empty_result_object(minimizer):
     assert len(res.x_iters) < n_calls
 
 
-@pytest.mark.parametrize("acq_func, minimizer", product(ACQ_FUNCS_PS,
-                                                        [gp_minimize,
-                                                         forest_minimize,
-                                                         gbrt_minimize]))
+@pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
+@pytest.mark.parametrize("minimizer",
+                         [gp_minimize, forest_minimize, gbrt_minimize])
 def test_per_second_api(acq_func, minimizer):
     def bench1_with_time(x):
         return bench1(x), np.abs(x[0])

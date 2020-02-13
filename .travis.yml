@@ -1,41 +1,71 @@
 language: python
 
-notifications:
-  email: false
-
 cache:
+  apt: true
   directories:
-   - $HOME/.cache/pip
+  - $HOME/.cache/pip
+  - $HOME/.ccache
 
 env:
-  matrix:
-    - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="false"
-    - DISTRIB="conda" PYTHON_VERSION="3.5" COVERAGE="true"
-    - DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="false"
+  global:
+    # Directory where tests are run from
+    - TEST_DIR=/tmp/skopt
+    - OMP_NUM_THREADS=4
+    - OPENBLAS_NUM_THREADS=4
+
+
+matrix:
+  include:
+    # Linux environment to test scikit-learn against numpy and scipy master
+    # installed from their CI wheels in a virtualenv with the Python
+    # interpreter provided by travis.
+    - name: "Python 3.5 - scikit 0.19.2"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.5"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+           SCIKIT_LEARN_VERSION="0.19.2" MATPLOTLIB_VERSION="*" COVERAGE="false"
+           JOBLIB_VERSION="0.11"
+    - name: "Python 3.6 - scikit 0.20.4"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.6"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+           SCIKIT_LEARN_VERSION="0.20.4" MATPLOTLIB_VERSION="*" COVERAGE="false"
+           JOBLIB_VERSION="0.12"
+    - name: "Python 3.7 - scikit 0.21.3"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.7"
+         NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+         SCIKIT_LEARN_VERSION="0.21.3" MATPLOTLIB_VERSION="*" COVERAGE="true"
+         JOBLIB_VERSION="*"
+    - name: "Python 3.7 - scikit 0.22.1"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.7"
+         NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+         SCIKIT_LEARN_VERSION="0.22.1" MATPLOTLIB_VERSION="*" COVERAGE="true"
+         JOBLIB_VERSION="*"
+    - name: "Python 3.8  latest package versions"
+      python: "3.7"
+      env: DISTRIB="conda" PYTHON_VERSION="3.8" COVERAGE="false"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PYAML_VERSION="*"
+           SCIKIT_LEARN_VERSION="*" JOBLIB_VERSION="*"
+
 
 install: source build_tools/travis/install.sh
-
 script:
-  - if [ ${COVERAGE} == "true" ];
-    then pytest --cov=skopt --durations=10; else
-    pytest --durations=10;
-    fi
-
-after_success:
-  - if [ ${COVERAGE} == "true" ]; then
-    pip install codecov;
-    codecov;
-    fi
-
+  - bash build_tools/travis/test_script.sh
+  # - bash build_tools/travis/test_docs.sh
+after_success: source build_tools/travis/after_success.sh
 deploy:
   provider: pypi
-  user: betatim
+  user: __token__
   # this line together with `setup.cfg` creates universal wheels as long as
   # skopt is a python only module (no compiled code)
   distributions: sdist bdist_wheel
   on:
     tags: true
     repo: scikit-optimize/scikit-optimize
-    condition: "$PYTHON_VERSION = 3.5"
+    condition: "$PYTHON_VERSION = 3.6"
+  skip_cleanup: true
+  skip_existing: true
   password:
-    secure: "NoybLUwpiDZAQAWkhd9IL0NnwbvW5Hy9cPumcVT3ZS7LJRGmb/zJfQajSIA7kf5RGGbydtCnKD82Mj5A9e1BRVgN6OEl7PJQD5EKCcFpaifnm5romTPN9i+BUeZz+mLpZUJbIANb6L3eBWqMthdsw1r6FR95YDL8mgVXvAqOA+7Inm4b+NssXK6XLyqwrN56UK1TT2oppCdKAVBk02oG/moF5czGbSHsNdcTpDHCPN7xJB/R4qxkvIa1z8WcsSjgpj2rhpCGmGM/XBpueROqvcycUOvG1nSNUn7q3/miOdZDCQvZkNSU10UlB+b3Yva3y1baGaNILYie0CC4dgVhWTSZI12fOfl9jCMzOLZAOPQghb+BjnVzxrHQHJeMFQR3VqXdSYY8basASfK/981siaVkXkEFnbKichEUtEHrDYgYCXCFGhA3GEDMQhvhqw2v3FTL3xN8VgVWjJUM4L/RRbJiXADXuxzb9/3v6PehF1NlSzEnwO5m7GuFbkPNBwZGuoMF0wQmLx5vb0E1T29R0oMHGe3k7BLhaFnMMii3bnPaSCWSsBE88Z1Bcwjs45JYgbWXZQG0ManeLEvM2digaQ0WDtkkjHqRjTeRR7f5+BvB0/meDZwW4XUccB8gCFDWC/jivLAwF8WRxpSLYBBUvfUax//OkKpzbHDsaZZh8i0="
+    secure: "fRrICfP/zNgp/wpMO/ip03P2/G3MhKYj2q7ZJLxgCt/c/AWbobzOF5L7IyCC/Z8VycqdMv1AcF/HLQRBiNQ/ZRxy7RkXk0Bc387ZmlZo3EmCWFhCxeYIJVqBqPQL+qUplbuLFMlcHsvjZh9R2R06k7zxu6cbGrgNCl59NcOcqjqWopwvG8A/nvZ6xLriaZOWv8u6vWrav+xqWSudaBpwjzB2h244rFhWlelKXBGQKw2TKYLuN9BMuklyaTojbVIy62VbL2/SMfPwl9phTAWpxHHjHYQPdk0RpgTJ9YCroSY3HM1LcD7MgIq4Rh1N8M6lcWqoRkjNBso/oLRGWh2Pbz3vt7tssGjAYfE9Xeir5yX1u5+aXzceb4JuIovAwjwvcOAfH8VoXM8nna3o3Qev4j82+XOwYdnuRfpASE1tiRCA/MYHzLvJe8YSfB5vflSKYpTOgKCw4UGp77G/hNs1nsorzCpLoezJ+ZBaehzs9ZdJ0Y5Lm3u1pPKR47DwXHvknLOcx90YN8mZu8c7c3nsC7D9B6xnE0sO1SarIXs3p4zbpfnvc7CDIR4WCvWoT3HQDurFxG6RwkVGcyDF43Wkv3DjOlmADFSOb6z3+G6vbw3p0Bkr6vNBoLuL9eIPkyjblkBEEleLlUBHQWtkBhVeoZiTXxKSHIW7RGd1fcmHWXU="

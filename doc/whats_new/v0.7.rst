@@ -1,0 +1,22 @@
+Version 0.7
+===========
+
+New features
+------------
+
+* Models queue has now a customizable size (model_queue_size).
+* Add log-uniform prior to Integer space
+* Support for plotting categorical dimensions
+
+Bug fixes
+---------
+
+* Allow BayesSearchCV to work with sklearn 0.21
+* Reduce the amount of deprecation warnings in unit tests
+
+Maintenance
+-----------
+
+* joblib instead of sklearn.externals.joblib
+* Improve travis CI unit tests (Different sklearn version are checked)
+* Removed `versioneer` support, to keep things simple and to fix pypi deploy

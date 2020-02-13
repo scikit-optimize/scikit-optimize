@@ -1,0 +1,10 @@
+[run]
+omit =
+    skopt/__init__.py
+    # these are our tests, don't count them towards coverage
+    skopt/tests/*
+
+[report]
+exclude_lines =
+   # Don't complain about packages we have installed
+   except ImportError
