@@ -176,6 +176,7 @@ class Dimension(object):
         else:
             raise ValueError("Dimension's name must be either string or None.")
 
+
 def _uniform_inclusive(loc=0.0, scale=1.0):
     # like scipy.stats.distributions but inclusive of `high`
     # XXX scale + 1. might not actually be a float after scale if
