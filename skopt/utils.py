@@ -601,15 +601,15 @@ def get_samples_dimension(result, index):
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : OptimizeResult
         The optimization results e.g. from calling `gp_minimize()`.
 
-    * `index` [int]:
+    index : int
         Index for a dimension in the search-space.
 
     Returns
     -------
-    * `samples`: [list of either int, float or string]:
+    samples : list of either int, float or string
         The optimization samples for the given dimension.
     """
 
