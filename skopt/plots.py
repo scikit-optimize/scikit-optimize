@@ -360,7 +360,7 @@ def _adjust_fig(fig, ax, space, ylabel, dimensions):
             ax[row, col].set_xticklabels([])
 
 
-def _map_bins(bins, bounds, prior):
+def _map_bins(bins, bounds, prior, categories=None):
     """
     For use when plotting histograms.
     Maps the number of bins to a log-scale between the bounds, if necessary.
@@ -386,8 +386,9 @@ def _map_bins(bins, bounds, prior):
          Number of bins for a histogram if no mapping,
          or a log-scaled array of bin-points if mapping is needed.
     """
-
-    if prior == 'log-uniform':
+    if categories is not None:
+        bins_ = len(categories)
+    elif prior == 'log-uniform':
         # Map the number of bins to a log-space for the dimension bounds.
         bounds_log = np.log10(bounds)
         bins_mapped = np.logspace(bounds_log[0], bounds_log[1], bins)
@@ -1044,8 +1045,6 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 
     A red star shows the best found parameters.
 
-    NOTE: Search-spaces with `Categorical` dimensions are not supported.
-
     Parameters
     ----------
     result : `OptimizeResult`
@@ -1054,9 +1053,8 @@ def plot_evaluations(result, bins=20, dimension_names=None):
     bins : int, bins=20
         Number of bins to use for histograms on the diagonal.
 
-    dimension_names : list(str)
+    dimension_names : list of str, default=None
         List of names for search-space dimensions to be used in the plot.
-        You can omit `Categorical` dimensions here as they are not supported.
         If `None` then use all dimensions from the search-space.
 
     Returns
@@ -1071,19 +1069,31 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 
     # Get the search-space instance from the optimization results.
     space = result.space
-
+    # Convert categoricals to integers, so we can ensure consistent ordering.
+    # Assign indices to categories in the order they appear in the Dimension.
+    # Matplotlib's categorical plotting functions are only present in v 2.1+,
+    # and may order categoricals differently in different plots anyway.
+    samples, minimum, iscat = _map_categories(space, result.x_iters, result.x)
+    dimension_names = space.dimension_names
     # Get the relevant search-space dimensions.
     if dimension_names is None:
         # Get all dimensions.
         dimensions = space.dimensions
+        dim_index = []
+        for row in range(space.n_dims):
+            dim_index.append(row)
     else:
         # Only get the named dimensions.
-        dimensions = space[dimension_names]
+        dimensions = []
+        dim_index = []
+        for row in range(space.n_dims):
+            dim_name = space.dimensions[row].name
+            if dim_name is None:
+                dim_name = "X_%d" % row
+            if dim_name in dimension_names:
+                dimensions.append(space.dimensions[row])
+                dim_index.append(row)
 
-    # Ensure there are no categorical dimensions.
-    # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(isinstance(dim, Categorical) for dim in dimensions):
-        raise ValueError("Categorical dimension is not supported.")
 
     # Number of search-space dimensions we are using.
     n_dims = len(dimensions)
@@ -1102,7 +1112,7 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 
         # Get the index for the search-space dimension.
         # This is used to lookup that particular dimension in some functions.
-        index_row = dim_row.index
+        index_row = dim_index[row]
 
         # Get the samples from the optimization-log for this dimension.
         samples_row = get_samples_dimension(result=result, index=index_row)
@@ -1110,13 +1120,19 @@ def plot_evaluations(result, bins=20, dimension_names=None):
         # Get the best-found sample for this dimension.
         best_sample_row = result.x[index_row]
 
-        # Search-space boundary for this dimension.
-        bounds_row = dim_row.bounds
+        if iscat[row]:
+            categories = dim_row.categories
+            bounds_row = None
+        else:
+            categories = None
+            # Search-space boundary for this dimension.
+            bounds_row = dim_row.bounds
 
         # Map the number of bins to a log-space if necessary.
         bins_mapped = _map_bins(bins=bins,
                                 bounds=dim_row.bounds,
-                                prior=dim_row.prior)
+                                prior=dim_row.prior,
+                                categories=categories)
 
         # Plot a histogram on the diagonal.
         ax[row, row].hist(samples_row, bins=bins_mapped, range=bounds_row)
@@ -1128,8 +1144,7 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 
             # Get the index for this search-space dimension.
             # This is used to lookup that dimension in some functions.
-            index_col = dim_col.index
-
+            index_col = dim_index[col]
             # Get the samples from the optimization-log for that dimension.
             samples_col = get_samples_dimension(result=result, index=index_col)
 
@@ -1157,14 +1172,17 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 def _map_categories(space, points, minimum):
     """
     Map categorical values to integers in a set of points.
+
     Returns
     -------
-   mapped_points : np.array, shape=points.shape
+    mapped_points : np.array, shape=points.shape
         A copy of `points` with categoricals replaced with their indices in
         the corresponding `Dimension`.
+
     mapped_minimum : np.array, shape (space.n_dims,)
         A copy of `minimum` with categoricals replaced with their indices in
         the corresponding `Dimension`.
+
     iscat : np.array, shape (space.n_dims,)
        Boolean array indicating whether dimension `i` in the `space` is
        categorical.
@@ -1187,20 +1205,24 @@ def _map_categories(space, points, minimum):
 
 def _evenly_sample(dim, n_points):
     """Return `n_points` evenly spaced points from a Dimension.
+
     Parameters
     ----------
     dim : `Dimension`
         The Dimension to sample from.  Can be categorical; evenly-spaced
         category indices are chosen in order without replacement (result
         may be smaller than `n_points`).
+
     n_points : int
         The number of points to sample from `dim`.
+
     Returns
     -------
     xi : np.array
         The sampled points in the Dimension.  For Categorical
         dimensions, returns the index of the value in
         `dim.categories`.
+
     xi_transformed : np.array
         The transformed values of `xi`, for feeding to a model.
     """

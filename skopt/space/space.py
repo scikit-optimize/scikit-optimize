@@ -670,7 +670,15 @@ class Space(object):
         """
         Names of all the dimensions in the search-space.
         """
-        return [dim.name for dim in self.dimensions]
+        index = 0
+        names = []
+        for dim in self.dimensions:
+            if dim.name is None:
+                names.append("X_%d" % index)
+            else:
+                names.append(dim.name)
+            index += 1
+        return names
 
     @property
     def is_real(self):
