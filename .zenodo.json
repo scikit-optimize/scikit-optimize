@@ -4,7 +4,8 @@
   "creators": [
     {
       "affiliation": "Wild Tree Tech",
-      "name": "Head, Tim"
+      "name": "Head, Tim",
+      "orcid": "0000-0003-0931-3698"
     },
     {
       "affiliation": "Google Brain",
@@ -16,103 +17,12 @@
     },
     {
       "affiliation": "ULi\u00e8ge",
-      "name": "Louppe, Gilles"
+      "name": "Louppe, Gilles",
+      "orcid": "0000-0002-2082-3106"
     },
     {
       "affiliation": "Saarland University",
       "name": "Shcherbatyi, Iaroslav"
-    },
-    {
-      "name": "fcharras"
-    },
-    {
-      "name": "Z\u00e9 Vin\u00edcius"
-    },
-    {
-      "name": "cmmalone"
-    },
-    {
-      "name": "Christopher Schr\u00f6der"
-    },
-    {
-      "name": "nel215"
-    },
-    {
-      "affiliation": "@yldio",
-      "name": "Nuno Campos"
-    },
-    {
-      "name": "Todd Young"
-    },
-    {
-      "affiliation": "Politecnico di Milano",
-      "name": "Stefano Cereda"
-    },
-    {
-      "name": "Thomas Fan"
-    },
-    {
-      "name": "rene-rex"
-    },
-    {
-      "affiliation": "Columbia University",
-      "name": "Kejia (KJ) Shi"
-    },
-    {
-      "affiliation": "Biomedical Informatics Department, Emory School of Medicine",
-      "name": "Justus Schwabedal"
-    },
-    {
-      "name": "carlosdanielcsantos"
-    },
-    {
-      "affiliation": "Hvass Laboratories",
-      "name": "Hvass-Labs"
-    },
-    {
-      "affiliation": "Technical University of Munich",
-      "name": "Mikhail Pak"
-    },
-    {
-      "name": "SoManyUsernamesTaken"
-    },
-    {
-      "affiliation": "UC Berkeley",
-      "name": "Fred Callaway"
-    },
-    {
-      "name": "Lo\u00efc Est\u00e8ve"
-    },
-    {
-      "affiliation": "ENS de Cachan - Paris Saclay University",
-      "name": "Lilian Besson"
-    },
-    {
-      "name": "Mehdi Cherti"
-    },
-    {
-      "affiliation": "Paderborn University",
-      "name": "Karlson Pfannschmidt"
-    },
-    {
-      "affiliation": "Toptal",
-      "name": "Fabian Linzberger"
-    },
-    {
-      "affiliation": "@point8",
-      "name": "Christophe Cauet"
-    },
-    {
-      "affiliation": "10clouds",
-      "name": "Anna Gut"
-    },
-    {
-      "affiliation": "Columbia University Data Science Institute",
-      "name": "Andreas Mueller"
-    },
-    {
-      "affiliation": "DFKI",
-      "name": "Alexander Fabisch"
     }
   ],
   "keywords": [
@@ -124,7 +34,7 @@
     "hyperparameter",
     "bayesian-optimization"
   ],
-  "license": "BSD-3-Clause",
+  "license": "bsd-3-clause",
   "related_identifiers": [
     {
       "identifier": "https://scikit-optimize.github.io",
