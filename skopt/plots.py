@@ -53,7 +53,6 @@ def plot_convergence(*args, **kwargs):
     ax : `Axes`
         The matplotlib axes.
     """
-
     # <3 legacy python
     ax = kwargs.get("ax", None)
     true_minimum = kwargs.get("true_minimum", None)
@@ -103,6 +102,91 @@ def plot_convergence(*args, **kwargs):
                    label="True minimum")
 
     if true_minimum or name:
+        ax.legend(loc="best")
+
+    return ax
+
+
+def plot_regret(*args, **kwargs):
+    """Plot one or several cumulative regret traces.
+    Parameters
+    ----------
+    args[i] : `OptimizeResult`, list of `OptimizeResult`, or tuple
+        The result(s) for which to plot the cumulative regret trace.
+        - if `OptimizeResult`, then draw the corresponding single trace;
+        - if list of `OptimizeResult`, then draw the corresponding cumulative
+            regret traces in transparency, along with the average cumulative
+            regret trace;
+        - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
+          an `OptimizeResult` or a list of `OptimizeResult`.
+    ax : Axes`, optional
+        The matplotlib axes on which to draw the plot, or `None` to create
+        a new one.
+    true_minimum : float, optional
+        The true minimum value of the function, if known.
+    yscale : None or string, optional
+        The scale for the y-axis.
+    Returns
+    -------
+    ax : `Axes`
+        The matplotlib axes.
+    """
+    # <3 legacy python
+    ax = kwargs.get("ax", None)
+    true_minimum = kwargs.get("true_minimum", None)
+    yscale = kwargs.get("yscale", None)
+
+    if ax is None:
+        ax = plt.gca()
+
+    ax.set_title("Cumulative regret plot")
+    ax.set_xlabel("Number of calls $n$")
+    ax.set_ylabel(r"$\sum_{i=0}^n(f(x_i) - optimum)$ after $n$ calls")
+    ax.grid()
+
+    if yscale is not None:
+        ax.set_yscale(yscale)
+
+    colors = cm.viridis(np.linspace(0.25, 1.0, len(args)))
+
+    if true_minimum is None:
+        results = []
+        for res in args:
+            if isinstance(res, tuple):
+                res = res[1]
+
+            if isinstance(res, OptimizeResult):
+                results.append(res)
+            elif isinstance(res, list):
+                results.extend(res)
+        true_minimum = np.min([np.min(r.func_vals) for r in results])
+
+    for results, color in zip(args, colors):
+        if isinstance(results, tuple):
+            name, results = results
+        else:
+            name = None
+
+        if isinstance(results, OptimizeResult):
+            n_calls = len(results.x_iters)
+            regrets = [np.sum(results.func_vals[:i] - true_minimum)
+                       for i in range(1, n_calls + 1)]
+            ax.plot(range(1, n_calls + 1), regrets, c=color,
+                    marker=".", markersize=12, lw=2, label=name)
+
+        elif isinstance(results, list):
+            n_calls = len(results[0].x_iters)
+            iterations = range(1, n_calls + 1)
+            regrets = [[np.sum(r.func_vals[:i] - true_minimum) for i in
+                        iterations] for r in results]
+
+            for cr in regrets:
+                ax.plot(iterations, cr, c=color, alpha=0.2)
+
+            ax.plot(iterations, np.mean(regrets, axis=0), c=color,
+                    marker=".", markersize=12, lw=2, label=name)
+
+    if name:
         ax.legend(loc="best")
 
     return ax
@@ -507,24 +591,24 @@ def plot_evaluations(result, bins=20, dimension_names=None):
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : `OptimizeResult`
         The optimization results from calling e.g. `gp_minimize()`.
 
-    * `bins` [int, bins=20]:
+    bins : int, bins=20
         Number of bins to use for histograms on the diagonal.
 
-    * `dimension_names` [list(str)]:
+    dimension_names : list(str)
         List of names for search-space dimensions to be used in the plot.
         You can omit `Categorical` dimensions here as they are not supported. 
         If `None` then use all dimensions from the search-space.
 
     Returns
     -------
-    * `fig`: [`Matplotlib.Figure`]:
+    fig : `Matplotlib.Figure`
         The object for the figure.
         For example, call `fig.savefig('plot.png')` to save the plot.
 
-    * `ax`: [`Matplotlib.Axes`]:
+    ax : `Matplotlib.Axes`
         A 2-d matrix of Axes-objects with the sub-plots.
     """
 
@@ -657,26 +741,26 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
 
     Parameters
     ----------
-    * `result` [`OptimizeResult`]
+    result : `OptimizeResult`
         The optimization results from calling e.g. `gp_minimize()`.
 
     levels : int, default=10
         Number of levels to draw on the contour plot, passed directly
         to `plt.contour()`.
 
-    * `n_points` [int, default=40]
+    n_points : int, default=40
         Number of points along each dimension where the partial dependence
         is evaluated when generating the contour-plots.
 
-    * `n_samples` [int, default=250]
+    n_samples : int, default=250
         Number of points along each dimension where the partial dependence
         is evaluated when generating the contour-plots.
 
-    * `zscale` [str, default='linear']
+    zscale : str, default='linear'
         Scale to use for the z-axis of the contour plots.
         Either 'log' or linear for all other choices.
 
-    * `dimension_names` [list(str), default=None]:
+    dimension_names : list(str), default=None
         List of names for search-space dimensions to be used in the plot.
         You can omit `Categorical` dimensions here as they are not supported.
         If `None` then use all dimensions from the search-space.
@@ -728,11 +812,11 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
 
     Returns
     -------
-    * `fig`: [`Matplotlib.Figure`]:
+    fig : `Matplotlib.Figure`
         The object for the figure.
         For example, call `fig.savefig('plot.png')` to save the plot.
     
-    * `ax`: [`Matplotlib.Axes`]:
+    ax : `Matplotlib.Axes`
         A 2-d matrix of Axes-objects with the sub-plots.
     """
 
@@ -993,11 +1077,12 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
 
     Returns
     -------
-    * `fig`: [`Matplotlib.Figure`]:
+    fig : `Matplotlib.Figure`
         The Matplotlib Figure-object.
-        For example, you can save the plot by calling `fig.savefig('file.png')` 
+        For example, you can save the plot by calling
+        `fig.savefig('file.png')`
 
-    * `ax`: [`Matplotlib.Axes`]:
+    ax : `Matplotlib.Axes`
         The Matplotlib Axes-object.
     """
 
