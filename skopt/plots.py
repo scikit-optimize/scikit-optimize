@@ -579,365 +579,6 @@ def partial_dependence_2D(model, dimension1, dimension2, samples, n_points=40):
     return xi, yi, zi
 
 
-def plot_evaluations(result, bins=20, dimension_names=None):
-    """
-    Visualize the order in which points were sampled during optimization.
-
-    This creates a 2-d matrix plot where the diagonal plots are histograms
-    that show the distribution of samples for each search-space dimension.
-
-    The plots below the diagonal are scatter-plots of the samples for
-    all combinations of search-space dimensions.
-
-    The ordering of the samples are shown as different colour-shades.
-
-    A red star shows the best found parameters.
-
-    NOTE: Search-spaces with `Categorical` dimensions are not supported.
-
-    Parameters
-    ----------
-    result : `OptimizeResult`
-        The optimization results from calling e.g. `gp_minimize()`.
-
-    bins : int, bins=20
-        Number of bins to use for histograms on the diagonal.
-
-    dimension_names : list(str)
-        List of names for search-space dimensions to be used in the plot.
-        You can omit `Categorical` dimensions here as they are not supported. 
-        If `None` then use all dimensions from the search-space.
-
-    Returns
-    -------
-    fig : `Matplotlib.Figure`
-        The object for the figure.
-        For example, call `fig.savefig('plot.png')` to save the plot.
-
-    ax : `Matplotlib.Axes`
-        A 2-d matrix of Axes-objects with the sub-plots.
-    """
-
-    # Get the search-space instance from the optimization results.
-    space = result.space
-
-    # Get the relevant search-space dimensions.
-    if dimension_names is None:
-        # Get all dimensions.
-        dimensions = space.dimensions
-    else:
-        # Only get the named dimensions.
-        dimensions = space[dimension_names]
-
-    # Ensure there are no categorical dimensions.
-    # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(isinstance(dim, Categorical) for dim in dimensions):
-        raise ValueError("Categorical dimension is not supported.")
-
-    # Number of search-space dimensions we are using.
-    n_dims = len(dimensions)
-
-    # Create a figure for plotting a 2-d matrix of sub-plots.
-    fig, ax = plt.subplots(n_dims, n_dims, figsize=(2 * n_dims, 2 * n_dims))
-
-    # Used to plot colour-shades for the sample-ordering.
-    # It is just a range from 0 to the number of samples.
-    sample_order = range(len(result.x_iters))
-
-    # For all rows in the 2-d plot matrix.
-    for row in range(n_dims):
-        # Get the search-space dimension for this row.
-        dim_row = dimensions[row]
-
-        # Get the index for the search-space dimension.
-        # This is used to lookup that particular dimension in some functions.
-        index_row = dim_row.index
-
-        # Get the samples from the optimization-log for this dimension.
-        samples_row = get_samples_dimension(result=result, index=index_row)
-
-        # Get the best-found sample for this dimension.
-        best_sample_row = result.x[index_row]
-
-        # Search-space boundary for this dimension.
-        bounds_row = dim_row.bounds
-
-        # Map the number of bins to a log-space if necessary.
-        bins_mapped = _map_bins(bins=bins,
-                                bounds=dim_row.bounds,
-                                prior=dim_row.prior)
-
-        # Plot a histogram on the diagonal.
-        ax[row, row].hist(samples_row, bins=bins_mapped, range=bounds_row)
-
-        # For all columns until the diagonal in the 2-d plot matrix.
-        for col in range(row):
-            # Get the search-space dimension for this column.
-            dim_col = dimensions[col]
-
-            # Get the index for this search-space dimension.
-            # This is used to lookup that dimension in some functions.
-            index_col = dim_col.index
-
-            # Get the samples from the optimization-log for that dimension.
-            samples_col = get_samples_dimension(result=result, index=index_col)
-
-            # Plot all the parameters that were sampled during optimization.
-            # These are plotted as small coloured dots, where the colour-shade
-            # indicates the time-progression.
-            ax[row, col].scatter(samples_col, samples_row,
-                                 c=sample_order, s=40, lw=0., cmap='viridis')
-
-            # Get the best-found sample for this dimension.
-            best_sample_col = result.x[index_col]
-
-            # Plot the best parameters that were sampled during optimization.
-            # These are plotted as a big red star.
-            ax[row, col].scatter(best_sample_col, best_sample_row,
-                                 c='red', s=100, lw=0., marker='*')
-
-    # Make various adjustments to the plots.
-    _adjust_fig(fig=fig, ax=ax, space=space,
-                dimensions=dimensions, ylabel="Sample Count")
-
-    return fig, ax
-
-
-def plot_objective(result, levels=10, n_points=40, n_samples=250,
-                   zscale='linear', dimension_names=None):
-    """
-    Plot a 2-d matrix with so-called Partial Dependence plots
-    of the objective function. This shows the influence of each
-    search-space dimension on the objective function.
-
-    This uses the last fitted model for estimating the objective function.
-
-    The diagonal shows the effect of a single dimension on the
-    objective function, while the plots below the diagonal show
-    the effect on the objective function when varying two dimensions.
-
-    The Partial Dependence is calculated by averaging the objective value 
-    for a number of random samples in the search-space,
-    while keeping one or two dimensions fixed at regular intervals. This
-    averages out the effect of varying the other dimensions and shows
-    the influence of one or two dimensions on the objective function.
-
-    Also shown are small black dots for the points that were sampled
-    during optimization, and large red stars show the best found points.
-
-    NOTE: The Partial Dependence plot is only an estimation of the surrogate
-          model which in turn is only an estimation of the true objective
-          function that has been optimized. This means the plots show
-          an "estimate of an estimate" and may therefore be quite imprecise,
-          especially if few samples have been collected during the optimization
-          (e.g. less than 100-200 samples), and in regions of the search-space
-          that have been sparsely sampled (e.g. regions away from the optimum).
-          This means that the plots may change each time you run the
-          optimization and they should not be considered completely reliable.
-          These compromises are necessary because we cannot evaluate the
-          expensive objective function in order to plot it, so we have to use
-          the cheaper surrogate model to plot its contour. And in order to
-          show search-spaces with 3 dimensions or more in a 2-dimensional plot,
-          we further need to map those dimensions to only 2-dimensions using
-          the Partial Dependence, which also causes distortions in the plots.
-
-    NOTE: Search-spaces with `Categorical` dimensions are not supported.
-
-    NOTE: This function can be very slow for dimensions greater than 5.
-
-    Parameters
-    ----------
-    result : `OptimizeResult`
-        The optimization results from calling e.g. `gp_minimize()`.
-
-    levels : int, default=10
-        Number of levels to draw on the contour plot, passed directly
-        to `plt.contour()`.
-
-    n_points : int, default=40
-        Number of points along each dimension where the partial dependence
-        is evaluated when generating the contour-plots.
-
-    n_samples : int, default=250
-        Number of points along each dimension where the partial dependence
-        is evaluated when generating the contour-plots.
-
-    zscale : str, default='linear'
-        Scale to use for the z-axis of the contour plots.
-        Either 'log' or linear for all other choices.
-
-    dimension_names : list(str), default=None
-        List of names for search-space dimensions to be used in the plot.
-        You can omit `Categorical` dimensions here as they are not supported.
-        If `None` then use all dimensions from the search-space.
-
-    sample_source : str or list of floats, default='random'
-        Defines to samples generation to use for averaging the model function
-        at each of the `n_points`.
-
-        A partial dependence plot is only generated, when `sample_source`
-        is set to 'random' and `n_samples` is sufficient.
-
-        `sample_source` can also be a list of
-        floats, which is then used for averaging.
-
-        Valid strings:
-
-            - 'random' - `n_samples` random samples will used
-
-            - 'result' - Use only the best observed parameters
-
-            - 'expected_minimum' - Parameters that gives the best
-                  minimum Calculated using scipy's minimize method.
-                  This method currently does not work with categorical values.
-
-            - 'expected_minimum_random' - Parameters that gives the
-                  best minimum when using naive random sampling.
-                  Works with categorical values.
-
-    minimum : str or list of floats, default = 'result'
-        Defines the values for the red points in the plots.
-        Valid strings:
-
-            - 'result' - Use best observed parameters
-
-            - 'expected_minimum' - Parameters that gives the best
-                  minimum Calculated using scipy's minimize method.
-                  This method currently does not work with categorical values.
-
-            - 'expected_minimum_random' - Parameters that gives the
-                  best minimum when using naive random sampling.
-                  Works with categorical values
-
-    n_minimum_search : int, default = None
-        Determines how many points should be evaluated
-        to find the minimum when using 'expected_minimum' or
-        'expected_minimum_random'. Parameter is used when
-        `sample_source` and/or `minimum` is set to
-        'expected_minimum' or 'expected_minimum_random'.
-
-    Returns
-    -------
-    fig : `Matplotlib.Figure`
-        The object for the figure.
-        For example, call `fig.savefig('plot.png')` to save the plot.
-    
-    ax : `Matplotlib.Axes`
-        A 2-d matrix of Axes-objects with the sub-plots.
-    """
-
-    # Scale for the z-axis of the contour-plot. Either Log or Linear (None).
-    locator = LogLocator() if zscale == 'log' else None
-
-    # Get the search-space instance from the optimization results.
-    space = result.space
-
-    # Get the relevant search-space dimensions.
-    if dimension_names is None:
-        # Get all dimensions.
-        dimensions = space.dimensions
-    else:
-        # Only get the named dimensions.
-        dimensions = space[dimension_names]
-
-    # Ensure there are no categorical dimensions.
-    # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(isinstance(dim, Categorical) for dim in dimensions):
-        raise ValueError("Categorical dimension is not supported.")
-
-    # Number of search-space dimensions we are using.
-    n_dims = len(dimensions)
-
-    # Get the last fitted model for the search-space.
-    last_model = result.models[-1]
-
-    # Get new random samples from the search-space and transform if necessary.
-    new_samples = space.rvs(n_samples=n_samples)
-    new_samples = space.transform(new_samples)
-
-    # Create a figure for plotting a 2-d matrix of sub-plots.
-    fig, ax = plt.subplots(n_dims, n_dims, figsize=(2*n_dims, 2*n_dims))
-
-    # For all rows in the 2-d plot matrix.
-    for row in range(n_dims):
-        # Get the search-space dimension for this row.
-        dim_row = dimensions[row]
-
-        # Get the index for the search-space dimension.
-        # This is used to lookup that particular dimension in some functions.
-        index_row = dim_row.index
-
-        # Get the samples from the optimization-log for this dimension.
-        samples_row = get_samples_dimension(result=result, index=index_row)
-
-        # Get the best-found sample for this dimension.
-        best_sample_row = result.x[index_row]
-
-        # Search-space boundary for this dimension.
-        bounds_row = dim_row.bounds
-
-        # Calculate partial dependence for this dimension.
-        xi, yi = partial_dependence_1D(model=last_model,
-                                       dimension=dim_row,
-                                       samples=new_samples,
-                                       n_points=n_points)
-
-        # Reference to the plot for the diagonal of this row.
-        a = ax[row, row]
-
-        # TODO: There is a problem here if yi is very large, then matplotlib
-        # TODO: writes a number above the plot that I don't know how to turn off.
-        # Plot the partial dependence for this dimension.
-        a.plot(xi, yi)
-
-        # Plot a dashed line for the best-found parameter.
-        a.axvline(best_sample_row, linestyle="--", color="red", lw=1)
-
-        # For all columns until the diagonal in the 2-d plot matrix.
-        for col in range(row):
-            # Get the search-space dimension for this column.
-            dim_col = dimensions[col]
-
-            # Get the index for this search-space dimension.
-            # This is used to lookup that dimension in some functions.
-            index_col = dim_col.index
-
-            # Get the samples from the optimization-log for that dimension.
-            samples_col = get_samples_dimension(result=result, index=index_col)
-
-            # Get the best-found sample for this dimension.
-            best_sample_col = result.x[index_col]
-
-            # Calculate the partial dependence for these two dimensions.
-            # Note that column and row are switched here.
-            xi, yi, zi = partial_dependence_2D(model=last_model,
-                                               dimension1=dim_col,
-                                               dimension2=dim_row,
-                                               samples=new_samples,
-                                               n_points=n_points)
-
-            # Reference to the plot for this row and column.
-            a = ax[row, col]
-
-            # Plot the contour landscape for the objective function.
-            a.contourf(xi, yi, zi, levels, locator=locator, cmap='viridis_r')
-
-            # Plot all the parameters that were sampled during optimization.
-            # These are plotted as small black dots.
-            a.scatter(samples_col, samples_row, c='black', s=10, lw=0.)
-
-            # Plot the best parameters that were sampled during optimization.
-            # These are plotted as a big red star.
-            a.scatter(best_sample_col, best_sample_row,
-                      c='red', s=100, lw=0., marker='*')
-
-    # Make various adjustments to the plots.
-    _adjust_fig(fig=fig, ax=ax, space=space,
-                dimensions=dimensions, ylabel="Partial Dependence")
-
-    return fig, ax
-
-
 def plot_objective_2D(result, dimension_name1, dimension_name2,
                       n_points=40, n_samples=250, levels=10, zscale='linear'):
     """
@@ -1152,3 +793,490 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
     ax.set_ylabel('Sample Count')
 
     return fig, ax
+
+
+def plot_objective(result, levels=10, n_points=40, n_samples=250,
+                   zscale='linear', dimension_names=None):
+    """
+    Plot a 2-d matrix with so-called Partial Dependence plots
+    of the objective function. This shows the influence of each
+    search-space dimension on the objective function.
+
+    This uses the last fitted model for estimating the objective function.
+
+    The diagonal shows the effect of a single dimension on the
+    objective function, while the plots below the diagonal show
+    the effect on the objective function when varying two dimensions.
+
+    The Partial Dependence is calculated by averaging the objective value
+    for a number of random samples in the search-space,
+    while keeping one or two dimensions fixed at regular intervals. This
+    averages out the effect of varying the other dimensions and shows
+    the influence of one or two dimensions on the objective function.
+
+    Also shown are small black dots for the points that were sampled
+    during optimization, and large red stars show the best found points.
+
+    NOTE: The Partial Dependence plot is only an estimation of the surrogate
+          model which in turn is only an estimation of the true objective
+          function that has been optimized. This means the plots show
+          an "estimate of an estimate" and may therefore be quite imprecise,
+          especially if few samples have been collected during the optimization
+          (e.g. less than 100-200 samples), and in regions of the search-space
+          that have been sparsely sampled (e.g. regions away from the optimum).
+          This means that the plots may change each time you run the
+          optimization and they should not be considered completely reliable.
+          These compromises are necessary because we cannot evaluate the
+          expensive objective function in order to plot it, so we have to use
+          the cheaper surrogate model to plot its contour. And in order to
+          show search-spaces with 3 dimensions or more in a 2-dimensional plot,
+          we further need to map those dimensions to only 2-dimensions using
+          the Partial Dependence, which also causes distortions in the plots.
+
+    NOTE: Search-spaces with `Categorical` dimensions are not supported.
+
+    NOTE: This function can be very slow for dimensions greater than 5.
+
+    Parameters
+    ----------
+    result : `OptimizeResult`
+        The optimization results from calling e.g. `gp_minimize()`.
+
+    levels : int, default=10
+        Number of levels to draw on the contour plot, passed directly
+        to `plt.contour()`.
+
+    n_points : int, default=40
+        Number of points along each dimension where the partial dependence
+        is evaluated when generating the contour-plots.
+
+    n_samples : int, default=250
+        Number of points along each dimension where the partial dependence
+        is evaluated when generating the contour-plots.
+
+    zscale : str, default='linear'
+        Scale to use for the z-axis of the contour plots.
+        Either 'log' or linear for all other choices.
+
+    dimension_names : list(str), default=None
+        List of names for search-space dimensions to be used in the plot.
+        You can omit `Categorical` dimensions here as they are not supported.
+        If `None` then use all dimensions from the search-space.
+
+    sample_source : str or list of floats, default='random'
+        Defines to samples generation to use for averaging the model function
+        at each of the `n_points`.
+
+        A partial dependence plot is only generated, when `sample_source`
+        is set to 'random' and `n_samples` is sufficient.
+
+        `sample_source` can also be a list of
+        floats, which is then used for averaging.
+
+        Valid strings:
+
+            - 'random' - `n_samples` random samples will used
+
+            - 'result' - Use only the best observed parameters
+
+            - 'expected_minimum' - Parameters that gives the best
+                  minimum Calculated using scipy's minimize method.
+                  This method currently does not work with categorical values.
+
+            - 'expected_minimum_random' - Parameters that gives the
+                  best minimum when using naive random sampling.
+                  Works with categorical values.
+
+    minimum : str or list of floats, default = 'result'
+        Defines the values for the red points in the plots.
+        Valid strings:
+
+            - 'result' - Use best observed parameters
+
+            - 'expected_minimum' - Parameters that gives the best
+                  minimum Calculated using scipy's minimize method.
+                  This method currently does not work with categorical values.
+
+            - 'expected_minimum_random' - Parameters that gives the
+                  best minimum when using naive random sampling.
+                  Works with categorical values
+
+    n_minimum_search : int, default = None
+        Determines how many points should be evaluated
+        to find the minimum when using 'expected_minimum' or
+        'expected_minimum_random'. Parameter is used when
+        `sample_source` and/or `minimum` is set to
+        'expected_minimum' or 'expected_minimum_random'.
+
+    Returns
+    -------
+    fig : `Matplotlib.Figure`
+        The object for the figure.
+        For example, call `fig.savefig('plot.png')` to save the plot.
+
+    ax : `Matplotlib.Axes`
+        A 2-d matrix of Axes-objects with the sub-plots.
+    """
+
+    # Scale for the z-axis of the contour-plot. Either Log or Linear (None).
+    locator = LogLocator() if zscale == 'log' else None
+
+    # Get the search-space instance from the optimization results.
+    space = result.space
+
+    # Get the relevant search-space dimensions.
+    if dimension_names is None:
+        # Get all dimensions.
+        dimensions = space.dimensions
+    else:
+        # Only get the named dimensions.
+        dimensions = space[dimension_names]
+
+    # Ensure there are no categorical dimensions.
+    # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
+    if any(isinstance(dim, Categorical) for dim in dimensions):
+        raise ValueError("Categorical dimension is not supported.")
+
+    # Number of search-space dimensions we are using.
+    n_dims = len(dimensions)
+
+    # Get the last fitted model for the search-space.
+    last_model = result.models[-1]
+
+    # Get new random samples from the search-space and transform if necessary.
+    new_samples = space.rvs(n_samples=n_samples)
+    new_samples = space.transform(new_samples)
+
+    # Create a figure for plotting a 2-d matrix of sub-plots.
+    fig, ax = plt.subplots(n_dims, n_dims, figsize=(2*n_dims, 2*n_dims))
+
+    # For all rows in the 2-d plot matrix.
+    for row in range(n_dims):
+        # Get the search-space dimension for this row.
+        dim_row = dimensions[row]
+
+        # Get the index for the search-space dimension.
+        # This is used to lookup that particular dimension in some functions.
+        index_row = dim_row.index
+
+        # Get the samples from the optimization-log for this dimension.
+        samples_row = get_samples_dimension(result=result, index=index_row)
+
+        # Get the best-found sample for this dimension.
+        best_sample_row = result.x[index_row]
+
+        # Search-space boundary for this dimension.
+        bounds_row = dim_row.bounds
+
+        # Calculate partial dependence for this dimension.
+        xi, yi = partial_dependence_1D(model=last_model,
+                                       dimension=dim_row,
+                                       samples=new_samples,
+                                       n_points=n_points)
+
+        # Reference to the plot for the diagonal of this row.
+        a = ax[row, row]
+
+        # TODO: There is a problem here if yi is very large, then matplotlib
+        # TODO: writes a number above the plot that I don't know how to turn off.
+        # Plot the partial dependence for this dimension.
+        a.plot(xi, yi)
+
+        # Plot a dashed line for the best-found parameter.
+        a.axvline(best_sample_row, linestyle="--", color="red", lw=1)
+
+        # For all columns until the diagonal in the 2-d plot matrix.
+        for col in range(row):
+            # Get the search-space dimension for this column.
+            dim_col = dimensions[col]
+
+            # Get the index for this search-space dimension.
+            # This is used to lookup that dimension in some functions.
+            index_col = dim_col.index
+
+            # Get the samples from the optimization-log for that dimension.
+            samples_col = get_samples_dimension(result=result, index=index_col)
+
+            # Get the best-found sample for this dimension.
+            best_sample_col = result.x[index_col]
+
+            # Calculate the partial dependence for these two dimensions.
+            # Note that column and row are switched here.
+            xi, yi, zi = partial_dependence_2D(model=last_model,
+                                               dimension1=dim_col,
+                                               dimension2=dim_row,
+                                               samples=new_samples,
+                                               n_points=n_points)
+
+            # Reference to the plot for this row and column.
+            a = ax[row, col]
+
+            # Plot the contour landscape for the objective function.
+            a.contourf(xi, yi, zi, levels, locator=locator, cmap='viridis_r')
+
+            # Plot all the parameters that were sampled during optimization.
+            # These are plotted as small black dots.
+            a.scatter(samples_col, samples_row, c='black', s=10, lw=0.)
+
+            # Plot the best parameters that were sampled during optimization.
+            # These are plotted as a big red star.
+            a.scatter(best_sample_col, best_sample_row,
+                      c='red', s=100, lw=0., marker='*')
+
+    # Make various adjustments to the plots.
+    _adjust_fig(fig=fig, ax=ax, space=space,
+                dimensions=dimensions, ylabel="Partial Dependence")
+
+    return fig, ax
+
+
+def plot_evaluations(result, bins=20, dimension_names=None):
+    """
+    Visualize the order in which points were sampled during optimization.
+
+    This creates a 2-d matrix plot where the diagonal plots are histograms
+    that show the distribution of samples for each search-space dimension.
+
+    The plots below the diagonal are scatter-plots of the samples for
+    all combinations of search-space dimensions.
+
+    The ordering of the samples are shown as different colour-shades.
+
+    A red star shows the best found parameters.
+
+    NOTE: Search-spaces with `Categorical` dimensions are not supported.
+
+    Parameters
+    ----------
+    result : `OptimizeResult`
+        The optimization results from calling e.g. `gp_minimize()`.
+
+    bins : int, bins=20
+        Number of bins to use for histograms on the diagonal.
+
+    dimension_names : list(str)
+        List of names for search-space dimensions to be used in the plot.
+        You can omit `Categorical` dimensions here as they are not supported.
+        If `None` then use all dimensions from the search-space.
+
+    Returns
+    -------
+    fig : `Matplotlib.Figure`
+        The object for the figure.
+        For example, call `fig.savefig('plot.png')` to save the plot.
+
+    ax : `Matplotlib.Axes`
+        A 2-d matrix of Axes-objects with the sub-plots.
+    """
+
+    # Get the search-space instance from the optimization results.
+    space = result.space
+
+    # Get the relevant search-space dimensions.
+    if dimension_names is None:
+        # Get all dimensions.
+        dimensions = space.dimensions
+    else:
+        # Only get the named dimensions.
+        dimensions = space[dimension_names]
+
+    # Ensure there are no categorical dimensions.
+    # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
+    if any(isinstance(dim, Categorical) for dim in dimensions):
+        raise ValueError("Categorical dimension is not supported.")
+
+    # Number of search-space dimensions we are using.
+    n_dims = len(dimensions)
+
+    # Create a figure for plotting a 2-d matrix of sub-plots.
+    fig, ax = plt.subplots(n_dims, n_dims, figsize=(2 * n_dims, 2 * n_dims))
+
+    # Used to plot colour-shades for the sample-ordering.
+    # It is just a range from 0 to the number of samples.
+    sample_order = range(len(result.x_iters))
+
+    # For all rows in the 2-d plot matrix.
+    for row in range(n_dims):
+        # Get the search-space dimension for this row.
+        dim_row = dimensions[row]
+
+        # Get the index for the search-space dimension.
+        # This is used to lookup that particular dimension in some functions.
+        index_row = dim_row.index
+
+        # Get the samples from the optimization-log for this dimension.
+        samples_row = get_samples_dimension(result=result, index=index_row)
+
+        # Get the best-found sample for this dimension.
+        best_sample_row = result.x[index_row]
+
+        # Search-space boundary for this dimension.
+        bounds_row = dim_row.bounds
+
+        # Map the number of bins to a log-space if necessary.
+        bins_mapped = _map_bins(bins=bins,
+                                bounds=dim_row.bounds,
+                                prior=dim_row.prior)
+
+        # Plot a histogram on the diagonal.
+        ax[row, row].hist(samples_row, bins=bins_mapped, range=bounds_row)
+
+        # For all columns until the diagonal in the 2-d plot matrix.
+        for col in range(row):
+            # Get the search-space dimension for this column.
+            dim_col = dimensions[col]
+
+            # Get the index for this search-space dimension.
+            # This is used to lookup that dimension in some functions.
+            index_col = dim_col.index
+
+            # Get the samples from the optimization-log for that dimension.
+            samples_col = get_samples_dimension(result=result, index=index_col)
+
+            # Plot all the parameters that were sampled during optimization.
+            # These are plotted as small coloured dots, where the colour-shade
+            # indicates the time-progression.
+            ax[row, col].scatter(samples_col, samples_row,
+                                 c=sample_order, s=40, lw=0., cmap='viridis')
+
+            # Get the best-found sample for this dimension.
+            best_sample_col = result.x[index_col]
+
+            # Plot the best parameters that were sampled during optimization.
+            # These are plotted as a big red star.
+            ax[row, col].scatter(best_sample_col, best_sample_row,
+                                 c='red', s=100, lw=0., marker='*')
+
+    # Make various adjustments to the plots.
+    _adjust_fig(fig=fig, ax=ax, space=space,
+                dimensions=dimensions, ylabel="Sample Count")
+
+    return fig, ax
+
+
+def _map_categories(space, points, minimum):
+    """
+    Map categorical values to integers in a set of points.
+    Returns
+    -------
+   mapped_points : np.array, shape=points.shape
+        A copy of `points` with categoricals replaced with their indices in
+        the corresponding `Dimension`.
+    mapped_minimum : np.array, shape (space.n_dims,)
+        A copy of `minimum` with categoricals replaced with their indices in
+        the corresponding `Dimension`.
+    iscat : np.array, shape (space.n_dims,)
+       Boolean array indicating whether dimension `i` in the `space` is
+       categorical.
+    """
+    points = np.asarray(points, dtype=object)  # Allow slicing, preserve cats
+    iscat = np.repeat(False, space.n_dims)
+    min_ = np.zeros(space.n_dims)
+    pts_ = np.zeros(points.shape)
+    for i, dim in enumerate(space.dimensions):
+        if isinstance(dim, Categorical):
+            iscat[i] = True
+            catmap = dict(zip(dim.categories, count()))
+            pts_[:, i] = [catmap[cat] for cat in points[:, i]]
+            min_[i] = catmap[minimum[i]]
+        else:
+            pts_[:, i] = points[:, i]
+            min_[i] = minimum[i]
+    return pts_, min_, iscat
+
+
+def _evenly_sample(dim, n_points):
+    """Return `n_points` evenly spaced points from a Dimension.
+    Parameters
+    ----------
+    dim : `Dimension`
+        The Dimension to sample from.  Can be categorical; evenly-spaced
+        category indices are chosen in order without replacement (result
+        may be smaller than `n_points`).
+    n_points : int
+        The number of points to sample from `dim`.
+    Returns
+    -------
+    xi : np.array
+        The sampled points in the Dimension.  For Categorical
+        dimensions, returns the index of the value in
+        `dim.categories`.
+    xi_transformed : np.array
+        The transformed values of `xi`, for feeding to a model.
+    """
+    cats = np.array(getattr(dim, 'categories', []), dtype=object)
+    if len(cats):  # Sample categoricals while maintaining order
+        xi = np.linspace(0, len(cats) - 1, min(len(cats), n_points),
+                         dtype=int)
+        xi_transformed = dim.transform(cats[xi])
+    else:
+        bounds = dim.bounds
+        # XXX use linspace(*bounds, n_points) after python2 support ends
+        xi = np.linspace(bounds[0], bounds[1], n_points)
+        xi_transformed = dim.transform(xi)
+    return xi, xi_transformed
+
+
+def _cat_format(dimension, x, _):
+    """Categorical axis tick formatter function.  Returns the name of category
+    `x` in `dimension`.  Used with `matplotlib.ticker.FuncFormatter`."""
+    return str(dimension.categories[int(x)])
+
+
+def _evaluate_min_params(result, params='result',
+                         n_minimum_search=None,
+                         random_state=None):
+    """Returns the minimum based on `params`"""
+    x_vals = None
+    space = result.space
+    if isinstance(params, str):
+        if params == 'result':
+            # Using the best observed result
+            x_vals = result.x
+        elif params == 'expected_minimum':
+            if result.space.is_partly_categorical:
+                # space is also categorical
+                raise ValueError('expected_minimum does not support any'
+                                 'categorical values')
+            # Do a gradient based minimum search using scipys own minimizer
+            if n_minimum_search:
+                # If a value for
+                # expected_minimum_samples has been parsed
+                x_vals, _ = expected_minimum(
+                    result,
+                    n_random_starts=n_minimum_search,
+                    random_state=random_state)
+            else:  # Use standard of 20 random starting points
+                x_vals, _ = expected_minimum(result,
+                                             n_random_starts=20,
+                                             random_state=random_state)
+        elif params == 'expected_minimum_random':
+            # Do a minimum search by evaluating the function with
+            # n_samples sample values
+            if n_minimum_search:
+                # If a value for
+                # n_minimum_samples has been parsed
+                x_vals, _ = expected_minimum_random_sampling(
+                    result,
+                    n_random_starts=n_minimum_search,
+                    random_state=random_state)
+            else:
+                # Use standard of 10^n_parameters. Note this
+                # becomes very slow for many parameters
+                x_vals, _ = expected_minimum_random_sampling(
+                    result,
+                    n_random_starts=10 ** len(result.x),
+                    random_state=random_state)
+        else:
+            raise ValueError('Argument ´eval_min_params´ must be a valid'
+                             'string (´result´)')
+    elif isinstance(params, list):
+        assert len(params) == len(result.x), 'Argument' \
+            '´eval_min_params´ of type list must have same length as' \
+            'number of features'
+        # Using defined x_values
+        x_vals = params
+    else:
+        raise ValueError('Argument ´eval_min_params´ must'
+                         'be a string or a list')
+    return x_vals
