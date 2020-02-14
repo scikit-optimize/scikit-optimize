@@ -5,6 +5,7 @@ from itertools import count
 from functools import partial
 from scipy.optimize import OptimizeResult
 
+from .acquisition import _gaussian_acquisition
 from skopt import expected_minimum, expected_minimum_random_sampling
 from .space import Categorical
 
@@ -101,6 +102,168 @@ def plot_convergence(*args, **kwargs):
         ax.legend(loc="best")
 
     return ax
+
+
+def plot_gaussian_process(res, **kwargs):
+    """Plots the optimization results and the gaussian process
+    for 1-D objective functions.
+
+    Parameters
+    ----------
+    res :  `OptimizeResult`
+        The result for which to plot the gaussian process.
+
+    ax : `Axes`, optional
+        The matplotlib axes on which to draw the plot, or `None` to create
+        a new one.
+
+    n_calls : int, default=-1
+        Can be used to evaluate the model at call `n_calls`.
+
+    objective : func, default=None
+        Defines the true objective function. Must have one input parameter.
+
+    noise_level : float, default=0
+        Sets the estimated noise level
+
+    show_legend : boolean, default=True
+        When True, a legend is plotted.
+
+    show_title : boolean, default=True
+        When True, a title containing the found minimum value
+        is shown
+
+    show_acq_func : boolean, default=False
+        When True, the acquisition function is plotted
+
+    show_next_point : boolean, default=False
+        When True, the next evaluated point is plotted
+
+    next_x : float, default=None
+        The next evaluated Point can also be defined.
+
+    show_observations : boolean, default=True
+        When True, observations are plotted as dots.
+
+    show_mu : boolean, default=True
+        When True, the predicted model is shown.
+
+    Returns
+    -------
+    ax : `Axes`
+        The matplotlib axes.
+    """
+    ax = kwargs.get("ax", None)
+    n_calls = kwargs.get("n_calls", -1)
+    objective = kwargs.get("objective", None)
+    noise_level = kwargs.get("noise_level", 0)
+    show_legend = kwargs.get("show_legend", True)
+    show_title = kwargs.get("show_title", True)
+    show_acq_func = kwargs.get("show_acq_func", False)
+    show_next_point = kwargs.get("show_next_point", False)
+    next_x = kwargs.get("next_x", None)
+    show_observations = kwargs.get("show_observations", True)
+    show_mu = kwargs.get("show_mu", True)
+    acq_func = kwargs.get("acq_func", None)
+    n_random = kwargs.get("n_random", None)
+    acq_func_kwargs = kwargs.get("acq_func_kwargs", None)
+
+    if ax is None:
+        ax = plt.gca()
+    bounds = res.space.dimensions[0].bounds
+    x = np.linspace(bounds[0], bounds[1], 400).reshape(-1, 1)
+    x_gp = res.space.transform(x.tolist())
+    if res.specs is not None and "args" in res.specs:
+        if n_random is None:
+            n_random = res.specs["args"].get('n_random_starts', n_random)
+        if acq_func is None:
+            acq_func = res.specs["args"].get("acq_func", "EI")
+        if acq_func_kwargs is None:
+            acq_func_kwargs = res.specs["args"].get("acq_func_kwargs", {})
+
+    if acq_func_kwargs is None:
+        acq_func_kwargs = {}
+    if acq_func is None or acq_func == "gp_hedge":
+        acq_func = "EI"
+    if n_random is None:
+        n_random = len(res.x_iters) - len(res.models)
+
+    if objective is not None:
+        fx = np.array([objective(x_i) for x_i in x])
+    if n_calls < 0:
+        gp = res.models[-1]
+        curr_x_iters = res.x_iters
+        curr_func_vals = res.func_vals
+    else:
+        gp = res.models[n_calls]
+
+        curr_x_iters = res.x_iters[:n_random + n_calls]
+        curr_func_vals = res.func_vals[:n_random + n_calls]
+
+    # Plot true function.
+    if objective is not None:
+        ax.plot(x, fx, "r--", label="True (unknown)")
+        ax.fill(np.concatenate([x, x[::-1]]),
+                np.concatenate(([fx_i - 1.9600 * noise_level for fx_i in fx],
+                                [fx_i + 1.9600 * noise_level for fx_i in fx[::-1]])),
+                alpha=.2, fc="r", ec="None")
+
+    # Plot GP(x) + contours
+    y_pred, sigma = gp.predict(x_gp, return_std=True)
+    if show_mu:
+        ax.plot(x, y_pred, "g--", label=r"$\mu_{GP}(x)$")
+        ax.fill(np.concatenate([x, x[::-1]]),
+                np.concatenate([y_pred - 1.9600 * sigma,
+                                (y_pred + 1.9600 * sigma)[::-1]]),
+                alpha=.2, fc="g", ec="None")
+
+    # Plot sampled points
+    if show_observations:
+        ax.plot(curr_x_iters, curr_func_vals,
+                "r.", markersize=8, label="Observations")
+    if (show_mu or show_observations or objective is not None) and show_acq_func:
+        ax_ei = ax.twinx()
+        ax_ei.set_ylabel(str(acq_func) + "(x)")
+        plot_both = True
+    else:
+        ax_ei = ax
+        plot_both = False
+    if show_acq_func:
+        acq = _gaussian_acquisition(x_gp, gp, y_opt=np.min(curr_func_vals),
+                                    acq_func=acq_func, acq_func_kwargs=acq_func_kwargs)
+        if acq_func in ["EI", "PI", "EIps", "PIps"]:
+            acq = - acq
+        ax_ei.plot(x, acq, "b", label=str(acq_func) + "(x)")
+        if not plot_both:
+            ax_ei.fill_between(x.ravel(), 0, acq.ravel(), alpha=0.3, color='blue')
+        if next_x is None and n_calls >= 0:
+            next_x = res.x_iters[n_random + n_calls]
+        if next_x is not None:
+            next_acq = _gaussian_acquisition(res.space.transform([next_x]), gp,
+                                             y_opt=np.min(curr_func_vals),
+                                             acq_func=acq_func,
+                                             acq_func_kwargs=acq_func_kwargs)
+            if acq_func in ["EI", "PI", "EIps", "PIps"]:
+                next_acq = -next_acq
+        if show_next_point and next_x is not None:
+            ax_ei.plot(next_x, next_acq, "bo", markersize=6, label="Next query point")
+
+    if show_title:
+        ax.set_title(r"x* = %.4f, f(x*) = %.4f" % (res.x[0], res.fun))
+    # Adjust plot layout
+    ax.grid()
+    ax.set_xlabel("x")
+    ax.set_ylabel("f(x)")
+    if show_legend:
+        if plot_both:
+            lines, labels = ax.get_legend_handles_labels()
+            lines2, labels2 = ax_ei.get_legend_handles_labels()
+            ax_ei.legend(lines + lines2, labels + labels2, loc="best", prop={'size': 6}, numpoints=1)
+        else:
+            ax.legend(loc="best", prop={'size': 6}, numpoints=1)
+
+    return ax
+
 
 
 def plot_regret(*args, **kwargs):
