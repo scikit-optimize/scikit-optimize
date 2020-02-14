@@ -17,11 +17,10 @@ from skopt.space import Real
 from skopt.space import Integer
 from skopt.space import Categorical
 from skopt.space import check_dimension as space_check_dimension
-from skopt.samples.sobol import Sobol
-from skopt.samples.utils import _bit_lo0, _bit_hi1, create_primes
-from skopt.samples.halton import _van_der_corput_samples
-from skopt.samples import Hammersly, Halton
-from skopt.samples.lhs import Lhs
+from skopt.samples.sobol import _bit_lo0, _bit_hi1
+from skopt.samples.halton import _van_der_corput_samples, _create_primes
+from skopt.samples import Hammersly, Halton, Lhs, Sobol
+from skopt.samples.lhs import Lhs, _w2_discrepancy_fast
 
 
 @pytest.mark.fast_test
@@ -132,11 +131,11 @@ def test_hammersly():
 @pytest.mark.fast_test
 def test_primes():
 
-    x = create_primes(1)
+    x = _create_primes(1)
     assert_array_equal(x, [])
-    x = create_primes(2)
+    x = _create_primes(2)
     assert_array_equal(x, [2])
-    x = create_primes(3)
+    x = _create_primes(3)
     assert_array_equal(x, [2, 3])
-    x = create_primes(20)
+    x = _create_primes(20)
     assert_array_equal(x, [2, 3, 5, 7, 11, 13, 17, 19])

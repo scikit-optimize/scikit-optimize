@@ -8,11 +8,11 @@ https://github.com/damar-wicaksono/gsa-module/blob/develop/
 gsa_module/samples/lhs_opt.py (Damar Wicaksono)
 """
 import numpy as np
+import math
 from sklearn.utils import check_random_state
 from scipy import spatial
-from .utils import random_permute_matrix
-from .utils import InitialPointGenerator
-from .utils import w2_discrepancy_fast, calc_max_inner, calc_num_candidate
+from ..utils import random_permute_matrix
+from .base import InitialPointGenerator
 
 
 class Lhs(InitialPointGenerator):
@@ -139,24 +139,24 @@ class Lhs(InitialPointGenerator):
                                                 random_state=random_state)
 
                 if self.ese_threshold_init <= 0.0:
-                    threshold = 0.005 * w2_discrepancy_fast(dm_init)
+                    threshold = 0.005 * _w2_discrepancy_fast(dm_init)
                 else:
                     threshold = self.ese_threshold_init
                 if self.ese_num_exchanges <= 0:  # number of exchanges
-                    num_exchanges = calc_num_candidate(n_samples)
+                    num_exchanges = _calc_num_candidate(n_samples)
                 else:
                     num_exchanges = self.ese_num_exchanges
                 # maximum number of inner iterations
                 if self.ese_max_inner <= 0:
-                    max_inner = calc_max_inner(n_samples, n_dim)
+                    max_inner = _calc_max_inner(n_samples, n_dim)
                 else:
                     max_inner = self.ese_max_inner
 
                 dm = dm_init.copy()  # the current design
                 # the best value of obj.func. so far
-                obj_func_best = w2_discrepancy_fast(dm)
+                obj_func_best = _w2_discrepancy_fast(dm)
                 # the old value of obj.func.
-                obj_func_best_old = w2_discrepancy_fast(dm)
+                obj_func_best_old = _w2_discrepancy_fast(dm)
                 flag_explore = False  # improved flag
 
                 best_evol = []  # Keep track the best solution
@@ -170,7 +170,7 @@ class Lhs(InitialPointGenerator):
 
                     # Begin Inner Iteration
                     for inner in range(max_inner):
-                        obj_func = w2_discrepancy_fast(dm)
+                        obj_func = _w2_discrepancy_fast(dm)
                         # Perturb current design
                         num_dimension = inner % n_dim
                         import itertools
@@ -195,14 +195,14 @@ class Lhs(InitialPointGenerator):
                                 pairs[i][1], num_dimension]
                             dm_try[pairs[i][1], num_dimension] = dm[
                                 pairs[i][0], num_dimension]
-                            obj_func_try = w2_discrepancy_fast(dm_try)
+                            obj_func_try = _w2_discrepancy_fast(dm_try)
                             if obj_func_try < obj_func_current:
                                 # Select the best trial from all the
                                 # perturbation trials
                                 obj_func_current = obj_func_try
                                 dm_current = dm_try.copy()
 
-                        obj_func_try = w2_discrepancy_fast(dm_current)
+                        obj_func_try = _w2_discrepancy_fast(dm_current)
                         # Check whether solution is acceptable
                         if (obj_func_try - obj_func) <=\
                                 threshold * rng.rand():
@@ -271,3 +271,82 @@ class Lhs(InitialPointGenerator):
                             threshold *= self.ese_exploring_params[2]
 
             return h_opt
+
+
+def _calc_num_candidate(n):
+    """Calculate the number of candidates from perturbing the current design
+    Recommended in the article is the maximum number of pair combination
+    from a given column divided by a factor of 5.
+    It is also recommended that the number of candidates to be evaluated does
+    not exceed 50
+
+    Parameters
+    ----------
+    n : int
+        the number of elements to be permuted
+    Returns
+    -------
+    the number of candidates from perturbing the current design
+        column-wise
+    """
+    pairs = math.factorial(n) / math.factorial(n - 2) / math.factorial(2)
+    fac = 5  # The factor recommended in the article
+
+    return min(int(pairs / fac), 50)
+
+
+def _calc_max_inner(n, k):
+    """Calculate the maximum number of inner iterations
+    :math:`\frac{2 \times n_e \times k}{J}`
+    It is recommended that the number of inner iterations does not exceed 100
+    Parameters
+    ----------
+    n : int
+        the number of samples in the design
+    k : int
+        the number of design dimension
+    Returns
+    -------
+    the maximum number of inner iterations/loop
+    """
+    pairs = math.factorial(n) / math.factorial(n - 2) / math.factorial(2)
+
+    return min(int(2 * pairs * k / _calc_num_candidate(n)), 100)
+
+
+def _w2_discrepancy_fast(D):
+    """The vectorized version of wrap-around L2-discrepancy
+    calculation, faster!
+    The formula for the Wrap-Around L2-Discrepancy is taken from Eq.5 of (1)
+    :math:`WD^2(D) = -(4/3)^K + 1/N^2 \Sigma_{i,j=1}^{N} \
+    Pi_{k=1}^K [3/2 - |x_k^1 - x_k^2| * (1 - |x_k^1 - x_k^2|)]`
+    The implementation below uses a vector operation of numpy array to
+    avoid the
+    nested loop in the more straightforward implementation
+
+    Parameters
+    ----------
+    D : np.array
+     the design matrix
+
+    Returns
+    -------
+    the wrap-around L2-discrepancy
+    """
+
+    n = D.shape[0]      # the number of samples
+    k = D.shape[1]      # the number of dimension
+    delta = [None] * k
+    for i in range(k):
+        # loop over dimension to calculate the absolute difference
+        # between point
+        # in a given dimension, note the vectorized operation
+        delta[i] = np.abs(D[:, i] - np.reshape(D[:, i], (len(D[:, i]), 1)))
+
+    product = 1.5 - delta[0] * (1 - delta[0])
+    for i in range(1, k):
+        product *= (1.5 - delta[i] * (1 - delta[i]))
+
+    w2_disc = -1 * (4.0/3.0)**k + 1/n**2 * np.sum(product)
+
+    return w2_disc

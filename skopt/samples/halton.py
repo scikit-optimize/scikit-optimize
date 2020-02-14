@@ -3,8 +3,7 @@ Inspired by https://github.com/jonathf/chaospy/blob/master/chaospy/
 distributions/sampler/sequences/halton.py
 """
 import numpy as np
-from .utils import create_primes
-from .utils import InitialPointGenerator
+from .base import InitialPointGenerator
 
 
 class Halton(InitialPointGenerator):
@@ -53,7 +52,7 @@ class Halton(InitialPointGenerator):
         if not primes:
             prime_order = 10 * n_dim
             while len(primes) < n_dim:
-                primes = create_primes(prime_order)
+                primes = _create_primes(prime_order)
                 prime_order *= 2
         primes = primes[:n_dim]
         assert len(primes) == n_dim, "not enough primes"
@@ -110,3 +109,40 @@ def _van_der_corput_samples(idx, number_base=2):
         base *= number_base
         active = idx > 0
     return out
+
+
+def _create_primes(threshold):
+    """
+    Generate prime values using sieve of Eratosthenes method.
+
+    Parameters
+    ----------
+    threshold : int
+        The upper bound for the size of the prime values.
+
+    Returns
+    ------
+    List
+        All primes from 2 and up to ``threshold``.
+    """
+    if threshold == 2:
+        return [2]
+
+    elif threshold < 2:
+        return []
+
+    numbers = list(range(3, threshold+1, 2))
+    root_of_threshold = threshold ** 0.5
+    half = int((threshold+1)/2-1)
+    idx = 0
+    counter = 3
+    while counter <= root_of_threshold:
+        if numbers[idx]:
+            idy = int((counter*counter-3)/2)
+            numbers[idy] = 0
+            while idy < half:
+                numbers[idy] = 0
+                idy += counter
+        idx += 1
+        counter = 2*idx+3
+    return [2] + [number for number in numbers if number]

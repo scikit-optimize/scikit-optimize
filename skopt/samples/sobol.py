@@ -18,8 +18,7 @@
 from __future__ import division
 import numpy as np
 from scipy.stats import norm
-from .utils import InitialPointGenerator
-from .utils import _bit_lo0, _bit_hi1, random_shift
+from .base import InitialPointGenerator
 from sklearn.utils import check_random_state
 
 
@@ -214,7 +213,7 @@ class Sobol(InitialPointGenerator):
         for j in range(n_samples):
             r[j, 0:n_dim], seed = self._sobol(n_dim, seed)
         if self.randomize:
-            return random_shift(r, random_state)
+            return _random_shift(r, random_state)
         return r
 
     def _sobol(self, dim_num, seed):
@@ -302,3 +301,67 @@ class Sobol(InitialPointGenerator):
         seed += 1
 
         return [quasi, seed]
+
+
+def _bit_hi1(n):
+    """
+    Returns the position of the high 1 bit base 2 in an integer.
+
+    Parameters
+    ----------
+    n : int
+        input, should be positive
+    """
+    bin_repr = np.binary_repr(n)
+    most_left_one = bin_repr.find('1')
+    if most_left_one == -1:
+        return 0
+    else:
+        return len(bin_repr) - most_left_one
+
+
+def _bit_lo0(n):
+    """
+    Returns the position of the low 0 bit base 2 in an integer.
+
+    Parameters
+    ----------
+    n : int
+        input, should be positive
+
+    """
+    bin_repr = np.binary_repr(n)
+    most_right_zero = bin_repr[::-1].find('0')
+    if most_right_zero == -1:
+        most_right_zero = len(bin_repr)
+    return most_right_zero + 1
+
+
+def _random_shift(dm, random_state=None):
+    """Random shifting of a vector
+    Randomization of the quasi-MC samples can be achieved
+    in the easiest manner by
+    random shift (or the Cranley-Patterson rotation).
+    Refereences
+    -----------
+    C. Lemieux, "Monte Carlo and Quasi-Monte Carlo Sampling," Springer
+    Series in Statistics 692, Springer Science+Business Media, New York,
+    2009
+
+    Parameters
+    ----------
+    dm : array, shape(n,d)
+        input matrix
+    random_state : int, RandomState instance, or None (default)
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    Randomized Sobol' design matrix
+    """
+    rng = check_random_state(random_state)
+    # Generate random shift matrix from uniform distribution
+    shift = np.repeat(rng.rand(1, dm.shape[1]), dm.shape[0], axis=0)
+    # Return the shifted Sobol' design
+    return (dm + shift) % 1

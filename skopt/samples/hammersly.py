@@ -4,7 +4,7 @@ distributions/sampler/sequences/hammersley.py
 """
 import numpy as np
 from .halton import Halton
-from .utils import InitialPointGenerator
+from .base import InitialPointGenerator
 
 
 class Hammersly(InitialPointGenerator):

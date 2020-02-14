@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import wraps
-
+from sklearn.utils import check_random_state
 import numpy as np
 from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize as sp_minimize
@@ -768,3 +768,13 @@ def use_named_args(dimensions):
         return wrapper
 
     return decorator
+
+
+def random_permute_matrix(h, random_state=None):
+    rng = check_random_state(random_state)
+    h_rand_perm = np.zeros_like(h)
+    samples, n = h.shape
+    for j in range(n):
+        order = rng.permutation(range(samples))
+        h_rand_perm[:, j] = h[order, j]
+    return h_rand_perm
