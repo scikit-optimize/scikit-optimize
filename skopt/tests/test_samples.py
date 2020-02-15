@@ -53,6 +53,7 @@ def test_bit():
     for i in range(len(X)):
         assert _bit_hi1(X[i]) == res[i]
 
+
 @pytest.mark.fast_test
 def test_sobol():
     sobol = Sobol()

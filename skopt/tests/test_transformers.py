@@ -6,7 +6,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 from numpy.testing import assert_raises_regex
 from skopt.space import LogN, Normalize
-from skopt.space.transformers import StringEncoder, IntegerEncoder, Identity
+from skopt.space.transformers import StringEncoder, LabelEncoder, Identity
 
 
 @pytest.mark.fast_test
@@ -30,13 +30,13 @@ def test_logn10_integer():
 @pytest.mark.fast_test
 def test_integer_encoder():
 
-    transformer = IntegerEncoder()
+    transformer = LabelEncoder()
     X = [1, 5, 9]
     transformer.fit(X)
     assert_array_equal(transformer.transform(X), [0, 1, 2])
     assert_array_equal(transformer.inverse_transform([0, 1, 2]), X)
 
-    transformer = IntegerEncoder(X)
+    transformer = LabelEncoder(X)
     assert_array_equal(transformer.transform(X), [0, 1, 2])
     assert_array_equal(transformer.inverse_transform([0, 1, 2]), X)
 
@@ -45,7 +45,7 @@ def test_integer_encoder():
     assert_array_equal(transformer.transform(X), [0, 1, 2])
     assert_array_equal(transformer.inverse_transform([0, 1, 2]), X)
 
-    transformer = IntegerEncoder(X)
+    transformer = LabelEncoder(X)
     assert_array_equal(transformer.transform(X), [0, 1, 2])
     assert_array_equal(transformer.inverse_transform([0, 1, 2]), X)
 
@@ -74,17 +74,17 @@ def test_string_encoder():
 def test_identity_encoder():
 
     transformer = Identity()
-    X = [1, 5, 9]
+    X = [1, 5, 9, 9, 5, 1]
     transformer.fit(X)
     assert_array_equal(transformer.transform(X), X)
     assert_array_equal(transformer.inverse_transform(X), X)
 
-    X = ['a', True, 1]
+    X = ['a', True, 1, 'a', True, 1]
     transformer.fit(X)
     assert_array_equal(transformer.transform(X), X)
     assert_array_equal(transformer.inverse_transform(X), X)
 
-    X = ["a", "b", "c"]
+    X = ["a", "b", "c", "a", "b", "c"]
     transformer.fit(X)
     assert_array_equal(transformer.transform(X), X)
     assert_array_equal(transformer.inverse_transform(X), X)

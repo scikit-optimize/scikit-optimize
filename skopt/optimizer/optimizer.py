@@ -273,16 +273,20 @@ class Optimizer(object):
                 isinstance(initial_point_generator, str):
             if initial_point_generator == "sobol":
                 from skopt.samples import Sobol
-                self._initial_point_generator = Sobol(**self.init_point_gen_kwargs)
+                self._initial_point_generator = Sobol(
+                    **self.init_point_gen_kwargs)
             elif initial_point_generator == "halton":
                 from skopt.samples import Halton
-                self._initial_point_generator = Halton(**self.init_point_gen_kwargs)
+                self._initial_point_generator = Halton(
+                    **self.init_point_gen_kwargs)
             elif initial_point_generator == "hammersly":
                 from skopt.samples import Hammersly
-                self._initial_point_generator = Hammersly(**self.init_point_gen_kwargs)
+                self._initial_point_generator = Hammersly(
+                    **self.init_point_gen_kwargs)
             elif initial_point_generator == "lhs":
                 from skopt.samples import Lhs
-                self._initial_point_generator = Lhs(**self.init_point_gen_kwargs)
+                self._initial_point_generator = Lhs(
+                    **self.init_point_gen_kwargs)
             else:
                 raise ValueError(
                     "Unkown initial_point_generator: " +
@@ -290,7 +294,7 @@ class Optimizer(object):
                 )
             inv_initial_samples = self._initial_point_generator.generate(
                 self.space.n_dims, n_initial_points,
-                random_state=random_state)
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
             transformer = self.space.get_transformer()
             self.space.set_transformer("normalize")
             self._initial_samples = self.space.inverse_transform(

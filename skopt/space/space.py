@@ -11,7 +11,7 @@ from sklearn.utils.fixes import sp_version
 
 from .transformers import CategoricalEncoder
 from .transformers import StringEncoder
-from .transformers import IntegerEncoder
+from .transformers import LabelEncoder
 from .transformers import Normalize
 from .transformers import Identity
 from .transformers import LogN
@@ -595,7 +595,7 @@ class Categorical(Dimension):
             self.transformer.fit(self.categories)
         elif transform == "normalize":
             self.transformer = Pipeline(
-                [IntegerEncoder(list(self.categories)),
+                [LabelEncoder(list(self.categories)),
                  Normalize(0, len(self.categories) - 1)])
         else:
             self.transformer = Identity()

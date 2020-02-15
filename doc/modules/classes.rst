@@ -296,7 +296,7 @@ details.
     space.transformers.Normalize
     space.transformers.Pipeline
     space.transformers.Transformer
-    space.transformers.IntegerEncoder
+    space.transformers.LabelEncoder
     space.transformers.StringEncoder
 
 

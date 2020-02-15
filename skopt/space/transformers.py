@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import column_or_1d
 
 
 class Transformer(object):
@@ -151,8 +152,8 @@ class CategoricalEncoder(Transformer):
         ]
 
 
-class IntegerEncoder(Transformer):
-    """IntegerEncoder that can handle categorical variables."""
+class LabelEncoder(Transformer):
+    """LabelEncoder that can handle categorical variables."""
     def __init__(self, X=None):
         if X is not None:
             self.fit(X)
@@ -165,7 +166,15 @@ class IntegerEncoder(Transformer):
         X : array-like, shape=(n_categories,)
             List of categories.
         """
-        self.mapping_ = {v: i for i, v in enumerate(X)}
+        X = np.asarray(X)
+        if X.dtype == object:
+            self.mapping_ = {v: i for i, v in enumerate(X)}
+        else:
+            i = 0
+            self.mapping_ = {}
+            for v in np.unique(X):
+                self.mapping_[v] = i
+                i += 1
         self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
         return self
 
@@ -200,10 +209,7 @@ class IntegerEncoder(Transformer):
         X : array-like, shape=(n_samples,)
             The original categories.
         """
-        if isinstance(Xt, (float, np.float64)):
-            Xt = [Xt]
-        else:
-            Xt = np.asarray(Xt)
+        Xt = np.asarray(Xt)
         return [
             self.inverse_mapping_[int(np.round(i))] for i in Xt
         ]
