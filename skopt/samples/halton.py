@@ -4,6 +4,7 @@ distributions/sampler/sequences/halton.py
 """
 import numpy as np
 from .base import InitialPointGenerator
+from sklearn.utils import check_random_state
 
 
 class Halton(InitialPointGenerator):
@@ -20,16 +21,20 @@ class Halton(InitialPointGenerator):
 
     Parameters
     ----------
-    skip : int
-        Skip the first ``skip`` samples. If negative, the maximum of
-        ``primes`` is used.
-    primes : tuple
+    min_skip : int
+        minimum skipped seed number. When `min_skip != max_skip`
+        a random number is picked.
+    max_skip : int
+        maximum skipped seed number. When `min_skip != max_skip`
+        a random number is picked.
+    primes : tuple, default=None
         The (non-)prime base to calculate values along each axis. If
-        empty, growing prime values starting from 2 will be used.
+        empty or None, growing prime values starting from 2 will be used.
     """
-    def __init__(self, skip=-1, primes=()):
-        self.skip = skip
+    def __init__(self, min_skip=-1, max_skip=-1, primes=None):
         self.primes = primes
+        self.min_skip = min_skip
+        self.max_skip = max_skip
 
     def generate(self, n_dim, n_samples, random_state=None):
         """Creates samples from Halton set.
@@ -48,19 +53,27 @@ class Halton(InitialPointGenerator):
         np.array, shape=(n_dim, n_samples)
             Halton set
         """
-        primes = list(self.primes)
-        if not primes:
+        rng = check_random_state(random_state)
+        if self.primes is None:
+            primes = []
+        else:
+            primes = list(self.primes)
+        if len(primes) < n_dim:
             prime_order = 10 * n_dim
             while len(primes) < n_dim:
                 primes = _create_primes(prime_order)
                 prime_order *= 2
-        primes = primes[:n_dim]
-        assert len(primes) == n_dim, "not enough primes"
 
-        if self.skip < 0:
+            primes = primes[:n_dim]
+        assert len(primes) == n_dim, "not enough primes"
+        if self.min_skip < 0 and self.max_skip < 0:
             skip = max(primes)
+        elif self.min_skip == self.max_skip:
+            skip = self.min_skip
+        elif self.min_skip < 0 or self.max_skip < 0:
+            skip = np.max(self.min_skip, self.max_skip)
         else:
-            skip = self.skip
+            skip = rng.randint(self.min_skip, self.max_skip)
 
         out = np.empty((n_dim, n_samples))
         indices = [idx + skip for idx in range(n_samples)]

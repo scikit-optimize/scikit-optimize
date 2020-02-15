@@ -130,17 +130,6 @@ pdist_data.append(pdist(x).flatten())
 x_label.append("ratio")
 
 #############################################################################
-# ESE optimized hypercube sampling
-# --------------------------------
-
-lhs = Lhs(criterion="ese", iterations=10)
-inv_initial_samples = lhs.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'ese LHS')
-pdist_data.append(pdist(x).flatten())
-x_label.append("ese")
-
-#############################################################################
 # Halton sampling
 # ---------------
 

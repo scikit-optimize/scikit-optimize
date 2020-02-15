@@ -81,22 +81,7 @@ class Optimizer(object):
 
         - "hammersly" for a Hammersly sequence,
 
-        - "lhs" for a latin hypercube sequence,
-
-        - "lhs_center" for a centered LHS sequence,
-
-        - "lhs_maximin" for a LHS sequence which is maximized regarding
-            the minimum distance of all points to each other
-
-        - "lhs_ratio" for a LHS sequence which is maximized regarding
-            the ratio between the maximum to the minimum distance of all
-            points to each other
-
-        - "lhs_correlation" for a LHS sequence which is minimized
-            regarding the correlation coefficients
-
-        - "lhs_ese" for a LHS sequence which is optimized by an enhanced
-            stochastic evolutionary (ESE) algorithm
+        - "lhs" for a latin hypercube sequence
 
     acq_func : string, default=`"gp_hedge"`
         Function to minimize over the posterior distribution. Can be either
@@ -149,6 +134,9 @@ class Optimizer(object):
     acq_optimizer_kwargs : dict
         Additional arguments to be passed to the acquistion optimizer.
 
+    init_point_gen_kwargs : dict
+        Additional arguments to be passed to the initial_point_generator
+
     model_queue_size : int or None, default=None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
@@ -176,7 +164,8 @@ class Optimizer(object):
                  random_state=None,
                  model_queue_size=None,
                  acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None):
+                 acq_optimizer_kwargs=None,
+                 init_point_gen_kwargs=None):
 
         self.rng = check_random_state(random_state)
 
@@ -277,48 +266,31 @@ class Optimizer(object):
 
         self._initial_samples = None
         self._initial_point_generator = initial_point_generator
+        if init_point_gen_kwargs is None:
+            init_point_gen_kwargs = dict()
+        self.init_point_gen_kwargs = init_point_gen_kwargs
         if initial_point_generator != "random" and \
                 isinstance(initial_point_generator, str):
             if initial_point_generator == "sobol":
                 from skopt.samples import Sobol
-                self._initial_point_generator = Sobol()
+                self._initial_point_generator = Sobol(**self.init_point_gen_kwargs)
             elif initial_point_generator == "halton":
                 from skopt.samples import Halton
-                self._initial_point_generator = Halton()
+                self._initial_point_generator = Halton(**self.init_point_gen_kwargs)
             elif initial_point_generator == "hammersly":
                 from skopt.samples import Hammersly
-                self._initial_point_generator = Hammersly()
-            elif initial_point_generator in ["lhs", "lhs_classic"]:
+                self._initial_point_generator = Hammersly(**self.init_point_gen_kwargs)
+            elif initial_point_generator == "lhs":
                 from skopt.samples import Lhs
-                self._initial_point_generator = Lhs(lhs_type="classic")
-            elif initial_point_generator == "lhs_centered":
-                from skopt.samples import Lhs
-                self._initial_point_generator = Lhs(lhs_type="centered")
-            elif initial_point_generator == "lhs_maximin":
-                from skopt.samples import Lhs
-                self._initial_point_generator = Lhs(criterion="maximin")
-            elif initial_point_generator == "lhs_ratio":
-                from skopt.samples import Lhs
-                self._initial_point_generator = Lhs(criterion="ratio")
-            elif initial_point_generator == "lhs_correlation":
-                from skopt.samples import Lhs
-                self._initial_point_generator = Lhs(criterion="correlation")
-            elif initial_point_generator == "lhs_ese":
-                from skopt.samples import Lhs
-                self._initial_point_generator = Lhs(criterion="ese",
-                                                    iterations=10)
+                self._initial_point_generator = Lhs(**self.init_point_gen_kwargs)
             else:
                 raise ValueError(
                     "Unkown initial_point_generator: " +
                     str(initial_point_generator)
                 )
-            try:
-                inv_initial_samples = self._initial_point_generator.generate(
-                    self.space.n_dims, n_initial_points,
-                    random_state=random_state)
-            except:
-                raise Exception("initial_point_generator is not a valid"
-                                "generator function")
+            inv_initial_samples = self._initial_point_generator.generate(
+                self.space.n_dims, n_initial_points,
+                random_state=random_state)
             transformer = self.space.get_transformer()
             self.space.set_transformer("normalize")
             self._initial_samples = self.space.inverse_transform(
@@ -367,6 +339,7 @@ class Optimizer(object):
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
+            init_point_gen_kwargs=self.init_point_gen_kwargs,
             random_state=random_state,
         )
         optimizer._initial_samples = self._initial_samples

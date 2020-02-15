@@ -11,7 +11,7 @@ class Hammersly(InitialPointGenerator):
     """Creates `Hammersley` sequence samples.
     The Hammersley set is equivalent to the Halton sequence, except for one
     dimension is replaced with a regular grid. It is not recommended to
-    generate a Hammersley sequence more than 10 dimension.
+    generate a Hammersley sequence with more than 10 dimension.
 
     For ``dim == 1`` the sequence falls back to Van Der Corput sequence.
 
@@ -22,16 +22,20 @@ class Hammersly(InitialPointGenerator):
 
     Parameters
     ----------
-    skip : int
-        Skip the first ``skip`` samples. If negative, the maximum of
-        ``primes`` is used.
-    primes : tuple
+    min_skip : int, default=-1
+        minimum skipped seed number. When `min_skip != max_skip` and
+        both are > -1, a random number is picked.
+    max_skip : int, default=-1
+        maximum skipped seed number. When `min_skip != max_skip` and
+        both are > -1, a random number is picked.
+    primes : tuple, default=None
         The (non-)prime base to calculate values along each axis. If
         empty, growing prime values starting from 2 will be used.
     """
-    def __init__(self, skip=-1, primes=()):
-        self.skip = skip
+    def __init__(self, min_skip=-1, max_skip=-1, primes=None):
         self.primes = primes
+        self.min_skip = min_skip
+        self.max_skip = max_skip
 
     def generate(self, n_dim, n_samples, random_state=None):
         """Creates samples from Hammersly set.
@@ -52,7 +56,9 @@ class Hammersly(InitialPointGenerator):
         np.array, shape=(n_dim, n_samples)
             Hammersley set
         """
-        halton = Halton(skip=self.skip, primes=self.primes)
+
+        halton = Halton(min_skip=self.min_skip, max_skip=self.max_skip,
+                        primes=self.primes)
 
         if n_dim == 1:
             return halton.generate(n_dim, n_samples,

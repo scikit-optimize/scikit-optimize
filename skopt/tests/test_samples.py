@@ -20,7 +20,6 @@ from skopt.space import check_dimension as space_check_dimension
 from skopt.samples.sobol import _bit_lo0, _bit_hi1
 from skopt.samples.halton import _van_der_corput_samples, _create_primes
 from skopt.samples import Hammersly, Halton, Lhs, Sobol
-from skopt.samples.lhs import Lhs, _w2_discrepancy_fast
 
 
 @pytest.mark.fast_test
@@ -40,10 +39,6 @@ def test_lhs_criterion():
         samples = lhs.generate(2, 200)
         assert len(samples) == 200
         assert len(samples[0]) == 2
-    lhs = Lhs(criterion="ese", iterations=1)
-    samples = lhs.generate(2, 20)
-    assert len(samples) == 20
-    assert len(samples[0]) == 2
 
 
 @pytest.mark.fast_test
