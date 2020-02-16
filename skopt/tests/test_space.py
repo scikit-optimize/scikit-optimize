@@ -523,6 +523,12 @@ def test_normalize_categorical():
                                                            random_state=1))))
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
+    categories = [1., 2., 3.]
+    a = Categorical(categories, transform="normalize")
+    assert_array_equal(categories, np.sort(np.unique(a.rvs(100,
+                                                           random_state=1))))
+    assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
+
     categories = [1, 2, 3]
     a = Categorical(categories, transform="string")
     a.set_transformer("normalize")

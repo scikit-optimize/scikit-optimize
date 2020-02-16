@@ -209,7 +209,10 @@ class LabelEncoder(Transformer):
         X : array-like, shape=(n_samples,)
             The original categories.
         """
-        Xt = np.asarray(Xt)
+        if isinstance(Xt, (float, np.float64)):
+            Xt = [Xt]
+        else:
+            Xt = np.asarray(Xt)
         return [
             self.inverse_mapping_[int(np.round(i))] for i in Xt
         ]
