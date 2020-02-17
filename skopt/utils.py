@@ -8,7 +8,7 @@ from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 from joblib import dump as dump_
 from joblib import load as load_
-
+from collections import OrderedDict
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor
 from .learning import GradientBoostingQuantileRegressor
@@ -18,6 +18,7 @@ from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 
 from .space import Space, Categorical, Integer, Real, Dimension
+
 
 __all__ = (
     "load",
@@ -152,9 +153,10 @@ def load(filename, **kwargs):
     Reconstruct a skopt optimization result from a file
     persisted with skopt.dump.
 
-    Notice that the loaded optimization result can be missing
-    the objective function (`.specs['args']['func']`) if `skopt.dump`
-    was called with `store_objective=False`.
+    .. note::
+        Notice that the loaded optimization result can be missing
+        the objective function (`.specs['args']['func']`) if `skopt.dump`
+        was called with `store_objective=False`.
 
     Parameters
     ----------
@@ -201,9 +203,12 @@ def check_x_in_space(x, space):
 def expected_minimum(res, n_random_starts=20, random_state=None):
     """
     Compute the minimum over the predictions of the last surrogate model.
+    Uses `expected_minimum_random_sampling` with `n_random_starts`=100000,
+    when the space contains any categorical values.
 
-    Note that the returned minimum may not necessarily be an accurate
-    prediction of the minimum of the true objective function.
+    .. note::
+        The returned minimum may not necessarily be an accurate
+        prediction of the minimum of the true objective function.
 
     Parameters
     ----------
@@ -220,11 +225,15 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
 
     Returns
     -------
-    x : list]
+    x : list
         location of the minimum.
     fun : float
         the surrogate function value at the minimum.
     """
+    if res.space.is_partly_categorical:
+        return expected_minimum_random_sampling(res, n_random_starts=100000,
+                                                random_state=random_state)
+
     def func(x):
         reg = res.models[-1]
         x = res.space.transform(x.reshape(1, -1))
@@ -245,6 +254,49 @@ def expected_minimum(res, n_random_starts=20, random_state=None):
             best_fun = r.fun
 
     return [v for v in best_x], best_fun
+
+
+def expected_minimum_random_sampling(res, n_random_starts=100000,
+                                     random_state=None):
+    """Minimum search by doing naive random sampling, Returns the parameters
+    that gave the minimum function value. Can be used when the space
+    contains any categorical values.
+
+    .. note::
+        The returned minimum may not necessarily be an accurate
+        prediction of the minimum of the true objective function.
+
+    Parameters
+    ----------
+    res : `OptimizeResult`, scipy object
+        The optimization result returned by a `skopt` minimizer.
+
+    n_random_starts : int, default=100000
+        The number of random starts for the minimization of the surrogate
+        model.
+
+    random_state : int, RandomState instance, or None (default)
+        Set random state to something other than None for reproducible
+        results.
+
+    Returns
+    -------
+    x : list
+        location of the minimum.
+    fun : float
+        the surrogate function value at the minimum.
+    """
+
+    # sample points from search space
+    random_samples = res.space.rvs(n_random_starts, random_state=random_state)
+
+    # make estimations with surrogate
+    model = res.models[-1]
+    y_random = model.predict(res.space.transform(random_samples))
+    index_best_objective = np.argmin(y_random)
+    min_x = random_samples[index_best_objective]
+
+    return min_x, y_random[index_best_objective]
 
 
 def has_gradients(estimator):
@@ -376,8 +428,13 @@ def dimensions_aslist(search_space):
     >>> from skopt.utils import dimensions_aslist
     >>> search_space = {'name1': Real(0,1),
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
-    >>> dimensions_aslist(search_space)
-    [Real(0,1), Integer(2,4), Real(-1,1)]
+    >>> dimensions_aslist(search_space)[0]
+    Real(low=0, high=1, prior='uniform', transform='identity')
+    >>> dimensions_aslist(search_space)[1]
+    Integer(low=2, high=4, prior='uniform', transform='identity')
+    >>> dimensions_aslist(search_space)[2]
+    Real(low=-1, high=1, prior='uniform', transform='identity')
+
     """
     params_space_list = [
         search_space[k] for k in sorted(search_space.keys())
@@ -405,7 +462,7 @@ def point_asdict(search_space, point_as_list):
 
     Returns
     -------
-    params_dict : dict
+    params_dict : OrderedDict
         dictionary with parameter names as keys to which
         corresponding parameter values are assigned.
 
@@ -417,11 +474,11 @@ def point_asdict(search_space, point_as_list):
     ...                 'name2': Integer(2,4), 'name3': Real(-1,1)}
     >>> point_as_list = [0.66, 3, -0.15]
     >>> point_asdict(search_space, point_as_list)
-    {'name1': 0.66, 'name2': 3, 'name3': -0.15}
+    OrderedDict([('name1', 0.66), ('name2', 3), ('name3', -0.15)])
     """
-    params_dict = {
-        k: v for k, v in zip(sorted(search_space.keys()), point_as_list)
-    }
+    params_dict = OrderedDict()
+    for k, v in zip(sorted(search_space.keys()), point_as_list):
+        params_dict[k] = v
     return params_dict
 
 
@@ -525,6 +582,59 @@ def normalize_dimensions(dimensions):
     return Space(transformed_dimensions)
 
 
+def check_list_types(x, types):
+    """
+    Check whether all elements of a list `x` are of the correct type(s)
+    and raise a ValueError if they are not.
+
+    Note that `types` can be either a single object-type or a tuple
+    of object-types.
+
+    Raises `ValueError`, If one or more element in the list `x` is
+    not of the correct type(s).
+
+    Parameters
+    ----------
+    x : list
+        List of objects.
+
+    types : object or list(object)
+        Either a single object-type or a tuple of object-types.
+
+    """
+
+    # List of the elements in the list that are incorrectly typed.
+    err = list(filter(lambda a: not isinstance(a, types), x))
+
+    # If the list is non-empty then raise an exception.
+    if len(err) > 0:
+        msg = "All elements in list must be instances of {}, but found: {}"
+        msg = msg.format(types, err)
+        raise ValueError(msg)
+
+
+def check_dimension_names(dimensions):
+    """
+    Check whether all dimensions have names. Raises `ValueError`,
+    if one or more dimensions are unnamed.
+
+    Parameters
+    ----------
+    dimensions : list(Dimension)
+        List of Dimension-objects.
+
+    """
+
+    # List of the dimensions that have no names.
+    err_dims = list(filter(lambda dim: dim.name is None, dimensions))
+
+    # If the list is non-empty then raise an exception.
+    if len(err_dims) > 0:
+        msg = "All dimensions must have names, but found: {}"
+        msg = msg.format(err_dims)
+        raise ValueError(msg)
+
+
 def use_named_args(dimensions):
     """
     Wrapper / decorator for an objective function that uses named arguments
@@ -546,7 +656,7 @@ def use_named_args(dimensions):
     Examples
     --------
     >>> # Define the search-space dimensions. They must all have names!
-    >>> from skopt.space.Space import Real
+    >>> from skopt.space import Real
     >>> from skopt import forest_minimize
     >>> from skopt.utils import use_named_args
     >>> dim1 = Real(name='foo', low=0.0, high=1.0)
@@ -560,8 +670,8 @@ def use_named_args(dimensions):
     >>> # and use this function-decorator to specify the
     >>> # search-space dimensions.
     >>> @use_named_args(dimensions=dimensions)
-    >>> def my_objective_function(foo, bar, baz):
-    >>>     return foo ** 2 + bar ** 4 + baz ** 8
+    ... def my_objective_function(foo, bar, baz):
+    ...     return foo ** 2 + bar ** 4 + baz ** 8
     >>>
     >>> # Not the function is callable from the outside as
     >>> # `my_objective_function(x)` where `x` is a list of unnamed arguments,
@@ -580,7 +690,9 @@ def use_named_args(dimensions):
     >>>
     >>> # Print the best-found results.
     >>> print("Best fitness:", result.fun)
+    Best fitness: 0.1948080835239698
     >>> print("Best parameters:", result.x)
+    Best parameters: [0.44134853091052617, 0.06570954323368307, 0.17586123323419825]
 
     Parameters
     ----------
@@ -610,25 +722,10 @@ def use_named_args(dimensions):
         """
 
         # Ensure all dimensions are correctly typed.
-        if not all(isinstance(dim, Dimension) for dim in dimensions):
-            # List of the dimensions that are incorrectly typed.
-            err_dims = list(filter(lambda dim: not isinstance(dim, Dimension),
-                                   dimensions))
-
-            # Error message.
-            msg = "All dimensions must be instances of the Dimension-class, but found: {}"
-            msg = msg.format(err_dims)
-            raise ValueError(msg)
+        check_list_types(dimensions, Dimension)
 
         # Ensure all dimensions have names.
-        if any(dim.name is None for dim in dimensions):
-            # List of the dimensions that have no names.
-            err_dims = list(filter(lambda dim: dim.name is None, dimensions))
-
-            # Error message.
-            msg = "All dimensions must have names, but found: {}"
-            msg = msg.format(err_dims)
-            raise ValueError(msg)
+        check_dimension_names(dimensions)
 
         @wraps(func)
         def wrapper(x):

@@ -70,7 +70,7 @@ controlling the exploration-exploitation trade-off.
 print(__doc__)
 
 import numpy as np
-np.random.seed(1234)
+np.random.seed(237)
 import matplotlib.pyplot as plt
 
 #############################################################################
@@ -114,7 +114,7 @@ res = gp_minimize(f,                  # the function to minimize
                   n_calls=15,         # the number of evaluations of f
                   n_random_starts=5,  # the number of random initialization points
                   noise=0.1**2,       # the noise level (optional)
-                  random_state=123)   # the random seed
+                  random_state=1234)   # the random seed
 
 #############################################################################
 # Accordingly, the approximated minimum is found to be:
