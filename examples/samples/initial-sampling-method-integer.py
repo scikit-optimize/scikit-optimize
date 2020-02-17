@@ -35,7 +35,7 @@ from scipy.spatial.distance import pdist
 
 #############################################################################
 
-def plot_branin(x, title):
+def plot_searchspace(x, title):
     fig, ax = plt.subplots()
     plt.plot(np.array(x)[:, 0], np.array(x)[:, 1], 'bo', label='samples')
     plt.plot(np.array(x)[:, 0], np.array(x)[:, 1], 'bs', markersize=40, alpha=0.5)
@@ -48,7 +48,7 @@ def plot_branin(x, title):
     ax.grid(True)
 
 n_dim = 2
-n_samples = 5
+n_samples = 36
 
 space = Space([(0, 5), (0, 5)])
 space.set_transformer("normalize")
@@ -57,9 +57,10 @@ space.set_transformer("normalize")
 # Random sampling
 # ---------------
 x = space.rvs(n_samples)
-plot_branin(x, "Random samples")
+plot_searchspace(x, "Random samples")
 pdist_data = []
 x_label = []
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("random")
 #############################################################################
@@ -69,7 +70,8 @@ x_label.append("random")
 sobol = Sobol()
 inv_initial_samples = sobol.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'Sobol')
+plot_searchspace(x, 'Sobol')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("sobol")
 
@@ -81,7 +83,8 @@ x_label.append("sobol")
 lhs = Lhs(lhs_type="classic")
 inv_initial_samples = lhs.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'classic LHS')
+plot_searchspace(x, 'classic LHS')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("lhs")
 
@@ -92,7 +95,8 @@ x_label.append("lhs")
 lhs = Lhs(lhs_type="centered")
 inv_initial_samples = lhs.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'centered LHS')
+plot_searchspace(x, 'centered LHS')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("center")
 
@@ -103,7 +107,8 @@ x_label.append("center")
 lhs = Lhs(criterion="maximin", iterations=1000)
 inv_initial_samples = lhs.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'maximin LHS')
+plot_searchspace(x, 'maximin LHS')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("maximin")
 
@@ -114,7 +119,8 @@ x_label.append("maximin")
 lhs = Lhs(criterion="correlation", iterations=1000)
 inv_initial_samples = lhs.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'correlation LHS')
+plot_searchspace(x, 'correlation LHS')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("corr")
 
@@ -125,7 +131,8 @@ x_label.append("corr")
 lhs = Lhs(criterion="ratio", iterations=1000)
 inv_initial_samples = lhs.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'ratio LHS')
+plot_searchspace(x, 'ratio LHS')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("ratio")
 
@@ -136,7 +143,8 @@ x_label.append("ratio")
 halton = Halton()
 inv_initial_samples = halton.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'Halton')
+plot_searchspace(x, 'Halton')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("halton")
 
@@ -147,7 +155,8 @@ x_label.append("halton")
 hammersly = Hammersly()
 inv_initial_samples = hammersly.generate(n_dim, n_samples)
 x = space.inverse_transform(inv_initial_samples)
-plot_branin(x, 'Hammersly')
+plot_searchspace(x, 'Hammersly')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("hammersly")
 
