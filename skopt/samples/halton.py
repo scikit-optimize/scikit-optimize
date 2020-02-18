@@ -4,6 +4,7 @@ distributions/sampler/sequences/halton.py
 """
 import numpy as np
 from .base import InitialPointGenerator
+from ..space import Space
 from sklearn.utils import check_random_state
 
 
@@ -36,13 +37,22 @@ class Halton(InitialPointGenerator):
         self.min_skip = min_skip
         self.max_skip = max_skip
 
-    def generate(self, n_dim, n_samples, random_state=None):
+    def generate(self, dimensions, n_samples, random_state=None):
         """Creates samples from Halton set.
 
         Parameters
         ----------
-        n_dim : int
-           The number of dimension
+        dimensions : list, shape (n_dims,)
+            List of search space dimensions.
+            Each search dimension can be defined either as
+
+            - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
+              dimensions),
+            - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
+              dimensions),
+            - as a list of categories (for `Categorical` dimensions), or
+            - an instance of a `Dimension` object (`Real`, `Integer` or
+              `Categorical`).
         n_samples : int
             The order of the Halton sequence. Defines the number of samples.
         random_state : int, RandomState instance, or None (default)
@@ -58,6 +68,9 @@ class Halton(InitialPointGenerator):
             primes = []
         else:
             primes = list(self.primes)
+        space = Space(dimensions)
+        n_dim = space.n_dims
+        space.set_transformer("normalize")
         if len(primes) < n_dim:
             prime_order = 10 * n_dim
             while len(primes) < n_dim:
@@ -80,7 +93,7 @@ class Halton(InitialPointGenerator):
         for dim_ in range(n_dim):
             out[dim_] = _van_der_corput_samples(
                 indices, number_base=primes[dim_])
-        return np.transpose(out)
+        return space.inverse_transform(np.transpose(out))
 
 
 def _van_der_corput_samples(idx, number_base=2):

@@ -133,6 +133,9 @@ def test_mixed_categoricals():
 
     res = gp_minimize(objective, space, n_calls=12, random_state=1)
     assert res["x"] == ['1', 4, 1.0]
+    res = gp_minimize(objective, space, n_calls=12, random_state=1,
+                      initial_point_generator="lhs")
+    assert res["x"] == ['1', 4, 1.0]
 
 
 def test_mixed_categoricals2():
@@ -148,4 +151,8 @@ def test_mixed_categoricals2():
         return loss
 
     res = gp_minimize(objective, space, n_calls=12, random_state=1)
+    assert res["x"] == ['1', 4]
+
+    res = gp_minimize(objective, space, n_calls=12, random_state=1,
+                      initial_point_generator="lhs")
     assert res["x"] == ['1', 4]

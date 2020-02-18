@@ -25,18 +25,28 @@ from skopt.samples import Hammersly, Halton, Lhs, Sobol
 @pytest.mark.fast_test
 def test_lhs_type():
     lhs = Lhs(lhs_type="classic")
-    samples = lhs.generate(2, 200)
+    samples = lhs.generate([(0., 1.), ] * 2, 200)
     assert len(samples) == 200
     assert len(samples[0]) == 2
     lhs = Lhs(lhs_type="centered")
-    samples = lhs.generate(3, 3)
+    samples = lhs.generate([(0., 1.), ] * 3, 3)
     assert_almost_equal(np.sum(samples), 4.5)
+    samples = lhs.generate([("a", "b", "c")], 3)
+    assert samples[0][0] in ["a", "b", "c"]
+
+    samples = lhs.generate([("a", "b", "c"), (0, 1)], 1)
+    assert samples[0][0] in ["a", "b", "c"]
+    assert samples[0][1] in [0, 1]
+
+    samples = lhs.generate([("a", "b", "c"), (0, 1)], 3)
+    assert samples[0][0] in ["a", "b", "c"]
+    assert samples[0][1] in [0, 1]
 
 
 def test_lhs_criterion():
     for criterion in ["maximin", "ratio", "correlation"]:
         lhs = Lhs(criterion=criterion, iterations=100)
-        samples = lhs.generate(2, 200)
+        samples = lhs.generate([(0., 1.), ] * 2, 200)
         assert len(samples) == 200
         assert len(samples[0]) == 2
 
@@ -74,7 +84,8 @@ def test_sobol():
 @pytest.mark.fast_test
 def test_generate():
     sobol = Sobol(min_skip=1, max_skip=1)
-    x = sobol.generate(3, 3)
+    x = sobol.generate([(0., 1.), ] * 3, 3)
+    x = np.array(x)
     assert_array_equal(x[0, :], [0.5, 0.5, 0.5])
     assert_array_equal(x[1, :], [0.75, 0.25, 0.75])
     assert_array_equal(x[2, :], [0.25, 0.75, 0.25])
@@ -94,17 +105,17 @@ def test_van_der_corput():
 @pytest.mark.fast_test
 def test_halton():
     h = Halton()
-    x = h.generate(2, 3)
+    x = h.generate([(0., 1.), ] * 2, 3)
     y = np.array([[0.125, 0.625, 0.375], [0.4444, 0.7778, 0.2222]]).T
     assert_array_almost_equal(x, y, 1e-3)
 
     h = Halton()
-    x = h.generate(2, 4)
+    x = h.generate([(0., 1.), ] * 2, 4)
     y = np.array([[0.125, 0.625, 0.375, 0.875],
                   [0.4444, 0.7778, 0.2222, 0.5556]]).T
     assert_array_almost_equal(x, y, 1e-3)
 
-    samples = h.generate(2, 200)
+    samples = h.generate([(0., 1.), ] * 2, 200)
     assert len(samples) == 200
     assert len(samples[0]) == 2
 
@@ -112,14 +123,14 @@ def test_halton():
 @pytest.mark.fast_test
 def test_hammersly():
     h = Hammersly()
-    x = h.generate(2, 3)
+    x = h.generate([(0., 1.), ] * 2, 3)
     y = np.array([[0.75, 0.125, 0.625], [0.25, 0.5, 0.75]]).T
     assert_almost_equal(x, y)
-    x = h.generate(2, 4)
+    x = h.generate([(0., 1.), ] * 2, 4)
     y = np.array([[0.75, 0.125, 0.625, 0.375], [0.2, 0.4, 0.6, 0.8]]).T
     assert_almost_equal(x, y)
 
-    samples = h.generate(2, 200)
+    samples = h.generate([(0., 1.), ] * 2, 200)
     assert len(samples) == 200
     assert len(samples[0]) == 2
 

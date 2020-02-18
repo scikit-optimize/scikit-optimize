@@ -68,8 +68,7 @@ x_label.append("random")
 # -----
 
 sobol = Sobol()
-inv_initial_samples = sobol.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+x = sobol.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'Sobol')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
@@ -80,9 +79,8 @@ x_label.append("sobol")
 # Classic latin hypercube sampling
 # --------------------------------
 
-lhs = Lhs(lhs_type="classic")
-inv_initial_samples = lhs.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+lhs = Lhs(lhs_type="classic", criterion=None)
+x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'classic LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
@@ -92,9 +90,8 @@ x_label.append("lhs")
 # Centered latin hypercube sampling
 # ---------------------------------
 
-lhs = Lhs(lhs_type="centered")
-inv_initial_samples = lhs.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+lhs = Lhs(lhs_type="centered", criterion=None)
+x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'centered LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
@@ -105,8 +102,7 @@ x_label.append("center")
 # ------------------------------------
 
 lhs = Lhs(criterion="maximin", iterations=1000)
-inv_initial_samples = lhs.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'maximin LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
@@ -117,8 +113,7 @@ x_label.append("maximin")
 # ----------------------------------------
 
 lhs = Lhs(criterion="correlation", iterations=1000)
-inv_initial_samples = lhs.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'correlation LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
@@ -129,8 +124,7 @@ x_label.append("corr")
 # ----------------------------------
 
 lhs = Lhs(criterion="ratio", iterations=1000)
-inv_initial_samples = lhs.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'ratio LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
@@ -141,8 +135,7 @@ x_label.append("ratio")
 # ---------------
 
 halton = Halton()
-inv_initial_samples = halton.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+x = halton.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'Halton')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
@@ -153,8 +146,7 @@ x_label.append("halton")
 # ------------------
 
 hammersly = Hammersly()
-inv_initial_samples = hammersly.generate(n_dim, n_samples)
-x = space.inverse_transform(inv_initial_samples)
+x = hammersly.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'Hammersly')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())

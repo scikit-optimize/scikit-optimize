@@ -378,6 +378,11 @@ def test_set_get_transformer():
     space.set_transformer("normalize")
     transformer = space.get_transformer()
     assert_array_equal(["normalize"] * 5, transformer)
+    space.set_transformer(transformer)
+    assert_array_equal(transformer, space.get_transformer())
+
+    space.set_transformer_by_type("label", Categorical)
+    assert space.dimensions[2].transform(["a"]) == [0]
 
 
 @pytest.mark.fast_test

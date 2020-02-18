@@ -19,6 +19,7 @@ from __future__ import division
 import numpy as np
 from scipy.stats import norm
 from .base import InitialPointGenerator
+from ..space import Space
 from sklearn.utils import check_random_state
 
 
@@ -186,13 +187,22 @@ class Sobol(InitialPointGenerator):
         self.recipd = 1.0 / (2 * p2)
         self.lastq = np.zeros(dim_num)
 
-    def generate(self, n_dim, n_samples, random_state=None):
+    def generate(self, dimensions, n_samples, random_state=None):
         """Creates samples from Sobol set.
 
         Parameters
         ----------
-        n_dim : int
-           The number of dimension
+        dimensions : list, shape (n_dims,)
+            List of search space dimensions.
+            Each search dimension can be defined either as
+
+            - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
+              dimensions),
+            - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
+              dimensions),
+            - as a list of categories (for `Categorical` dimensions), or
+            - an instance of a `Dimension` object (`Real`, `Integer` or
+              `Categorical`).
         n_samples : int
             The order of the Sobol sequence. Defines the number of samples.
         random_state : int, RandomState instance, or None (default)
@@ -205,6 +215,9 @@ class Sobol(InitialPointGenerator):
             Sobol set
         """
         rng = check_random_state(random_state)
+        space = Space(dimensions)
+        n_dim = space.n_dims
+        space.set_transformer("normalize")
         r = np.full((n_samples, n_dim), np.nan)
         if self.min_skip == self.max_skip:
             seed = self.min_skip
@@ -213,8 +226,8 @@ class Sobol(InitialPointGenerator):
         for j in range(n_samples):
             r[j, 0:n_dim], seed = self._sobol(n_dim, seed)
         if self.randomize:
-            return _random_shift(r, random_state)
-        return r
+            return space.inverse_transform(_random_shift(r, random_state))
+        return space.inverse_transform(r)
 
     def _sobol(self, dim_num, seed):
         """Generates a new quasirandom Sobol vector with each call.

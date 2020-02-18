@@ -74,13 +74,9 @@ class Optimizer(object):
         Sets a initial points generator. Can be either
 
         - "random" for uniform random numbers,
-
         - "sobol" for a Sobol sequence,
-
         - "halton" for a Halton sequence,
-
         - "hammersly" for a Hammersly sequence,
-
         - "lhs" for a latin hypercube sequence
 
     acq_func : string, default=`"gp_hedge"`
@@ -292,14 +288,9 @@ class Optimizer(object):
                     "Unkown initial_point_generator: " +
                     str(initial_point_generator)
                 )
-            inv_initial_samples = self._initial_point_generator.generate(
-                self.space.n_dims, n_initial_points,
+            self._initial_samples = self._initial_point_generator.generate(
+                self.space.dimensions, n_initial_points,
                 random_state=self.rng.randint(0, np.iinfo(np.int32).max))
-            transformer = self.space.get_transformer()
-            self.space.set_transformer("normalize")
-            self._initial_samples = self.space.inverse_transform(
-                inv_initial_samples)
-            self.space.set_transformer(transformer)
 
         # record categorical and non-categorical indices
         self._cat_inds = []

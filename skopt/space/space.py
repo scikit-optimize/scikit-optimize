@@ -47,11 +47,12 @@ def check_dimension(dimension, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    transform : "identity", "normalize", "string", "onehot" optional
+    transform : "identity", "normalize", "string", "label", "onehot" optional
         - For `Categorical` dimensions, the following transformations are
           supported.
 
           - "onehot" (default) one-hot transformation of the original space.
+          - "label" integer transformation of the original space
           - "string" string transformation of the original space.
           - "identity" same as the original space.
 
@@ -544,11 +545,13 @@ class Categorical(Dimension):
         Prior probabilities for each category. By default all categories
         are equally likely.
 
-    transform : "onehot", "string", "identity", default="onehot"
+    transform : "onehot", "string", "identity", "label", default="onehot"
         - "identity", the transformed space is the same as the original
           space.
         -  "string",  the transformed space is a string encoded
           representation of the original space.
+        - "label", the transformed space is a label encoded
+          representation (integer) of the original space.
         - "onehot", the transformed space is a one-hot encoded
           representation of the original space.
 
@@ -580,18 +583,22 @@ class Categorical(Dimension):
         Parameters
         ----------
         transform : str
-           Can be 'normalize', 'onehot', 'string' or 'identity'
+           Can be 'normalize', 'onehot', 'string', 'label', or 'identity'
 
         """
         self.transform_ = transform
-        if transform not in ["identity", "onehot", "string", "normalize"]:
-            raise ValueError("Expected transform to be 'identity', 'string' or"
-                             "'onehot' got {}".format(transform))
+        if transform not in ["identity", "onehot", "string", "normalize",
+                             "label"]:
+            raise ValueError("Expected transform to be 'identity', 'string',"
+                             "'label' or 'onehot' got {}".format(transform))
         if transform == "onehot":
             self.transformer = CategoricalEncoder()
             self.transformer.fit(self.categories)
         elif transform == "string":
             self.transformer = StringEncoder()
+            self.transformer.fit(self.categories)
+        elif transform == "label":
+            self.transformer = LabelEncoder()
             self.transformer.fit(self.categories)
         elif transform == "normalize":
             self.transformer = Pipeline(
@@ -857,6 +864,22 @@ class Space(object):
             if isinstance(transform, list):
                 self.dimensions[j].set_transformer(transform[j])
             else:
+                self.dimensions[j].set_transformer(transform)
+
+    def set_transformer_by_type(self, transform, dim_type):
+        """Sets the transformer of `dim_type` objects to `transform`
+
+        Parameters
+        ----------
+        transform : str
+           Sets all transformer of type `dim_type` to `transform`
+        dim_type : type
+            Can be `skopt.space.Real`, `skopt.space.Integer` or
+             `skopt.space.Categorical`
+        """
+        # Transform
+        for j in range(self.n_dims):
+            if isinstance(self.dimensions[j], dim_type):
                 self.dimensions[j].set_transformer(transform)
 
     def get_transformer(self):
