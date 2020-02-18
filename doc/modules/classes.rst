@@ -89,6 +89,12 @@ Functions
     benchmarks.bench5
     benchmarks.branin
     benchmarks.hart6
+    benchmarks.Branin
+    benchmarks.Hartmann6
+    benchmarks.Forrester
+    benchmarks.Sumpow
+    benchmarks.Sumquares
+    benchmarks.Ackley
 
 .. _callbacks_ref:
 

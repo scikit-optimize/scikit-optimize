@@ -8,7 +8,7 @@ from numpy.testing import assert_raises
 
 from skopt.space import Real
 from skopt import Optimizer
-from skopt.benchmarks import branin
+from skopt.benchmarks import Branin
 import skopt.learning as sol
 
 from scipy.spatial.distance import pdist
@@ -47,9 +47,10 @@ def test_constant_liar_runs(strategy, surrogate, acq_func):
     * `surrogate` [scikit-optimize surrogate class]:
         A class of the scikit-optimize surrogate used in Optimizer.
     """
+    branin = Branin()
     optimizer = Optimizer(
         base_estimator=surrogate(),
-        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        dimensions=branin.dimensions,
         acq_func=acq_func,
         acq_optimizer='sampling',
         random_state=0
@@ -86,9 +87,10 @@ def test_all_points_different(strategy, surrogate):
     * `surrogate` [scikit-optimize surrogate class]:
         A class of the scikit-optimize surrogate used in Optimizer.
     """
+    branin = Branin()
     optimizer = Optimizer(
         base_estimator=surrogate(),
-        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        dimensions=branin.dimensions,
         acq_optimizer='sampling',
         random_state=1
     )
@@ -116,10 +118,10 @@ def test_same_set_of_points_ask(strategy, surrogate):
     * `surrogate` [scikit-optimize surrogate class]:
         A class of the scikit-optimize surrogate used in Optimizer.
     """
-
+    branin = Branin()
     optimizer = Optimizer(
         base_estimator=surrogate(),
-        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        dimensions=branin.dimensions,
         acq_optimizer='sampling',
         random_state=2
     )
@@ -135,10 +137,10 @@ def test_same_set_of_points_ask(strategy, surrogate):
 @pytest.mark.parametrize("surrogate", available_surrogates)
 def test_reproducible_runs(strategy, surrogate):
     # two runs of the optimizer should yield exactly the same results
-
+    branin = Branin()
     optimizer = Optimizer(
         base_estimator=surrogate(random_state=1),
-        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        dimensions=branin.dimensions,
         acq_optimizer='sampling',
         random_state=1
     )
@@ -152,7 +154,7 @@ def test_reproducible_runs(strategy, surrogate):
     # the x's should be exaclty as they are in `points`
     optimizer = Optimizer(
         base_estimator=surrogate(random_state=1),
-        dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+        dimensions=branin.dimensions,
         acq_optimizer='sampling',
         random_state=1
     )

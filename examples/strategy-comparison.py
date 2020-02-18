@@ -30,14 +30,12 @@ import matplotlib.pyplot as plt
 # Toy model
 # =========
 #
-# We will use the :class:`benchmarks.branin` function as toy model for the expensive function.
+# We will use the :class:`benchmarks.Branin` function as toy model for the expensive function.
 # In a real world application this function would be unknown and expensive
 # to evaluate.
 
-from skopt.benchmarks import branin as _branin
-
-def branin(x, noise_level=0.):
-    return _branin(x) + noise_level * np.random.randn()
+from skopt.benchmarks import Branin
+branin = Branin()
 
 #############################################################################
 
@@ -94,15 +92,15 @@ plot_branin()
 from functools import partial
 from skopt import gp_minimize, forest_minimize, dummy_minimize
 
-func = partial(branin, noise_level=2.0)
-bounds = [(-5.0, 10.0), (0.0, 15.0)]
+branin.noise_level = 2.0
+bounds = branin.dimensions
 n_calls = 60
 
 #############################################################################
 
 
 def run(minimizer, n_iter=5):
-    return [minimizer(func, bounds, n_calls=n_calls, random_state=n)
+    return [minimizer(branin, bounds, n_calls=n_calls, random_state=n)
             for n in range(n_iter)]
 
 # Random search
@@ -126,7 +124,7 @@ plot = plot_convergence(("dummy_minimize", dummy_res),
                         ("gp_minimize", gp_res),
                         ("forest_minimize('rf')", rf_res),
                         ("forest_minimize('et)", et_res),
-                        true_minimum=0.397887, yscale="log")
+                        true_minimum=branin.minimum, yscale="log")
 
 plot.legend(loc="best", prop={'size': 6}, numpoints=1)
 
