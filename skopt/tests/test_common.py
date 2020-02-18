@@ -17,10 +17,7 @@ from skopt import dummy_minimize
 from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt import gbrt_minimize
-from skopt.benchmarks import branin
-from skopt.benchmarks import bench1
-from skopt.benchmarks import bench4
-from skopt.benchmarks import bench5
+from skopt.benchmarks import Branin, bench1, bench4, bench5
 from skopt.callbacks import DeltaXStopper
 from skopt.space import Space
 
@@ -41,7 +38,7 @@ for acq in ACQUISITION:
 def check_minimizer_api(result, n_calls, n_models=None):
     # assumes the result was produced on branin
     assert(isinstance(result.space, Space))
-
+    branin = Branin()
     if n_models is not None:
         assert_equal(len(result.models), n_models)
 
@@ -95,7 +92,8 @@ def test_minimizer_api_dummy_minimize(verbose, call):
     # dummy_minimize is special as it does not support all parameters
     # and does not fit any models
     n_calls = 7
-    result = dummy_minimize(branin, [(-5.0, 10.0), (0.0, 15.0)],
+    branin = Branin()
+    result = dummy_minimize(branin, branin.dimensions,
                             n_calls=n_calls, random_state=1,
                             verbose=verbose, callback=call)
 
@@ -115,8 +113,8 @@ def test_minimizer_api(verbose, call, minimizer):
     n_calls = 7
     n_random_starts = 3
     n_models = n_calls - n_random_starts + 1
-
-    result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+    branin = Branin()
+    result = minimizer(branin, branin.dimensions,
                        n_random_starts=n_random_starts,
                        n_calls=n_calls,
                        random_state=1,
@@ -134,8 +132,8 @@ def test_minimizer_api_random_only(minimizer):
     # no models should be fit as we only evaluate at random points
     n_calls = 5
     n_random_starts = 5
-
-    result = minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+    branin = Branin()
+    result = minimizer(branin, branin.dimensions,
                        n_random_starts=n_random_starts,
                        n_calls=n_calls,
                        random_state=1)
@@ -151,12 +149,12 @@ def test_fixed_random_states(minimizer):
     # random state somewhere that is not reproducible
     n_calls = 4
     n_random_starts = 2
-
-    space = [(-5.0, 10.0), (0.0, 15.0)]
+    branin = Branin()
+    space = branin.dimensions
     result1 = minimizer(branin, space, n_calls=n_calls,
                         n_random_starts=n_random_starts, random_state=1)
 
-    dimensions = [(-5.0, 10.0), (0.0, 15.0)]
+    dimensions = branin.dimensions
     result2 = minimizer(branin, dimensions, n_calls=n_calls,
                         n_random_starts=n_random_starts, random_state=1)
 
@@ -171,15 +169,15 @@ def test_minimizer_with_space(minimizer):
     # result
     n_calls = 4
     n_random_starts = 2
-
-    space = Space([(-5.0, 10.0), (0.0, 15.0)])
+    branin = Branin()
+    space = Space(branin.dimensions)
     space_result = minimizer(branin, space, n_calls=n_calls,
                              n_random_starts=n_random_starts, random_state=1)
 
     check_minimizer_api(space_result, n_calls)
     check_minimizer_bounds(space_result, n_calls)
 
-    dimensions = [(-5.0, 10.0), (0.0, 15.0)]
+    dimensions = branin.dimensions
     result = minimizer(branin, dimensions, n_calls=n_calls,
                        n_random_starts=n_random_starts, random_state=1)
 
@@ -194,7 +192,8 @@ def test_minimizer_with_space(minimizer):
 def test_init_vals_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points, y0 values
     # and random starts
-    space = [(-5.0, 10.0), (0.0, 15.0)]
+    branin = Branin()
+    space = branin.dimensions
     x0 = [[1, 2], [3, 4], [5, 6]]
     y0 = list(map(branin, x0))
     n_calls = 7
@@ -213,7 +212,8 @@ def test_init_vals_and_models(n_random_starts, optimizer_func):
 def test_init_points_and_models(n_random_starts, optimizer_func):
     # test how many models are fitted when using initial points and random
     # starts (no y0 in this case)
-    space = [(-5.0, 10.0), (0.0, 15.0)]
+    branin = Branin()
+    space = branin.dimensions
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = 7
 
@@ -228,7 +228,8 @@ def test_init_points_and_models(n_random_starts, optimizer_func):
 @pytest.mark.parametrize("optimizer_func",
                          [gp_minimize, forest_minimize, gbrt_minimize])
 def test_init_vals(n_random_starts, optimizer_func):
-    space = [(-5.0, 10.0), (0.0, 15.0)]
+    branin = Branin()
+    space = branin.dimensions
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = len(x0) + n_random_starts + 1
 
@@ -238,7 +239,8 @@ def test_init_vals(n_random_starts, optimizer_func):
 
 @pytest.mark.fast_test
 def test_init_vals_dummy_minimize():
-    space = [(-5.0, 10.0), (0.0, 15.0)]
+    branin = Branin()
+    space = branin.dimensions
     x0 = [[1, 2], [3, 4], [5, 6]]
     n_calls = 10
     check_init_vals(dummy_minimize, branin, space, x0, n_calls)
@@ -320,28 +322,29 @@ def check_init_vals(optimizer, func, space, x0, n_calls):
 @pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_invalid_n_calls_arguments(minimizer):
+    branin = Branin()
     with pytest.raises(ValueError):
-        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+        minimizer(branin, branin.dimensions,
                   n_calls=0, random_state=1)
 
     with pytest.raises(ValueError):
-        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+        minimizer(branin, branin.dimensions,
                   n_random_starts=0, random_state=1)
 
     # n_calls >= n_random_starts
     with pytest.raises(ValueError):
-        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)],
+        minimizer(branin, branin.dimensions,
                   n_calls=1, n_random_starts=10, random_state=1)
 
     # n_calls >= n_random_starts + len(x0)
     with pytest.raises(ValueError):
-        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=1,
+        minimizer(branin, branin.dimensions, n_calls=1,
                   x0=[[-1, 2], [-3, 3], [2, 5]], random_state=1,
                   n_random_starts=7)
 
     # n_calls >= n_random_starts
     with pytest.raises(ValueError):
-        minimizer(branin, [(-5.0, 10.0), (0.0, 15.0)], n_calls=1,
+        minimizer(branin, branin.dimensions, n_calls=1,
                   x0=[[-1, 2], [-3, 3], [2, 5]], y0=[2.0, 3.0, 5.0],
                   random_state=1, n_random_starts=7)
 

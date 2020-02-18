@@ -50,10 +50,12 @@ from skopt import Optimizer
 from skopt.space import Real
 from joblib import Parallel, delayed
 # example objective taken from skopt
-from skopt.benchmarks import branin
+from skopt.benchmarks import Branin
+
+branin = Branin()
 
 optimizer = Optimizer(
-    dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],
+    dimensions=branin.dimensions,
     random_state=1,
     base_estimator='gp'
 )

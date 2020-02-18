@@ -9,7 +9,7 @@ from numpy.testing import assert_raises
 from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt.benchmarks import bench1, bench1_with_time
-from skopt.benchmarks import branin
+from skopt.benchmarks import Branin
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
 from skopt.learning import GradientBoostingQuantileRegressor
 from skopt.optimizer import Optimizer
@@ -307,7 +307,8 @@ def test_optimizer_base_estimator_string_smoke(base_estimator):
 def test_defaults_are_equivalent():
     # check that the defaults of Optimizer reproduce the defaults of
     # gp_minimize
-    space = [(-5., 10.), (0., 15.)]
+    branin = Branin()
+    space = branin.dimensions
     #opt = Optimizer(space, 'ET', acq_func="EI", random_state=1)
     opt = Optimizer(space, random_state=1)
 

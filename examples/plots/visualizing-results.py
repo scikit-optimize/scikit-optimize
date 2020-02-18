@@ -52,10 +52,11 @@ import matplotlib.pyplot as plt
 # it hard to visualize. This will show off the utility of
 # :class:`plots.plot_evaluations`.
 
-from skopt.benchmarks import branin as branin
-from skopt.benchmarks import hart6 as hart6_
+from skopt.benchmarks import Branin
+from skopt.benchmarks import Hartmann6
 
-
+branin = Branin()
+hart6_ = Hartmann6()
 # redefined `hart6` to allow adding arbitrary "noise" dimensions
 def hart6(x):
     return hart6_(x[:6])
