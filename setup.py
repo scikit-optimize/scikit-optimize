@@ -17,13 +17,30 @@ import skopt
 
 VERSION = skopt.__version__
 
+CLASSIFIERS = ['Intended Audience :: Science/Research',
+               'Intended Audience :: Developers',
+               'License :: OSI Approved :: BSD License',
+               'Programming Language :: Python',
+               'Topic :: Software Development',
+               'Topic :: Scientific/Engineering',
+               'Operating System :: Microsoft :: Windows',
+               'Operating System :: POSIX',
+               'Operating System :: Unix',
+               'Operating System :: MacOS',
+               'Programming Language :: Python :: 3.5',
+               'Programming Language :: Python :: 3.6',
+               'Programming Language :: Python :: 3.7',
+               'Programming Language :: Python :: 3.8']
+
+
 setup(name='scikit-optimize',
       version=VERSION,
       description='Sequential model-based optimization toolbox.',
       long_description=open('README.rst').read(),
       url='https://scikit-optimize.github.io/',
-      license='BSD 3-clause "New" or "Revised License"',
+      license='BSD 3-clause',
       author='The scikit-optimize contributors',
+      classifiers=CLASSIFIERS,
       packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
                 'skopt.learning.gaussian_process'],
       install_requires=['joblib', 'pyaml', 'numpy', 'scipy>=0.14.0',
@@ -31,4 +48,5 @@ setup(name='scikit-optimize',
       extras_require={
         'plots':  ["matplotlib"]
         }
+
       )
