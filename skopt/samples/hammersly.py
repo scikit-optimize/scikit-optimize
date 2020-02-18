@@ -71,14 +71,18 @@ class Hammersly(InitialPointGenerator):
                         primes=self.primes)
         space = Space(dimensions)
         n_dim = space.n_dims
+        transformer = space.get_transformer()
         space.set_transformer("normalize")
         if n_dim == 1:
-            return halton.generate(dimensions, n_samples,
-                                   random_state=random_state)
-        out = np.empty((n_dim, n_samples), dtype=float)
-        out[:n_dim - 1] = np.array(halton.generate(
-            [(0., 1.), ] * (n_dim - 1), n_samples,
-            random_state=random_state)).T
+            out = halton.generate(dimensions, n_samples,
+                                  random_state=random_state)
+        else:
+            out = np.empty((n_dim, n_samples), dtype=float)
+            out[:n_dim - 1] = np.array(halton.generate(
+                [(0., 1.), ] * (n_dim - 1), n_samples,
+                random_state=random_state)).T
 
-        out[n_dim - 1] = np.linspace(0, 1, n_samples + 2)[1:-1]
-        return space.inverse_transform(out.T)
+            out[n_dim - 1] = np.linspace(0, 1, n_samples + 2)[1:-1]
+            out = space.inverse_transform(out.T)
+        space.set_transformer(transformer)
+        return out

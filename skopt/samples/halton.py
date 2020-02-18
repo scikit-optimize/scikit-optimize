@@ -70,6 +70,7 @@ class Halton(InitialPointGenerator):
             primes = list(self.primes)
         space = Space(dimensions)
         n_dim = space.n_dims
+        transformer = space.get_transformer()
         space.set_transformer("normalize")
         if len(primes) < n_dim:
             prime_order = 10 * n_dim
@@ -93,7 +94,9 @@ class Halton(InitialPointGenerator):
         for dim_ in range(n_dim):
             out[dim_] = _van_der_corput_samples(
                 indices, number_base=primes[dim_])
-        return space.inverse_transform(np.transpose(out))
+        out = space.inverse_transform(np.transpose(out))
+        space.set_transformer(transformer)
+        return out
 
 
 def _van_der_corput_samples(idx, number_base=2):

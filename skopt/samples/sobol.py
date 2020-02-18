@@ -217,6 +217,7 @@ class Sobol(InitialPointGenerator):
         rng = check_random_state(random_state)
         space = Space(dimensions)
         n_dim = space.n_dims
+        transformer = space.get_transformer()
         space.set_transformer("normalize")
         r = np.full((n_samples, n_dim), np.nan)
         if self.min_skip == self.max_skip:
@@ -226,8 +227,10 @@ class Sobol(InitialPointGenerator):
         for j in range(n_samples):
             r[j, 0:n_dim], seed = self._sobol(n_dim, seed)
         if self.randomize:
-            return space.inverse_transform(_random_shift(r, random_state))
-        return space.inverse_transform(r)
+            r = space.inverse_transform(_random_shift(r, random_state))
+        r = space.inverse_transform(r)
+        space.set_transformer(transformer)
+        return r
 
     def _sobol(self, dim_num, seed):
         """Generates a new quasirandom Sobol vector with each call.
