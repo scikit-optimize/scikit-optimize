@@ -43,7 +43,7 @@ setup(name='scikit-optimize',
       classifiers=CLASSIFIERS,
       packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
                 'skopt.learning.gaussian_process'],
-      install_requires=['joblib', 'pyaml', 'numpy', 'scipy>=0.14.0',
+      install_requires=['joblib', 'pyaml', 'numpy>=1.8.2', 'scipy>=0.14.0',
                         'scikit-learn>=0.19.1'],
       extras_require={
         'plots':  ["matplotlib"]
