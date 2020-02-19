@@ -4,7 +4,7 @@
 Installation
 ============
 
-scikit-optimize supports Python 3.5 or newer.
+scikit-optimize supports Python 3.6 or newer.
 
 The newest release can be installed via pip:
 
