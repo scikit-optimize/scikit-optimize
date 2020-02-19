@@ -1,7 +1,7 @@
-numpy>=1.10
-scipy>=0.16
+numpy>=1.11
+scipy>=0.18
 scikit-learn>=0.19
 matplotlib>=2.0.0
 pytest
 pyaml>=16.9
-joblib>=0.10
+joblib>=0.11

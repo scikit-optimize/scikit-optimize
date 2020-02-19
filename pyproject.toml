@@ -3,9 +3,9 @@
 requires = [
     "setuptools",
     "wheel",
-    "numpy>=1.8.2",
-    "scipy>=0.14",
+    "numpy>=1.11",
+    "scipy>=0.18",
     "scikit-learn>=0.19.1",
-    "pyaml",
+    "pyaml>=16.9",
     "joblib>=0.11",
 ]
