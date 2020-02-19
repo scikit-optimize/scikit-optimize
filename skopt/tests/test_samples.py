@@ -17,9 +17,9 @@ from skopt.space import Real
 from skopt.space import Integer
 from skopt.space import Categorical
 from skopt.space import check_dimension as space_check_dimension
-from skopt.samples.sobol import _bit_lo0, _bit_hi1
-from skopt.samples.halton import _van_der_corput_samples, _create_primes
-from skopt.samples import Hammersly, Halton, Lhs, Sobol
+from skopt.sampler.sobol import _bit_lo0, _bit_hi1
+from skopt.sampler.halton import _van_der_corput_samples, _create_primes
+from skopt.sampler import Hammersly, Halton, Lhs, Sobol
 
 
 @pytest.mark.fast_test

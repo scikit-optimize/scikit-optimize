@@ -16,6 +16,7 @@ from sklearn.utils import check_random_state
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..learning import GaussianProcessRegressor
+from ..sampler import Sobol, Lhs, Hammersly, Halton
 from ..space import Categorical
 from ..space import Space
 from ..utils import check_x_in_space
@@ -268,19 +269,15 @@ class Optimizer(object):
         if initial_point_generator != "random" and \
                 isinstance(initial_point_generator, str):
             if initial_point_generator == "sobol":
-                from skopt.samples import Sobol
                 self._initial_point_generator = Sobol(
                     **self.init_point_gen_kwargs)
             elif initial_point_generator == "halton":
-                from skopt.samples import Halton
                 self._initial_point_generator = Halton(
                     **self.init_point_gen_kwargs)
             elif initial_point_generator == "hammersly":
-                from skopt.samples import Hammersly
                 self._initial_point_generator = Hammersly(
                     **self.init_point_gen_kwargs)
             elif initial_point_generator == "lhs":
-                from skopt.samples import Lhs
                 self._initial_point_generator = Lhs(
                     **self.init_point_gen_kwargs)
             else:

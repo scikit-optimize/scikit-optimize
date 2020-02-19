@@ -12,7 +12,7 @@ from skopt.utils import cook_estimator
 
 
 def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
-                   margin, n_calls, init_gen="random", n_random_starts=10):
+                   margin, n_calls, n_random_starts=10, init_gen="random"):
     r = gp_minimize(func, bounds, acq_optimizer=acq_optimizer,
                     acq_func=acq_func, n_random_starts=n_random_starts,
                     n_calls=n_calls, random_state=1,
@@ -40,7 +40,7 @@ def test_gp_minimize_bench1(search, acq):
 @pytest.mark.parametrize("initgen", INITGEN)
 def test_gp_minimize_bench1_initgen(search, acq, initgen):
     check_minimize(bench1, 0.,
-                   [(-2.0, 2.0)], search, acq, 0.05, 20, initgen)
+                   [(-2.0, 2.0)], search, acq, 0.05, 20, init_gen=initgen)
 
 
 @pytest.mark.slow_test

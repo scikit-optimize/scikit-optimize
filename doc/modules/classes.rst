@@ -221,16 +221,16 @@ details.
     utils.point_aslist
     utils.use_named_args
 
-.. _samples_ref:
+.. _sampler_ref:
 
-:mod:`skopt.samples`: Samples
-===============================
+:mod:`skopt.sampler`: Samplers
+==============================
 
-.. automodule:: skopt.samples
+.. automodule:: skopt.sampler
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`sample` section for further details.
+**User guide:** See the :ref:`sampler` section for further details.
 
 .. currentmodule:: skopt
 
@@ -238,10 +238,10 @@ details.
    :toctree: generated/
    :template: class.rst
 
-    samples.Lhs
-    samples.Sobol
-    samples.Halton
-    samples.Hammersly
+    sampler.Lhs
+    sampler.Sobol
+    sampler.Halton
+    sampler.Hammersly
 
 
 .. _space_ref:

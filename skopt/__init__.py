@@ -46,7 +46,7 @@ else:
     from . import optimizer
 
     from . import space
-    from . import samples
+    from . import sampler
     from .optimizer import dummy_minimize
     from .optimizer import forest_minimize
     from .optimizer import gbrt_minimize

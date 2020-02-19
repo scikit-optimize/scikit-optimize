@@ -25,7 +25,7 @@ setup(name='scikit-optimize',
       license='BSD 3-clause "New" or "Revised License"',
       author='The scikit-optimize contributors',
       packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
-                'skopt.learning.gaussian_process', 'skopt.samples'],
+                'skopt.learning.gaussian_process', 'skopt.sampler'],
       install_requires=['joblib', 'pyaml', 'numpy', 'scipy>=0.14.0',
                         'scikit-learn>=0.19.1'],
       extras_require={
