@@ -16,6 +16,7 @@ from sklearn.utils import check_random_state
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..learning import GaussianProcessRegressor
+from ..sampler import Sobol, Lhs, Hammersly, Halton
 from ..space import Categorical
 from ..space import Space
 from ..utils import check_x_in_space
@@ -66,9 +67,18 @@ class Optimizer(object):
 
     n_initial_points : int, default=10
         Number of evaluations of `func` with initialization points
-        before approximating it with `base_estimator`. Points provided as
-        `x0` count as initialization points. If len(x0) < n_initial_points
-        additional points are sampled at random.
+        before approximating it with `base_estimator`. Initial point
+        generator can be changed by setting `initial_point_generator`.
+
+    initial_point_generator : str, InitialPointGenerator instance,
+    default='random'
+        Sets a initial points generator. Can be either
+
+        - "random" for uniform random numbers,
+        - "sobol" for a Sobol sequence,
+        - "halton" for a Halton sequence,
+        - "hammersly" for a Hammersly sequence,
+        - "lhs" for a latin hypercube sequence
 
     acq_func : string, default=`"gp_hedge"`
         Function to minimize over the posterior distribution. Can be either
@@ -121,6 +131,9 @@ class Optimizer(object):
     acq_optimizer_kwargs : dict
         Additional arguments to be passed to the acquistion optimizer.
 
+    init_point_gen_kwargs : dict
+        Additional arguments to be passed to the initial_point_generator
+
     model_queue_size : int or None, default=None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
@@ -139,14 +152,17 @@ class Optimizer(object):
         space used to sample points, bounds, and type of parameters.
 
     """
+
     def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
+                 initial_point_generator="random",
                  acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None,
                  model_queue_size=None,
                  acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None):
+                 acq_optimizer_kwargs=None,
+                 init_point_gen_kwargs=None):
 
         self.rng = check_random_state(random_state)
 
@@ -221,7 +237,7 @@ class Optimizer(object):
                              "'sampling', got {0}".format(acq_optimizer))
 
         if (not has_gradients(self.base_estimator_) and
-            acq_optimizer != "sampling"):
+                acq_optimizer != "sampling"):
             raise ValueError("The regressor {0} should run with "
                              "acq_optimizer"
                              "='sampling'.".format(type(base_estimator)))
@@ -244,6 +260,36 @@ class Optimizer(object):
         if isinstance(self.base_estimator_, GaussianProcessRegressor):
             dimensions = normalize_dimensions(dimensions)
         self.space = Space(dimensions)
+
+        self._initial_samples = None
+        self._initial_point_generator = initial_point_generator
+        if init_point_gen_kwargs is None:
+            init_point_gen_kwargs = dict()
+        self.init_point_gen_kwargs = init_point_gen_kwargs
+        if initial_point_generator != "random" and \
+                isinstance(initial_point_generator, str):
+            if initial_point_generator == "sobol":
+                self._initial_point_generator = Sobol(
+                    **self.init_point_gen_kwargs)
+            elif initial_point_generator == "halton":
+                self._initial_point_generator = Halton(
+                    **self.init_point_gen_kwargs)
+            elif initial_point_generator == "hammersly":
+                self._initial_point_generator = Hammersly(
+                    **self.init_point_gen_kwargs)
+            elif initial_point_generator == "lhs":
+                self._initial_point_generator = Lhs(
+                    **self.init_point_gen_kwargs)
+            else:
+                raise ValueError(
+                    "Unkown initial_point_generator: " +
+                    str(initial_point_generator)
+                )
+            transformer = self.space.get_transformer()
+            self._initial_samples = self._initial_point_generator.generate(
+                self.space.dimensions, n_initial_points,
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+            self.space.set_transformer(transformer)
 
         # record categorical and non-categorical indices
         self._cat_inds = []
@@ -282,13 +328,15 @@ class Optimizer(object):
             dimensions=self.space.dimensions,
             base_estimator=self.base_estimator_,
             n_initial_points=self.n_initial_points_,
+            initial_point_generator=self._initial_point_generator,
             acq_func=self.acq_func,
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
+            init_point_gen_kwargs=self.init_point_gen_kwargs,
             random_state=random_state,
         )
-
+        optimizer._initial_samples = self._initial_samples
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
 
@@ -395,7 +443,12 @@ class Optimizer(object):
         if self._n_initial_points > 0 or self.base_estimator_ is None:
             # this will not make a copy of `self.rng` and hence keep advancing
             # our random state.
-            return self.space.rvs(random_state=self.rng)[0]
+            if self._initial_samples is None:
+                return self.space.rvs(random_state=self.rng)[0]
+            else:
+                # The samples are evaluated starting form initial_samples[0]
+                return self._initial_samples[
+                    len(self._initial_samples) - self._n_initial_points]
 
         else:
             if not self.models:
@@ -415,8 +468,8 @@ class Optimizer(object):
     def tell(self, x, y, fit=True):
         """Record an observation (or several) of the objective function.
 
-        Provide values of the objective function at points suggested by `ask()`
-        or other points. By default a new model will be fit to all
+        Provide values of the objective function at points suggested by
+        `ask()` or other points. By default a new model will be fit to all
         observations. The new model is used to suggest the next point at
         which to evaluate the objective. This point can be retrieved by calling
         `ask()`.
@@ -487,7 +540,7 @@ class Optimizer(object):
         # after being "told" n_initial_points we switch from sampling
         # random points to using a surrogate model
         if (fit and self._n_initial_points <= 0 and
-           self.base_estimator_ is not None):
+                self.base_estimator_ is not None):
             transformed_bounds = np.array(self.space.transformed_bounds)
             est = clone(self.base_estimator_)
 
