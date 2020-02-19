@@ -7,10 +7,12 @@ from ..utils import cook_estimator
 
 def gbrt_minimize(func, dimensions, base_estimator=None,
                   n_calls=100, n_random_starts=10,
+                  initial_point_generator="random",
                   acq_func="EI", acq_optimizer="auto",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, xi=0.01, kappa=1.96,
-                  n_jobs=1, model_queue_size=None):
+                  n_jobs=1, model_queue_size=None,
+                  init_point_gen_kwargs=None):
     """Sequential optimization using gradient boosted trees.
 
     Gradient boosted regression trees are used to model the (very)
@@ -60,6 +62,16 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     n_random_starts : int, default=10
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
+
+    initial_point_generator : str, InitialPointGenerator instance,
+    default='random'
+        Sets a initial points generator. Can be either
+
+        - "random" for uniform random numbers,
+        - "sobol" for a Sobol sequence,
+        - "halton" for a Halton sequence,
+        - "hammersly" for a Hammersly sequence,
+        - "lhs" for a latin hypercube sequence,
 
     acq_func : string, default=`"LCB"`
         Function to minimize over the forest posterior. Can be either
@@ -123,6 +135,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
+    init_point_gen_kwargs : dict
+        Additional arguments to be passed to the initial_point_generator
+
     Returns
     -------
     res : `OptimizeResult`, scipy object
@@ -159,7 +174,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
                          n_random_starts=n_random_starts,
+                         initial_point_generator=initial_point_generator,
                          x0=x0, y0=y0, random_state=random_state, xi=xi,
                          kappa=kappa, acq_func=acq_func, verbose=verbose,
                          callback=callback, acq_optimizer="sampling",
-                         model_queue_size=model_queue_size)
+                         model_queue_size=model_queue_size,
+                         init_point_gen_kwargs=init_point_gen_kwargs)

@@ -12,16 +12,18 @@ from skopt.utils import cook_estimator
 
 
 def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
-                   margin, n_calls, n_random_starts=10):
+                   margin, n_calls, n_random_starts=10, init_gen="random"):
     r = gp_minimize(func, bounds, acq_optimizer=acq_optimizer,
                     acq_func=acq_func, n_random_starts=n_random_starts,
                     n_calls=n_calls, random_state=1,
+                    initial_point_generator=init_gen,
                     noise=1e-10)
     assert r.fun < y_opt + margin
 
 
 SEARCH = ["sampling", "lbfgs"]
 ACQUISITION = ["LCB", "EI"]
+INITGEN = ["random", "lhs", "halton", "hammersly", "sobol"]
 
 
 @pytest.mark.slow_test
@@ -30,6 +32,15 @@ ACQUISITION = ["LCB", "EI"]
 def test_gp_minimize_bench1(search, acq):
     check_minimize(bench1, 0.,
                    [(-2.0, 2.0)], search, acq, 0.05, 20)
+
+
+@pytest.mark.slow_test
+@pytest.mark.parametrize("search", ["sampling"])
+@pytest.mark.parametrize("acq", ["LCB"])
+@pytest.mark.parametrize("initgen", INITGEN)
+def test_gp_minimize_bench1_initgen(search, acq, initgen):
+    check_minimize(bench1, 0.,
+                   [(-2.0, 2.0)], search, acq, 0.05, 20, init_gen=initgen)
 
 
 @pytest.mark.slow_test
@@ -116,7 +127,8 @@ def test_categorical_integer():
     assert res.x_iters[0][0] == dims[0][0]
 
 
-def test_mixed_categoricals():
+@pytest.mark.parametrize("initgen", INITGEN)
+def test_mixed_categoricals(initgen):
 
     space = Space([
         Categorical(name="x", categories=["1", "2", "3"]),
@@ -131,11 +143,13 @@ def test_mixed_categoricals():
         loss = int(x) + y * z
         return loss
 
-    res = gp_minimize(objective, space, n_calls=12, random_state=1)
-    assert res["x"] == ['1', 4, 1.0]
+    res = gp_minimize(objective, space, n_calls=12, random_state=1,
+                      initial_point_generator=initgen)
+    assert res["x"] in [['1', 4, 1.0], ['2', 4, 1.0]]
 
 
-def test_mixed_categoricals2():
+@pytest.mark.parametrize("initgen", INITGEN)
+def test_mixed_categoricals2(initgen):
     space = Space([
         Categorical(name="x", categories=["1", "2", "3"]),
         Categorical(name="y", categories=[4, 5, 6])
@@ -147,5 +161,6 @@ def test_mixed_categoricals2():
         loss = int(x) + y
         return loss
 
-    res = gp_minimize(objective, space, n_calls=12, random_state=1)
+    res = gp_minimize(objective, space, n_calls=12, random_state=1,
+                      initial_point_generator=initgen)
     assert res["x"] == ['1', 4]

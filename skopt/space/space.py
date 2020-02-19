@@ -11,6 +11,7 @@ from sklearn.utils.fixes import sp_version
 
 from .transformers import CategoricalEncoder
 from .transformers import StringEncoder
+from .transformers import LabelEncoder
 from .transformers import Normalize
 from .transformers import Identity
 from .transformers import LogN
@@ -46,11 +47,12 @@ def check_dimension(dimension, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    transform : "identity", "normalize", "string", "onehot" optional
+    transform : "identity", "normalize", "string", "label", "onehot" optional
         - For `Categorical` dimensions, the following transformations are
           supported.
 
           - "onehot" (default) one-hot transformation of the original space.
+          - "label" integer transformation of the original space
           - "string" string transformation of the original space.
           - "identity" same as the original space.
 
@@ -149,6 +151,9 @@ class Dimension(object):
         """
         return self.transformer.inverse_transform(Xt)
 
+    def set_transformer(self):
+        raise NotImplementedError
+
     @property
     def size(self):
         return 1
@@ -234,6 +239,9 @@ class Real(Dimension):
         self.log_base = np.log10(base)
         self.name = name
         self.dtype = dtype
+        self._rvs = None
+        self.transformer = None
+        self.transform_ = transform
         if isinstance(self.dtype, str) and self.dtype\
                 not in ['float', 'float16', 'float32', 'float64']:
             raise ValueError("dtype must be 'float', 'float16', 'float32'"
@@ -246,14 +254,23 @@ class Real(Dimension):
 
         if transform is None:
             transform = "identity"
+        self.set_transformer(transform)
 
+    def set_transformer(self, transform="identitiy"):
+        """Define rvs and transformer spaces.
+
+        Parameters
+        ----------
+        transform : str
+           Can be 'normalize' or 'identity'
+
+        """
         self.transform_ = transform
 
         if self.transform_ not in ["normalize", "identity"]:
             raise ValueError("transform should be 'normalize' or 'identity'"
                              " got {}".format(self.transform_))
 
-        # Define _rvs and transformer spaces.
         # XXX: The _rvs is for sampling in the transformed space.
         # The rvs on Dimension calls inverse_transform on the points sampled
         # using _rvs
@@ -263,12 +280,12 @@ class Real(Dimension):
             self._rvs = _uniform_inclusive(0., 1.)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
-                    [Identity(), Normalize(low, high)])
+                    [Identity(), Normalize(self.low, self.high)])
             else:
                 self.transformer = Pipeline(
                     [LogN(self.base),
-                     Normalize(np.log10(low) / self.log_base,
-                               np.log10(high) / self.log_base)]
+                     Normalize(np.log10(self.low) / self.log_base,
+                               np.log10(self.high) / self.log_base)]
                 )
         else:
             if self.prior == "uniform":
@@ -397,6 +414,10 @@ class Integer(Dimension):
         self.log_base = np.log10(base)
         self.name = name
         self.dtype = dtype
+        self.transform_ = transform
+        self._rvs = None
+        self.transformer = None
+
         if isinstance(self.dtype, str) and self.dtype\
             not in ['int', 'int8', 'int16', 'int32', 'int64',
                     'uint8', 'uint16', 'uint32', 'uint64']:
@@ -414,7 +435,17 @@ class Integer(Dimension):
 
         if transform is None:
             transform = "identity"
+        self.set_transformer(transform)
 
+    def set_transformer(self, transform="identitiy"):
+        """Define _rvs and transformer spaces.
+
+        Parameters
+        ----------
+        transform : str
+           Can be 'normalize' or 'identity'
+
+        """
         self.transform_ = transform
 
         if transform not in ["normalize", "identity"]:
@@ -425,13 +456,13 @@ class Integer(Dimension):
             self._rvs = _uniform_inclusive(0.0, 1.0)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
-                    [Identity(), Normalize(low, high, is_int=True)])
+                    [Identity(), Normalize(self.low, self.high, is_int=True)])
             else:
 
                 self.transformer = Pipeline(
                     [LogN(self.base),
-                     Normalize(np.log10(low) / self.log_base,
-                               np.log10(high) / self.log_base)]
+                     Normalize(np.log10(self.low) / self.log_base,
+                               np.log10(self.high) / self.log_base)]
                 )
         else:
             if self.prior == "uniform":
@@ -514,11 +545,13 @@ class Categorical(Dimension):
         Prior probabilities for each category. By default all categories
         are equally likely.
 
-    transform : "onehot", "string", "identity", default="onehot"
+    transform : "onehot", "string", "identity", "label", default="onehot"
         - "identity", the transformed space is the same as the original
           space.
         -  "string",  the transformed space is a string encoded
           representation of the original space.
+        - "label", the transformed space is a label encoded
+          representation (integer) of the original space.
         - "onehot", the transformed space is a one-hot encoded
           representation of the original space.
 
@@ -533,19 +566,8 @@ class Categorical(Dimension):
         if transform is None:
             transform = "onehot"
         self.transform_ = transform
-        if transform not in ["identity", "onehot", "string"]:
-            raise ValueError("Expected transform to be 'identity', 'string' or"
-                             "'onehot' got {}".format(transform))
-        if transform == "onehot":
-            self.transformer = CategoricalEncoder()
-            self.transformer.fit(self.categories)
-        elif transform == "string":
-            self.transformer = StringEncoder()
-            self.transformer.fit(self.categories)
-        else:
-            self.transformer = Identity()
-            self.transformer.fit(self.categories)
-
+        self.transformer = None
+        self._rvs = None
         self.prior = prior
 
         if prior is None:
@@ -553,11 +575,45 @@ class Categorical(Dimension):
                                   len(self.categories))
         else:
             self.prior_ = prior
+        self.set_transformer(transform)
 
-        # XXX check that sum(prior) == 1
-        self._rvs = rv_discrete(
-            values=(range(len(self.categories)), self.prior_)
-        )
+    def set_transformer(self, transform="onehot"):
+        """Define _rvs and transformer spaces.
+
+        Parameters
+        ----------
+        transform : str
+           Can be 'normalize', 'onehot', 'string', 'label', or 'identity'
+
+        """
+        self.transform_ = transform
+        if transform not in ["identity", "onehot", "string", "normalize",
+                             "label"]:
+            raise ValueError("Expected transform to be 'identity', 'string',"
+                             "'label' or 'onehot' got {}".format(transform))
+        if transform == "onehot":
+            self.transformer = CategoricalEncoder()
+            self.transformer.fit(self.categories)
+        elif transform == "string":
+            self.transformer = StringEncoder()
+            self.transformer.fit(self.categories)
+        elif transform == "label":
+            self.transformer = LabelEncoder()
+            self.transformer.fit(self.categories)
+        elif transform == "normalize":
+            self.transformer = Pipeline(
+                [LabelEncoder(list(self.categories)),
+                 Normalize(0, len(self.categories) - 1)])
+        else:
+            self.transformer = Identity()
+            self.transformer.fit(self.categories)
+        if transform == "normalize":
+            self._rvs = _uniform_inclusive(0.0, 1.0)
+        else:
+            # XXX check that sum(prior) == 1
+            self._rvs = rv_discrete(
+                values=(range(len(self.categories)), self.prior_)
+            )
 
     def __eq__(self, other):
         return (type(self) is type(other) and
@@ -577,11 +633,26 @@ class Categorical(Dimension):
 
         return "Categorical(categories={}, prior={})".format(cats, prior)
 
+    def inverse_transform(self, Xt):
+        """Inverse transform samples from the warped space back into the
+           original space.
+        """
+        # The concatenation of all transformed dimensions makes Xt to be
+        # of type float, hence the required cast back to int.
+        inv_transform = super(Categorical, self).inverse_transform(Xt)
+        if isinstance(inv_transform, list):
+            inv_transform = np.array(inv_transform)
+        return inv_transform
+
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
 
         if isinstance(choices, numbers.Integral):
             return self.categories[choices]
+        elif self.transform_ == "normalize" and isinstance(choices, float):
+            return self.inverse_transform([(choices)])
+        elif self.transform_ == "normalize":
+            return self.inverse_transform(list(choices))
         else:
             return [self.categories[c] for c in choices]
 
@@ -777,6 +848,46 @@ class Space(object):
             rows.append(r)
 
         return rows
+
+    def set_transformer(self, transform):
+        """Sets the transformer of all dimension objects to `transform`
+
+        Parameters
+        ----------
+        transform : str or list of str
+           Sets all transformer,, when `transform`  is a string.
+           Otherwise, transform must be a list with strings with
+           the same length as `dimensions`
+        """
+        # Transform
+        for j in range(self.n_dims):
+            if isinstance(transform, list):
+                self.dimensions[j].set_transformer(transform[j])
+            else:
+                self.dimensions[j].set_transformer(transform)
+
+    def set_transformer_by_type(self, transform, dim_type):
+        """Sets the transformer of `dim_type` objects to `transform`
+
+        Parameters
+        ----------
+        transform : str
+           Sets all transformer of type `dim_type` to `transform`
+        dim_type : type
+            Can be `skopt.space.Real`, `skopt.space.Integer` or
+             `skopt.space.Categorical`
+        """
+        # Transform
+        for j in range(self.n_dims):
+            if isinstance(self.dimensions[j], dim_type):
+                self.dimensions[j].set_transformer(transform)
+
+    def get_transformer(self):
+        """Returns all transformers as list"""
+        transformer = []
+        for j in range(self.n_dims):
+            transformer.append(self.dimensions[j].transform_)
+        return transformer
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
