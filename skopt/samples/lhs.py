@@ -68,77 +68,51 @@ class Lhs(InitialPointGenerator):
         rng = check_random_state(random_state)
         space = Space(dimensions)
         transformer = space.get_transformer()
-        if space.is_partly_categorical:
-            space.set_transformer("identity")
-            space.set_transformer_by_type("label", Categorical)
-            trans_cat_int = space.get_transformer()
         n_dim = space.n_dims
         space.set_transformer("normalize")
-        trans_normalize = space.get_transformer()
         if self.criterion is None or n_samples == 1:
-            h = self._lhs_normalized(n_dim, n_samples, random_state)
+            h = self._lhs_normalized(n_dim, n_samples, rng)
             h = space.inverse_transform(h)
             space.set_transformer(transformer)
             return h
         else:
-            h_opt = self._lhs_normalized(n_dim, n_samples, random_state)
-            space.set_transformer(trans_normalize)
+            h_opt = self._lhs_normalized(n_dim, n_samples, rng)
             h_opt = space.inverse_transform(h_opt)
-
             if self.criterion == "correlation":
                 mincorr = np.inf
                 for i in range(self.iterations):
                     # Generate a random LHS
-                    h = self._lhs_normalized(n_dim, n_samples, random_state)
-                    space.set_transformer(trans_normalize)
-                    h = space.inverse_transform(h)
-                    if space.is_partly_categorical:
-                        space.set_transformer(trans_cat_int)
-                        h = space.transform(h)
+                    h = self._lhs_normalized(n_dim, n_samples, rng)
                     r = np.corrcoef(np.array(h).T)
                     if np.max(np.abs(r[r != 1])) < mincorr:
                         mincorr = np.max(np.abs(r - np.eye(r.shape[0])))
                         h_opt = h.copy()
-                        if space.is_partly_categorical:
-                            space.set_transformer(trans_cat_int)
-                            h_opt = space.inverse_transform(h_opt)
-
+                        h_opt = space.inverse_transform(h_opt)
             elif self.criterion == "maximin":
                 maxdist = 0
                 # Maximize the minimum distance between points
                 for i in range(self.iterations):
-                    h = self._lhs_normalized(n_dim, n_samples, random_state)
-                    space.set_transformer(trans_normalize)
-                    h = space.inverse_transform(h)
-                    if space.is_partly_categorical:
-                        space.set_transformer(trans_cat_int)
-                        h = space.transform(h)
+                    h = self._lhs_normalized(n_dim, n_samples, rng)
                     d = spatial.distance.pdist(np.array(h), 'euclidean')
-                    if maxdist > np.min(d):
+                    if maxdist < np.min(d):
                         maxdist = np.min(d)
                         h_opt = h.copy()
-                        if space.is_partly_categorical:
-                            space.set_transformer(trans_cat_int)
-                            h_opt = space.inverse_transform(h_opt)
+                        h_opt = space.inverse_transform(h_opt)
             elif self.criterion == "ratio":
                 minratio = np.inf
 
                 # Maximize the minimum distance between points
                 for i in range(self.iterations):
-                    h = self._lhs_normalized(n_dim, n_samples, random_state)
-                    space.set_transformer(trans_normalize)
-                    h = space.inverse_transform(h)
-                    if space.is_partly_categorical:
-                        space.set_transformer(trans_cat_int)
-                        h = space.transform(h)
+                    h = self._lhs_normalized(n_dim, n_samples, rng)
                     p = spatial.distance.pdist(np.array(h), 'euclidean')
-                    ratio = np.max(p) / np.min(p)
-                    if minratio < ratio:
+                    if np.min(p) == 0:
+                        ratio = np.max(p) / 1e-8
+                    else:
+                        ratio = np.max(p) / np.min(p)
+                    if minratio > ratio:
                         minratio = ratio
                         h_opt = h.copy()
-                        if space.is_partly_categorical:
-                            space.set_transformer(trans_cat_int)
-                            h_opt = space.inverse_transform(h_opt)
+                        h_opt = space.inverse_transform(h_opt)
             else:
                 raise ValueError("Wrong criterion."
                                  "Got {}".format(self.criterion))
@@ -158,4 +132,4 @@ class Lhs(InitialPointGenerator):
                 h[:, j] = u[:, j] * np.diff(x) + x[:n_samples]
         else:
             raise ValueError("Wrong lhs_type. Got ".format(self.lhs_type))
-        return random_permute_matrix(h, random_state=random_state)
+        return random_permute_matrix(h, random_state=rng)

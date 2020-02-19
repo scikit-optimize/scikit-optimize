@@ -24,7 +24,7 @@ See also the example on a real space
 
 print(__doc__)
 import numpy as np
-np.random.seed(123)
+np.random.seed(1234)
 import matplotlib.pyplot as plt
 from skopt.space import Space
 from skopt.samples import Sobol
@@ -47,9 +47,8 @@ def plot_searchspace(x, title):
     plt.title(title)
     ax.grid(True)
 
-n_dim = 2
-n_samples = 36
 
+n_samples = 10
 space = Space([(0, 5), (0, 5)])
 space.set_transformer("normalize")
 
@@ -63,6 +62,7 @@ x_label = []
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("random")
+
 #############################################################################
 # Sobol
 # -----
@@ -73,7 +73,6 @@ plot_searchspace(x, 'Sobol')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("sobol")
-
 
 #############################################################################
 # Classic latin hypercube sampling
@@ -101,7 +100,7 @@ x_label.append("center")
 # Maximin optimized hypercube sampling
 # ------------------------------------
 
-lhs = Lhs(criterion="maximin", iterations=1000)
+lhs = Lhs(criterion="maximin", iterations=10000)
 x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'maximin LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
@@ -112,7 +111,7 @@ x_label.append("maximin")
 # Correlation optimized hypercube sampling
 # ----------------------------------------
 
-lhs = Lhs(criterion="correlation", iterations=1000)
+lhs = Lhs(criterion="correlation", iterations=10000)
 x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'correlation LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
@@ -123,7 +122,7 @@ x_label.append("corr")
 # Ratio optimized hypercube sampling
 # ----------------------------------
 
-lhs = Lhs(criterion="ratio", iterations=1000)
+lhs = Lhs(criterion="ratio", iterations=10000)
 x = lhs.generate(space.dimensions, n_samples)
 plot_searchspace(x, 'ratio LHS')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))

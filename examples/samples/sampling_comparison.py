@@ -46,7 +46,6 @@ def branin(x, noise_level=0.):
 
 #############################################################################
 
-from scipy.optimize import OptimizeResult
 from matplotlib.pyplot import cm
 import time
 from skopt import gp_minimize, forest_minimize, dummy_minimize

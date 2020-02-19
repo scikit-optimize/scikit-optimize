@@ -36,10 +36,10 @@ from scipy.spatial.distance import pdist
 
 #############################################################################
 
-def ploit_searchspace(x, title):
+def plot_searchspace(x, title):
     fig, ax = plt.subplots()
     plt.plot(np.array(x)[:, 0], np.array(x)[:, 1], 'bo', label='samples')
-    plt.plot(np.array(x)[:, 0], np.array(x)[:, 1], 'bo', markersize=40, alpha=0.5)
+    plt.plot(np.array(x)[:, 0], np.array(x)[:, 1], 'bo', markersize=80, alpha=0.5)
     # ax.legend(loc="best", numpoints=1)
     ax.set_xlabel("X1")
     ax.set_xlim([-5, 10])
@@ -47,8 +47,7 @@ def ploit_searchspace(x, title):
     ax.set_ylim([0, 15])
     plt.title(title)
 
-n_dim = 2
-n_samples = 40
+n_samples = 10
 
 space = Space([(-5., 10.), (0., 15.)])
 space.set_transformer("normalize")
@@ -57,21 +56,21 @@ space.set_transformer("normalize")
 # Random sampling
 # ---------------
 x = space.rvs(n_samples)
-ploit_searchspace(x, "Random samples")
+plot_searchspace(x, "Random samples")
 pdist_data = []
 x_label = []
 pdist_data.append(pdist(x).flatten())
 x_label.append("random")
+
 #############################################################################
 # Sobol
 # -----
 
 sobol = Sobol()
 x = sobol.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'Sobol')
+plot_searchspace(x, 'Sobol')
 pdist_data.append(pdist(x).flatten())
 x_label.append("sobol")
-
 
 #############################################################################
 # Classic Latin hypercube sampling
@@ -79,7 +78,7 @@ x_label.append("sobol")
 
 lhs = Lhs(lhs_type="classic", criterion=None)
 x = lhs.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'classic LHS')
+plot_searchspace(x, 'classic LHS')
 pdist_data.append(pdist(x).flatten())
 x_label.append("lhs")
 
@@ -89,7 +88,7 @@ x_label.append("lhs")
 
 lhs = Lhs(lhs_type="centered", criterion=None)
 x = lhs.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'centered LHS')
+plot_searchspace(x, 'centered LHS')
 pdist_data.append(pdist(x).flatten())
 x_label.append("center")
 
@@ -97,9 +96,9 @@ x_label.append("center")
 # Maximin optimized hypercube sampling
 # ------------------------------------
 
-lhs = Lhs(criterion="maximin", iterations=1000)
+lhs = Lhs(criterion="maximin", iterations=10000)
 x = lhs.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'maximin LHS')
+plot_searchspace(x, 'maximin LHS')
 pdist_data.append(pdist(x).flatten())
 x_label.append("maximin")
 
@@ -107,9 +106,9 @@ x_label.append("maximin")
 # Correlation optimized hypercube sampling
 # ----------------------------------------
 
-lhs = Lhs(criterion="correlation", iterations=1000)
+lhs = Lhs(criterion="correlation", iterations=10000)
 x = lhs.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'correlation LHS')
+plot_searchspace(x, 'correlation LHS')
 pdist_data.append(pdist(x).flatten())
 x_label.append("corr")
 
@@ -117,9 +116,9 @@ x_label.append("corr")
 # Ratio optimized hypercube sampling
 # ----------------------------------
 
-lhs = Lhs(criterion="ratio", iterations=1000)
+lhs = Lhs(criterion="ratio", iterations=10000)
 x = lhs.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'ratio LHS')
+plot_searchspace(x, 'ratio LHS')
 pdist_data.append(pdist(x).flatten())
 x_label.append("ratio")
 
@@ -129,7 +128,7 @@ x_label.append("ratio")
 
 halton = Halton()
 x = halton.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'Halton')
+plot_searchspace(x, 'Halton')
 pdist_data.append(pdist(x).flatten())
 x_label.append("halton")
 
@@ -139,7 +138,7 @@ x_label.append("halton")
 
 hammersly = Hammersly()
 x = hammersly.generate(space.dimensions, n_samples)
-ploit_searchspace(x, 'Hammersly')
+plot_searchspace(x, 'Hammersly')
 pdist_data.append(pdist(x).flatten())
 x_label.append("hammersly")
 

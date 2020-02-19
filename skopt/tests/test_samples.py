@@ -10,7 +10,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 from numpy.testing import assert_raises_regex
-
+from scipy import spatial
 from skopt import Optimizer
 from skopt.space import Space
 from skopt.space import Real
@@ -49,6 +49,34 @@ def test_lhs_criterion():
         samples = lhs.generate([(0., 1.), ] * 2, 200)
         assert len(samples) == 200
         assert len(samples[0]) == 2
+
+
+def test_lhs_pdist():
+    n_dim = 2
+    n_samples = 20
+    lhs = Lhs()
+
+    h = lhs._lhs_normalized(n_dim, n_samples, 0)
+    d_classic = spatial.distance.pdist(np.array(h), 'euclidean')
+    lhs = Lhs(criterion="maximin", iterations=100)
+    h = lhs.generate([(0., 1.), ] * n_dim, n_samples, random_state=0)
+    d = spatial.distance.pdist(np.array(h), 'euclidean')
+    assert np.min(d) > np.min(d_classic)
+
+
+def test_lhs_random_state():
+    n_dim = 2
+    n_samples = 20
+    lhs = Lhs()
+
+    h = lhs._lhs_normalized(n_dim, n_samples, 0)
+    h2 = lhs._lhs_normalized(n_dim, n_samples, 0)
+    assert_array_equal(h, h2)
+    for criterion in ["maximin", "ratio", "correlation"]:
+        lhs = Lhs(criterion=criterion, iterations=100)
+        h = lhs.generate([(0., 1.), ] * n_dim, n_samples, random_state=0)
+        h2 = lhs.generate([(0., 1.), ] * n_dim, n_samples, random_state=0)
+        assert_array_equal(h, h2)
 
 
 @pytest.mark.fast_test

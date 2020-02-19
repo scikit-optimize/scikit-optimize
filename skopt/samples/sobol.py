@@ -227,7 +227,7 @@ class Sobol(InitialPointGenerator):
         for j in range(n_samples):
             r[j, 0:n_dim], seed = self._sobol(n_dim, seed)
         if self.randomize:
-            r = space.inverse_transform(_random_shift(r, random_state))
+            r = space.inverse_transform(_random_shift(r, rng))
         r = space.inverse_transform(r)
         space.set_transformer(transformer)
         return r
