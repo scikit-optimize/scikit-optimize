@@ -93,7 +93,8 @@ class Lhs(InitialPointGenerator):
                     # Generate a random LHS
                     h = self._lhs_normalized(n_dim, n_samples, rng)
                     r = np.corrcoef(np.array(h).T)
-                    if np.max(np.abs(r[r != 1])) < mincorr:
+                    if len(np.abs(r[r != 1])) > 0 and \
+                            np.max(np.abs(r[r != 1])) < mincorr:
                         mincorr = np.max(np.abs(r - np.eye(r.shape[0])))
                         h_opt = h.copy()
                         h_opt = space.inverse_transform(h_opt)

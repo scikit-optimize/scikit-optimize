@@ -51,7 +51,27 @@ def _create_uniform_grid_only_border(n_dim, order):
 
 
 class Grid(InitialPointGenerator):
-    """Generate samples from a regular grid."""
+    """Generate samples from a regular grid.
+
+    Parameters
+    ----------
+    border : str, default='exclude'
+        defines how the samples are generated:
+        - 'include' : Includes the border into the grid layout
+        - 'exclude' : Excludes the border from the grid layout
+        - 'only' : Selects only points at the border of the dimension
+    use_full_layout : boolean, default=True
+        When True, a  full factorial design is generated and missing points are taken
+        from the next larger  full factorial design, depending on `append_border`
+        When False, the next larger  full factorial design is generated and points
+        are randomly selected from it.
+    append_border : str, default="only"
+        When use_full_layout is True, this parameter defines how the missing
+        points will be generated from the next larger grid layout:
+        - 'include' : Includes the border into the grid layout
+        - 'exclude' : Excludes the border from the grid layout
+        - 'only' : Selects only points at the border of the dimension
+    """
 
     def __init__(self, border="exclude", use_full_layout=True,
                  append_border="only"):

@@ -25,17 +25,48 @@ from skopt.sampler.grid import _create_uniform_grid_include_border
 from skopt.sampler.grid import _create_uniform_grid_exclude_border
 from skopt.sampler.grid import _quadrature_combine
 from skopt.sampler.grid import _create_uniform_grid_only_border
+from skopt.utils import cook_initial_point_generator
+
+
+LHS_TYPE = ["classic", "centered"]
+CRITERION = ["maximin", "ratio", "correlation", None]
+SAMPLER = ["lhs", "halton", "sobol", "hammersly", "grid"]
 
 
 @pytest.mark.fast_test
-def test_lhs_type():
-    lhs = Lhs(lhs_type="classic")
-    samples = lhs.generate([(0., 1.), ] * 2, 200)
-    assert len(samples) == 200
-    assert len(samples[0]) == 2
+def test_lhs_centered():
     lhs = Lhs(lhs_type="centered")
     samples = lhs.generate([(0., 1.), ] * 3, 3)
     assert_almost_equal(np.sum(samples), 4.5)
+
+
+@pytest.mark.parametrize("samlper", SAMPLER)
+def test_sampler(samlper):
+   s = cook_initial_point_generator(samlper)
+   samples = s.generate([(0., 1.), ] * 2, 200)
+   assert len(samples) == 200
+   assert len(samples[0]) == 2
+   assert isinstance(s, InitialPointGenerator)
+
+   samples = s.generate([("a", "b", "c")], 3)
+   assert samples[0][0] in ["a", "b", "c"]
+
+   samples = s.generate([("a", "b", "c"), (0, 1)], 1)
+   assert samples[0][0] in ["a", "b", "c"]
+   assert samples[0][1] in [0, 1]
+
+   samples = s.generate([("a", "b", "c"), (0, 1)], 3)
+   assert samples[0][0] in ["a", "b", "c"]
+   assert samples[0][1] in [0, 1]
+
+
+@pytest.mark.parametrize("lhs_type", LHS_TYPE)
+@pytest.mark.parametrize("criterion", CRITERION)
+def test_lhs_criterion(lhs_type, criterion):
+    lhs = Lhs(lhs_type=lhs_type, criterion=criterion, iterations=100)
+    samples = lhs.generate([(0., 1.), ] * 2, 200)
+    assert len(samples) == 200
+    assert len(samples[0]) == 2
     samples = lhs.generate([("a", "b", "c")], 3)
     assert samples[0][0] in ["a", "b", "c"]
 
@@ -46,14 +77,6 @@ def test_lhs_type():
     samples = lhs.generate([("a", "b", "c"), (0, 1)], 3)
     assert samples[0][0] in ["a", "b", "c"]
     assert samples[0][1] in [0, 1]
-
-
-def test_lhs_criterion():
-    for criterion in ["maximin", "ratio", "correlation"]:
-        lhs = Lhs(criterion=criterion, iterations=100)
-        samples = lhs.generate([(0., 1.), ] * 2, 200)
-        assert len(samples) == 200
-        assert len(samples[0]) == 2
 
 
 def test_lhs_pdist():
@@ -69,7 +92,8 @@ def test_lhs_pdist():
     assert np.min(d) > np.min(d_classic)
 
 
-def test_lhs_random_state():
+@pytest.mark.parametrize("criterion", CRITERION)
+def test_lhs_random_state(criterion):
     n_dim = 2
     n_samples = 20
     lhs = Lhs()
@@ -77,11 +101,10 @@ def test_lhs_random_state():
     h = lhs._lhs_normalized(n_dim, n_samples, 0)
     h2 = lhs._lhs_normalized(n_dim, n_samples, 0)
     assert_array_equal(h, h2)
-    for criterion in ["maximin", "ratio", "correlation"]:
-        lhs = Lhs(criterion=criterion, iterations=100)
-        h = lhs.generate([(0., 1.), ] * n_dim, n_samples, random_state=0)
-        h2 = lhs.generate([(0., 1.), ] * n_dim, n_samples, random_state=0)
-        assert_array_equal(h, h2)
+    lhs = Lhs(criterion=criterion, iterations=100)
+    h = lhs.generate([(0., 1.), ] * n_dim, n_samples, random_state=0)
+    h2 = lhs.generate([(0., 1.), ] * n_dim, n_samples, random_state=0)
+    assert_array_equal(h, h2)
 
 
 @pytest.mark.fast_test
@@ -234,3 +257,26 @@ def test_uniform_grid():
     assert_raises(AssertionError, _create_uniform_grid_include_border, 0, 1)
     assert_raises(AssertionError, _create_uniform_grid_only_border, 1, 1)
     assert_raises(AssertionError, _create_uniform_grid_only_border, 0, 2)
+
+
+@pytest.mark.fast_test
+def test_grid():
+    grid = Grid()
+    samples = grid.generate([(0., 1.), ] * 2, 200)
+    assert len(samples) == 200
+    assert len(samples[0]) == 2
+
+    grid = Grid(border="include")
+    samples = grid.generate([(0., 1.), ] * 2, 200)
+    assert len(samples) == 200
+    assert len(samples[0]) == 2
+
+    grid = Grid(use_full_layout=False)
+    samples = grid.generate([(0., 1.), ] * 2, 200)
+    assert len(samples) == 200
+    assert len(samples[0]) == 2
+
+    grid = Grid(use_full_layout=True, append_border="include")
+    samples = grid.generate([(0., 1.), ] * 2, 200)
+    assert len(samples) == 200
+    assert len(samples[0]) == 2
