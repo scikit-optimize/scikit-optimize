@@ -16,7 +16,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         and return the objective value.
     
         If you have a search-space where all dimensions have names,
-        then you can use `skopt.utils.use_named_args` as a decorator
+        then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
         with the named arguments. See `use_named_args` for an example.
 
@@ -35,8 +35,8 @@ def dummy_minimize(func, dimensions, n_calls=100,
     n_calls : int, default=100
         Number of calls to `func` to find the minimum.
 
-    initial_point_generator : str, InitialPointGenerator instance,
-    default='random'
+    initial_point_generator : str, InitialPointGenerator instance, \
+            default='random'
         Sets a initial points generator. Can be either
 
         - "random" for uniform random numbers,

@@ -422,7 +422,9 @@ def cook_initial_point_generator(generator, **kwargs):
     kwargs : dict
         Extra parameters provided to the generator at init time.
     """
-    if isinstance(generator, str):
+    if generator is None:
+        generator = "random"
+    elif isinstance(generator, str):
         generator = generator.lower()
         if generator not in ["sobol", "halton", "hammersly", "lhs", "random",
                              "grid"]:
@@ -431,11 +433,9 @@ def cook_initial_point_generator(generator, **kwargs):
                              "'random', or 'grid' not "
                              "%s." % generator)
     elif not isinstance(generator, InitialPointGenerator):
-        raise ValueError("generator has to be an InitialPointGenerator.")
-    if generator == "random":
-        return None
-    elif generator is None:
-        generator = "lhs"
+        raise ValueError("generator has to be an InitialPointGenerator."
+                         "Got %s" % (str(type(generator))))
+
     if isinstance(generator, str):
         if generator == "sobol":
             generator = Sobol()
@@ -447,6 +447,8 @@ def cook_initial_point_generator(generator, **kwargs):
             generator = Lhs()
         elif generator == "grid":
             generator = Grid()
+        elif generator == "random":
+            return None
     generator.set_params(**kwargs)
     return generator
 
