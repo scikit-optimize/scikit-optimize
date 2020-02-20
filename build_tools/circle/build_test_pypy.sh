@@ -2,6 +2,8 @@
 set -x
 set -e
 # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/build_test_pypy.sh
+# The scikit-learn developers.
+# License: BSD-style
 apt-get -yq update
 apt-get -yq install libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
 

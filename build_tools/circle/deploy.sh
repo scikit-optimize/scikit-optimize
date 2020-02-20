@@ -1,5 +1,6 @@
 #!/bin/bash
 # Almost copied verbatim from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/push_doc.sh
+#
 export SKOPT_HOME=$(pwd)
 
 if [ -z $CIRCLE_PROJECT_USERNAME ];

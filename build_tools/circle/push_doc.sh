@@ -1,5 +1,8 @@
 #!/bin/bash
 # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/push_doc.sh
+# The scikit-learn developers.
+# License: BSD-style
+#
 # This script is meant to be called in the "deploy" step defined in
 # circle.yml. See https://circleci.com/docs/ for more details.
 # The behavior of the script is controlled by environment variable defined
