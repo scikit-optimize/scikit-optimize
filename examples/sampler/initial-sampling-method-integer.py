@@ -31,6 +31,7 @@ from skopt.sampler import Sobol
 from skopt.sampler import Lhs
 from skopt.sampler import Halton
 from skopt.sampler import Hammersly
+from skopt.sampler import Grid
 from scipy.spatial.distance import pdist
 
 #############################################################################
@@ -50,7 +51,6 @@ def plot_searchspace(x, title):
 
 n_samples = 10
 space = Space([(0, 5), (0, 5)])
-space.set_transformer("normalize")
 
 #############################################################################
 # Random sampling
@@ -150,6 +150,17 @@ plot_searchspace(x, 'Hammersly')
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
 x_label.append("hammersly")
+
+#############################################################################
+# Grid sampling
+# -------------
+
+grid = Grid(border="include", use_full_layout=False)
+x = grid.generate(space.dimensions, n_samples)
+plot_searchspace(x, 'Grid')
+print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
+pdist_data.append(pdist(x).flatten())
+x_label.append("grid")
 
 #############################################################################
 # Pdist boxplot of all methods

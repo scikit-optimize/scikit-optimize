@@ -28,11 +28,11 @@ def test_forest_minimize_api(base_estimator):
 
 
 def check_minimize(minimizer, func, y_opt, dimensions, margin,
-                   n_calls, n_random_starts=10, x0=None):
+                   n_calls, n_initial_points=10, x0=None):
     for n in range(3):
         r = minimizer(
             func, dimensions, n_calls=n_calls, random_state=n,
-            n_random_starts=n_random_starts, x0=x0)
+            n_initial_points=n_initial_points, x0=x0)
         assert r.fun < y_opt + margin
 
 
@@ -64,5 +64,5 @@ def test_categorical_integer():
 
     dims = [[1]]
     res = forest_minimize(f, dims, n_calls=1, random_state=1,
-                          n_random_starts=1)
+                          n_initial_points=1)
     assert res.x_iters[0][0] == dims[0][0]
