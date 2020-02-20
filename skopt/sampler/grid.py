@@ -116,6 +116,8 @@ class Grid(InitialPointGenerator):
             if order < 2:
                 order = 2
             h = _create_uniform_grid_exclude_border(n_dim, order)
+        else:
+            raise ValueError("Wrong value for border")
         if np.size(h, 0) > n_samples:
             rng.shuffle(h)
             h = h[:n_samples, :]
@@ -135,6 +137,8 @@ class Grid(InitialPointGenerator):
                 if order < 1:
                     order = 1
                 h2 = _create_uniform_grid_exclude_border(n_dim, order)
+            else:
+                raise ValueError("Wrong value for append_border")
             h = np.vstack((h, h2[:(n_samples - np.size(h, 0))]))
             rng.shuffle(h)
         else:
