@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/list_versions.sh
+# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/
+# build_tools/circle/list_versions.sh
 # The scikit-learn developers.
 # License: BSD-style
 # List all available versions of the documentation
@@ -20,7 +21,8 @@ def json_urlread(url):
 
 
 def human_readable_data_quantity(quantity, multiple=1024):
-    # https://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
+    # https://stackoverflow.com/questions/1094841/
+    # reusable-library-to-get-human-readable-version-of-file-size
     if quantity == 0:
         quantity = +0
     SUFFIXES = ["B"] + [i + {1000: "B", 1024: "iB"}[multiple]
