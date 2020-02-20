@@ -53,7 +53,8 @@ def _create_uniform_grid_only_border(n_dim, order):
 class Grid(InitialPointGenerator):
     """Generate samples from a regular grid."""
 
-    def __init__(self, border="exclude", use_full_layout=True, append_border="only"):
+    def __init__(self, border="exclude", use_full_layout=True,
+                 append_border="only"):
         self.border = border
         self.use_full_layout = use_full_layout
         self.append_border = append_border

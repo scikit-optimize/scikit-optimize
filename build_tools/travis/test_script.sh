@@ -11,10 +11,11 @@ set -e
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "import sklearn; print('scipy %s' % sklearn.__version__)"
 python -c "\
 try:
-    import sklearn
-    print('sklearn %s' % sklearn.__version__)
+    import skopt
+    print('skopt %s' % skopt.__version__)
 except ImportError:
     pass
 "
@@ -36,7 +37,7 @@ run_tests() {
     export SKOPT_SKIP_NETWORK_TESTS=1
 
     if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --cov sklearn"
+        TEST_CMD="$TEST_CMD --cov skopt"
     fi
 
     if [[ -n "$CHECK_WARNINGS" ]]; then

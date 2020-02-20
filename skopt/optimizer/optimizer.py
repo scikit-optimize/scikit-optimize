@@ -62,7 +62,7 @@ class Optimizer(object):
         is used in the minimize functions.
 
     n_random_starts : int, default=10
-        .. deprecated::
+        .. deprecated:: 0.9
             use `n_initial_points` instead.
 
     n_initial_points : int, default=10

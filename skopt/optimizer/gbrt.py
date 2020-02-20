@@ -65,7 +65,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     n_random_starts : int, default=10
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
-        .. deprecated::
+        .. deprecated:: 0.9
             use `n_initial_points` instead.
 
     n_initial_points : int, default=10
