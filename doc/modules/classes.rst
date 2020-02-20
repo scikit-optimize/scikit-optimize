@@ -213,6 +213,7 @@ details.
    :template: function.rst
 
     utils.cook_estimator
+    utils.cook_initial_point_generator
     utils.dimensions_aslist
     utils.expected_minimum
     utils.expected_minimum_random_sampling
@@ -221,6 +222,28 @@ details.
     utils.point_asdict
     utils.point_aslist
     utils.use_named_args
+
+.. _sampler_ref:
+
+:mod:`skopt.sampler`: Samplers
+==============================
+
+.. automodule:: skopt.sampler
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`sampler` section for further details.
+
+.. currentmodule:: skopt
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+    sampler.Lhs
+    sampler.Sobol
+    sampler.Halton
+    sampler.Hammersly
 
 
 .. _space_ref:
@@ -275,5 +298,7 @@ details.
     space.transformers.Normalize
     space.transformers.Pipeline
     space.transformers.Transformer
+    space.transformers.LabelEncoder
+    space.transformers.StringEncoder
 
 

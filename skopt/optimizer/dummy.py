@@ -3,9 +3,10 @@
 from .base import base_minimize
 
 
-def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
+def dummy_minimize(func, dimensions, n_calls=100,
+                   initial_point_generator="random", x0=None, y0=None,
                    random_state=None, verbose=False, callback=None,
-                   model_queue_size=None):
+                   model_queue_size=None, init_point_gen_kwargs=None):
     """Random search by uniform sampling within the given bounds.
 
     Parameters
@@ -15,7 +16,7 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
         and return the objective value.
     
         If you have a search-space where all dimensions have names,
-        then you can use `skopt.utils.use_named_args` as a decorator
+        then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
         with the named arguments. See `use_named_args` for an example.
 
@@ -33,6 +34,17 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
 
     n_calls : int, default=100
         Number of calls to `func` to find the minimum.
+
+    initial_point_generator : str, InitialPointGenerator instance, \
+            default='random'
+        Sets a initial points generator. Can be either
+
+        - "random" for uniform random numbers,
+        - "sobol" for a Sobol sequence,
+        - "halton" for a Halton sequence,
+        - "hammersly" for a Hammersly sequence,
+        - "lhs" for a latin hypercube sequence,
+        - "grid" for a uniform grid sequence
 
     x0 : list, list of lists or `None`
         Initial input points.
@@ -96,15 +108,16 @@ def dummy_minimize(func, dimensions, n_calls=100, x0=None, y0=None,
     # all our calls want random suggestions, except if we need to evaluate
     # some initial points
     if x0 is not None and y0 is None:
-        n_random_calls = n_calls - len(x0)
+        n_initial_points = n_calls - len(x0)
     else:
-        n_random_calls = n_calls
+        n_initial_points = n_calls
 
     return base_minimize(func, dimensions, base_estimator="dummy",
                          # explicitly set optimizer to sampling as "dummy"
                          # minimizer does not provide gradients.
                          acq_optimizer="sampling",
-                         n_calls=n_calls, n_random_starts=n_random_calls,
+                         n_calls=n_calls, n_initial_points=n_initial_points,
+                         initial_point_generator=initial_point_generator,
                          x0=x0, y0=y0, random_state=random_state,
                          verbose=verbose,
                          callback=callback, model_queue_size=model_queue_size)
