@@ -1,4 +1,5 @@
 version: 2
+
 jobs:
   build:
     docker:
@@ -135,13 +136,30 @@ jobs:
 
   deploy:
     docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      # Attach documentation generated in the 'doc' step so that it can be
+      # deployed.
+      - attach_workspace:
+          at: doc/_build/html
+      - run: ls -ltrh doc/_build/html/stable
+      - deploy:
+          command: |
+            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+              bash build_tools/circle/push_doc.sh doc/_build/html/stable
+            fi
+
+  deploy-old:
+    docker:
       - image: circleci/python:3.6.7
     steps:
       - checkout
       - attach_workspace:
           at: ~/doc
-      #- deploy:
-      #    command: bash build_tools/circle/deploy.sh
+      deploy:
+        command: bash build_tools/circle/deploy.sh
 
 workflows:
   version: 2
