@@ -61,10 +61,11 @@ class Grid(InitialPointGenerator):
         - 'exclude' : Excludes the border from the grid layout
         - 'only' : Selects only points at the border of the dimension
     use_full_layout : boolean, default=True
-        When True, a  full factorial design is generated and missing points are taken
-        from the next larger  full factorial design, depending on `append_border`
-        When False, the next larger  full factorial design is generated and points
-        are randomly selected from it.
+        When True, a  full factorial design is generated and
+        missing points are taken from the next larger full factorial
+        design, depending on `append_border`
+        When False, the next larger  full factorial design is
+        generated and points are randomly selected from it.
     append_border : str, default="only"
         When use_full_layout is True, this parameter defines how the missing
         points will be generated from the next larger grid layout:
