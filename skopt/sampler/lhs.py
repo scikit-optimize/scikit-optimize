@@ -6,18 +6,9 @@ master/pyDOE2/doe_lhs.py
 import numpy as np
 from sklearn.utils import check_random_state
 from scipy import spatial
+from ..utils import random_permute_matrix
 from ..space import Space, Categorical
 from .base import InitialPointGenerator
-
-
-def _random_permute_matrix(h, random_state=None):
-    rng = check_random_state(random_state)
-    h_rand_perm = np.zeros_like(h)
-    samples, n = h.shape
-    for j in range(n):
-        order = rng.permutation(range(samples))
-        h_rand_perm[:, j] = h[order, j]
-    return h_rand_perm
 
 
 class Lhs(InitialPointGenerator):
@@ -93,8 +84,7 @@ class Lhs(InitialPointGenerator):
                     # Generate a random LHS
                     h = self._lhs_normalized(n_dim, n_samples, rng)
                     r = np.corrcoef(np.array(h).T)
-                    if len(np.abs(r[r != 1])) > 0 and \
-                            np.max(np.abs(r[r != 1])) < mincorr:
+                    if np.max(np.abs(r[r != 1])) < mincorr:
                         mincorr = np.max(np.abs(r - np.eye(r.shape[0])))
                         h_opt = h.copy()
                         h_opt = space.inverse_transform(h_opt)
@@ -142,4 +132,4 @@ class Lhs(InitialPointGenerator):
                 h[:, j] = u[:, j] * np.diff(x) + x[:n_samples]
         else:
             raise ValueError("Wrong lhs_type. Got ".format(self.lhs_type))
-        return _random_permute_matrix(h, random_state=rng)
+        return random_permute_matrix(h, random_state=rng)

@@ -16,6 +16,7 @@ from sklearn.utils import check_random_state
 from ..acquisition import _gaussian_acquisition
 from ..acquisition import gaussian_acquisition_1D
 from ..learning import GaussianProcessRegressor
+from ..sampler import Sobol, Lhs, Hammersly, Halton
 from ..space import Categorical
 from ..space import Space
 from ..utils import check_x_in_space
@@ -25,7 +26,6 @@ from ..utils import has_gradients
 from ..utils import is_listlike
 from ..utils import is_2Dlistlike
 from ..utils import normalize_dimensions
-from ..utils import cook_initial_point_generator
 
 
 class Optimizer(object):
@@ -52,8 +52,8 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    base_estimator : `"GP"`, `"RF"`, `"ET"`, `"GBRT"` or sklearn regressor, \
-            default=`"GP"`
+    base_estimator : `"GP"`, `"RF"`, `"ET"`, `"GBRT"` or sklearn regressor,
+    default=`"GP"`
         Should inherit from :obj:`sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
@@ -62,7 +62,7 @@ class Optimizer(object):
         is used in the minimize functions.
 
     n_random_starts : int, default=10
-        .. deprecated:: 0.9
+        .. deprecated::
             use `n_initial_points` instead.
 
     n_initial_points : int, default=10
@@ -70,16 +70,15 @@ class Optimizer(object):
         before approximating it with `base_estimator`. Initial point
         generator can be changed by setting `initial_point_generator`.
 
-    initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+    initial_point_generator : str, InitialPointGenerator instance,
+    default='random'
         Sets a initial points generator. Can be either
 
         - "random" for uniform random numbers,
         - "sobol" for a Sobol sequence,
         - "halton" for a Halton sequence,
         - "hammersly" for a Hammersly sequence,
-        - "lhs" for a latin hypercube sequence,
-        - "grid" for a uniform grid sequence
+        - "lhs" for a latin hypercube sequence
 
     acq_func : string, default=`"gp_hedge"`
         Function to minimize over the posterior distribution. Can be either
@@ -132,6 +131,9 @@ class Optimizer(object):
     acq_optimizer_kwargs : dict
         Additional arguments to be passed to the acquistion optimizer.
 
+    init_point_gen_kwargs : dict
+        Additional arguments to be passed to the initial_point_generator
+
     model_queue_size : int or None, default=None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
@@ -159,7 +161,8 @@ class Optimizer(object):
                  random_state=None,
                  model_queue_size=None,
                  acq_func_kwargs=None,
-                 acq_optimizer_kwargs=None):
+                 acq_optimizer_kwargs=None,
+                 init_point_gen_kwargs=None):
 
         self.rng = check_random_state(random_state)
 
@@ -259,10 +262,29 @@ class Optimizer(object):
         self.space = Space(dimensions)
 
         self._initial_samples = None
-        self._initial_point_generator = cook_initial_point_generator(
-            initial_point_generator)
-
-        if self._initial_point_generator is not None:
+        self._initial_point_generator = initial_point_generator
+        if init_point_gen_kwargs is None:
+            init_point_gen_kwargs = dict()
+        self.init_point_gen_kwargs = init_point_gen_kwargs
+        if initial_point_generator != "random" and \
+                isinstance(initial_point_generator, str):
+            if initial_point_generator == "sobol":
+                self._initial_point_generator = Sobol(
+                    **self.init_point_gen_kwargs)
+            elif initial_point_generator == "halton":
+                self._initial_point_generator = Halton(
+                    **self.init_point_gen_kwargs)
+            elif initial_point_generator == "hammersly":
+                self._initial_point_generator = Hammersly(
+                    **self.init_point_gen_kwargs)
+            elif initial_point_generator == "lhs":
+                self._initial_point_generator = Lhs(
+                    **self.init_point_gen_kwargs)
+            else:
+                raise ValueError(
+                    "Unkown initial_point_generator: " +
+                    str(initial_point_generator)
+                )
             transformer = self.space.get_transformer()
             self._initial_samples = self._initial_point_generator.generate(
                 self.space.dimensions, n_initial_points,
@@ -311,7 +333,8 @@ class Optimizer(object):
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
-            random_state=random_state
+            init_point_gen_kwargs=self.init_point_gen_kwargs,
+            random_state=random_state,
         )
         optimizer._initial_samples = self._initial_samples
         if hasattr(self, "gains_"):

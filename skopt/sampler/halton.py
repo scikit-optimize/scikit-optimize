@@ -58,7 +58,6 @@ class Halton(InitialPointGenerator):
         random_state : int, RandomState instance, or None (default)
             Set random state to something other than None for reproducible
             results.
-
         Returns
         -------
         np.array, shape=(n_dim, n_samples)

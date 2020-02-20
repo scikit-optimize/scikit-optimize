@@ -78,20 +78,23 @@ def plot_convergence(result_list, true_minimum=None, yscale=None, title="Converg
     return ax
 
 
-def run(minimizer, initial_point_generator,
-        n_initial_points=10, n_repeats=1):
-    return [minimizer(func, bounds, n_initial_points=n_initial_points,
+def run(minimizer, initial_point_generator, init_point_gen_kwargs,
+        n_random_starts=10, n_repeats=1):
+    return [minimizer(func, bounds, n_random_starts=n_random_starts,
                       initial_point_generator=initial_point_generator,
+                      init_point_gen_kwargs=init_point_gen_kwargs,
                       n_calls=n_calls, random_state=n)
             for n in range(n_repeats)]
 
 
-def run_measure(initial_point_generator, n_initial_points=10):
+def run_measure(initial_point_generator,
+                n_random_starts=10,
+                init_point_gen_kwargs=None):
     start = time.time()
     # n_repeats must set to a much higher value to obtain meaningful results.
     n_repeats = 1
-    res = run(gp_minimize, initial_point_generator,
-              n_initial_points=n_initial_points, n_repeats=n_repeats)
+    res = run(gp_minimize, initial_point_generator, init_point_gen_kwargs,
+              n_random_starts=n_random_starts, n_repeats=n_repeats)
     duration = time.time() - start
     # print("%s %s: %.2f s" % (initial_point_generator,
     #                          str(init_point_gen_kwargs),
@@ -118,7 +121,7 @@ if example == "hart6":
     bounds = [(0., 1.), ] * 6
     true_minimum = -3.32237
     n_calls = 40
-    n_initial_points = 10
+    n_random_starts = 10
     yscale = None
     title = "Convergence plot - hart6"
 else:
@@ -126,26 +129,25 @@ else:
     bounds = [(-5.0, 10.0), (0.0, 15.0)]
     true_minimum = 0.397887
     n_calls = 30
-    n_initial_points = 10
+    n_random_starts = 10
     yscale="log"
     title = "Convergence plot - branin"
 
 #############################################################################
-from skopt.utils import cook_initial_point_generator
+
 
 # Random search
-dummy_res = run_measure("random", n_initial_points)
-lhs = cook_initial_point_generator(
-    "lhs", lhs_type="classic", criterion=None)
-lhs_res = run_measure(lhs, n_initial_points)
-lhs2 = cook_initial_point_generator("lhs", criterion="maximin")
-lhs2_res = run_measure(lhs2, n_initial_points)
-sobol = cook_initial_point_generator("sobol", randomize=False,
-                                     min_skip=1, max_skip=100)
-sobol_res = run_measure(sobol, n_initial_points)
-halton_res = run_measure("halton", n_initial_points)
-hammersly_res = run_measure("hammersly", n_initial_points)
-grid_res = run_measure("grid", n_initial_points)
+dummy_res = run_measure( "random", n_random_starts)
+lhs_res = run_measure("lhs", n_random_starts,
+                      {"lhs_type": "classic",
+                       "criterion": None})
+lhs2_res = run_measure("lhs", n_random_starts,
+                       {"criterion": "maximin"})
+sobol_res = run_measure("sobol", n_random_starts,
+                        {"randomize": False,
+                         "min_skip": 1, "max_skip": 100})
+halton_res = run_measure("halton", n_random_starts)
+hammersly_res = run_measure("hammersly", n_random_starts)
 
 #############################################################################
 # Note that this can take a few minutes.
@@ -155,8 +157,7 @@ plot = plot_convergence([("random", dummy_res),
                         ("lhs_maximin", lhs2_res),
                         ("sobol", sobol_res),
                         ("halton", halton_res),
-                        ("hammersly", hammersly_res),
-                        ("grid", grid_res)],
+                        ("hammersly", hammersly_res)],
                         true_minimum=true_minimum,
                         yscale=yscale,
                         title=title)
@@ -171,10 +172,12 @@ plt.show()
 
 #############################################################################
 # Test with different n_random_starts values
-lhs2 = cook_initial_point_generator("lhs", criterion="maximin")
-lhs2_15_res = run_measure(lhs2, 12)
-lhs2_20_res = run_measure(lhs2, 14)
-lhs2_25_res = run_measure(lhs2, 16)
+lhs2_15_res = run_measure("lhs", 12,
+                          {"criterion": "maximin"})
+lhs2_20_res = run_measure("lhs", 14,
+                          {"criterion": "maximin"})
+lhs2_25_res = run_measure("lhs", 16,
+                          {"criterion": "maximin"})
 
 #############################################################################
 # n_random_starts = 10 produces the best results
