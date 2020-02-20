@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/push_doc.sh
+#
 # This script is meant to be called in the "deploy" step defined in
 # circle.yml. See https://circleci.com/docs/ for more details.
 # The behavior of the script is controlled by environment variable defined

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/checkout_merge_commit.sh
 
 # Add `master` branch to the update list.
 # Otherwise CircleCI will give us a cached one.
