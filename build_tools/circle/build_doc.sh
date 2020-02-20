@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -x
 set -e
-# # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/build_doc.sh
+# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/build_doc.sh
+# The scikit-learn developers.
+# License: BSD-style
+#
 # Decide what kind of documentation build to run, and run it.
 #
 # If the last commit message has a "[doc skip]" marker, do not build

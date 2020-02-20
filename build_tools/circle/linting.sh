@@ -1,5 +1,8 @@
 #!/bin/bash
-# # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/linting.sh
+# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/linting.sh
+# The scikit-learn developers.
+# License: BSD-style
+#
 # This script is used in CircleCI to check that PRs do not add obvious
 # flake8 violations. It relies on two things:
 #   - find common ancestor between branch and

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-# # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/list_versions.sh
+# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/list_versions.sh
+# The scikit-learn developers.
+# License: BSD-style
 # List all available versions of the documentation
 import json
 import re
