@@ -3,7 +3,7 @@
 requires = [
     "setuptools",
     "wheel",
-    "numpy>=1.11",
+    "numpy>=1.12",
     "scipy>=0.18",
     "scikit-learn>=0.19.1",
     "pyaml>=16.9",
