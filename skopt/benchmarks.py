@@ -68,7 +68,8 @@ def bench5(x):
 
 def branin(x, a=1, b=5.1 / (4 * np.pi**2), c=5. / np.pi,
            r=6, s=10, t=1. / (8 * np.pi)):
-    """Branin-Hoo function is defined on the square x1 ∈ [-5, 10], x2 ∈ [0, 15].
+    """Branin-Hoo function is defined on the square
+    :math:`x1 \in [-5, 10], x2 \in [0, 15]`.
 
     It has three minima with f(x*) = 0.397887 at x* = (-pi, 12.275),
     (+pi, 2.275), and (9.42478, 2.475).
