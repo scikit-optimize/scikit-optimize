@@ -212,6 +212,7 @@ details.
    :template: function.rst
 
     utils.cook_estimator
+    utils.cook_initial_point_generator
     utils.dimensions_aslist
     utils.expected_minimum
     utils.expected_minimum_random_sampling

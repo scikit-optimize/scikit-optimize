@@ -16,7 +16,8 @@ from .learning import RandomForestRegressor
 from .learning.gaussian_process.kernels import ConstantKernel
 from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
-
+from .sampler import Sobol, Lhs, Hammersly, Halton, Grid
+from .sampler import InitialPointGenerator
 from .space import Space, Categorical, Integer, Real, Dimension
 
 
@@ -342,7 +343,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     Parameters
     ----------
     base_estimator : "GP", "RF", "ET", "GBRT", "DUMMY"
-                        or sklearn regressor, default="GP"
+                        or sklearn regressor
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
@@ -404,6 +405,50 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
     base_estimator.set_params(**kwargs)
     return base_estimator
+
+
+def cook_initial_point_generator(generator, **kwargs):
+    """
+    Cook a default initial point generator.
+
+    For the special generator called "random" the return value is None.
+
+    Parameters
+    ----------
+    generator : "lhs", "sobol", "halton", "hammersly", "grid", "random"
+                        or InitialPointGenerator instance"
+        Should inherit from `skopt.sampler.InitialPointGenerator`.
+
+    kwargs : dict
+        Extra parameters provided to the generator at init time.
+    """
+    if isinstance(generator, str):
+        generator = generator.lower()
+        if generator not in ["sobol", "halton", "hammersly", "lhs", "random",
+                             "grid"]:
+            raise ValueError("Valid strings for the generator parameter "
+                             " are: 'sobol', 'lhs', 'halton', 'hammersly',"
+                             "'random', or 'grid' not "
+                             "%s." % generator)
+    elif not isinstance(generator, InitialPointGenerator):
+        raise ValueError("generator has to be an InitialPointGenerator.")
+    if generator == "random":
+        return None
+    elif generator is None:
+        generator = "lhs"
+    if isinstance(generator, str):
+        if generator == "sobol":
+            generator = Sobol()
+        elif generator == "halton":
+            generator = Halton()
+        elif generator == "hammersly":
+            generator = Hammersly()
+        elif generator == "lhs":
+            generator = Lhs()
+        elif generator == "grid":
+            generator = Grid()
+    generator.set_params(**kwargs)
+    return generator
 
 
 def dimensions_aslist(search_space):
@@ -768,13 +813,3 @@ def use_named_args(dimensions):
         return wrapper
 
     return decorator
-
-
-def random_permute_matrix(h, random_state=None):
-    rng = check_random_state(random_state)
-    h_rand_perm = np.zeros_like(h)
-    samples, n = h.shape
-    for j in range(n):
-        order = rng.permutation(range(samples))
-        h_rand_perm[:, j] = h[order, j]
-    return h_rand_perm

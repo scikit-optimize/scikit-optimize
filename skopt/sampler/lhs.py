@@ -6,9 +6,18 @@ master/pyDOE2/doe_lhs.py
 import numpy as np
 from sklearn.utils import check_random_state
 from scipy import spatial
-from ..utils import random_permute_matrix
 from ..space import Space, Categorical
 from .base import InitialPointGenerator
+
+
+def _random_permute_matrix(h, random_state=None):
+    rng = check_random_state(random_state)
+    h_rand_perm = np.zeros_like(h)
+    samples, n = h.shape
+    for j in range(n):
+        order = rng.permutation(range(samples))
+        h_rand_perm[:, j] = h[order, j]
+    return h_rand_perm
 
 
 class Lhs(InitialPointGenerator):
@@ -132,4 +141,4 @@ class Lhs(InitialPointGenerator):
                 h[:, j] = u[:, j] * np.diff(x) + x[:n_samples]
         else:
             raise ValueError("Wrong lhs_type. Got ".format(self.lhs_type))
-        return random_permute_matrix(h, random_state=rng)
+        return _random_permute_matrix(h, random_state=rng)

@@ -12,9 +12,9 @@ from skopt.utils import cook_estimator
 
 
 def check_minimize(func, y_opt, bounds, acq_optimizer, acq_func,
-                   margin, n_calls, n_random_starts=10, init_gen="random"):
+                   margin, n_calls, n_initial_points=10, init_gen="random"):
     r = gp_minimize(func, bounds, acq_optimizer=acq_optimizer,
-                    acq_func=acq_func, n_random_starts=n_random_starts,
+                    acq_func=acq_func, n_initial_points=n_initial_points,
                     n_calls=n_calls, random_state=1,
                     initial_point_generator=init_gen,
                     noise=1e-10)
@@ -72,10 +72,10 @@ def test_gp_minimize_bench4(search, acq):
 @pytest.mark.fast_test
 def test_n_jobs():
     r_single = gp_minimize(bench3, [(-2.0, 2.0)], acq_optimizer="lbfgs",
-                           acq_func="EI", n_calls=2, n_random_starts=1,
+                           acq_func="EI", n_calls=2, n_initial_points=1,
                            random_state=1, noise=1e-10)
     r_double = gp_minimize(bench3, [(-2.0, 2.0)], acq_optimizer="lbfgs",
-                           acq_func="EI", n_calls=2, n_random_starts=1,
+                           acq_func="EI", n_calls=2, n_initial_points=1,
                            random_state=1, noise=1e-10, n_jobs=2)
     assert_array_equal(r_single.x_iters, r_double.x_iters)
 
@@ -83,7 +83,7 @@ def test_n_jobs():
 @pytest.mark.fast_test
 def test_gpr_default():
     """Smoke test that gp_minimize does not fail for default values."""
-    gp_minimize(branin, ((-5.0, 10.0), (0.0, 15.0)), n_random_starts=1,
+    gp_minimize(branin, ((-5.0, 10.0), (0.0, 15.0)), n_initial_points=1,
                 n_calls=2)
 
 
@@ -95,7 +95,7 @@ def test_use_given_estimator():
     noise_correct = 1e+5
     noise_fake = 1e-10
     estimator = cook_estimator("GP", domain, noise=noise_correct)
-    res = gp_minimize(branin, domain, n_calls=1, n_random_starts=1,
+    res = gp_minimize(branin, domain, n_calls=1, n_initial_points=1,
                       base_estimator=estimator, noise=noise_fake)
 
     assert res['models'][-1].noise == noise_correct
@@ -109,7 +109,7 @@ def test_use_given_estimator_with_max_model_size():
     noise_correct = 1e+5
     noise_fake = 1e-10
     estimator = cook_estimator("GP", domain, noise=noise_correct)
-    res = gp_minimize(branin, domain, n_calls=1, n_random_starts=1,
+    res = gp_minimize(branin, domain, n_calls=1, n_initial_points=1,
                       base_estimator=estimator, noise=noise_fake,
                       model_queue_size=1)
     assert len(res['models']) == 1
@@ -122,7 +122,7 @@ def test_categorical_integer():
         return 0
 
     dims = [[1]]
-    res = gp_minimize(f, dims, n_calls=1, n_random_starts=1,
+    res = gp_minimize(f, dims, n_calls=1, n_initial_points=1,
                       random_state=1)
     assert res.x_iters[0][0] == dims[0][0]
 

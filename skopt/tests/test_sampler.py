@@ -9,7 +9,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
-from numpy.testing import assert_raises_regex
+from numpy.testing import assert_raises
 from scipy import spatial
 from skopt import Optimizer
 from skopt.space import Space
@@ -19,7 +19,12 @@ from skopt.space import Categorical
 from skopt.space import check_dimension as space_check_dimension
 from skopt.sampler.sobol import _bit_lo0, _bit_hi1
 from skopt.sampler.halton import _van_der_corput_samples, _create_primes
-from skopt.sampler import Hammersly, Halton, Lhs, Sobol
+from skopt.sampler import Hammersly, Halton, Lhs, Sobol, Grid
+from skopt.sampler import InitialPointGenerator
+from skopt.sampler.grid import _create_uniform_grid_include_border
+from skopt.sampler.grid import _create_uniform_grid_exclude_border
+from skopt.sampler.grid import _quadrature_combine
+from skopt.sampler.grid import _create_uniform_grid_only_border
 
 
 @pytest.mark.fast_test
@@ -118,6 +123,10 @@ def test_generate():
     assert_array_equal(x[1, :], [0.75, 0.25, 0.75])
     assert_array_equal(x[2, :], [0.25, 0.75, 0.25])
 
+    sobol.set_params(max_skip=2)
+    assert sobol.max_skip == 2
+    assert isinstance(sobol, InitialPointGenerator)
+
 
 @pytest.mark.fast_test
 def test_van_der_corput():
@@ -174,3 +183,54 @@ def test_primes():
     assert_array_equal(x, [2, 3])
     x = _create_primes(20)
     assert_array_equal(x, [2, 3, 5, 7, 11, 13, 17, 19])
+
+
+@pytest.mark.fast_test
+def test_quadrature_combine():
+    a = [1, 2]
+    b = [[4, 4], [5, 6]]
+    x = [[1, 4, 4], [1, 5, 6], [2, 4, 4], [2, 5, 6]]
+    x_test = _quadrature_combine([a, b])
+    assert_array_equal(x_test, x)
+
+
+@pytest.mark.fast_test
+def test_uniform_grid():
+    x = _create_uniform_grid_exclude_border(1, 2)
+    assert_array_equal(x, [[1./3.], [2./3.]])
+    x = _create_uniform_grid_include_border(1, 2)
+    assert_array_equal(x, [[0.], [1.]])
+    x = _create_uniform_grid_only_border(1, 2)
+    assert_array_equal(x, [[0.], [1.]])
+
+    x = _create_uniform_grid_exclude_border(1, 3)
+    assert_array_equal(x, [[1./4.], [2./4.], [3./4.]])
+    x = _create_uniform_grid_include_border(1, 3)
+    assert_array_equal(x, [[0./2.], [1./2.], [2./2.]])
+    x = _create_uniform_grid_only_border(1, 3)
+    assert_array_equal(x, [[0./2.], [1./2.], [2./2.]])
+
+    x = _create_uniform_grid_exclude_border(1, 5)
+    assert_array_equal(x, [[1./6.], [2./6.], [3./6.], [4./6.], [5./6.]])
+    x = _create_uniform_grid_include_border(1, 5)
+    assert_array_equal(x, [[0./4.], [1./4.], [2./4.], [3./4.], [4./4.]])
+    x = _create_uniform_grid_only_border(1, 5)
+    assert_array_equal(x, [[0./4.], [1./4.], [2./4.], [3./4.], [4./4.]])
+
+    x = _create_uniform_grid_exclude_border(2, 2)
+    assert_array_equal(x, [[1. / 3., 1./3.], [1. / 3., 2. / 3.],
+                           [2. / 3., 1. / 3.], [2. / 3., 2. / 3.]])
+    x = _create_uniform_grid_include_border(2, 2)
+    assert_array_equal(x, [[0., 0.], [0., 1.],
+                           [1., 0.], [1., 1.]])
+    x = _create_uniform_grid_only_border(2, 3)
+    assert_array_equal(x, [[0., 0.], [0., 0.5],
+                           [0., 1.], [1., 0.],
+                           [1., 0.5], [1., 1.]])
+
+    assert_raises(AssertionError, _create_uniform_grid_exclude_border, 1, 0)
+    assert_raises(AssertionError, _create_uniform_grid_exclude_border, 0, 1)
+    assert_raises(AssertionError, _create_uniform_grid_include_border, 1, 0)
+    assert_raises(AssertionError, _create_uniform_grid_include_border, 0, 1)
+    assert_raises(AssertionError, _create_uniform_grid_only_border, 1, 1)
+    assert_raises(AssertionError, _create_uniform_grid_only_border, 0, 2)
