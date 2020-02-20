@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -x
 set -e
-
+# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/build_test_pypy.sh
 apt-get -yq update
 apt-get -yq install libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
 

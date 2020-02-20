@@ -1,5 +1,5 @@
 version: 2
-
+# # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/.circleci/config.yml
 jobs:
   build:
     docker:
