@@ -65,7 +65,7 @@ else:
         "learning",
         "optimizer",
         "plots",
-        "samples",
+        "sampler",
         "space",
         "gp_minimize",
         "dummy_minimize",

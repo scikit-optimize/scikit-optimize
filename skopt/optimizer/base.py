@@ -6,6 +6,7 @@ It is sufficient that one re-implements the base estimator.
 
 import copy
 import inspect
+import warnings
 import numbers
 try:
     from collections.abc import Iterable
@@ -21,13 +22,13 @@ from ..utils import eval_callbacks
 
 
 def base_minimize(func, dimensions, base_estimator,
-                  n_calls=100, n_random_starts=10,
+                  n_calls=100, n_random_starts=None,
+                  n_initial_points=10,
                   initial_point_generator="random",
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1, model_queue_size=None,
-                  init_point_gen_kwargs=None):
+                  xi=0.01, kappa=1.96, n_jobs=1, model_queue_size=None):
     """Base optimizer class
     Parameters
     ----------
@@ -36,7 +37,7 @@ def base_minimize(func, dimensions, base_estimator,
         and return the objective value.
     
         If you have a search-space where all dimensions have names,
-        then you can use `skopt.utils.use_named_args` as a decorator
+        then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
         with the named arguments. See `use_named_args` for an example.
 
@@ -68,9 +69,16 @@ def base_minimize(func, dimensions, base_estimator,
     n_random_starts : int, default=10
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
+        .. deprecated:: 0.9
+            use `n_initial_points` instead.
 
-    initial_point_generator : str, InitialPointGenerator instance,
-    default='random'
+    n_initial_points : int, default=10
+        Number of evaluations of `func` with initialization points
+        before approximating it with `base_estimator`. Initial point
+        generator can be changed by setting `initial_point_generator`.
+
+    initial_point_generator : str, InitialPointGenerator instance, \
+            default='random'
         Sets a initial points generator. Can be either
 
         - "random" for uniform random numbers,
@@ -78,6 +86,7 @@ def base_minimize(func, dimensions, base_estimator,
         - "halton" for a Halton sequence,
         - "hammersly" for a Hammersly sequence,
         - "lhs" for a latin hypercube sequence,
+        - "grid" for a uniform grid sequence
 
     acq_func : string, default=`"EI"`
         Function to minimize over the posterior distribution. Can be either
@@ -175,9 +184,6 @@ def base_minimize(func, dimensions, base_estimator,
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
-    init_point_gen_kwargs : dict
-        Additional arguments to be passed to the initial_point_generator
-
     Returns
     -------
     res : `OptimizeResult`, scipy object
@@ -223,20 +229,28 @@ def base_minimize(func, dimensions, base_estimator,
         x0 = [x0]
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, but got %s" % type(x0))
-    if n_random_starts <= 0 and not x0:
-        raise ValueError("Either set `n_random_starts` > 0,"
+
+    # Check `n_random_starts` deprecation first
+    if n_random_starts is not None:
+        warnings.warn(("n_random_starts will be removed in favour of "
+                       "n_initial_points. It overwrites n_initial_points."),
+                      DeprecationWarning)
+        n_initial_points = n_random_starts
+
+    if n_initial_points <= 0 and not x0:
+        raise ValueError("Either set `n_initial_points` > 0,"
                          " or provide `x0`")
     # check y0: list-like, requirement of maximal calls
     if isinstance(y0, Iterable):
         y0 = list(y0)
     elif isinstance(y0, numbers.Number):
         y0 = [y0]
-    required_calls = n_random_starts + (len(x0) if not y0 else 0)
+    required_calls = n_initial_points + (len(x0) if not y0 else 0)
     if n_calls < required_calls:
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
     # calculate the total number of initial points
-    n_initial_points = n_random_starts + len(x0)
+    n_initial_points = n_initial_points + len(x0)
 
     # Build optimizer
 
@@ -248,8 +262,7 @@ def base_minimize(func, dimensions, base_estimator,
                           random_state=random_state,
                           model_queue_size=model_queue_size,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
-                          acq_func_kwargs=acq_func_kwargs,
-                          init_point_gen_kwargs=init_point_gen_kwargs)
+                          acq_func_kwargs=acq_func_kwargs)
     # check x0: element-wise data type, dimensionality
     assert all(isinstance(p, Iterable) for p in x0)
     if not all(len(p) == optimizer.space.n_dims for p in x0):
@@ -260,7 +273,7 @@ def base_minimize(func, dimensions, base_estimator,
     if verbose:
         callbacks.append(VerboseCallback(
             n_init=len(x0) if not y0 else 0,
-            n_random=n_random_starts,
+            n_random=n_initial_points,
             n_total=n_calls))
 
     # Record provided points
