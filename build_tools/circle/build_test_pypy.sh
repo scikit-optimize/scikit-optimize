@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/circle/build_test_pypy.sh
 set -x
 set -e
 
