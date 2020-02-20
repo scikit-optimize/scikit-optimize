@@ -158,8 +158,8 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/doc
-      deploy:
-        command: bash build_tools/circle/deploy.sh
+      - deploy:
+          command: bash build_tools/circle/deploy.sh
 
 workflows:
   version: 2
