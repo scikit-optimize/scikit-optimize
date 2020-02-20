@@ -30,6 +30,35 @@ jobs:
           root: ~/doc
           paths: .
 
+  lint:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run:
+          name: dependencies
+          command: sudo pip install flake8
+      - run:
+          name: linting
+          command: ./build_tools/circle/linting.sh
+
+  pypy3:
+    docker:
+      - image: pypy:3.6-7.2.0
+    steps:
+      - restore_cache:
+          keys:
+            - pypy3-ccache-{{ .Branch }}
+            - pypy3-ccache
+      - checkout
+      - run: ./build_tools/circle/build_test_pypy.sh
+      - save_cache:
+          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
+
   deploy:
     docker:
       - image: circleci/python:3.6.7
@@ -44,10 +73,23 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - build
+      - lint
+      - build:
+          requires:
+            - lint
       - deploy:
           requires:
             - build
           filters:
             branches:
               only: master
+  pypy:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - pypy3
