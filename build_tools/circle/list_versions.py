@@ -10,6 +10,7 @@ import sys
 from distutils.version import LooseVersion
 from urllib.request import urlopen
 
+
 def json_urlread(url):
     try:
         return json.loads(urlopen(url).read().decode('utf8'))
