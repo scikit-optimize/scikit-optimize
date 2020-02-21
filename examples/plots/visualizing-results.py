@@ -199,7 +199,7 @@ forest_res = forest_minimize(hart6, bounds, n_calls=n_calls,
 #############################################################################
 
 _ = plot_evaluations(forest_res)
-_ = plot_objective(forest_res)
+_ = plot_objective(forest_res, n_samples=40)
 
 #############################################################################
 # Going from 6 to 6+2 dimensions
@@ -218,6 +218,6 @@ forest_res = forest_minimize(hart6, bounds, n_calls=n_calls,
                              base_estimator="ET", random_state=4)
 
 _ = plot_evaluations(forest_res)
-_ = plot_objective(forest_res)
+_ = plot_objective(forest_res, n_samples=40)
 
 # .. [Friedman (2001)] `doi:10.1214/aos/1013203451 section 8.2 <http://projecteuclid.org/euclid.aos/1013203451>`
