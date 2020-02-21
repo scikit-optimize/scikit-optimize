@@ -86,6 +86,8 @@ seen = set()
 for name in (NAMED_DIRS +
              sorted((k for k in dirs if k[:1].isdigit()),
                     key=LooseVersion, reverse=True)):
+    if name not in dirs:
+        continue
     version_num, pdf_size = dirs[name]
     if version_num in seen:
         # symlink came first
