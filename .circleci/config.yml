@@ -1,36 +1,6 @@
 version: 2
 # # Copied from https://github.com/scikit-learn/scikit-learn/blob/master/.circleci/config.yml
 jobs:
-  build:
-    docker:
-      - image: continuumio/miniconda3
-    steps:
-      - checkout
-      - restore_cache:
-          key: deps-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
-      - run:
-          name: Install dependencies
-          command: |
-            bash build_tools/circle/install.sh
-          no_output_timeout: 1024s
-      - save_cache:
-          key: deps-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "build_tools/circle/install.sh" }}
-          paths:
-            - /opt/conda/pkgs
-            - ~/.cache/pip
-      - run:
-          name: Run build
-          command: |
-            bash build_tools/circle/execute.sh
-            if grep -q "Traceback (most recent call last):" nb_to_md.txt; then false; else true; fi
-          no_output_timeout: 3600s
-      - store_artifacts:
-          path: ~/doc
-          destination: doc
-      - persist_to_workspace:
-          root: ~/doc
-          paths: .
-
   doc-min-dependencies:
     docker:
       - image: circleci/python:3.7.3-stretch
@@ -150,16 +120,6 @@ jobs:
             if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
-
-  deploy-old:
-    docker:
-      - image: circleci/python:3.6.7
-    steps:
-      - checkout
-      - attach_workspace:
-          at: ~/doc
-      - deploy:
-          command: bash build_tools/circle/deploy.sh
 
 workflows:
   version: 2
