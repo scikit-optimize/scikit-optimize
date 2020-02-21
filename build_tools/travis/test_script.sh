@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# Copied from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/travis/test_script.sh
+# The scikit-learn developers.
+# License: BSD-style
+#
 # This script is meant to be called by the "script" step defined in
 # .travis.yml. See https://docs.travis-ci.com/ for more details.
 # The behavior of the script is controlled by environment variabled defined
