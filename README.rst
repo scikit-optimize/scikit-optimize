@@ -29,8 +29,7 @@ Important links
 
 -  Static documentation - `Static
    documentation <https://scikit-optimize.github.io/>`__
--  Example notebooks - can be found in the
-   `examples directory <https://github.com/scikit-optimize/scikit-optimize/tree/master/examples>`_.
+-  Example notebooks - can be found in examples_.
 -  Issue tracker -
    https://github.com/scikit-optimize/scikit-optimize/issues
 -  Releases - https://pypi.python.org/pypi/scikit-optimize
@@ -97,9 +96,8 @@ class:
 
 
 Read our `introduction to bayesian
-optimization <https://scikit-optimize.github.io/notebooks/bayesian-optimization.html>`__
-and the other
-`examples <https://github.com/scikit-optimize/scikit-optimize/tree/master/examples>`__.
+optimization <https://scikit-optimize.github.io/stable/auto_examples/bayesian-optimization.html>`__
+and the other examples_.
 
 
 Development
@@ -198,3 +196,4 @@ recognition, feel free to add them to the "Made possible by" list.
    :target: https://gitter.im/scikit-optimize/Lobby
 .. |Zenodo DOI| image:: https://zenodo.org/badge/54340642.svg
    :target: https://zenodo.org/badge/latestdoi/54340642
+.. _examples: https://scikit-optimize.github.io/stable/auto_examples/index.html

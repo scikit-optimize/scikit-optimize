@@ -54,4 +54,15 @@ run_tests() {
     $TEST_CMD skopt
 }
 
-run_tests
+run_package_check() {
+
+    TEST_CMD="twine check dist/*"
+    set -x
+    $TEST_CMD
+}
+
+if [[ "$SDIST" == "true" ]]; then
+    run_package_check
+else
+    run_tests
+fi
