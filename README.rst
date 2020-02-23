@@ -29,8 +29,7 @@ Important links
 
 -  Static documentation - `Static
    documentation <https://scikit-optimize.github.io/>`__
--  Example notebooks - can be found in
-   `here <https://scikit-optimize.github.io/stable/auto_examples/index.html>`_.
+-  Example notebooks - can be found in examples_.
 -  Issue tracker -
    https://github.com/scikit-optimize/scikit-optimize/issues
 -  Releases - https://pypi.python.org/pypi/scikit-optimize
@@ -98,8 +97,7 @@ class:
 
 Read our `introduction to bayesian
 optimization <https://scikit-optimize.github.io/stable/auto_examples/bayesian-optimization.html>`__
-and the other
-`examples <https://scikit-optimize.github.io/stable/auto_examples/index.html>`__.
+and the other examples_.
 
 
 Development
@@ -139,7 +137,7 @@ create a new issue and work through the following checklist:
 * update the version tag in ``__init__.py``
 * update the version tag mentioned in the README
 * check if the dependencies in ``setup.py`` are valid or need unpinning
-* check that the ``CHANGELOG.md`` is up to date
+* check that the ``doc/whats_new/v0.X.rst`` is up to date
 * did the last build of master succeed?
 * create a `new release <https://github.com/scikit-optimize/scikit-optimize/releases>`__
 * ping `conda-forge <https://github.com/conda-forge/scikit-optimize-feedstock>`__
@@ -198,3 +196,4 @@ recognition, feel free to add them to the "Made possible by" list.
    :target: https://gitter.im/scikit-optimize/Lobby
 .. |Zenodo DOI| image:: https://zenodo.org/badge/54340642.svg
    :target: https://zenodo.org/badge/latestdoi/54340642
+.. _examples: https://scikit-optimize.github.io/stable/auto_examples/index.html
