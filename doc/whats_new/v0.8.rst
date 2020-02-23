@@ -1,11 +1,12 @@
-Version 0.8
-===========
-**not released**
-New features
-------------
 
-Bug fixes
----------
+.. currentmodule:: skopt
 
-Maintenance
------------
+.. _changes_0_8:
+
+Version 0.8.0
+=============
+
+**In Development**
+
+
+
