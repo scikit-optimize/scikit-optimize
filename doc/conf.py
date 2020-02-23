@@ -34,7 +34,7 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # -- Project information -----------------------------------------------------
 
 project = 'scikit-optimize'
-copyright = '2017 - 2020, The scikit-optimize contributors.'
+copyright = '2017 - 2020, scikit-optimize contributors (BSD License)'
 author = 'The scikit-optimize contributors'
 
 # The short X.Y version
