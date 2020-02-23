@@ -13,7 +13,7 @@ Version 0.7.2
 - |Feature| update_next() and get_results() added to Optimize and
   add more examples
   :pr:`837` by :user:`Holger Nahrstaedt <holgern>` and
-  `Sigurd Carlsen <sigurdcarlsen>`
+  :user:`Sigurd Carlsen <sigurdcarlsen>`
 - |Fix| Fix random forest regressor (Add missing min_impurity_decrease)
   :pr:`829` by :user:`Holger Nahrstaedt <holgern>`
 
@@ -31,7 +31,7 @@ Version 0.7.2
 ------------------
 - |Enhancement| Add more parameter to plot_objective and more plot examples
   :pr:`830` by :user:`Holger Nahrstaedt <holgern>` and
-  `Sigurd Carlsen <sigurdcarlsen>`
+  :user:`Sigurd Carlsen <sigurdcarlsen>`
 
 :mod:`skopt.searchcv`
 ---------------------
@@ -45,7 +45,7 @@ Version 0.7.2
 
 Miscellaneous
 -------------
-* |Api| Fix doc examples
+* |Fix| Fix doc examples
 * |Fix| Fix license detection in github
   :pr:`827` by :user:`Holger Nahrstaedt <holgern>`
 * |Enhancement| Add doctest to CI
@@ -104,9 +104,9 @@ Version 0.7
 Miscellaneous
 -------------
 
-- Reduce the amount of deprecation warnings in unit tests
+- |Fix| Reduce the amount of deprecation warnings in unit tests
   :pr:`808` by :user:`Holger Nahrstaedt <holgern>`
-- Reduce the amount of deprecation warnings in unit tests
+- |Fix| Reduce the amount of deprecation warnings in unit tests
   :pr:`802` by :user:`Alex Liebscher <liebscher>`
 - joblib instead of sklearn.externals.joblib
   :pr:`776` by :user:`Vince Jankovics <vakker>`
