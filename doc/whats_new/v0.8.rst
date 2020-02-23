@@ -1,3 +1,4 @@
+.. include:: _contributors.rst
 
 .. currentmodule:: skopt
 
