@@ -29,8 +29,8 @@ Important links
 
 -  Static documentation - `Static
    documentation <https://scikit-optimize.github.io/>`__
--  Example notebooks - can be found in the
-   `examples directory <https://github.com/scikit-optimize/scikit-optimize/tree/master/examples>`_.
+-  Example notebooks - can be found in
+   `here <https://scikit-optimize.github.io/stable/auto_examples/index.html>`_.
 -  Issue tracker -
    https://github.com/scikit-optimize/scikit-optimize/issues
 -  Releases - https://pypi.python.org/pypi/scikit-optimize
@@ -97,9 +97,9 @@ class:
 
 
 Read our `introduction to bayesian
-optimization <https://scikit-optimize.github.io/notebooks/bayesian-optimization.html>`__
+optimization <https://scikit-optimize.github.io/stable/auto_examples/bayesian-optimization.html>`__
 and the other
-`examples <https://github.com/scikit-optimize/scikit-optimize/tree/master/examples>`__.
+`examples <https://scikit-optimize.github.io/stable/auto_examples/index.html>`__.
 
 
 Development
