@@ -2,6 +2,8 @@
 
 .. currentmodule:: skopt
 
+Versions 0.7.3 and 0.7.4 fixes the missing LICENSE in the package source
+
 .. _changes_0_7_2:
 
 Version 0.7.2
