@@ -57,6 +57,7 @@ run_tests() {
 run_package_check() {
 
     TEST_CMD="twine check dist/*"
+    set -x
     $TEST_CMD
 }
 
