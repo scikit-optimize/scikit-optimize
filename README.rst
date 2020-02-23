@@ -97,7 +97,7 @@ class:
 
 
 Read our `introduction to bayesian
-optimization <https://scikit-optimize.github.io/notebooks/bayesian-optimization.html>`__
+optimization <https://scikit-optimize.github.io/stable/auto_examples/bayesian-optimization.html>`__
 and the other
 `examples <https://github.com/scikit-optimize/scikit-optimize/tree/master/examples>`__.
 
