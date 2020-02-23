@@ -65,10 +65,10 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$SDIST" == "true" ]]; then
-    pip install -e '.[plots]'
-else
     python setup.py sdist
     pip install twine
+else
+    pip install -e '.[plots]'
 fi
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
