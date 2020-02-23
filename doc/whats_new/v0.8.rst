@@ -1,11 +1,27 @@
-Version 0.8
-===========
-**not released**
-New features
-------------
+.. include:: _contributors.rst
 
-Bug fixes
----------
+.. currentmodule:: skopt
 
-Maintenance
------------
+.. _changes_0_8:
+
+Version 0.8.0
+=============
+**In Development**
+
+:mod:`skopt.sampler`
+--------------------
+- |MajorFeature| Initial sampling generation
+  from latin hypercube, sobol, hammersly and halton
+  is possible and can be set in all optimizers
+  :pr:`835` by :user:`Holger Nahrstaedt <holgern>`
+- |Enhancement| Improve sampler and add grid sampler
+  :pr:`851` by :user:`Holger Nahrstaedt <holgern>`
+
+Miscellaneous
+-------------
+- Improve circle ci
+  :pr:`852` by :user:`Holger Nahrstaedt <holgern>`
+- Add project toml and adapt minimal numpy, scipy, pyyaml and
+  joblib version in setup.py
+  :pr:`850` by :user:`Holger Nahrstaedt <holgern>`
+

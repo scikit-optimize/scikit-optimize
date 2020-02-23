@@ -1,22 +1,116 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: skopt
+
+.. _changes_0_7_2:
+
+Version 0.7.2
+=============
+**February 2020**
+
+:mod:`skopt.optimizer`
+----------------------
+- |Feature| update_next() and get_results() added to Optimize and
+  add more examples
+  :pr:`837` by :user:`Holger Nahrstaedt <holgern>` and
+  :user:`Sigurd Carlsen <sigurdcarlsen>`
+- |Fix| Fix random forest regressor (Add missing min_impurity_decrease)
+  :pr:`829` by :user:`Holger Nahrstaedt <holgern>`
+
+:mod:`skopt.utils`
+------------------
+- |Enhancement| Add expected_minimum_random_sampling
+  :pr:`830` by :user:`Holger Nahrstaedt <holgern>`
+- |FIX| Return ordereddict in point_asdict and add some more unit tests.
+  :pr:`840` by :user:`Holger Nahrstaedt <holgern>`
+- |Enhancement| Added `check_list_types` and `check_dimension_names`
+  :pr:`803` by :user:`Hvass-Labs <Hvass-Labs>` and
+  :user:`Holger Nahrstaedt <holgern>`
+
+:mod:`skopt.plots`
+------------------
+- |Enhancement| Add more parameter to plot_objective and more plot examples
+  :pr:`830` by :user:`Holger Nahrstaedt <holgern>` and
+  :user:`Sigurd Carlsen <sigurdcarlsen>`
+
+:mod:`skopt.searchcv`
+---------------------
+- |Fix| Fix searchcv rank (issue #831)
+  :pr:`832` by :user:`Holger Nahrstaedt <holgern>`
+
+:mod:`skopt.space`
+------------------
+* |Fix| Fix integer normalize by using round()
+  :pr:`830` by :user:`Holger Nahrstaedt <holgern>`
+
+Miscellaneous
+-------------
+* |Fix| Fix doc examples
+* |Fix| Fix license detection in github
+  :pr:`827` by :user:`Holger Nahrstaedt <holgern>`
+* |Enhancement| Add doctest to CI
+
+.. _changes_0_7_1:
+
+Version 0.7.1
+=============
+**February 2020**
+
+:mod:`skopt.space`
+------------------
+* |Fix| Fix categorical space (issue #821)
+  :pr:`823` by :user:`Holger Nahrstaedt <holgern>`
+* |Enhancement| int can be set as dtype to fix issue #790
+  :pr:`807` by :user:`Holger Nahrstaedt <holgern>`
+* |Feature| New StringEncoder, can be used in Categoricals
+* Remove string conversion in Identity
+* |Enhancement| dtype can be set in Integer and Real
+
+Miscellaneous
+-------------
+- Sphinx documentation
+  :pr:`809` by :user:`Holger Nahrstaedt <holgern>`
+- notebooks are replaced by sphinx-gallery
+  :pr:`811` by :user:`Holger Nahrstaedt <holgern>`
+- Improve sphinx doc
+  :pr:`819` by :user:`Holger Nahrstaedt <holgern>`
+- Old pdoc scripts are removed and replaced by sphinx
+  :pr:`822` by :user:`Holger Nahrstaedt <holgern>`
+
+.. _changes_0_7:
+
 Version 0.7
 ===========
+**January 2020**
 
-New features
-------------
+:mod:`skopt.optimizer`
+----------------------
+- |Enhancement| Models queue has now a customizable size (model_queue_size).
+  :pr:`803` by :user:`Kajetan Tukendorf <Bacoknight>` and
+  :user:`Holger Nahrstaedt <holgern>`
+- |Enhancement| Add log-uniform prior to Integer space
+  :pr:`805` by :user:`Alex Liebscher <liebscher>`
 
-* Models queue has now a customizable size (model_queue_size).
-* Add log-uniform prior to Integer space
-* Support for plotting categorical dimensions
+:mod:`skopt.plots`
+------------------
+- |Enhancement| Support for plotting categorical dimensions
+  :pr:`806` by :user:`jkleint <jkleint>`
 
-Bug fixes
----------
+:mod:`skopt.searchcv`
+---------------------
+- |Fix| Allow BayesSearchCV to work with sklearn 0.21.
+  :pr:`777` by :user:`Kit Choi <kitchoi>`
 
-* Allow BayesSearchCV to work with sklearn 0.21
-* Reduce the amount of deprecation warnings in unit tests
+Miscellaneous
+-------------
 
-Maintenance
------------
-
-* joblib instead of sklearn.externals.joblib
-* Improve travis CI unit tests (Different sklearn version are checked)
-* Removed `versioneer` support, to keep things simple and to fix pypi deploy
+- |Fix| Reduce the amount of deprecation warnings in unit tests
+  :pr:`808` by :user:`Holger Nahrstaedt <holgern>`
+- |Fix| Reduce the amount of deprecation warnings in unit tests
+  :pr:`802` by :user:`Alex Liebscher <liebscher>`
+- joblib instead of sklearn.externals.joblib
+  :pr:`776` by :user:`Vince Jankovics <vakker>`
+- Improve travis CI unit tests (Different sklearn version are checked)
+  :pr:`804` by :user:`Holger Nahrstaedt <holgern>`
+- Removed `versioneer` support, to keep things simple and to fix pypi deploy
+  :pr:`816` by :user:`Holger Nahrstaedt <holgern>`
