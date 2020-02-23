@@ -64,7 +64,12 @@ if [[ "$COVERAGE" == "true" ]]; then
     pip install pytest-cov coverage coveralls
 fi
 
-pip install -e '.[plots]'
+if [[ "$SDIST" == "true" ]]; then
+    pip install -e '.[plots]'
+else
+    python setup.py sdist
+    pip install twine
+fi
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
