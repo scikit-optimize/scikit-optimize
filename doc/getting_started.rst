@@ -51,7 +51,7 @@ class::
     ...     y = f(suggested)
     ...     res = opt.tell(suggested, y)
     >>> print("x*=%.2f f(x*)=%.2f" % (res.x[0], res.fun))
-    x*=-0.10 f(x*)=-0.06
+    x*=0.27 f(x*)=-0.15
 
 For more read our :ref:`sphx_glr_auto_examples_bayesian-optimization.py` and the other
 `examples <auto_examples/index.html>`_.
