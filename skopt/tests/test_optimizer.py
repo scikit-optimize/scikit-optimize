@@ -388,9 +388,9 @@ def test_categorical_only2():
 
     next_x = opt.ask(n_points=4)
     assert len(next_x) == 4
-    res = opt.tell(next_x, [linalg.norm(x) for x in next_x])
+    opt.tell(next_x, [linalg.norm(x) for x in next_x])
     next_x = opt.ask(n_points=4)
     assert len(next_x) == 4
-    res = opt.tell(next_x, [linalg.norm(int(x)) for x in next_x])
+    opt.tell(next_x, [linalg.norm(int(x)) for x in next_x])
     next_x = opt.ask(n_points=4)
     assert len(next_x) == 4
