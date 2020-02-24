@@ -38,7 +38,7 @@ with :class:`skopt`::
     >>>
     >>> res = gp_minimize(f, [(-2.0, 2.0)], n_calls=20)
     >>> print("x*=%.2f f(x*)=%.2f" % (res.x[0], res.fun))
-    x*=0.85 f(x*)=-0.05
+    x*=0.85 f(x*)=-0.06
 
 For more control over the optimization loop you can use the :class:`skopt.Optimizer`
 class::
