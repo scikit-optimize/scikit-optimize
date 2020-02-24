@@ -202,9 +202,8 @@ def check_x_in_space(x, space):
 
 
 def expected_minimum(res, n_random_starts=20, random_state=None):
-    """
-    Compute the minimum over the predictions of the last surrogate model.
-    Uses `expected_minimum_random_sampling` with `n_random_starts`=100000,
+    """Compute the minimum over the predictions of the last surrogate model.
+    Uses `expected_minimum_random_sampling` with `n_random_starts` = 100000,
     when the space contains any categorical values.
 
     .. note::
@@ -333,8 +332,7 @@ def has_gradients(estimator):
 
 
 def cook_estimator(base_estimator, space=None, **kwargs):
-    """
-    Cook a default estimator.
+    """Cook a default estimator.
 
     For the special base_estimator called "DUMMY" the return value is None.
     This corresponds to sampling points at random, hence there is no need
@@ -342,8 +340,7 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
     Parameters
     ----------
-    base_estimator : "GP", "RF", "ET", "GBRT", "DUMMY"
-                        or sklearn regressor
+    base_estimator : "GP", "RF", "ET", "GBRT", "DUMMY" or sklearn regressor
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition the `predict` method should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
@@ -408,15 +405,14 @@ def cook_estimator(base_estimator, space=None, **kwargs):
 
 
 def cook_initial_point_generator(generator, **kwargs):
-    """
-    Cook a default initial point generator.
+    """Cook a default initial point generator.
 
     For the special generator called "random" the return value is None.
 
     Parameters
     ----------
-    generator : "lhs", "sobol", "halton", "hammersly", "grid", "random"
-                        or InitialPointGenerator instance"
+    generator : "lhs", "sobol", "halton", "hammersly", "grid", "random" \
+            or InitialPointGenerator instance"
         Should inherit from `skopt.sampler.InitialPointGenerator`.
 
     kwargs : dict
@@ -594,37 +590,30 @@ def normalize_dimensions(dimensions):
     """
     space = Space(dimensions)
     transformed_dimensions = []
-    if space.is_categorical:
-        # recreate the space and explicitly set transform to "string"
-        # this is a special case for GP based regressors
-        for dimension in space:
+    for dimension in space.dimensions:
+        if isinstance(dimension, Categorical):
             transformed_dimensions.append(Categorical(dimension.categories,
                                                       dimension.prior,
                                                       name=dimension.name,
-                                                      transform="string"))
-
-    else:
-        for dimension in space.dimensions:
-            if isinstance(dimension, Categorical):
-                transformed_dimensions.append(dimension)
-            # To make sure that GP operates in the [0, 1] space
-            elif isinstance(dimension, Real):
-                transformed_dimensions.append(
-                    Real(dimension.low, dimension.high, dimension.prior,
-                         name=dimension.name,
-                         transform="normalize",
-                         dtype=dimension.dtype)
-                    )
-            elif isinstance(dimension, Integer):
-                transformed_dimensions.append(
-                    Integer(dimension.low, dimension.high,
-                            name=dimension.name,
-                            transform="normalize",
-                            dtype=dimension.dtype)
-                    )
-            else:
-                raise RuntimeError("Unknown dimension type "
-                                   "(%s)" % type(dimension))
+                                                      transform="normalize"))
+        # To make sure that GP operates in the [0, 1] space
+        elif isinstance(dimension, Real):
+            transformed_dimensions.append(
+                Real(dimension.low, dimension.high, dimension.prior,
+                     name=dimension.name,
+                     transform="normalize",
+                     dtype=dimension.dtype)
+                )
+        elif isinstance(dimension, Integer):
+            transformed_dimensions.append(
+                Integer(dimension.low, dimension.high,
+                        name=dimension.name,
+                        transform="normalize",
+                        dtype=dimension.dtype)
+                )
+        else:
+            raise RuntimeError("Unknown dimension type "
+                               "(%s)" % type(dimension))
 
     return Space(transformed_dimensions)
 
