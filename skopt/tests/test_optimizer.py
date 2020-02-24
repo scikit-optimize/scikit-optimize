@@ -380,7 +380,7 @@ def test_categorical_only2():
     from numpy import linalg
     from skopt.space import Categorical
     from skopt.learning import GaussianProcessRegressor
-    space = [Categorical([1, 2, 3]), Categorical(["4", "5", "6"])]
+    space = [Categorical([1, 2, 3]), Categorical([4, 5, 6])]
     opt = Optimizer(space,
                     base_estimator=GaussianProcessRegressor(alpha=1e-7),
                     acq_optimizer='lbfgs',
@@ -391,6 +391,6 @@ def test_categorical_only2():
     opt.tell(next_x, [linalg.norm(x) for x in next_x])
     next_x = opt.ask(n_points=4)
     assert len(next_x) == 4
-    opt.tell(next_x, [linalg.norm(int(x)) for x in next_x])
+    opt.tell(next_x, [linalg.norm(x) for x in next_x])
     next_x = opt.ask(n_points=4)
     assert len(next_x) == 4
