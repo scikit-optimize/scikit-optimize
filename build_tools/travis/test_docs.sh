@@ -2,5 +2,6 @@
 
 set -e
 set -x
-
-make test-doc
+if [[ "$SDIST" != "true" ]]; then
+    make test-doc
+fi

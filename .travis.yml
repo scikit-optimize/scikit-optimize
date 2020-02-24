@@ -53,7 +53,7 @@ matrix:
 install: source build_tools/travis/install.sh
 script:
   - bash build_tools/travis/test_script.sh
-  # - bash build_tools/travis/test_docs.sh
+  - bash build_tools/travis/test_docs.sh
 after_success: source build_tools/travis/after_success.sh
 deploy:
   provider: pypi
