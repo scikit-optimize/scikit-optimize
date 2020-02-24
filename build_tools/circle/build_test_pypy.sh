@@ -27,7 +27,7 @@ pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux20
 
 # Install Cython directly
 pip install https://antocuni.github.io/pypy-wheels/ubuntu/Cython/Cython-0.29.14-py3-none-any.whl
-pip install sphinx numpydoc docutils joblib pillow pytest
+pip install sphinx numpydoc docutils joblib pillow pytest matplotlib
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
