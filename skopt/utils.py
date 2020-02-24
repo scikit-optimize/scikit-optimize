@@ -594,37 +594,30 @@ def normalize_dimensions(dimensions):
     """
     space = Space(dimensions)
     transformed_dimensions = []
-    if space.is_categorical:
-        # recreate the space and explicitly set transform to "string"
-        # this is a special case for GP based regressors
-        for dimension in space:
+    for dimension in space.dimensions:
+        if isinstance(dimension, Categorical):
             transformed_dimensions.append(Categorical(dimension.categories,
                                                       dimension.prior,
                                                       name=dimension.name,
-                                                      transform="string"))
-
-    else:
-        for dimension in space.dimensions:
-            if isinstance(dimension, Categorical):
-                transformed_dimensions.append(dimension)
-            # To make sure that GP operates in the [0, 1] space
-            elif isinstance(dimension, Real):
-                transformed_dimensions.append(
-                    Real(dimension.low, dimension.high, dimension.prior,
-                         name=dimension.name,
-                         transform="normalize",
-                         dtype=dimension.dtype)
-                    )
-            elif isinstance(dimension, Integer):
-                transformed_dimensions.append(
-                    Integer(dimension.low, dimension.high,
-                            name=dimension.name,
-                            transform="normalize",
-                            dtype=dimension.dtype)
-                    )
-            else:
-                raise RuntimeError("Unknown dimension type "
-                                   "(%s)" % type(dimension))
+                                                      transform="normalize"))
+        # To make sure that GP operates in the [0, 1] space
+        elif isinstance(dimension, Real):
+            transformed_dimensions.append(
+                Real(dimension.low, dimension.high, dimension.prior,
+                     name=dimension.name,
+                     transform="normalize",
+                     dtype=dimension.dtype)
+                )
+        elif isinstance(dimension, Integer):
+            transformed_dimensions.append(
+                Integer(dimension.low, dimension.high,
+                        name=dimension.name,
+                        transform="normalize",
+                        dtype=dimension.dtype)
+                )
+        else:
+            raise RuntimeError("Unknown dimension type "
+                               "(%s)" % type(dimension))
 
     return Space(transformed_dimensions)
 
