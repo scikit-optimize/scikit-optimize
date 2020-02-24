@@ -55,7 +55,8 @@ def plot_branin():
 
     cm = ax.pcolormesh(x_ax, y_ax, fx,
                        norm=LogNorm(vmin=fx.min(),
-                                    vmax=fx.max()))
+                                    vmax=fx.max()),
+                       cmap='viridis_r')
 
     minima = np.array([[-np.pi, 12.275], [+np.pi, 2.275], [9.42478, 2.475]])
     ax.plot(minima[:, 0], minima[:, 1], "r.", markersize=14,
