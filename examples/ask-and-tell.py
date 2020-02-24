@@ -72,7 +72,9 @@ plt.show()
 # naming of the ***_minimize()** functions. An important difference is that
 # you do not pass the objective function to the optimizer.
 
-opt = Optimizer([(-2.0, 2.0)], "ET", acq_optimizer="sampling")
+opt = Optimizer([(-2.0, 2.0)], "GP", acq_func="EI",
+                acq_optimizer="sampling",
+                initial_point_generator="lhs")
 
 # To obtain a suggestion for the point at which to evaluate the objective
 # you call the ask() method of opt:
@@ -90,7 +92,8 @@ f_val = objective(next_x)
 opt.tell(next_x, f_val)
 
 #########################################################################
-# Like ***_minimize()** the first few points are random suggestions as there
+# Like ***_minimize()** the first few points are suggestions from
+# the initial point generator as there
 # is no data yet with which to fit a surrogate model.
 
 
