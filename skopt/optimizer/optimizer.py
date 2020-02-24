@@ -206,7 +206,7 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
-                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+                random_state=_get_seed_from_random_state(self.rng))
 
         # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
@@ -266,7 +266,7 @@ class Optimizer(object):
             transformer = self.space.get_transformer()
             self._initial_samples = self._initial_point_generator.generate(
                 self.space.dimensions, n_initial_points,
-                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+                random_state=_get_seed_from_random_state(self.rng))
             self.space.set_transformer(transformer)
 
         # record categorical and non-categorical indices
@@ -377,8 +377,7 @@ class Optimizer(object):
         # Copy of the optimizer is made in order to manage the
         # deletion of points with "lie" objective (the copy of
         # oiptimizer is simply discarded)
-        opt = self.copy(random_state=self.rng.randint(0,
-                                                      np.iinfo(np.int32).max))
+        opt = self.copy(random_state=_get_seed_from_random_state(self.rng))
 
         X = []
         for i in range(n_points):
@@ -657,3 +656,9 @@ class Optimizer(object):
         """
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
+
+
+def _get_seed_from_random_state(random_state):
+    rng = check_random_state(random_state)
+    BIG_INT = 2**31 - 1
+    return rng.randint(BIG_INT, dtype='u8')

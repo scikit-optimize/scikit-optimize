@@ -1,4 +1,5 @@
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
 import pytest
 
 from skopt import gp_minimize
@@ -85,6 +86,28 @@ def test_gpr_default():
     """Smoke test that gp_minimize does not fail for default values."""
     gp_minimize(branin, ((-5.0, 10.0), (0.0, 15.0)), n_initial_points=1,
                 n_calls=2)
+
+
+@pytest.mark.fast_test
+def test_random_state():
+    """Test that checks if random_state leads to reproducible results"""
+    def objective(X):
+        return (X[0] - 2) ** 2 + (X[1] - 4) ** 2
+    space = [(-4., 4.), (-10., 10)]
+    random_state = 42
+    res1 = gp_minimize(objective, space, acq_optimizer="lbfgs",
+                       acq_func="gp_hedge", n_initial_points=2,
+                       n_calls=15, random_state=random_state,
+                       n_restarts_optimizer=5,
+                       xi=0.01, kappa=1.96, noise='gaussian')
+    res2 = gp_minimize(objective, space, acq_optimizer="lbfgs",
+                       acq_func="gp_hedge", n_initial_points=2,
+                       n_calls=15, random_state=random_state,
+                       n_restarts_optimizer=5,
+                       xi=0.01, kappa=1.96, noise='gaussian')
+    assert_array_equal(res1.x_iters, res2.x_iters)
+    assert_array_equal(res1.x, res2.x)
+    assert_array_almost_equal(res1.x, [2.208269686475764, 2.7125254537751253])
 
 
 @pytest.mark.fast_test
