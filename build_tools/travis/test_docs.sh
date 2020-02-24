@@ -3,8 +3,5 @@
 set -e
 set -x
 if [[ "$SDIST" != "true" ]]; then
-    pushd .
-    cd doc
-    make doctest
-    popd
+    make test-doc
 fi
