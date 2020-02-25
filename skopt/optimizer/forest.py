@@ -42,7 +42,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
         with the named arguments. See :func:`skopt.utils.use_named_args`
-         for an example.
+        for an example.
 
     dimensions : list, shape (n_dims,)
         List of search space dimensions.
@@ -56,8 +56,8 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-         NOTE: The upper and lower bounds are inclusive for `Integer`
-         dimensions.
+         .. note:: The upper and lower bounds are inclusive for `Integer`
+            dimensions.
 
     base_estimator : string or `Regressor`, default="ET"
         The regressor to use as surrogate model. Can be either
@@ -78,6 +78,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
     n_random_starts : int, default=10
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
+
         .. deprecated:: 0.9
             use `n_initial_points` instead.
 
@@ -168,18 +169,12 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
-
         - `fun` [float]: function value at the minimum.
-
         - `models`: surrogate models used for each iteration.
-
         - `x_iters` [list of lists]: location of function evaluation for each
-           iteration.
-
+          iteration.
         - `func_vals` [array]: function value for each iteration.
-
         - `space` [Space]: the optimization space.
-
         - `specs` [dict]`: the call specifications.
 
         For more details related to the OptimizeResult object, refer

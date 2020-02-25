@@ -65,6 +65,7 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     n_random_starts : int, default=10
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
+
         .. deprecated:: 0.9
             use `n_initial_points` instead.
 
@@ -153,22 +154,15 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
-
         - `fun` [float]: function value at the minimum.
-
         - `models`: surrogate models used for each iteration.
-
         - `x_iters` [list of lists]: location of function evaluation for each
-           iteration.
-
+          iteration.
         - `func_vals` [array]: function value for each iteration.
-
         - `space` [Space]: the optimization space.
-
         - `specs` [dict]`: the call specifications.
-
         - `rng` [RandomState instance]: State of the random state
-           at the end of minimization.
+          at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html

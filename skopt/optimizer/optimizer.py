@@ -74,14 +74,14 @@ class Optimizer(object):
             default='random'
         Sets a initial points generator. Can be either
 
-        - "random" for uniform random numbers,
-        - "sobol" for a Sobol sequence,
-        - "halton" for a Halton sequence,
-        - "hammersly" for a Hammersly sequence,
-        - "lhs" for a latin hypercube sequence,
-        - "grid" for a uniform grid sequence
+        - `"random"` for uniform random numbers,
+        - `"sobol"` for a Sobol sequence,
+        - `"halton"` for a Halton sequence,
+        - `"hammersly"` for a Hammersly sequence,
+        - `"lhs"` for a latin hypercube sequence,
+        - `"grid"` for a uniform grid sequence
 
-    acq_func : string, default=`"gp_hedge"`
+    acq_func : string, default="gp_hedge"
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -89,38 +89,42 @@ class Optimizer(object):
         - `"PI"` for negative probability of improvement.
         - `"gp_hedge"` Probabilistically choose one of the above three
           acquisition functions at every iteration.
-            - The gains `g_i` are initialized to zero.
-            - At every iteration,
-                - Each acquisition function is optimised independently to
-                  propose an candidate point `X_i`.
-                - Out of all these candidate points, the next point `X_best` is
-                  chosen by :math:`softmax(\eta g_i)`
-                - After fitting the surrogate model with `(X_best, y_best)`,
-                  the gains are updated such that :math:`g_i -= \mu(X_i)`
-        - `"EIps" for negated expected improvement per second to take into
+
+          - The gains `g_i` are initialized to zero.
+          - At every iteration,
+
+            - Each acquisition function is optimised independently to
+              propose an candidate point `X_i`.
+            - Out of all these candidate points, the next point `X_best` is
+              chosen by :math:`softmax(\eta g_i)`
+            - After fitting the surrogate model with `(X_best, y_best)`,
+              the gains are updated such that :math:`g_i -= \mu(X_i)`
+
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of `"EIps"`
 
-    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default=`"auto"`
-        Method to minimize the acquistion function. The fit model
+    acq_optimizer : string, "sampling" or "lbfgs", default="auto"
+        Method to minimize the acquisition function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
         - If set to `"auto"`, then `acq_optimizer` is configured on the
           basis of the base_estimator and the space searched over.
           If the space is Categorical or if the estimator provided based on
-          tree-models then this is set to be "sampling"`.
+          tree-models then this is set to be `"sampling"`.
         - If set to `"sampling"`, then `acq_func` is optimized by computing
           `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
-              - Sampling `n_restarts_optimizer` points randomly.
-              - `"lbfgs"` is run for 20 iterations with these points as initial
-                points to find local minima.
-              - The optimal of these local minima is used to update the prior.
+
+          - Sampling `n_restarts_optimizer` points randomly.
+          - `"lbfgs"` is run for 20 iterations with these points as initial
+            points to find local minima.
+          - The optimal of these local minima is used to update the prior.
 
     random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
