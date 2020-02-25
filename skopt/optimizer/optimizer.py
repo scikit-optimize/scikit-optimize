@@ -52,26 +52,26 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    base_estimator : "GP", "RF", "ET", "GBRT" or sklearn regressor, \
-            default="GP"
+    base_estimator : `"GP"`, `"RF"`, `"ET"`, `"GBRT"` or sklearn regressor, \
+            default: `"GP"`
         Should inherit from :obj:`sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
-        argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+        argument, which returns `std(Y | x)` along with `E[Y | x]`.
         If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
         surrogate model of the corresponding type is used corresponding to what
         is used in the minimize functions.
 
-    n_random_starts : int, default=10
-        .. deprecated:: 0.9
+    n_random_starts : int, default: 10
+        .. deprecated:: 0.6
             use `n_initial_points` instead.
 
-    n_initial_points : int, default=10
+    n_initial_points : int, default: 10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Initial point
         generator can be changed by setting `initial_point_generator`.
 
     initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+            default: `"random"`
         Sets a initial points generator. Can be either
 
         - `"random"` for uniform random numbers,
@@ -81,7 +81,7 @@ class Optimizer(object):
         - `"lhs"` for a latin hypercube sequence,
         - `"grid"` for a uniform grid sequence
 
-    acq_func : string, default="gp_hedge"
+    acq_func : string, default: `"gp_hedge"`
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -108,7 +108,7 @@ class Optimizer(object):
           return type of the objective function is assumed to be similar to
           that of `"EIps"`
 
-    acq_optimizer : string, "sampling" or "lbfgs", default="auto"
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default: `"auto"`
         Method to minimize the acquisition function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
@@ -131,12 +131,12 @@ class Optimizer(object):
         results.
 
     acq_func_kwargs : dict
-        Additional arguments to be passed to the acquistion function.
+        Additional arguments to be passed to the acquisition function.
 
     acq_optimizer_kwargs : dict
-        Additional arguments to be passed to the acquistion optimizer.
+        Additional arguments to be passed to the acquisition optimizer.
 
-    model_queue_size : int or None, default=None
+    model_queue_size : int or None, default: None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
@@ -329,7 +329,7 @@ class Optimizer(object):
     def ask(self, n_points=None, strategy="cl_min"):
         """Query point or multiple points at which objective should be evaluated.
 
-        n_points : int or None, default=None
+        n_points : int or None, default: None
             Number of points returned by the ask method.
             If the value is None, a single point to evaluate is returned.
             Otherwise a list of points to evaluate is returned of size
@@ -337,7 +337,7 @@ class Optimizer(object):
             parallel, and thus obtain more objective function evaluations per
             unit of time.
 
-        strategy : string, default="cl_min"
+        strategy : string, default: "cl_min"
             Method to use to sample multiple points (see also `n_points`
             description). This parameter is ignored if n_points = None.
             Supported options are `"cl_min"`, `"cl_mean"` or `"cl_max"`.
@@ -468,7 +468,7 @@ class Optimizer(object):
         y : scalar or list
             Value of objective at `x`.
 
-        fit : bool, default=True
+        fit : bool, default: True
             Fit a model to observed evaluations of the objective. A model will
             only be fitted after `n_initial_points` points have been told to
             the optimizer irrespective of the value of `fit`.

@@ -60,27 +60,27 @@ def base_minimize(func, dimensions, base_estimator,
     base_estimator : sklearn regressor
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition, should have an optional `return_std` argument,
-        which returns `std(Y | x)`` along with `E[Y | x]`.
+        which returns `std(Y | x)` along with `E[Y | x]`.
 
-    n_calls : int, default=100
+    n_calls : int, default: 100
         Maximum number of calls to `func`. An objective function will
         always be evaluated this number of times; Various options to
         supply initialization points do not affect this value.
 
-    n_random_starts : int, default=10
+    n_random_starts : int, default: None
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-        .. deprecated:: 0.9
+        .. deprecated:: 0.8
             use `n_initial_points` instead.
 
-    n_initial_points : int, default=10
+    n_initial_points : int, default: 10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Initial point
         generator can be changed by setting `initial_point_generator`.
 
     initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+            default: `"random"`
         Sets a initial points generator. Can be either
 
         - `"random"` for uniform random numbers,
@@ -90,7 +90,7 @@ def base_minimize(func, dimensions, base_estimator,
         - `"lhs"` for a latin hypercube sequence,
         - `"grid"` for a uniform grid sequence
 
-    acq_func : string, default="EI"
+    acq_func : string, default: `"EI"`
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound,
@@ -104,7 +104,7 @@ def base_minimize(func, dimensions, base_estimator,
           return type of the objective function is assumed to be similar to
           that of `"EIps"`
 
-    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default: `"lbfgs"`
         Method to minimize the acquisition function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
@@ -149,7 +149,7 @@ def base_minimize(func, dimensions, base_estimator,
         Set random state to something other than None for reproducible
         results.
 
-    verbose : boolean, default=False
+    verbose : boolean, default: False
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
@@ -157,33 +157,33 @@ def base_minimize(func, dimensions, base_estimator,
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
-    n_points : int, default=10000
+    n_points : int, default: 10000
         If `acq_optimizer` is set to `"sampling"`, then `acq_func` is
         optimized by computing `acq_func` at `n_points` randomly sampled
         points.
 
-    n_restarts_optimizer : int, default=5
+    n_restarts_optimizer : int, default: 5
         The number of restarts of the optimizer when `acq_optimizer`
         is `"lbfgs"`.
 
-    xi : float, default=0.01
+    xi : float, default: 0.01
         Controls how much improvement one wants over the previous best
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
-    kappa : float, default=1.96
+    kappa : float, default: 1.96
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    n_jobs : int, default=1
+    n_jobs : int, default: 1
         Number of cores to run in parallel while running the lbfgs
         optimizations over the acquisition function. Valid only when
         `acq_optimizer` is set to "lbfgs."
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
-    model_queue_size : int or None, default=None
+    model_queue_size : int or None, default: None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 

@@ -32,19 +32,19 @@ def dummy_minimize(func, dimensions, n_calls=100,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    n_calls : int, default=100
+    n_calls : int, default: 100
         Number of calls to `func` to find the minimum.
 
     initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+            default: `"random"`
         Sets a initial points generator. Can be either
 
-        - "random" for uniform random numbers,
-        - "sobol" for a Sobol sequence,
-        - "halton" for a Halton sequence,
-        - "hammersly" for a Hammersly sequence,
-        - "lhs" for a latin hypercube sequence,
-        - "grid" for a uniform grid sequence
+        - `"random"` for uniform random numbers,
+        - `"sobol"` for a Sobol sequence,
+        - `"halton"` for a Halton sequence,
+        - `"hammersly"` for a Hammersly sequence,
+        - `"lhs"` for a latin hypercube sequence,
+        - `"grid"` for a uniform grid sequence
 
     x0 : list, list of lists or `None`
         Initial input points.
@@ -68,7 +68,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         Set random state to something other than None for reproducible
         results.
 
-    verbose : boolean, default=False
+    verbose : boolean, default: False
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
@@ -76,7 +76,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
-    model_queue_size : int or None, default=None
+    model_queue_size : int or None, default: None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
@@ -98,6 +98,9 @@ def dummy_minimize(func, dimensions, n_calls=100,
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
+
+    .. seealso:: functions :class:`skopt.gp_minimize`,
+        :class:`skopt.forest_minimize`, :class:`skopt.gbrt_minimize`
     """
     # all our calls want random suggestions, except if we need to evaluate
     # some initial points

@@ -59,33 +59,33 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
     base_estimator : `GradientBoostingQuantileRegressor`
         The regressor to use as surrogate model
 
-    n_calls : int, default=100
+    n_calls : int, default: 100
         Number of calls to `func`.
 
-    n_random_starts : int, default=10
+    n_random_starts : int, default: None
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-        .. deprecated:: 0.9
+        .. deprecated:: 0.8
             use `n_initial_points` instead.
 
-    n_initial_points : int, default=10
+    n_initial_points : int, default: 10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Initial point
         generator can be changed by setting `initial_point_generator`.
 
     initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+            default: `"random"`
         Sets a initial points generator. Can be either
 
-        - "random" for uniform random numbers,
-        - "sobol" for a Sobol sequence,
-        - "halton" for a Halton sequence,
-        - "hammersly" for a Hammersly sequence,
-        - "lhs" for a latin hypercube sequence,
-        - "grid" for a uniform grid sequence
+        - `"random"` for uniform random numbers,
+        - `"sobol"` for a Sobol sequence,
+        - `"halton"` for a Halton sequence,
+        - `"hammersly"` for a Hammersly sequence,
+        - `"lhs"` for a latin hypercube sequence,
+        - `"grid"` for a uniform grid sequence
 
-    acq_func : string, default=`"LCB"`
+    acq_func : string, default: `"LCB"`
         Function to minimize over the forest posterior. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -119,31 +119,31 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
         Set random state to something other than None for reproducible
         results.
 
-    verbose : boolean, default=False
+    verbose : boolean, default: False
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
     callback : callable, optional
         If provided, then `callback(res)` is called after call to func.
 
-    n_points : int, default=10000
+    n_points : int, default: 10000
         Number of points to sample when minimizing the acquisition function.
 
-    xi : float, default=0.01
+    xi : float, default: 0.01
         Controls how much improvement one wants over the previous best
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
-    kappa : float, default=1.96
+    kappa : float, default: 1.96
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    n_jobs : int, default=1
+    n_jobs : int, default: 1
         The number of jobs to run in parallel for `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
-    model_queue_size : int or None, default=None
+    model_queue_size : int or None, default: None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
@@ -166,6 +166,9 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
+
+    .. seealso:: functions :class:`skopt.gp_minimize`,
+        :class:`skopt.dummy_minimize`, :class:`skopt.forest_minimize`
     """
     # Check params
     rng = check_random_state(random_state)

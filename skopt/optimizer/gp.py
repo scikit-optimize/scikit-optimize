@@ -80,23 +80,23 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - Noise that is added to the matern kernel. The noise is assumed
           to be iid gaussian.
 
-    n_calls : int, default=100
+    n_calls : int, default: 100
         Number of calls to `func`.
 
-    n_random_starts : int, default=10
+    n_random_starts : int, default: None
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-        .. deprecated:: 0.9
+        .. deprecated:: 0.8
             use `n_initial_points` instead.
 
-    n_initial_points : int, default=10
+    n_initial_points : int, default: 10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Initial point
         generator can be changed by setting `initial_point_generator`.
 
     initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+            default: 'random'
         Sets a initial points generator. Can be either
 
         - `"random"` for uniform random numbers,
@@ -105,7 +105,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - `"hammersly"` for a Hammersly sequence,
         - `"lhs"` for a latin hypercube sequence,
 
-    acq_func : string, default=`"gp_hedge"`
+    acq_func : string, default: `"gp_hedge"`
         Function to minimize over the gaussian prior. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -134,7 +134,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
           return type of the objective function is assumed to be similar to
           that of `"EIps"`
 
-    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default: `"lbfgs"`
         Method to minimize the acquistion function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
@@ -176,7 +176,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Set random state to something other than None for reproducible
         results.
 
-    verbose : boolean, default=False
+    verbose : boolean, default: False
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
@@ -184,25 +184,25 @@ def gp_minimize(func, dimensions, base_estimator=None,
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
-    n_points : int, default=10000
+    n_points : int, default: 10000
         Number of points to sample to determine the next "best" point.
         Useless if acq_optimizer is set to `"lbfgs"`.
 
-    n_restarts_optimizer : int, default=5
+    n_restarts_optimizer : int, default: 5
         The number of restarts of the optimizer when `acq_optimizer`
         is `"lbfgs"`.
 
-    kappa : float, default=1.96
+    kappa : float, default: 1.96
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    xi : float, default=0.01
+    xi : float, default: 0.01
         Controls how much improvement one wants over the previous best
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
-    noise : float, default="gaussian"
+    noise : float, default: "gaussian"
 
         - Use noise="gaussian" if the objective returns noisy observations.
           The noise of each observation is assumed to be iid with
@@ -212,14 +212,14 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - Set this to a value close to zero (1e-10) if the function is
           noise-free. Setting to zero might cause stability issues.
 
-    n_jobs : int, default=1
+    n_jobs : int, default: 1
         Number of cores to run in parallel while running the lbfgs
         optimizations over the acquisition function. Valid only
-        when `acq_optimizer` is set to "lbfgs."
+        when `acq_optimizer` is set to `"lbfgs"`.
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
-    model_queue_size : int or None, default=None
+    model_queue_size : int or None, default: None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
@@ -244,7 +244,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
 
     .. seealso:: functions :class:`skopt.forest_minimize`,
-        :class:`skopt.dummy_minimize`
+        :class:`skopt.dummy_minimize`, :class:`skopt.gbrt_minimize`
 
     """
     # Check params
