@@ -17,9 +17,14 @@ Version 0.8.0
 - |Enhancement| Improve sampler and add grid sampler
   :pr:`851` by :user:`Holger Nahrstaedt <holgern>`
 
-:mod:`skopt.utils`
+:mod:`skopt.space`
 ------------------
 - |Fix| Fix Optimizer for full categorical spaces
+  :pr:`880` by :user:`Holger Nahrstaedt <holgern>
+
+:mod:`skopt.utils`
+------------------
+- |Fix| Fix Integer transform and inverse_transform for normalize
   :pr:`874` by :user:`Holger Nahrstaedt <holgern>`
 
 Miscellaneous
