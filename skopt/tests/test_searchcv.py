@@ -13,7 +13,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 from sklearn.base import BaseEstimator
 from joblib import cpu_count
-from collections import OrderedDict
 
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
