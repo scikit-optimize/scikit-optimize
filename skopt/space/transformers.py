@@ -255,6 +255,8 @@ class Normalize(Transformer):
             if np.any(X < self.low - 1e-8):
                 raise ValueError("All values should"
                                  "be greater than %f" % self.low)
+        if (self.high - self.low) == 0.:
+            return X * 0.
         if self.is_int:
             return (np.round(X).astype(np.int) - self.low) /\
                    (self.high - self.low)

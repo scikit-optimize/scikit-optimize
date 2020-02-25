@@ -348,3 +348,49 @@ def test_dimensions_names():
     assert "cat" in names
     assert "int" in names
     assert None not in names
+
+
+@pytest.mark.fast_test
+def test_categorical_only():
+    from skopt.space import Categorical
+    cat1 = Categorical([2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    cat2 = Categorical([2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+
+    opt = Optimizer([cat1, cat2])
+    for n in range(15):
+        x = opt.ask()
+        res = opt.tell(x, 12 * n)
+    assert len(res.x_iters) == 15
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+
+    cat3 = Categorical(["2", "3", "4", "5", "6", "7", "8", "9", "10", "11"])
+    cat4 = Categorical(["2", "3", "4", "5", "6", "7", "8", "9", "10", "11"])
+
+    opt = Optimizer([cat3, cat4])
+    for n in range(15):
+        x = opt.ask()
+        res = opt.tell(x, 12 * n)
+    assert len(res.x_iters) == 15
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+
+
+def test_categorical_only2():
+    from numpy import linalg
+    from skopt.space import Categorical
+    from skopt.learning import GaussianProcessRegressor
+    space = [Categorical([1, 2, 3]), Categorical([4, 5, 6])]
+    opt = Optimizer(space,
+                    base_estimator=GaussianProcessRegressor(alpha=1e-7),
+                    acq_optimizer='lbfgs',
+                    n_initial_points=10)
+
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+    opt.tell(next_x, [linalg.norm(x) for x in next_x])
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+    opt.tell(next_x, [linalg.norm(x) for x in next_x])
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
