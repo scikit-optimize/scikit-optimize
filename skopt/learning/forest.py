@@ -81,8 +81,9 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
 
         .. note::
             The search for a split does not stop until at least one
-            valid partition of the node samples is found, even if it requires to
-            effectively inspect more than ``max_features`` features.
+            valid partition of the node samples is found, even if it
+            requires to effectively inspect more than ``max_features``
+            features.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -275,8 +276,9 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
 
         .. note::
             The search for a split does not stop until at least one
-            valid partition of the node samples is found, even if it requires to
-            effectively inspect more than ``max_features`` features.
+            valid partition of the node samples is found, even if it
+            requires to effectively inspect more than ``max_features``
+            features.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
