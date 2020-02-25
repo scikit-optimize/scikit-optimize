@@ -20,7 +20,7 @@ Version 0.8.0
 :mod:`skopt.space`
 ------------------
 - |Fix| Fix Optimizer for full categorical spaces
-  :pr:`880` by :user:`Holger Nahrstaedt <holgern>
+  :pr:`880` by :user:`Holger Nahrstaedt <holgern>`
 
 :mod:`skopt.utils`
 ------------------
