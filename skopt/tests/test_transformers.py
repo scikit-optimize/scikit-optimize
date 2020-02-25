@@ -97,13 +97,16 @@ def test_normalize_integer():
     assert transformer.transform(20.2) == 1.0
     assert transformer.transform(1.2) == 0.0
     assert transformer.transform(0.9) == 0.0
-    assert_raises(ValueError, transformer.transform, 20.6)
+    assert_raises(ValueError, transformer.transform, 21.6)
     assert_raises(ValueError, transformer.transform, 0.4)
 
     assert transformer.inverse_transform(0.99) == 20
     assert transformer.inverse_transform(0.01) == 1
-    assert_raises(ValueError, transformer.inverse_transform, 1. + 1e-8)
-    assert_raises(ValueError, transformer.transform, 0. - 1e-8)
+    assert_raises(ValueError, transformer.inverse_transform, 1. + 1e-5)
+    assert_raises(ValueError, transformer.transform, 0. - 1e-5)
+    transformer = Normalize(0, 20, is_int=True)
+    assert transformer.transform(-0.2) == 0.0
+    assert_raises(ValueError, transformer.transform, -0.6)
 
 
 @pytest.mark.fast_test
@@ -111,7 +114,7 @@ def test_normalize():
     transformer = Normalize(1, 20, is_int=False)
     assert transformer.transform(20.) == 1.0
     assert transformer.transform(1.) == 0.0
-    assert_raises(ValueError, transformer.transform, 20. + 1e-7)
-    assert_raises(ValueError, transformer.transform, 1.0 - 1e-7)
-    assert_raises(ValueError, transformer.inverse_transform, 1. + 1e-8)
-    assert_raises(ValueError, transformer.transform, 0. - 1e-8)
+    assert_raises(ValueError, transformer.transform, 20. + 1e-5)
+    assert_raises(ValueError, transformer.transform, 1.0 - 1e-5)
+    assert_raises(ValueError, transformer.inverse_transform, 1. + 1e-5)
+    assert_raises(ValueError, transformer.transform, 0. - 1e-5)
