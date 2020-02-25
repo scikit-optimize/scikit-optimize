@@ -110,10 +110,8 @@ class BayesSearchCV(BaseSearchCV):
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
-
             - An int, giving the exact number of total jobs that are
               spawned
-
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
@@ -125,6 +123,7 @@ class BayesSearchCV(BaseSearchCV):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
+
           - None, to use the default 3-fold cross validation,
           - integer, to specify the number of folds in a `(Stratified)KFold`,
           - An object to be used as a cross-validation generator.
@@ -242,6 +241,10 @@ class BayesSearchCV(BaseSearchCV):
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
+
+    optimizer_results_ : list of `OptimizeResult`
+        Contains a `OptimizeResult` for each search space. The search space
+        parameter are sorted by its name.
 
     best_score_ : float
         Score of best_estimator on the left out data.
@@ -372,6 +375,11 @@ class BayesSearchCV(BaseSearchCV):
     def best_params_(self):
         check_is_fitted(self, 'cv_results_')
         return self.cv_results_['params'][self.best_index_]
+
+    @property
+    def optimizer_results_(self):
+        check_is_fitted(self, '_optim_results')
+        return self._optim_results
 
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     def _fit(self, X, y, groups, parameter_iterable):
@@ -659,6 +667,7 @@ class BayesSearchCV(BaseSearchCV):
         self.cv_results_ = defaultdict(list)
         self.best_index_ = None
         self.multimetric_ = False
+        self._optim_results = []
 
         n_points = self.n_points
 
@@ -683,6 +692,7 @@ class BayesSearchCV(BaseSearchCV):
 
                 if eval_callbacks(callbacks, optim_result):
                     break
+            self._optim_results.append(optim_result)
 
         # Refit the best model on the the whole dataset
         if self.refit:
