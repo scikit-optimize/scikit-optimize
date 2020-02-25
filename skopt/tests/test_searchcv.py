@@ -13,6 +13,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 from sklearn.base import BaseEstimator
 from joblib import cpu_count
+from collections import OrderedDict
 
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
@@ -167,6 +168,10 @@ def test_searchcv_runs_multiple_subspaces():
     # test if all subspaces are explored
     total_evaluations = len(opt.cv_results_['mean_test_score'])
     assert total_evaluations == 1+1+2, "Not all spaces were explored!"
+    assert len(opt.optimizer_results_) == 3
+    assert isinstance(opt.optimizer_results_[0].x[0], LinearSVC)
+    assert isinstance(opt.optimizer_results_[1].x[0], DecisionTreeClassifier)
+    assert isinstance(opt.optimizer_results_[2].x[0], SVC)
 
 
 def test_searchcv_sklearn_compatibility():
@@ -259,14 +264,25 @@ def test_searchcv_reproducibility():
 
     opt.fit(X_train, y_train)
     best_est = opt.best_estimator_
+    optim_res = opt.optimizer_results_[0].x
 
     opt2 = clone(opt).fit(X_train, y_train)
     best_est2 = opt2.best_estimator_
+    optim_res2 = opt2.optimizer_results_[0].x
 
     assert getattr(best_est, 'C') == getattr(best_est2, 'C')
     assert getattr(best_est, 'gamma') == getattr(best_est2, 'gamma')
     assert getattr(best_est, 'degree') == getattr(best_est2, 'degree')
     assert getattr(best_est, 'kernel') == getattr(best_est2, 'kernel')
+    # dict is sorted by alphabet
+    assert optim_res[0] == getattr(best_est, 'C')
+    assert optim_res[2] == getattr(best_est, 'gamma')
+    assert optim_res[1] == getattr(best_est, 'degree')
+    assert optim_res[3] == getattr(best_est, 'kernel')
+    assert optim_res2[0] == getattr(best_est, 'C')
+    assert optim_res2[2] == getattr(best_est, 'gamma')
+    assert optim_res2[1] == getattr(best_est, 'degree')
+    assert optim_res2[3] == getattr(best_est, 'kernel')
 
 
 def test_searchcv_refit():
