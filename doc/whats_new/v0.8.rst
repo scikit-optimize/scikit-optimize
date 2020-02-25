@@ -19,12 +19,12 @@ Version 0.8.0
 
 :mod:`skopt.space`
 ------------------
-- |Fix| Fix Optimizer for full categorical spaces
+- |Fix| Fix Integer transform and inverse_transform for normalize
   :pr:`880` by :user:`Holger Nahrstaedt <holgern>`
 
 :mod:`skopt.utils`
 ------------------
-- |Fix| Fix Integer transform and inverse_transform for normalize
+- |Fix| Fix Optimizer for full categorical spaces
   :pr:`874` by :user:`Holger Nahrstaedt <holgern>`
 
 Miscellaneous
