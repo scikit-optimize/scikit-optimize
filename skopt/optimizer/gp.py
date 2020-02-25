@@ -113,7 +113,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - `"PI"` for negative probability of improvement.
         - `"gp_hedge"` Probabilistically choose one of the above three
           acquisition functions at every iteration. The weightage
-          given to these gains can be set by :math:`\eta` through
+          given to these gains can be set by :math:`\\eta` through
           `acq_func_kwargs`.
 
           - The gains `g_i` are initialized to zero.
@@ -122,9 +122,9 @@ def gp_minimize(func, dimensions, base_estimator=None,
             - Each acquisition function is optimised independently to
               propose an candidate point `X_i`.
             - Out of all these candidate points, the next point `X_best` is
-              chosen by :math:`softmax(\eta g_i)`
+              chosen by :math:`softmax(\\eta g_i)`
             - After fitting the surrogate model with `(X_best, y_best)`,
-              the gains are updated such that :math:`g_i -= \mu(X_i)`
+              the gains are updated such that :math:`g_i -= \\mu(X_i)`
 
         - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is

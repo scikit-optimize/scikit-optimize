@@ -52,8 +52,8 @@ class Optimizer(object):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    base_estimator : `"GP"`, `"RF"`, `"ET"`, `"GBRT"` or sklearn regressor, \
-            default=`"GP"`
+    base_estimator : "GP", "RF", "ET", "GBRT" or sklearn regressor, \
+            default="GP"
         Should inherit from :obj:`sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
         argument, which returns `std(Y | x)`` along with `E[Y | x]`.
@@ -96,9 +96,9 @@ class Optimizer(object):
             - Each acquisition function is optimised independently to
               propose an candidate point `X_i`.
             - Out of all these candidate points, the next point `X_best` is
-              chosen by :math:`softmax(\eta g_i)`
+              chosen by :math:`softmax(\\eta g_i)`
             - After fitting the surrogate model with `(X_best, y_best)`,
-              the gains are updated such that :math:`g_i -= \mu(X_i)`
+              the gains are updated such that :math:`g_i -= \\mu(X_i)`
 
         - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
