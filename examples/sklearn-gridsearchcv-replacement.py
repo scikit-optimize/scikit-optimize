@@ -35,6 +35,8 @@ Note: for a manual hyperparameter optimization example, see
 """
 print(__doc__)
 import numpy as np
+np.random.seed(123)
+import matplotlib.pyplot as plt
 
 #############################################################################
 # Minimal example
@@ -122,6 +124,13 @@ opt.fit(X_train, y_train)
 
 print("val. score: %s" % opt.best_score_)
 print("test score: %s" % opt.score(X_test, y_test))
+print("best params: %s" % str(opt.best_params_))
+
+#############################################################################
+from skopt.plots import plot_objective
+
+plot_objective(opt.optimizer_results_[0])
+plt.show()
 
 #############################################################################
 # Progress monitoring and control using `callback` argument of `fit` method

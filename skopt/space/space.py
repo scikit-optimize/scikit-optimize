@@ -167,6 +167,10 @@ class Dimension(object):
         raise NotImplementedError
 
     @property
+    def is_constant(self):
+        raise NotImplementedError
+
+    @property
     def transformed_bounds(self):
         raise NotImplementedError
 
@@ -328,6 +332,10 @@ class Real(Dimension):
     @property
     def bounds(self):
         return (self.low, self.high)
+
+    @property
+    def is_constant(self):
+        return self.low == self.high
 
     def __contains__(self, point):
         if isinstance(point, list):
@@ -504,6 +512,10 @@ class Integer(Dimension):
     def bounds(self):
         return (self.low, self.high)
 
+    @property
+    def is_constant(self):
+        return self.low == self.high
+
     def __contains__(self, point):
         if isinstance(point, list):
             point = np.array(point)
@@ -668,6 +680,10 @@ class Categorical(Dimension):
     @property
     def bounds(self):
         return self.categories
+
+    @property
+    def is_constant(self):
+        return len(self.categories) <= 1
 
     def __contains__(self, point):
         return point in self.categories
@@ -1017,6 +1033,17 @@ class Space(object):
     def is_partly_categorical(self):
         """Space contains any categorical dimensions"""
         return any([isinstance(dim, Categorical) for dim in self.dimensions])
+
+    @property
+    def n_constant_dimensions(self):
+        """Returns the number of constant dimensions which have zero degree of
+        freedom, e.g. an Integer dimensions with (0., 0.) as bounds.
+        """
+        n = 0
+        for dim in self.dimensions:
+            if dim.is_constant:
+                n += 1
+        return n
 
     def distance(self, point_a, point_b):
         """Compute distance between two points in this space.
