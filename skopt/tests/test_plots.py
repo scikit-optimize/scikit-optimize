@@ -111,7 +111,7 @@ def test_evaluate_min_params():
     x_min2, f_min2 = expected_minimum_random_sampling(res,
                                                       n_random_starts=1000,
                                                       random_state=1)
-
+    plots.plot_gaussian_process(res)
     assert _evaluate_min_params(res, params='result') == res.x
     assert _evaluate_min_params(res, params=[1.]) == [1.]
     assert _evaluate_min_params(res, params='expected_minimum',

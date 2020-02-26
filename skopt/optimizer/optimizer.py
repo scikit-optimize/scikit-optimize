@@ -2,7 +2,8 @@ import sys
 import warnings
 from math import log
 from numbers import Number
-
+import copy
+import inspect
 import numpy as np
 
 from scipy.optimize import fmin_l_bfgs_b
@@ -170,7 +171,8 @@ class Optimizer(object):
                  model_queue_size=None,
                  acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
-
+        self.specs = {"args": copy.copy(inspect.currentframe().f_locals),
+                      "function": "Optimizer"}
         self.rng = check_random_state(random_state)
 
         # Configure acquisition function
@@ -298,7 +300,6 @@ class Optimizer(object):
         self.yi = []
 
         # Initialize cache for `ask` method responses
-
         # This ensures that multiple calls to `ask` with n_points set
         # return same sets of points. Reset to {} at every call to `tell`.
         self.cache_ = {}
@@ -326,7 +327,6 @@ class Optimizer(object):
         optimizer._initial_samples = self._initial_samples
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
-
         if self.Xi:
             optimizer._tell(self.Xi, self.yi)
 
@@ -608,8 +608,11 @@ class Optimizer(object):
                 next_x.reshape((1, -1)))[0]
 
         # Pack results
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        result = create_result(self.Xi, self.yi, self.space, self.rng,
+                               models=self.models)
+
+        result.specs = self.specs
+        return result
 
     def _check_y_is_valid(self, x, y):
         """Check if the shape and types of x and y are consistent."""
@@ -642,8 +645,10 @@ class Optimizer(object):
             x = self.ask()
             self.tell(x, func(x))
 
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        result = create_result(self.Xi, self.yi, self.space, self.rng,
+                               models=self.models)
+        result.specs = self.specs
+        return result
 
     def update_next(self):
         """Updates the value returned by opt.ask(). Useful if a parameter
@@ -665,5 +670,7 @@ class Optimizer(object):
             OptimizeResult instance with the required information.
 
         """
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        result = create_result(self.Xi, self.yi, self.space, self.rng,
+                               models=self.models)
+        result.specs = self.specs
+        return result
