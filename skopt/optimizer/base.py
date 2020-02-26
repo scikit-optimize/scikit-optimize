@@ -178,8 +178,10 @@ def base_minimize(func, dimensions, base_estimator,
 
     n_jobs : int, default: 1
         Number of cores to run in parallel while running the lbfgs
-        optimizations over the acquisition function. Valid only when
-        `acq_optimizer` is set to "lbfgs."
+        optimizations over the acquisition function and given to
+        the base_estimator. Valid only when
+        `acq_optimizer` is set to "lbfgs". or when the base_estimator
+        supports n_jobs as parameter and was given as string.
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
@@ -254,6 +256,7 @@ def base_minimize(func, dimensions, base_estimator,
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
                           initial_point_generator=initial_point_generator,
+                          n_jobs=n_jobs,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
                           random_state=random_state,
                           model_queue_size=model_queue_size,

@@ -400,6 +400,9 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     elif base_estimator == "DUMMY":
         return None
 
+    if ('n_jobs' in kwargs.keys()) and not hasattr(base_estimator, 'n_jobs'):
+        del kwargs['n_jobs']
+
     base_estimator.set_params(**kwargs)
     return base_estimator
 
