@@ -190,6 +190,7 @@ details.
     plots.partial_dependence
     plots.plot_convergence
     plots.plot_evaluations
+    plots.plot_gaussian_process
     plots.plot_objective
     plots.plot_regret
 
