@@ -130,6 +130,12 @@ class Optimizer(object):
         Set random state to something other than None for reproducible
         results.
 
+    n_jobs : int, default: 1
+        The number of jobs to run in parallel in the base_estimator,
+        if the base_estimator supports n_jobs as parameter and
+        base_estimator was given as string.
+        If -1, then the number of jobs is set to the number of cores.
+
     acq_func_kwargs : dict
         Additional arguments to be passed to the acquisition function.
 
@@ -158,7 +164,7 @@ class Optimizer(object):
     def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  initial_point_generator="random",
-                 acq_func="gp_hedge",
+                 n_jobs=1, acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None,
                  model_queue_size=None,
@@ -210,7 +216,8 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
-                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max),
+                n_jobs=n_jobs)
 
         # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
@@ -251,8 +258,7 @@ class Optimizer(object):
         self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
         self.n_restarts_optimizer = acq_optimizer_kwargs.get(
             "n_restarts_optimizer", 5)
-        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
-        self.n_jobs = n_jobs
+        self.n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
         # Configure search space
