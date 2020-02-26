@@ -20,7 +20,8 @@ print(__doc__)
 import numpy as np
 np.random.seed(1234)
 import matplotlib.pyplot as plt
-
+from skopt.plots import plot_gaussian_process
+from skopt import Optimizer
 
 #############################################################################
 # Toy example
@@ -41,22 +42,19 @@ def objective_wo_noise(x):
 
 #############################################################################
 
-from skopt import Optimizer
 opt_gp = Optimizer([(-2.0, 2.0)], base_estimator="GP", n_initial_points=5,
                 acq_optimizer="sampling", random_state=42)
 
 #############################################################################
 
-from skopt.plots import plot_gaussian_process
-
-def plot_optimizer(res, next_x, n_iter, max_iters=5):
+def plot_optimizer(res, n_iter, max_iters=5):
     if n_iter == 0:
         show_legend = True
     else:
         show_legend = False
     ax = plt.subplot(max_iters, 2, 2 * n_iter + 1)
     # Plot GP(x) + contours
-    ax = plot_gaussian_process(res,  ax=ax,
+    ax = plot_gaussian_process(res, ax=ax,
                                objective=objective_wo_noise,
                                noise_level=noise_level,
                                show_legend=show_legend, show_title=True,
@@ -71,7 +69,7 @@ def plot_optimizer(res, next_x, n_iter, max_iters=5):
                                noise_level=noise_level,
                                show_legend=show_legend, show_title=False,
                                show_next_point=True, show_acq_func=True,
-                               next_x=next_x, show_observations=False,
+                               show_observations=False,
                                show_mu=False)
     ax.set_ylabel("")
     ax.set_xlabel("")
@@ -90,7 +88,7 @@ for i in range(10):
     f_val = objective(next_x)
     res = opt_gp.tell(next_x, f_val)
     if i >= 5:
-        plot_optimizer(res, opt_gp._next_x, n_iter=i-5, max_iters=5)
+        plot_optimizer(res, n_iter=i-5, max_iters=5)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.plot()
 
@@ -132,6 +130,6 @@ for kernel in kernels:
         f_val = objective(next_x)
         res = opt.tell(next_x, f_val)
         if i >= 5:
-            plot_optimizer(res, opt._next_x, n_iter=i - 5, max_iters=5)
+            plot_optimizer(res, n_iter=i - 5, max_iters=5)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.show()

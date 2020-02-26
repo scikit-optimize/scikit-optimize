@@ -40,7 +40,7 @@ For :math:`t=1:T`:
 
 2. optimize a cheap acquisition/utility function $u$ based on the posterior
    distribution for sampling the next point.
-   .. math::`x_{t+1} = arg \min_x u(x)`
+   .. math::`x_{t+1} = arg \\min_x u(x)`
    Exploit uncertainty to balance exploration against exploitation.
 
 3. Sample the next observation :math:`y_{t+1}` at :math:`x_{t+1}`.
@@ -53,7 +53,7 @@ Acquisition functions :math:`u(x)` specify which sample :math:`x`: should be
 tried next:
 
 - Expected improvement (default):
-  :math:`-EI(x) = -\mathbb{E} [f(x) - f(x_t^+)]`
+  :math:`-EI(x) = -\\mathbb{E} [f(x) - f(x_t^+)]`
 - Lower confidence bound: :math:`LCB(x) = \mu_{GP}(x) + \kappa \sigma_{GP}(x)`
 - Probability of improvement: :math:`-PI(x) = -P(f(x) \geq f(x_t^+) + \kappa)`
 
@@ -69,6 +69,7 @@ print(__doc__)
 import numpy as np
 np.random.seed(237)
 import matplotlib.pyplot as plt
+from skopt.plots import plot_gaussian_process
 
 #############################################################################
 # Toy example
@@ -148,12 +149,14 @@ plot_convergence(res);
 # 2. The acquisition values that determine the next point to be queried.
 
 plt.rcParams["figure.figsize"] = (8, 14)
+
+
 def f_wo_noise(x):
     return f(x, noise_level=0)
 
 #############################################################################
 # Plot the 5 iterations following the 5 random points
-from skopt.plots import plot_gaussian_process
+
 for n_iter in range(5):
     # Plot true function.
     plt.subplot(5, 2, 2*n_iter+1)
