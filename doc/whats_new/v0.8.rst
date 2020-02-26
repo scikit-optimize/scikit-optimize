@@ -8,6 +8,13 @@ Version 0.8.0
 =============
 **In Development**
 
+:mod:`skopt.Optimizer`
+----------------------
+- |Enhancement| n_jobs support was added to Optimizer and
+  fixed for forest_minimize
+  :pr:`884` by :user:`Holger Nahrstaedt <holgern>`
+  based on :pr:`627` by :user:`JPN <jonathanng>`
+
 :mod:`skopt.sampler`
 --------------------
 - |MajorFeature| Initial sampling generation
