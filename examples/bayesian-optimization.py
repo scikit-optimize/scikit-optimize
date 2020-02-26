@@ -27,7 +27,7 @@ under the constraints that
 is certainly a better optimization algorithm than Bayesian optimization.
 
 This example uses :class:`plots.plot_gaussian_process` which is available
-since version 0.7.3.
+since version 0.8.
 
 Bayesian optimization loop
 --------------------------

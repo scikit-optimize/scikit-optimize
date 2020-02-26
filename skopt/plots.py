@@ -117,32 +117,35 @@ def plot_gaussian_process(res, **kwargs):
         The matplotlib axes on which to draw the plot, or `None` to create
         a new one.
 
-    n_calls : int, default=-1
+    n_calls : int, default: -1
         Can be used to evaluate the model at call `n_calls`.
 
-    objective : func, default=None
+    objective : func, default: None
         Defines the true objective function. Must have one input parameter.
 
-    noise_level : float, default=0
+    n_points : int, default: 1000
+        Number of data points used to create the plots
+
+    noise_level : float, default: 0
         Sets the estimated noise level
 
-    show_legend : boolean, default=True
+    show_legend : boolean, default: True
         When True, a legend is plotted.
 
-    show_title : boolean, default=True
+    show_title : boolean, default: True
         When True, a title containing the found minimum value
         is shown
 
-    show_acq_func : boolean, default=False
+    show_acq_func : boolean, default: False
         When True, the acquisition function is plotted
 
-    show_next_point : boolean, default=False
+    show_next_point : boolean, default: False
         When True, the next evaluated point is plotted
 
-    show_observations : boolean, default=True
+    show_observations : boolean, default: True
         When True, observations are plotted as dots.
 
-    show_mu : boolean, default=True
+    show_mu : boolean, default: True
         When True, the predicted model is shown.
 
     Returns
@@ -160,22 +163,18 @@ def plot_gaussian_process(res, **kwargs):
     show_next_point = kwargs.get("show_next_point", False)
     show_observations = kwargs.get("show_observations", True)
     show_mu = kwargs.get("show_mu", True)
-    acq_func = kwargs.get("acq_func", None)
-    n_random = kwargs.get("n_random", None)
-    acq_func_kwargs = kwargs.get("acq_func_kwargs", None)
+    n_points = kwargs.get("n_points", 1000)
 
     if ax is None:
         ax = plt.gca()
-    bounds = res.space.dimensions[0].bounds
-    x = np.linspace(bounds[0], bounds[1], 400).reshape(-1, 1)
-    x_gp = res.space.transform(x.tolist())
+    assert res.space.n_dims == 1, "Space dimension must be 1"
+    x, x_model = _evenly_sample(res.space.dimensions[0], n_points)
+    x = x.reshape(-1, 1)
+    x_model = x_model.reshape(-1, 1)
     if res.specs is not None and "args" in res.specs:
-        if n_random is None:
-            n_random = res.specs["args"].get('n_random_starts', n_random)
-        if acq_func is None:
-            acq_func = res.specs["args"].get("acq_func", "EI")
-        if acq_func_kwargs is None:
-            acq_func_kwargs = res.specs["args"].get("acq_func_kwargs", {})
+        n_random = res.specs["args"].get('n_random_starts', None)
+        acq_func = res.specs["args"].get("acq_func", "EI")
+        acq_func_kwargs = res.specs["args"].get("acq_func_kwargs", {})
 
     if acq_func_kwargs is None:
         acq_func_kwargs = {}
@@ -187,11 +186,11 @@ def plot_gaussian_process(res, **kwargs):
     if objective is not None:
         fx = np.array([objective(x_i) for x_i in x])
     if n_calls < 0:
-        gp = res.models[-1]
+        model = res.models[-1]
         curr_x_iters = res.x_iters
         curr_func_vals = res.func_vals
     else:
-        gp = res.models[n_calls]
+        model = res.models[n_calls]
 
         curr_x_iters = res.x_iters[:n_random + n_calls]
         curr_func_vals = res.func_vals[:n_random + n_calls]
@@ -209,7 +208,7 @@ def plot_gaussian_process(res, **kwargs):
 
     # Plot GP(x) + contours
     if show_mu:
-        y_pred, sigma = gp.predict(x_gp, return_std=True)
+        y_pred, sigma = model.predict(x_model, return_std=True)
         ax.plot(x, y_pred, "g--", label=r"$\mu_{GP}(x)$")
         ax.fill(np.concatenate([x, x[::-1]]),
                 np.concatenate([y_pred - 1.9600 * sigma,
@@ -229,17 +228,17 @@ def plot_gaussian_process(res, **kwargs):
         ax_ei = ax
         plot_both = False
     if show_acq_func:
-        acq = _gaussian_acquisition(x_gp, gp, y_opt=np.min(curr_func_vals),
+        acq = _gaussian_acquisition(x_model, model, y_opt=np.min(curr_func_vals),
                                     acq_func=acq_func,
                                     acq_func_kwargs=acq_func_kwargs)
         next_x = x[np.argmin(acq)]
         next_acq = acq[np.argmin(acq)]
-        if acq_func in ["EI", "PI", "EIps", "PIps"]:
-            acq = - acq
-            next_acq = -next_acq
+        acq = - acq
+        next_acq = -next_acq
         ax_ei.plot(x, acq, "b", label=str(acq_func) + "(x)")
         if not plot_both:
-            ax_ei.fill_between(x.ravel(), 0, acq.ravel(), alpha=0.3, color='blue')
+            ax_ei.fill_between(x.ravel(), 0, acq.ravel(),
+                               alpha=0.3, color='blue')
 
         if show_next_point and next_x is not None:
             ax_ei.plot(next_x, next_acq, "bo", markersize=6,
