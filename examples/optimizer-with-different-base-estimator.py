@@ -34,9 +34,12 @@ noise_level = 0.1
 # Our 1D toy problem, this is the function we are trying to
 # minimize
 
+
 def objective(x, noise_level=noise_level):
     return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2))\
            + np.random.randn() * noise_level
+
+
 def objective_wo_noise(x):
     return objective(x, noise_level=0)
 
@@ -46,6 +49,7 @@ opt_gp = Optimizer([(-2.0, 2.0)], base_estimator="GP", n_initial_points=5,
                 acq_optimizer="sampling", random_state=42)
 
 #############################################################################
+
 
 def plot_optimizer(res, n_iter, max_iters=5):
     if n_iter == 0:

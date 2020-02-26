@@ -228,7 +228,8 @@ def plot_gaussian_process(res, **kwargs):
         ax_ei = ax
         plot_both = False
     if show_acq_func:
-        acq = _gaussian_acquisition(x_model, model, y_opt=np.min(curr_func_vals),
+        acq = _gaussian_acquisition(x_model, model,
+                                    y_opt=np.min(curr_func_vals),
                                     acq_func=acq_func,
                                     acq_func_kwargs=acq_func_kwargs)
         next_x = x[np.argmin(acq)]
