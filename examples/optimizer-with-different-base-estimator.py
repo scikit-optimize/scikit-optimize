@@ -13,7 +13,7 @@ To use different base_estimator or create a regressor with different parameters,
 we can create a regressor object and set it as kernel.
 
 This example uses :class:`plots.plot_gaussian_process` which is available
-since version 0.7.3.
+since version 0.8.
 """
 print(__doc__)
 
