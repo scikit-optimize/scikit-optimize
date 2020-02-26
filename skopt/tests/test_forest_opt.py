@@ -28,11 +28,11 @@ def test_forest_minimize_api(base_estimator):
 
 
 def check_minimize(minimizer, func, y_opt, dimensions, margin,
-                   n_calls, n_initial_points=10, x0=None):
+                   n_calls, n_initial_points=10, x0=None, n_jobs=1):
     for n in range(3):
         r = minimizer(
             func, dimensions, n_calls=n_calls, random_state=n,
-            n_initial_points=n_initial_points, x0=x0)
+            n_initial_points=n_initial_points, x0=x0, n_jobs=n_jobs)
         assert r.fun < y_opt + margin
 
 
@@ -55,6 +55,12 @@ def test_tree_based_minimize(name, minimizer):
                    [(-2.0, 2.0)], 0.05, 10, 5)
     check_minimize(minimizer, bench4, 1.,
                    [("-2", "-1", "0", "1", "2")], 0.05, 5, 1)
+
+
+@pytest.mark.slow_test
+def test_tree_based_minimize_n_jobs():
+    check_minimize(forest_minimize, bench1, 0.05,
+                   [(-2.0, 2.0)], 0.05, 25, 5, n_jobs=2)
 
 
 @pytest.mark.fast_test
