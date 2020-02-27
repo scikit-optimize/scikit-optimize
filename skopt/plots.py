@@ -203,7 +203,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     diagonal_ylim = tuple(diagonal_ylim)
 
     # Number of search-space dimensions we are using.
-    if isinstance(ax, (list, np.ndarray, np.array)):
+    if isinstance(ax, (list, np.ndarray)):
         n_dims = len(plot_dims)
     else:
         n_dims = 1
@@ -696,7 +696,7 @@ def _get_ylim_diagonal(ax):
     """
 
     # Number of search-space dimensions used in this plot.
-    if isinstance(ax, (list, np.ndarray, np.array)):
+    if isinstance(ax, (list, np.ndarray)):
         n_dims = len(ax)
         # Get ylim for all diagonal plots.
         ylim = [ax[row, row].get_ylim() for row in range(n_dims)]
