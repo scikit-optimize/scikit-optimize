@@ -4,10 +4,10 @@ import numpy as np
 from itertools import count
 from functools import partial
 from scipy.optimize import OptimizeResult
-from skopt.space import Categorical
-from collections import Counter
+
 from skopt import expected_minimum, expected_minimum_random_sampling
 from .space import Categorical
+from collections import Counter
 
 # For plot tests, matplotlib must be set to headless mode early
 if 'pytest' in sys.modules:
