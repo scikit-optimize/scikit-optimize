@@ -85,6 +85,7 @@ def test_plots_work():
     plots.plot_convergence(res)
     plots.plot_evaluations(res)
     plots.plot_objective(res)
+    plots.plot_objective(res, dimensions=["a", "b", "c", "d", "e", "f"])
     plots.plot_objective(res,
                          minimum='expected_minimum_random')
     plots.plot_objective(res,
@@ -176,4 +177,4 @@ def test_names_dimensions():
         res = opt.tell(next_x, f_val)
 
     # Plot results
-    assert_raises(ValueError, plots.plot_objective, res)
+    plots.plot_objective(res)
