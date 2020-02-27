@@ -980,7 +980,8 @@ def plot_objective_2D(result, dimension_identifier1, dimension_identifier2,
     return ax
 
 
-def plot_histogram(result, dimension_identifier, bins=20, rotate_labels=0, ax=None):
+def plot_histogram(result, dimension_identifier, bins=20, rotate_labels=0,
+                   ax=None):
     """
     Create and return a Matplotlib figure with a histogram
     of the samples from the optimization results,
