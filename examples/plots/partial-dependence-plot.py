@@ -19,7 +19,6 @@ import numpy as np
 np.random.seed(123)
 import matplotlib.pyplot as plt
 
-
 #############################################################################
 # Objective function
 # ==================

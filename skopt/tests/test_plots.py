@@ -105,6 +105,8 @@ def test_plots_work():
     plots.plot_objective(res,
                          sample_source='result')
     plots.plot_regret(res)
+    plots.plot_objective_2D(res, 0, 4)
+    plots.plot_histogram(res, 0, 4)
 
     # TODO: Compare plots to known good results?
     # Look into how matplotlib does this.
