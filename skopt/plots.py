@@ -354,61 +354,19 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
     For Categorical variables, the `xi` (and `yi` for 2D) returned are
     the indices of the variable in `Dimension.categories`.
     """
-    # The idea is to step through one dimension, evaluating the model with
-    # that dimension fixed and averaging either over random values or over
-    # the given ones in x_val in all other dimensions.
-    # (Or step through 2 dimensions when i and j are given.)
-    # Categorical dimensions make this interesting, because they are one-
-    # hot-encoded, so there is a one-to-many mapping of input dimensions
-    # to transformed (model) dimensions.
-
     # If we haven't parsed an x_eval list we use random sampled values instead
     if x_eval is None and sample_points is None:
         sample_points = space.transform(space.rvs(n_samples=n_samples))
     elif sample_points is None:
         sample_points = space.transform([x_eval])
 
-    # dim_locs[i] is the (column index of the) start of dim i in
-    # sample_points.
-    # This is usefull when we are using one hot encoding, i.e using
-    # categorical values
-    dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
-
     if j is None:
-        # We sample evenly instead of randomly. This is necessary when using
-        # categorical values
-        xi, xi_transformed = _evenly_sample(space.dimensions[i], n_points)
-        yi = []
-        for x_ in xi_transformed:
-            rvs_ = np.array(sample_points)  # copy
-            # We replace the values in the dimension that we want to keep
-            # fixed
-            rvs_[:, dim_locs[i]:dim_locs[i + 1]] = x_
-            # In case of `x_eval=None` rvs conists of random samples.
-            # Calculating the mean of these samples is how partial dependence
-            # is implemented.
-            yi.append(np.mean(model.predict(rvs_)))
-
-        return xi, yi
-
+        return partial_dependence_1D(space, model, i, sample_points, n_points)
     else:
-        xi, xi_transformed = _evenly_sample(space.dimensions[j], n_points)
-        yi, yi_transformed = _evenly_sample(space.dimensions[i], n_points)
-
-        zi = []
-        for x_ in xi_transformed:
-            row = []
-            for y_ in yi_transformed:
-                rvs_ = np.array(sample_points)  # copy
-                rvs_[:, dim_locs[j]:dim_locs[j + 1]] = x_
-                rvs_[:, dim_locs[i]:dim_locs[i + 1]] = y_
-                row.append(np.mean(model.predict(rvs_)))
-            zi.append(row)
-
-        return xi, yi, np.array(zi).T
+        return partial_dependence_2D(space, model, i, j, sample_points, n_points)
 
 
-def plot_objective_old(result, levels=10, n_points=40, n_samples=250, size=2,
+def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                        zscale='linear', dimensions=None, sample_source='random',
                        minimum='result', n_minimum_search=None):
     """Pairwise dependence plot of the objective function.
@@ -563,7 +521,7 @@ def plot_objective_old(result, levels=10, n_points=40, n_samples=250, size=2,
                                      dim_labels=dimensions)
 
 
-def plot_evaluations_old(result, bins=20, dimensions=None):
+def plot_evaluations(result, bins=20, dimensions=None):
     """Visualize the order in which points where sampled.
 
     The scatter plot matrix shows at which points in the search
@@ -834,7 +792,8 @@ def _map_bins(bins, bounds, prior, categories=None):
     return bins_mapped
 
 
-def partial_dependence_1D(model, dimension, samples, n_points=40):
+def partial_dependence_1D(space, model, i, samples,
+                          n_points=40):
     """
     Calculate the partial dependence for a single dimension.
     
@@ -847,11 +806,14 @@ def partial_dependence_1D(model, dimension, samples, n_points=40):
 
     Parameters
     ----------
+    space : `Space`
+        The parameter space over which the minimization was performed.
+
     model
         Surrogate model for the objective function.
 
-    dimension : Dimension
-        The `Dimension`-object for which to calculate the partial dependence.
+    i : int
+        The dimension for which to calculate the partial dependence.
 
     samples : np.array, shape=(n_points, n_dims)
         Randomly sampled and transformed points to use when averaging
@@ -859,14 +821,8 @@ def partial_dependence_1D(model, dimension, samples, n_points=40):
         dependence.
 
     n_points : int, default=40
-        Number of points along each dimension where the partial dependence
-        is evaluated.
-
-    x_eval : list, default=None
-        `x_eval` is a list of parameter values or None. In case `x_eval`
-        is not None, the parsed dependence will be calculated using these
-        values.
-        Otherwise, random selected samples will be used.
+        Number of points at which to evaluate the partial dependence
+        along each dimension `i`.
 
     Returns
     -------
@@ -876,6 +832,19 @@ def partial_dependence_1D(model, dimension, samples, n_points=40):
     yi : np.array
         The average value of the modelled objective function at each point `xi`.
     """
+    # The idea is to step through one dimension, evaluating the model with
+    # that dimension fixed and averaging either over random values or over
+    # the given ones in x_val in all other dimensions.
+    # (Or step through 2 dimensions when i and j are given.)
+    # Categorical dimensions make this interesting, because they are one-
+    # hot-encoded, so there is a one-to-many mapping of input dimensions
+    # to transformed (model) dimensions.
+
+    # dim_locs[i] is the (column index of the) start of dim i in
+    # sample_points.
+    # This is usefull when we are using one hot encoding, i.e using
+    # categorical values
+    dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
 
     def _calc(x):
         """
@@ -884,40 +853,23 @@ def partial_dependence_1D(model, dimension, samples, n_points=40):
         the index'th dimension of the search-space to the value x,
         and then averaging over all samples.
         """
-
-        # Copy the samples so we don't destroy the originals.
-        samples_copy = np.copy(samples)
-
-        # Set the index'th dimension to x for all samples.
-        samples_copy[:, index] = x
-
-        # Calculate the predicted objective value for all samples.
-        y_pred = model.predict(samples_copy)
-
-        # The average predicted value for the objective function.
-        y_pred_mean = np.mean(y_pred)
-
-        return y_pred_mean
-
-    # Get search-space index for the given dimension.
-    index = dimension.index
-
-    # Get the bounds of the dimension.
-    bounds = dimension.bounds
-
-    # Generate evenly spaced points between the bounds.
-    xi = np.linspace(bounds[0], bounds[1], n_points)
-
-    # Transform the points if necessary.
-    xi_transformed = dimension.transform(xi)
-
+        rvs_ = np.array(samples)  # copy
+        # We replace the values in the dimension that we want to keep
+        # fixed
+        rvs_[:, dim_locs[i]:dim_locs[i + 1]] = x
+        # In case of `x_eval=None` rvs conists of random samples.
+        # Calculating the mean of these samples is how partial dependence
+        # is implemented.
+        return np.mean(model.predict(rvs_))
+    xi, xi_transformed = _evenly_sample(space.dimensions[i], n_points)
     # Calculate the partial dependence for all the points.
     yi = [_calc(x) for x in xi_transformed]
 
     return xi, yi
 
 
-def partial_dependence_2D(model, dimension1, dimension2, samples, n_points=40):
+def partial_dependence_2D(space, model, i, j, samples,
+                          n_points=40):
     """
     Calculate the partial dependence for two dimensions in the search-space.
 
@@ -930,24 +882,26 @@ def partial_dependence_2D(model, dimension1, dimension2, samples, n_points=40):
 
     Parameters
     ----------
+    space : `Space`
+        The parameter space over which the minimization was performed.
+
     model
         Surrogate model for the objective function.
 
-    dimension1 : Dimension
-        The first `Dimension`-object for which to calculate the
-        partial dependence.
+    i : int
+        The first dimension for which to calculate the partial dependence.
 
-    dimension2 : Dimension
-        The second `Dimension`-object for which to calculate the
-        partial dependence.
+    j : int
+        The second dimension for which to calculate the partial dependence.
 
     samples : np.array, shape=(n_points, n_dims)
         Randomly sampled and transformed points to use when averaging
-        the model function at each of the `n_points`.
+        the model function at each of the `n_points` when using partial
+        dependence.
 
     n_points : int, default=40
-        Number of points along each dimension where the partial dependence
-        is evaluated.
+        Number of points at which to evaluate the partial dependence
+        along each dimension `i` and `j`.
 
     Returns
     -------
@@ -960,7 +914,19 @@ def partial_dependence_2D(model, dimension1, dimension2, samples, n_points=40):
     zi : np.array, shape=(n_points, n_points)
         The average value of the objective function at each point `(xi, yi)`.
     """
+    # The idea is to step through one dimension, evaluating the model with
+    # that dimension fixed and averaging either over random values or over
+    # the given ones in x_val in all other dimensions.
+    # (Or step through 2 dimensions when i and j are given.)
+    # Categorical dimensions make this interesting, because they are one-
+    # hot-encoded, so there is a one-to-many mapping of input dimensions
+    # to transformed (model) dimensions.
 
+    # dim_locs[i] is the (column index of the) start of dim i in
+    # sample_points.
+    # This is usefull when we are using one hot encoding, i.e using
+    # categorical values
+    dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
     def _calc(x, y):
         """
         Helper-function to calculate the average predicted
@@ -969,40 +935,13 @@ def partial_dependence_2D(model, dimension1, dimension2, samples, n_points=40):
         and setting the index2'th dimension to the value y,
         and then averaging over all samples.
         """
+        rvs_ = np.array(samples)  # copy
+        rvs_[:, dim_locs[j]:dim_locs[j + 1]] = x
+        rvs_[:, dim_locs[i]:dim_locs[i + 1]] = y
+        return np.mean(model.predict(rvs_))
 
-        # Copy the samples so we don't destroy the originals.
-        samples_copy = np.copy(samples)
-
-        # Set the index1'th dimension to x for all samples.
-        samples_copy[:, index1] = x
-
-        # Set the index2'th dimension to y for all samples.
-        samples_copy[:, index2] = y
-
-        # Calculate the predicted objective value for all samples.
-        z_pred = model.predict(samples_copy)
-
-        # The average predicted value for the objective function.
-        z_pred_mean = np.mean(z_pred)
-
-        return z_pred_mean
-
-    # Get search-space indices for the dimensions.
-    index1 = dimension1.index
-    index2 = dimension2.index
-
-    # Get search-space bounds for the dimensions.
-    bounds1 = dimension1.bounds
-    bounds2 = dimension2.bounds
-
-    # Generate evenly spaced points between the dimension bounds.
-    xi = np.linspace(bounds1[0], bounds1[1], n_points)
-    yi = np.linspace(bounds2[0], bounds2[1], n_points)
-
-    # Transform the points if necessary.
-    xi_transformed = dimension1.transform(xi)
-    yi_transformed = dimension2.transform(yi)
-
+    xi, xi_transformed = _evenly_sample(space.dimensions[j], n_points)
+    yi, yi_transformed = _evenly_sample(space.dimensions[i], n_points)
     # Calculate the partial dependence for all combinations of these points.
     zi = [[_calc(x, y) for x in xi_transformed] for y in yi_transformed]
 
@@ -1064,15 +1003,13 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
 
     # Get the search-space instance from the optimization results.
     space = result.space
-
+    if x_eval is None:
+        samples = space.transform(space.rvs(n_samples=n_samples))
+    else:
+        samples = space.transform([x_eval])
     # Get the dimension-object, its index in the search-space, and its name.
     dimension1 = space[dimension_name1]
     dimension2 = space[dimension_name2]
-
-    # Ensure dimensions are not Categorical.
-    # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(isinstance(dim, Categorical) for dim in [dimension1, dimension2]):
-        raise ValueError("Categorical dimension is not supported.")
 
     # Get the indices for the search-space dimensions.
     index1 = dimension1.index
@@ -1228,7 +1165,7 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
     return fig, ax
 
 
-def plot_objective(result, levels=10, n_points=40, n_samples=250,
+def plot_objective_new(result, levels=10, n_points=40, n_samples=250,
                    zscale='linear', dimension_names=None):
     """
     Plot a 2-d matrix with so-called Partial Dependence plots
@@ -1463,7 +1400,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250,
     return fig, ax
 
 
-def plot_evaluations(result, bins=20, dimension_names=None):
+def plot_evaluations_new(result, bins=20, dimension_names=None):
     """
     Visualize the order in which points were sampled during optimization.
 

@@ -5,12 +5,14 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 from numpy.testing import assert_raises
+from numpy.testing import assert_array_almost_equal
 from skopt.space import Integer, Categorical
 from skopt import plots, gp_minimize
 import matplotlib.pyplot as plt
 from skopt.benchmarks import bench3
 from skopt import expected_minimum, expected_minimum_random_sampling
-from skopt.plots import _evaluate_min_params
+from skopt.plots import _evaluate_min_params, partial_dependence
+from skopt.plots import partial_dependence_1D, partial_dependence_2D
 from skopt import Optimizer
 
 
@@ -41,6 +43,50 @@ def test_plots_work():
         return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
+
+    samples = res.space.transform(res.space.rvs(n_samples=40,  random_state=3))
+    xi_ = [1., 10.5, 20.]
+    yi_ = [-0.9194979634067544, -0.9194802312964899, -0.9194601855985786]
+    xi, yi = partial_dependence(res.space, res.models[-1], 0,
+                                sample_points=samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_)
+
+    xi, yi = partial_dependence_1D(res.space, res.models[-1], 0,
+                                   samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_)
+
+    xi_ = [0, 1]
+    yi_ = [-0.919544265279874, -0.919428904254748]
+    xi, yi = partial_dependence(res.space, res.models[-1], 4,
+                                sample_points=samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_)
+
+    xi, yi = partial_dependence_1D(res.space, res.models[-1], 4,
+                                   samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_)
+
+    xi_ = [0, 1]
+    yi_ = [1., 10.5, 20.]
+    zi_ = [[-0.91956104, -0.91944569],
+           [-0.91954331, -0.91942795],
+           [-0.91952327, -0.91940791]]
+    xi, yi, zi = partial_dependence(res.space, res.models[-1], 0, 4,
+                                    sample_points=samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_)
+    assert_array_almost_equal(zi, zi_)
+    xi, yi, zi = partial_dependence_2D(res.space, res.models[-1], 0, 4,
+                                       samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_)
+    assert_array_almost_equal(zi, zi_)
+
+    x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
+    x_min2, f_min2 = expected_minimum(res, random_state=1)
 
     x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
     x_min2, f_min2 = expected_minimum(res, random_state=1)
