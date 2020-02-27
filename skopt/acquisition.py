@@ -112,7 +112,7 @@ def gaussian_lcb(X, model, kappa=1.96, return_grad=False):
         exploration over exploitation and vice versa.
         If set to 'inf', the acquisition function will only use the variance
         which is useful in a pure exploration setting.
-        Useless if ``method`` is set to "LCB".
+        Useless if ``method`` is not set to "LCB".
 
     return_grad : boolean, optional
         Whether or not to return the grad. Implemented only for the case where
