@@ -266,7 +266,7 @@ class Optimizer(object):
             transformer = self.space.get_transformer()
             self._initial_samples = self._initial_point_generator.generate(
                 self.space.dimensions, n_initial_points,
-                random_state=_get_seed_from_random_state(self.rng))
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
             self.space.set_transformer(transformer)
 
         # record categorical and non-categorical indices
@@ -656,9 +656,3 @@ class Optimizer(object):
         """
         return create_result(self.Xi, self.yi, self.space, self.rng,
                              models=self.models)
-
-
-def _get_seed_from_random_state(random_state):
-    rng = check_random_state(random_state)
-    BIG_INT = 2**31 - 1
-    return rng.randint(BIG_INT, dtype='u8')
