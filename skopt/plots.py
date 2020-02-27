@@ -203,7 +203,10 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     diagonal_ylim = tuple(diagonal_ylim)
 
     # Number of search-space dimensions we are using.
-    n_dims = len(plot_dims)
+    if isinstance(ax, list):
+        n_dims = len(plot_dims)
+    else:
+        n_dims = 1
 
     if dimensions is None:
         dimensions = ["$X_{%i}$" % i if d.name is None else d.name
@@ -215,7 +218,10 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     # Deal with formatting of the axes
     for i in range(n_dims):  # rows
         for j in range(n_dims):  # columns
-            ax_ = ax[i, j]
+            if n_dims > 1:
+                ax_ = ax[i, j]
+            else:
+                ax_ = ax
             index_i, dim_i = plot_dims[i]
             index_j, dim_j = plot_dims[j]
             if j > i:
@@ -502,9 +508,6 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     # calculating dependence. (Unless partial
     # dependence is to be used instead).
     space = result.space
-    if space.n_dims == 1:
-        raise ValueError("plot_objective needs at least two"
-                         "variables. Found only one.")
     # Get the relevant search-space dimensions.
     if plot_dims is None:
         # Get all dimensions.
@@ -549,23 +552,27 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                                                index,
                                                samples=samples,
                                                n_points=n_points)
-
-                ax[i, i].plot(xi, yi)
-                ax[i, i].axvline(minimum[i], linestyle="--", color="r", lw=1)
+                if n_dims > 1:
+                    ax_ = ax[i, i]
+                else:
+                    ax_ = ax
+                ax_.plot(xi, yi)
+                ax_.axvline(minimum[i], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
                 index1, dim1 = plot_dims[i]
                 index2, dim2 = plot_dims[j]
+                ax_ = ax[i, j]
                 xi, yi, zi = partial_dependence_2D(space, result.models[-1],
                                                    index1, index2,
                                                    samples, n_points)
-                ax[i, j].contourf(xi, yi, zi, levels,
-                                  locator=locator, cmap='viridis_r')
-                ax[i, j].scatter(x_samples[:, index2], x_samples[:, index1],
-                                 c='k', s=10, lw=0.)
-                ax[i, j].scatter(minimum[index2], minimum[index1],
-                                 c=['r'], s=100, lw=0., marker='*')
+                ax_.contourf(xi, yi, zi, levels,
+                             locator=locator, cmap='viridis_r')
+                ax_.scatter(x_samples[:, index2], x_samples[:, index1],
+                            c='k', s=10, lw=0.)
+                ax_.scatter(minimum[index2], minimum[index1],
+                            c=['r'], s=100, lw=0., marker='*')
     ylabel = "Partial dependence"
 
     # Make various adjustments to the plots.
@@ -649,18 +656,22 @@ def plot_evaluations(result, bins=20, dimensions=None,
                     bins_ = np.logspace(np.log10(low), np.log10(high), bins)
                 else:
                     bins_ = bins
-                ax[i, i].hist(
-                    samples[:, index], bins=bins_,
-                    range=None if iscat[j] else dim.bounds)
+                if n_dims == 1:
+                    ax_ = ax
+                else:
+                    ax_ = ax[i, i]
+                ax_.hist(samples[:, index], bins=bins_,
+                         range=None if iscat[j] else dim.bounds)
 
             # lower triangle
             elif i > j:
                 index_i, dim_i = plot_dims[i]
                 index_j, dim_j = plot_dims[j]
-                ax[i, j].scatter(samples[:, index_j], samples[:, index_i],
-                                 c=order, s=40, lw=0., cmap='viridis')
-                ax[i, j].scatter(minimum[index_j], minimum[index_i],
-                                 c=['r'], s=100, lw=0., marker='*')
+                ax_ = ax[i, j]
+                ax_.scatter(samples[:, index_j], samples[:, index_i],
+                            c=order, s=40, lw=0., cmap='viridis')
+                ax_.scatter(minimum[index_j], minimum[index_i],
+                            c=['r'], s=100, lw=0., marker='*')
 
     # Make various adjustments to the plots.
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
@@ -685,10 +696,13 @@ def _get_ylim_diagonal(ax):
     """
 
     # Number of search-space dimensions used in this plot.
-    n_dims = len(ax)
-
-    # Get ylim for all diagonal plots.
-    ylim = [ax[row, row].get_ylim() for row in range(n_dims)]
+    if isinstance(ax, list):
+        n_dims = len(ax)
+        # Get ylim for all diagonal plots.
+        ylim = [ax[row, row].get_ylim() for row in range(n_dims)]
+    else:
+        n_dim = 1
+        ylim = [ax.get_ylim()]
 
     # Separate into two lists with low and high ylim.
     ylim_lo, ylim_hi = zip(*ylim)
