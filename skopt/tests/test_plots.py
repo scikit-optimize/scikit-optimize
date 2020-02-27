@@ -44,16 +44,19 @@ def test_plots_work():
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
 
-    samples = res.space.transform(res.space.rvs(n_samples=40,  random_state=3))
+    x = [[11, 52, 8, 14, 'entropy', 'f'],
+         [14, 90, 10, 2, 'gini', 'a'],
+         [7, 90, 6, 14, 'entropy', 'f']]
+    samples = res.space.transform(x)
     xi_ = [1., 10.5, 20.]
-    yi_ = [-0.9194979634067544, -0.9194802312964899, -0.9194601855985786]
+    yi_ = [-0.9240883492576596, -0.9240745890422687, -0.9240586402439884]
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 0,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
     assert_array_almost_equal(yi, yi_)
 
     xi_ = [0, 1]
-    yi_ = [-0.919544265279874, -0.919428904254748]
+    yi_ = [-0.9241087603770617, -0.9240188905968352]
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 4,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
@@ -61,9 +64,9 @@ def test_plots_work():
 
     xi_ = [0, 1]
     yi_ = [1., 10.5, 20.]
-    zi_ = [[-0.91956104, -0.91944569],
-           [-0.91954331, -0.91942795],
-           [-0.91952327, -0.91940791]]
+    zi_ = [[-0.92412562, -0.92403575],
+           [-0.92411186, -0.92402199],
+           [-0.92409591, -0.92400604]]
     xi, yi, zi = partial_dependence_2D(res.space, res.models[-1], 0, 4,
                                        samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
