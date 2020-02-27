@@ -740,7 +740,8 @@ def partial_dependence_1D(space, model, i, samples,
         The points at which the partial dependence was evaluated.
 
     yi : np.array
-        The average value of the modelled objective function at each point `xi`.
+        The average value of the modelled objective function at
+        each point `xi`.
     """
     # The idea is to step through one dimension, evaluating the model with
     # that dimension fixed and averaging either over random values or over
@@ -837,6 +838,7 @@ def partial_dependence_2D(space, model, i, j, samples,
     # This is usefull when we are using one hot encoding, i.e using
     # categorical values
     dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
+
     def _calc(x, y):
         """
         Helper-function to calculate the average predicted
@@ -873,7 +875,7 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
 
     This is similar to `plot_objective()` but only for 2 dimensions
     whose doc-string also has a more extensive explanation.
-    
+
     Parameters
     ----------
     result : `OptimizeResult`

@@ -47,11 +47,6 @@ def test_plots_work():
     samples = res.space.transform(res.space.rvs(n_samples=40,  random_state=3))
     xi_ = [1., 10.5, 20.]
     yi_ = [-0.9194979634067544, -0.9194802312964899, -0.9194601855985786]
-    xi, yi = partial_dependence(res.space, res.models[-1], 0,
-                                sample_points=samples, n_points=3)
-    assert_array_almost_equal(xi, xi_)
-    assert_array_almost_equal(yi, yi_)
-
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 0,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
@@ -59,11 +54,6 @@ def test_plots_work():
 
     xi_ = [0, 1]
     yi_ = [-0.919544265279874, -0.919428904254748]
-    xi, yi = partial_dependence(res.space, res.models[-1], 4,
-                                sample_points=samples, n_points=3)
-    assert_array_almost_equal(xi, xi_)
-    assert_array_almost_equal(yi, yi_)
-
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 4,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
@@ -74,11 +64,6 @@ def test_plots_work():
     zi_ = [[-0.91956104, -0.91944569],
            [-0.91954331, -0.91942795],
            [-0.91952327, -0.91940791]]
-    xi, yi, zi = partial_dependence(res.space, res.models[-1], 0, 4,
-                                    sample_points=samples, n_points=3)
-    assert_array_almost_equal(xi, xi_)
-    assert_array_almost_equal(yi, yi_)
-    assert_array_almost_equal(zi, zi_)
     xi, yi, zi = partial_dependence_2D(res.space, res.models[-1], 0, 4,
                                        samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
