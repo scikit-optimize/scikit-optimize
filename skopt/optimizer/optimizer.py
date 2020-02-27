@@ -206,8 +206,7 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
-                random_state=_get_seed_from_random_state(self.rng),
-            )
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
 
         # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
