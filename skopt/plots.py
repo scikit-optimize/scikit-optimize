@@ -4,7 +4,8 @@ import numpy as np
 from itertools import count
 from functools import partial
 from scipy.optimize import OptimizeResult
-
+from skopt.space import Categorical
+from collections import Counter
 from skopt import expected_minimum, expected_minimum_random_sampling
 from .space import Categorical
 
@@ -18,9 +19,6 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator, FuncFormatter  # noqa: E402
-
-from skopt.space import Categorical
-from collections import Counter
 
 
 def plot_convergence(*args, **kwargs):
@@ -571,10 +569,6 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     ylabel = "Partial dependence"
 
     # Make various adjustments to the plots.
-    # _adjust_fig(fig=fig, ax=ax, space=space,
-    #             dimensions=dimensions, ylabel=ylabel)
-    # return ax
-
     return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
                                      dimensions=dimensions,
                                      dim_labels=dim_labels)
@@ -668,9 +662,6 @@ def plot_evaluations(result, bins=20, dimensions=None, dim_labels=None):
                                  c=['r'], s=100, lw=0., marker='*')
 
     # Make various adjustments to the plots.
-    # _adjust_fig(fig=fig, ax=ax, space=space,
-    #             dimensions=dimensions, ylabel="Sample Count")
-    # return ax
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
                                      dimensions=dimensions,
                                      dim_labels=dim_labels)
@@ -711,181 +702,11 @@ def _get_ylim_diagonal(ax):
     return ylim_diagonal
 
 
-def _adjust_fig(fig, ax, space, ylabel, dimensions):
-    """
-    Process and adjust a 2-dimensional plot-matrix in various ways,
-    by writing axis-labels, etc.
-    
-    This is used by plot_objective() and plot_evaluations().
-    
-    Parameters
-    ----------
-    fig : `Matplotlib.Figure`
-        Figure-object for the plots.
-
-    ax : `Matplotlib.Axes`
-        2-dimensional matrix with Matplotlib Axes objects.
-
-    space : `Space`
-        Search-space object.
-
-    ylabel : `str`
-        String to be printed on the top-left diagonal plot
-        e.g. 'Sample Count'.
-
-    dimensions : `list(Dimension)`
-        List of `Dimension` objects used in the plots.
-
-    Returns
-    -------
-    * Nothing.
-    """
-
-    # Adjust spacing of the figure.
-    # This looks bad on some outputs so it has been disabled for now.
-    # fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
-    #                     hspace=0.1, wspace=0.1)
-
-    # Get min/max ylim for the diagonal plots, used to normalize their y-axis.
-    ylim_diagonal = _get_ylim_diagonal(ax=ax)
-
-    # The following for-loops process the sub-plots inside the 2-d matrix.
-    # This could perhaps also be implemented using other Python tricks,
-    # but these for-loops are probably much easier to understand.
-    # Similarly, they have been separated into several for-loops to make
-    # them easier to understand and modify.
-
-    # Number of search-space dimensions used in this plot.
-    n_dims = len(dimensions)
-
-    # Process the plots on the diagonal.
-    for row in range(n_dims):
-        # Get the search-space dimension for this row.
-        index, dim = dimensions[row]
-
-        # Reference to the diagonal plot for this row.
-        a = ax[row, row]
-
-        # Write the dimension-name as a label on top of the diagonal plot.
-        a.xaxis.set_label_position('top')
-        a.set_xlabel(dim.name)
-
-        # Set the x-axis limits to correspond to the search-space bounds.
-        a.set_xlim(dim.bounds)
-
-        # Use a common limit for the y-axis on all diagonal plots.
-        a.set_ylim(ylim_diagonal)
-
-        # Use log-scale on the x-axis?
-        if dim.prior == 'log-uniform':
-            a.set_xscale('log')
-
-    # Process the plots below the diagonal.
-    for row in range(n_dims):
-        # Get the search-space dimension for this row.
-        index_row, dim_row = dimensions[row]
-
-        # Only iterate until the diagonal.
-        for col in range(row):
-            # Get the search-space dimension for this column.
-            index_col, dim_col = dimensions[col]
-
-            # Reference to the plot for this row and column.
-            a = ax[row, col]
-
-            # Plot a grid.
-            a.grid(True)
-
-            # Set the plot-limits to correspond to the search-space bounds.
-            a.set_xlim(dim_col.bounds)
-            a.set_ylim(dim_row.bounds)
-
-            # Use log-scale on the x-axis?
-            if dim_col.prior == 'log-uniform':
-                a.set_xscale('log')
-
-            # Use log-scale on the y-axis?
-            if dim_row.prior == 'log-uniform':
-                a.set_yscale('log')
-
-    # Turn off all plots to the upper-right of the diagonal.
-    for row in range(n_dims):
-        for col in range(row+1, n_dims):
-            ax[row, col].axis("off")
-
-    # Set the designated ylabel for the top-left plot.
-    row = col = 0
-    ax[row, col].set_ylabel(ylabel)
-
-    # Set the dimension-names for the left-most column.
-    col = 0
-    for row in range(1, n_dims):
-        ax[row, col].set_ylabel(dimensions[row][1].name)
-
-    # Set the dimension-names for the bottom row.
-    row = n_dims - 1
-    for col in range(0, n_dims):
-        ax[row, col].set_xlabel(dimensions[col][1].name)
-
-    # Remove the y-tick labels for all plots except the left-most column.
-    for row in range(n_dims):
-        for col in range(1, n_dims):
-            ax[row, col].set_yticklabels([])
-
-    # Remove the x-tick labels for all plots except the bottom row.
-    for row in range(n_dims-1):
-        for col in range(n_dims):
-            ax[row, col].set_xticklabels([])
-
-
-def _map_bins(bins, bounds, prior, categories=None):
-    """
-    For use when plotting histograms.
-    Maps the number of bins to a log-scale between the bounds, if necessary.
-
-    When `x_eval` is not `None`, the given values are used instead of
-    random samples. In this case, `n_samples` will be ignored.
-
-    Parameters
-    ----------
-    bins : int
-        Number of bins in the histogram.
-
-    bounds : (int, int)
-        Tuple or list with lower- and upper-bounds for a search-space
-        dimension.
-
-    prior : str or None
-        If 'log-uniform' then use log-scaling for the bins,
-        otherwise use the original number of bins.
-
-    Returns
-    -------
-    bins_mapped : int or np.array(int)
-         Number of bins for a histogram if no mapping,
-         or a log-scaled array of bin-points if mapping is needed.
-    """
-    if categories is not None:
-        bins_ = len(categories)
-    elif prior == 'log-uniform':
-        # Map the number of bins to a log-space for the dimension bounds.
-        bounds_log = np.log10(bounds)
-        bins_mapped = np.logspace(bounds_log[0], bounds_log[1], bins)
-
-        # Note that Python 3.X supports the following, but not Python 2.7
-        # bins_mapped = np.logspace(*np.log10(bounds), bins)
-    else:
-        # Use the original number of bins.
-        bins_mapped = bins
-
-    return bins_mapped
-
-
 def partial_dependence_1D(space, model, i, samples,
                           n_points=40):
     """
     Calculate the partial dependence for a single dimension.
-    
+
     This uses the given model to calculate the average objective value
     for all the samples, where the given dimension is fixed at
     regular intervals between its bounds.
@@ -1053,8 +874,6 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
     This is similar to `plot_objective()` but only for 2 dimensions
     whose doc-string also has a more extensive explanation.
     
-    NOTE: Categorical dimensions are not supported.
-
     Parameters
     ----------
     result : `OptimizeResult`
@@ -1227,12 +1046,12 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0, ax=None):
     else:
         # Otherwise the search-space Dimension is either integer or float,
         # in which case the histogram can be plotted more easily.
-
-        # Map the number of bins to a log-space if necessary.
-        bins_mapped = _map_bins(bins=bins,
-                                bounds=dimension.bounds,
-                                prior=dimension.prior)
-
+        if dimension.prior == 'log-uniform':
+            # Map the number of bins to a log-space for the dimension bounds.
+            bins_mapped = np.logspace(*np.log10(dimension.bounds), bins)
+        else:
+            # Use the original number of bins.
+            bins_mapped = bins
         # Plot the histogram.
         ax.hist(samples, bins=bins_mapped, range=dimension.bounds)
 

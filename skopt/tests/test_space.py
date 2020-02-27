@@ -599,7 +599,8 @@ def test_dimension_name():
     for n in notnames:
         with pytest.raises(ValueError) as exc:
             real = Real(1, 2, name=n)
-            assert("Dimension's name must be either string or None." == exc.value.args[0])
+            assert("Dimension's name must be either string or"
+                   "None." == exc.value.args[0])
     s = Space([Real(1, 2, name="a"),
                Integer(1, 100, name="b"),
                Categorical(["red, blue"], name="c")])
@@ -611,7 +612,7 @@ def test_dimension_name():
     assert s[0, "c"] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
     assert s[0, 2] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
 
-            
+
 @pytest.mark.parametrize("dimension",
                          [Real(1, 2), Integer(1, 100), Categorical(["red, blue"])])
 def test_dimension_name_none(dimension):
