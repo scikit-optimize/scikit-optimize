@@ -195,29 +195,29 @@ def plot_regret(*args, **kwargs):
     return ax
 
 
-def _format_scatter_plot_axes(ax, space, ylabel, dimensions,
-                              dim_labels=None):
+def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
+                              dimensions=None):
     # Work out min, max of y axis for the diagonal so we can adjust
     # them all to the same value
     diagonal_ylim = _get_ylim_diagonal(ax)
     diagonal_ylim = tuple(diagonal_ylim)
 
     # Number of search-space dimensions we are using.
-    n_dims = len(dimensions)
+    n_dims = len(plot_dims)
 
-    if dim_labels is None:
-        dim_labels = ["$X_{%i}$" % i if d.name is None else d.name
-                      for i, d in dimensions]
+    if dimensions is None:
+        dimensions = ["$X_{%i}$" % i if d.name is None else d.name
+                      for i, d in plot_dims]
     # Axes for categorical dimensions are really integers; we have to
     # label them with the category names
-    iscat = [isinstance(dim[1], Categorical) for dim in dimensions]
+    iscat = [isinstance(dim[1], Categorical) for dim in plot_dims]
 
     # Deal with formatting of the axes
     for i in range(n_dims):  # rows
         for j in range(n_dims):  # columns
             ax_ = ax[i, j]
-            index_i, dim_i = dimensions[i]
-            index_j, dim_j = dimensions[j]
+            index_i, dim_i = plot_dims[i]
+            index_j, dim_j = plot_dims[j]
             if j > i:
                 ax_.axis("off")
             elif i > j:  # off-diagonal plots
@@ -232,7 +232,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dimensions,
                 else:
                     ax_.set_xlim(*dim_j.bounds)
                 if j == 0:  # only leftmost column (0) gets y labels
-                    ax_.set_ylabel(dim_labels[i])
+                    ax_.set_ylabel(dimensions[i])
                     if iscat[i]:  # Set category labels for left column
                         ax_.yaxis.set_major_formatter(FuncFormatter(
                             partial(_cat_format, dim_i)))
@@ -245,7 +245,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dimensions,
                 # ... the bottom row
                 else:
                     [l.set_rotation(45) for l in ax_.get_xticklabels()]
-                    ax_.set_xlabel(dim_labels[j])
+                    ax_.set_xlabel(dimensions[j])
 
                 # configure plot for linear vs log-scale
                 if dim_j.prior == 'log-uniform':
@@ -269,7 +269,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, dimensions,
 
                 ax_.xaxis.tick_top()
                 ax_.xaxis.set_label_position('top')
-                ax_.set_xlabel(dim_labels[j])
+                ax_.set_xlabel(dimensions[j])
 
                 if dim_i.prior == 'log-uniform':
                     ax_.set_xscale('log')
@@ -370,7 +370,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear', dimensions=None, sample_source='random',
-                   minimum='result', n_minimum_search=None, dim_labels=None):
+                   minimum='result', n_minimum_search=None, plot_dims=None):
     """Plot a 2-d matrix with so-called Partial Dependence plots
     of the objective function. This shows the influence of each
     search-space dimension on the objective function.
@@ -436,15 +436,15 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         Scale to use for the z axis of the contour plots. Either 'linear'
         or 'log'.
 
-    dimensions : list(str), list(int), default=None
-        List of names or indices for search-space dimensions to be
-        used in the plot.
-        If `None` then use all dimensions from the search-space.
-
-    dim_labels : list of str, default=None
+    dimensions : list of str, default=None
         Labels of the dimension
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
+
+    plot_dims : list(str), list(int), default=None
+        List of names or indices for search-space dimensions to be
+        used in the plot.
+        If `None` then use all dimensions from the search-space.
 
     sample_source : str or list of floats, default='random'
         Defines to samples generation to use for averaging the model function
@@ -506,17 +506,17 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         raise ValueError("plot_objective needs at least two"
                          "variables. Found only one.")
     # Get the relevant search-space dimensions.
-    if dimensions is None:
+    if plot_dims is None:
         # Get all dimensions.
-        dimensions = []
+        plot_dims = []
         for row in range(space.n_dims):
-            dimensions.append((row, space.dimensions[row]))
+            plot_dims.append((row, space.dimensions[row]))
     else:
-        dimensions = space[dimensions]
+        plot_dims = space[plot_dims]
     # Number of search-space dimensions we are using.
-    n_dims = len(dimensions)
-    if dim_labels is not None:
-        assert len(dim_labels) == n_dims
+    n_dims = len(plot_dims)
+    if dimensions is not None:
+        assert len(dimensions) == n_dims
     x_vals = _evaluate_min_params(result, minimum, n_minimum_search)
     if sample_source == "random":
         x_eval = None
@@ -544,7 +544,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     for i in range(n_dims):
         for j in range(n_dims):
             if i == j:
-                index, dim = dimensions[i]
+                index, dim = plot_dims[i]
                 xi, yi = partial_dependence_1D(space, result.models[-1],
                                                index,
                                                samples=samples,
@@ -555,8 +555,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
             # lower triangle
             elif i > j:
-                index1, dim1 = dimensions[i]
-                index2, dim2 = dimensions[j]
+                index1, dim1 = plot_dims[i]
+                index2, dim2 = plot_dims[j]
                 xi, yi, zi = partial_dependence_2D(space, result.models[-1],
                                                    index1, index2,
                                                    samples, n_points)
@@ -570,11 +570,12 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     # Make various adjustments to the plots.
     return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
-                                     dimensions=dimensions,
-                                     dim_labels=dim_labels)
+                                     plot_dims=plot_dims,
+                                     dimensions=dimensions)
 
 
-def plot_evaluations(result, bins=20, dimensions=None, dim_labels=None):
+def plot_evaluations(result, bins=20, dimensions=None,
+                     plot_dims=None):
     """Visualize the order in which points were sampled during optimization.
 
     This creates a 2-d matrix plot where the diagonal plots are histograms
@@ -596,15 +597,15 @@ def plot_evaluations(result, bins=20, dimensions=None, dim_labels=None):
     bins : int, bins=20
         Number of bins to use for histograms on the diagonal.
 
-    dimensions : list(str), list(int), default=None
-        List of names or indices for search-space dimensions to be
-        used in the plot.
-        If `None` then use all dimensions from the search-space.
-
-    dim_labels : list of str, default=None
+    dimensions : list of str, default=None
         Labels of the dimension
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
+
+    plot_dims : list(str), list(int), default=None
+        List of names or indices for search-space dimensions to be
+        used in the plot.
+        If `None` then use all dimensions from the search-space.
 
     Returns
     -------
@@ -619,17 +620,17 @@ def plot_evaluations(result, bins=20, dimensions=None, dim_labels=None):
     samples, minimum, iscat = _map_categories(space, result.x_iters, result.x)
     order = range(samples.shape[0])
 
-    if dimensions is None:
+    if plot_dims is None:
         # Get all dimensions.
-        dimensions = []
+        plot_dims = []
         for row in range(space.n_dims):
-            dimensions.append((row, space.dimensions[row]))
+            plot_dims.append((row, space.dimensions[row]))
     else:
-        dimensions = space[dimensions]
+        plot_dims = space[plot_dims]
     # Number of search-space dimensions we are using.
-    n_dims = len(dimensions)
-    if dim_labels is not None:
-        assert len(dim_labels) == n_dims
+    n_dims = len(plot_dims)
+    if dimensions is not None:
+        assert len(dimensions) == n_dims
 
     fig, ax = plt.subplots(n_dims, n_dims,
                            figsize=(2 * n_dims, 2 * n_dims))
@@ -640,7 +641,7 @@ def plot_evaluations(result, bins=20, dimensions=None, dim_labels=None):
     for i in range(n_dims):
         for j in range(n_dims):
             if i == j:
-                index, dim = dimensions[i]
+                index, dim = plot_dims[i]
                 if iscat[j]:
                     bins_ = len(dim.categories)
                 elif dim.prior == 'log-uniform':
@@ -654,8 +655,8 @@ def plot_evaluations(result, bins=20, dimensions=None, dim_labels=None):
 
             # lower triangle
             elif i > j:
-                index_i, dim_i = dimensions[i]
-                index_j, dim_j = dimensions[j]
+                index_i, dim_i = plot_dims[i]
+                index_j, dim_j = plot_dims[j]
                 ax[i, j].scatter(samples[:, index_j], samples[:, index_i],
                                  c=order, s=40, lw=0., cmap='viridis')
                 ax[i, j].scatter(minimum[index_j], minimum[index_i],
@@ -663,8 +664,8 @@ def plot_evaluations(result, bins=20, dimensions=None, dim_labels=None):
 
     # Make various adjustments to the plots.
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
-                                     dimensions=dimensions,
-                                     dim_labels=dim_labels)
+                                     plot_dims=plot_dims,
+                                     dimensions=dimensions)
 
 
 def _get_ylim_diagonal(ax):
@@ -863,7 +864,7 @@ def partial_dependence_2D(space, model, i, j, samples,
     return xi, yi, zi
 
 
-def plot_objective_2D(result, dimension_name1, dimension_name2,
+def plot_objective_2D(result, dimension_identifier1, dimension_identifier2,
                       n_points=40, n_samples=250, levels=10, zscale='linear',
                       sample_source='random',
                       minimum='result', n_minimum_search=None, ax=None):
@@ -881,10 +882,10 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
     result : `OptimizeResult`
         The optimization results e.g. from calling `gp_minimize()`.
 
-    dimension_name1 : str or int
+    dimension_identifier1 : str or int
         Name or index of a dimension in the search-space.
 
-    dimension_name2 : str or int
+    dimension_identifier2 : str or int
         Name or index of a dimension in the search-space.
 
     n_samples : int, default=250
@@ -925,8 +926,8 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
         samples = space.transform([x_eval])
     x_samples, x_minimum, _ = _map_categories(space, result.x_iters, x_vals)
     # Get the dimension-object, its index in the search-space, and its name.
-    index1, dimension1 = space[dimension_name1]
-    index2, dimension2 = space[dimension_name2]
+    index1, dimension1 = space[dimension_identifier1]
+    index2, dimension2 = space[dimension_identifier2]
 
     # Get the samples from the optimization-log for the relevant dimensions.
     # samples1 = get_samples_dimension(result=result, index=index1)
@@ -979,7 +980,7 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
     return ax
 
 
-def plot_histogram(result, dimension_name, bins=20, rotate_labels=0, ax=None):
+def plot_histogram(result, dimension_identifier, bins=20, rotate_labels=0, ax=None):
     """
     Create and return a Matplotlib figure with a histogram
     of the samples from the optimization results,
@@ -990,7 +991,7 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0, ax=None):
     result : `OptimizeResult`
         The optimization results e.g. from calling `gp_minimize()`.
 
-    dimension_name : str or int
+    dimension_identifier : str or int
         Name or index of a dimension in the search-space.
 
     bins : int, bins=20
@@ -1010,7 +1011,7 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0, ax=None):
     space = result.space
 
     # Get the dimension-object.
-    index, dimension = space[dimension_name]
+    index, dimension = space[dimension_identifier]
 
     # Get the samples from the optimization-log for that particular dimension.
     samples = [x[index] for x in result.x_iters]
