@@ -1,7 +1,7 @@
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 import pytest
-
+import numpy as np
 from skopt import gp_minimize
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2
@@ -95,6 +95,8 @@ def test_random_state():
         return (X[0] - 2) ** 2 + (X[1] - 4) ** 2
     space = [(-4., 4.), (-10., 10)]
     random_state = 42
+    # Set seed
+    np.random.seed(random_state)
     res1 = gp_minimize(objective, space, acq_optimizer="sampling",
                        acq_func="EI", n_initial_points=2,
                        n_calls=15, random_state=random_state,
