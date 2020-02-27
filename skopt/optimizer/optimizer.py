@@ -206,7 +206,8 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
-                random_state=_get_seed_from_random_state(self.rng))
+                random_state=_get_seed_from_random_state(self.rng),
+            )
 
         # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
@@ -377,7 +378,7 @@ class Optimizer(object):
         # Copy of the optimizer is made in order to manage the
         # deletion of points with "lie" objective (the copy of
         # oiptimizer is simply discarded)
-        opt = self.copy(random_state=_get_seed_from_random_state(self.rng))
+        opt = self.copy(random_state=self.rng)
 
         X = []
         for i in range(n_points):
