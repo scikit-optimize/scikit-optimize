@@ -20,7 +20,6 @@ from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator, FuncFormatter  # noqa: E402
 
 from skopt.space import Categorical
-from skopt.utils import get_samples_dimension
 from collections import Counter
 
 
@@ -367,8 +366,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
-                       zscale='linear', dimensions=None, sample_source='random',
-                       minimum='result', n_minimum_search=None):
+                   zscale='linear', dimensions=None, sample_source='random',
+                   minimum='result', n_minimum_search=None):
     """Pairwise dependence plot of the objective function.
 
     The diagonal shows the partial dependence for dimension `i` with
@@ -473,11 +472,12 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     x_vals = _evaluate_min_params(result, minimum, n_minimum_search)
     if sample_source == "random":
         x_eval = None
+        samples = space.transform(space.rvs(n_samples=n_samples))
     else:
         x_eval = _evaluate_min_params(result, sample_source,
                                       n_minimum_search)
-    rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
-    samples, minimum, _ = _map_categories(space, result.x_iters, x_vals)
+        samples = space.transform([x_eval])
+    x_samples, minimum, _ = _map_categories(space, result.x_iters, x_vals)
 
     if zscale == 'log':
         locator = LogLocator()
@@ -496,23 +496,21 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     for i in range(space.n_dims):
         for j in range(space.n_dims):
             if i == j:
-                xi, yi = partial_dependence(space, result.models[-1], i,
-                                            j=None,
-                                            sample_points=rvs_transformed,
-                                            n_points=n_points, x_eval=x_eval)
+                xi, yi = partial_dependence_1D(space, result.models[-1], i,
+                                               samples=samples,
+                                               n_points=n_points)
 
                 ax[i, i].plot(xi, yi)
                 ax[i, i].axvline(minimum[i], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
-                xi, yi, zi = partial_dependence(space, result.models[-1],
-                                                i, j,
-                                                rvs_transformed, n_points,
-                                                x_eval=x_eval)
+                xi, yi, zi = partial_dependence_2D(space, result.models[-1],
+                                                   i, j,
+                                                   samples, n_points)
                 ax[i, j].contourf(xi, yi, zi, levels,
                                   locator=locator, cmap='viridis_r')
-                ax[i, j].scatter(samples[:, j], samples[:, i],
+                ax[i, j].scatter(x_samples[:, j], x_samples[:, i],
                                  c='k', s=10, lw=0.)
                 ax[i, j].scatter(minimum[j], minimum[i],
                                  c=['r'], s=20, lw=0.)
@@ -673,7 +671,7 @@ def _adjust_fig(fig, ax, space, ylabel, dimensions):
     # Process the plots on the diagonal.
     for row in range(n_dims):
         # Get the search-space dimension for this row.
-        dim = dimensions[row]
+        index, dim = dimensions[row]
 
         # Reference to the diagonal plot for this row.
         a = ax[row, row]
@@ -695,12 +693,12 @@ def _adjust_fig(fig, ax, space, ylabel, dimensions):
     # Process the plots below the diagonal.
     for row in range(n_dims):
         # Get the search-space dimension for this row.
-        dim_row = dimensions[row]
+        index_row, dim_row = dimensions[row]
 
         # Only iterate until the diagonal.
         for col in range(row):
             # Get the search-space dimension for this column.
-            dim_col = dimensions[col]
+            index_col, dim_col = dimensions[col]
 
             # Reference to the plot for this row and column.
             a = ax[row, col]
@@ -732,12 +730,12 @@ def _adjust_fig(fig, ax, space, ylabel, dimensions):
     # Set the dimension-names for the left-most column.
     col = 0
     for row in range(1, n_dims):
-        ax[row, col].set_ylabel(dimensions[row].name)
+        ax[row, col].set_ylabel(dimensions[row][1].name)
 
     # Set the dimension-names for the bottom row.
     row = n_dims - 1
     for col in range(0, n_dims):
-        ax[row, col].set_xlabel(dimensions[col].name)
+        ax[row, col].set_xlabel(dimensions[col][1].name)
 
     # Remove the y-tick labels for all plots except the left-most column.
     for row in range(n_dims):
@@ -952,7 +950,9 @@ def partial_dependence_2D(space, model, i, j, samples,
 
 
 def plot_objective_2D(result, dimension_name1, dimension_name2,
-                      n_points=40, n_samples=250, levels=10, zscale='linear'):
+                      n_points=40, n_samples=250, levels=10, zscale='linear',
+                      sample_source='random',
+                      minimum='result', n_minimum_search=None, ax=None):
     """
     Create and return a Matplotlib figure and axes with a landscape
     contour-plot of the last fitted model of the search-space,
@@ -1003,43 +1003,39 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
 
     # Get the search-space instance from the optimization results.
     space = result.space
-    if x_eval is None:
+    x_vals = _evaluate_min_params(result, minimum, n_minimum_search)
+    if sample_source == "random":
+        x_eval = None
         samples = space.transform(space.rvs(n_samples=n_samples))
     else:
+        x_eval = _evaluate_min_params(result, sample_source,
+                                      n_minimum_search)
         samples = space.transform([x_eval])
+    x_samples, x_minimum, _ = _map_categories(space, result.x_iters, x_vals)
     # Get the dimension-object, its index in the search-space, and its name.
-    dimension1 = space[dimension_name1]
-    dimension2 = space[dimension_name2]
-
-    # Get the indices for the search-space dimensions.
-    index1 = dimension1.index
-    index2 = dimension2.index
+    index1, dimension1 = space[dimension_name1]
+    index2, dimension2 = space[dimension_name2]
 
     # Get the samples from the optimization-log for the relevant dimensions.
-    samples1 = get_samples_dimension(result=result, index=index1)
-    samples2 = get_samples_dimension(result=result, index=index2)
+    # samples1 = get_samples_dimension(result=result, index=index1)
+    samples1 = x_samples[:, index1]
+    samples2 = x_samples[:, index2]
+    # samples2 = get_samples_dimension(result=result, index=index2)
 
     # Get the best-found samples for the relevant dimensions.
-    best_sample1 = result.x[index1]
-    best_sample2 = result.x[index2]
+    best_sample1 = x_minimum[index1]
+    best_sample2 = x_minimum[index2]
 
     # Get the last fitted model for the search-space.
     last_model = result.models[-1]
 
-    # Get new random samples from the search-space and transform if necessary.
-    new_samples = space.rvs(n_samples=n_samples)
-    new_samples = space.transform(new_samples)
-
     # Estimate the objective function for these sampled points
     # using the last fitted model for the search-space.
-    xi, yi, zi = partial_dependence_2D(model=last_model,
-                                       dimension1=dimension1,
-                                       dimension2=dimension2,
-                                       samples=new_samples,
-                                       n_points=n_points)
+    xi, yi, zi = partial_dependence_2D(space, last_model, index1, index2,
+                                       samples, n_points=n_points)
 
-    # Start a new plot.
-    fig, ax = plt.subplots(nrows=1, ncols=1)
+    if ax is None:
+        ax = plt.gca()
 
     # Scale for the z-axis of the contour-plot. Either Log or Linear (None).
     locator = LogLocator() if zscale == 'log' else None
@@ -1049,16 +1045,16 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
 
     # Plot all the parameters that were sampled during optimization.
     # These are plotted as small black dots.
-    ax.scatter(samples1, samples2, c='black', s=10, linewidths=1)
+    ax.scatter(samples2, samples1, c='black', s=10, linewidths=1)
 
     # Plot the best parameters that were sampled during optimization.
     # These are plotted as a big red star.
-    ax.scatter(best_sample1, best_sample2,
+    ax.scatter(best_sample2, best_sample1,
                c='red', s=50, linewidths=1, marker='*')
 
     # Use the dimension-names as the labels for the plot-axes.
-    ax.set_xlabel(dimension_name1)
-    ax.set_ylabel(dimension_name2)
+    ax.set_xlabel(dimension2.name)
+    ax.set_ylabel(dimension1.name)
 
     # Use log-scale on the x-axis?
     if dimension1.prior == 'log-uniform':
@@ -1068,10 +1064,10 @@ def plot_objective_2D(result, dimension_name1, dimension_name2,
     if dimension2.prior == 'log-uniform':
         ax.set_yscale('log')
 
-    return fig, ax
+    return ax
 
 
-def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
+def plot_histogram(result, dimension_name, bins=20, rotate_labels=0, ax=None):
     """
     Create and return a Matplotlib figure with a histogram
     of the samples from the optimization results,
@@ -1094,11 +1090,6 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
 
     Returns
     -------
-    fig : `Matplotlib.Figure`
-        The Matplotlib Figure-object.
-        For example, you can save the plot by calling
-        `fig.savefig('file.png')`
-
     ax : `Matplotlib.Axes`
         The Matplotlib Axes-object.
     """
@@ -1107,13 +1098,13 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
     space = result.space
 
     # Get the dimension-object.
-    dimension = space[dimension_name]
+    index, dimension = space[dimension_name]
 
     # Get the samples from the optimization-log for that particular dimension.
-    samples = get_samples_dimension(result=result, index=dimension.index)
+    samples = [x[index] for x in result.x_iters]
 
-    # Start a new plot.
-    fig, ax = plt.subplots(nrows=1, ncols=1)
+    if ax is None:
+        ax = plt.gca()
 
     if isinstance(dimension, Categorical):
         # When the search-space dimension is Categorical, it means
@@ -1159,14 +1150,14 @@ def plot_histogram(result, dimension_name, bins=20, rotate_labels=0):
             ax.set_xscale('log')
 
     # Set the labels.
-    ax.set_xlabel(dimension_name)
+    ax.set_xlabel(dimension.name)
     ax.set_ylabel('Sample Count')
 
-    return fig, ax
+    return ax
 
 
 def plot_objective_new(result, levels=10, n_points=40, n_samples=250,
-                   zscale='linear', dimension_names=None):
+                       zscale='linear', dimension_names=None):
     """
     Plot a 2-d matrix with so-called Partial Dependence plots
     of the objective function. This shows the influence of each
@@ -1297,15 +1288,12 @@ def plot_objective_new(result, levels=10, n_points=40, n_samples=250,
     # Get the relevant search-space dimensions.
     if dimension_names is None:
         # Get all dimensions.
-        dimensions = space.dimensions
+        dimensions = []
+        for row in range(space.n_dims):
+            dimensions.append((row, space.dimensions[row]))
     else:
-        # Only get the named dimensions.
         dimensions = space[dimension_names]
 
-    # Ensure there are no categorical dimensions.
-    # TODO replace with check_list_types(dimensions, (Integer, Real)) in PR #597
-    if any(isinstance(dim, Categorical) for dim in dimensions):
-        raise ValueError("Categorical dimension is not supported.")
 
     # Number of search-space dimensions we are using.
     n_dims = len(dimensions)
@@ -1323,24 +1311,17 @@ def plot_objective_new(result, levels=10, n_points=40, n_samples=250,
     # For all rows in the 2-d plot matrix.
     for row in range(n_dims):
         # Get the search-space dimension for this row.
-        dim_row = dimensions[row]
-
-        # Get the index for the search-space dimension.
-        # This is used to lookup that particular dimension in some functions.
-        index_row = dim_row.index
+        index_row, dim_row = dimensions[row]
 
         # Get the samples from the optimization-log for this dimension.
-        samples_row = get_samples_dimension(result=result, index=index_row)
+        samples_row = [x[index_row] for x in result.x_iters]
 
         # Get the best-found sample for this dimension.
         best_sample_row = result.x[index_row]
 
-        # Search-space boundary for this dimension.
-        bounds_row = dim_row.bounds
-
         # Calculate partial dependence for this dimension.
-        xi, yi = partial_dependence_1D(model=last_model,
-                                       dimension=dim_row,
+        xi, yi = partial_dependence_1D(space, last_model,
+                                       index_row,
                                        samples=new_samples,
                                        n_points=n_points)
 
@@ -1358,23 +1339,18 @@ def plot_objective_new(result, levels=10, n_points=40, n_samples=250,
         # For all columns until the diagonal in the 2-d plot matrix.
         for col in range(row):
             # Get the search-space dimension for this column.
-            dim_col = dimensions[col]
-
-            # Get the index for this search-space dimension.
-            # This is used to lookup that dimension in some functions.
-            index_col = dim_col.index
+            index_col, dim_col = dimensions[col]
 
             # Get the samples from the optimization-log for that dimension.
-            samples_col = get_samples_dimension(result=result, index=index_col)
+            samples_col = [x[index_col] for x in result.x_iters]
 
             # Get the best-found sample for this dimension.
             best_sample_col = result.x[index_col]
 
             # Calculate the partial dependence for these two dimensions.
             # Note that column and row are switched here.
-            xi, yi, zi = partial_dependence_2D(model=last_model,
-                                               dimension1=dim_col,
-                                               dimension2=dim_row,
+            xi, yi, zi = partial_dependence_2D(space, last_model,
+                                               index_col, index_row,
                                                samples=new_samples,
                                                n_points=n_points)
 
@@ -1394,8 +1370,8 @@ def plot_objective_new(result, levels=10, n_points=40, n_samples=250,
                       c='red', s=100, lw=0., marker='*')
 
     # Make various adjustments to the plots.
-    _adjust_fig(fig=fig, ax=ax, space=space,
-                dimensions=dimensions, ylabel="Partial Dependence")
+    #_adjust_fig(fig=fig, ax=ax, space=space,
+    #            dimensions=dimensions, ylabel="Partial Dependence")
 
     return fig, ax
 
@@ -1447,22 +1423,11 @@ def plot_evaluations_new(result, bins=20, dimension_names=None):
     # Get the relevant search-space dimensions.
     if dimension_names is None:
         # Get all dimensions.
-        dimensions = space.dimensions
-        dim_index = []
-        for row in range(space.n_dims):
-            dim_index.append(row)
-    else:
-        # Only get the named dimensions.
         dimensions = []
-        dim_index = []
         for row in range(space.n_dims):
-            dim_name = space.dimensions[row].name
-            if dim_name is None:
-                dim_name = "X_%d" % row
-            if dim_name in dimension_names:
-                dimensions.append(space.dimensions[row])
-                dim_index.append(row)
-
+            dimensions.append((row, space.dimensions[row]))
+    else:
+        dimensions = space[dimension_names]
 
     # Number of search-space dimensions we are using.
     n_dims = len(dimensions)
@@ -1477,14 +1442,10 @@ def plot_evaluations_new(result, bins=20, dimension_names=None):
     # For all rows in the 2-d plot matrix.
     for row in range(n_dims):
         # Get the search-space dimension for this row.
-        dim_row = dimensions[row]
-
-        # Get the index for the search-space dimension.
-        # This is used to lookup that particular dimension in some functions.
-        index_row = dim_index[row]
+        index_row, dim_row = dimensions[row]
 
         # Get the samples from the optimization-log for this dimension.
-        samples_row = get_samples_dimension(result=result, index=index_row)
+        samples_row = [x[index_row] for x in result.x_iters]
 
         # Get the best-found sample for this dimension.
         best_sample_row = result.x[index_row]
@@ -1509,13 +1470,10 @@ def plot_evaluations_new(result, bins=20, dimension_names=None):
         # For all columns until the diagonal in the 2-d plot matrix.
         for col in range(row):
             # Get the search-space dimension for this column.
-            dim_col = dimensions[col]
+            index_col, dim_col = dimensions[col]
 
-            # Get the index for this search-space dimension.
-            # This is used to lookup that dimension in some functions.
-            index_col = dim_index[col]
             # Get the samples from the optimization-log for that dimension.
-            samples_col = get_samples_dimension(result=result, index=index_col)
+            samples_col = [x[index_col] for x in result.x_iters]
 
             # Plot all the parameters that were sampled during optimization.
             # These are plotted as small coloured dots, where the colour-shade

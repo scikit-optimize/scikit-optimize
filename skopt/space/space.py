@@ -919,24 +919,28 @@ class Space(object):
 
         Returns
         -------
-        dims Dimension, list(Dimension), None
+        dims tuple (index, Dimension), list(tuple(index, Dimension)), \
+                (None, None)
             A single search-space dimension with the given name,
             or a list of search-space dimensions with the given names.
         """
 
         def _get(dimension_name):
             """Helper-function for getting a single dimension."""
-
+            index = 0
             # Get the index of the search-space dimension using its name.
             for dim in self.dimensions:
                 if dimension_name == dim.name:
-                    return dim
-            return None
+                    return (index, dim)
+                elif dimension_name == index:
+                    return (index, dim)
+                index += 1
+            return (None, None)
 
-        if isinstance(dimension_names, str):
+        if isinstance(dimension_names, (str, int)):
             # Get a single search-space dimension.
             dims = _get(dimension_name=dimension_names)
-        elif isinstance(dimension_names, list):
+        elif isinstance(dimension_names, (list, tuple)):
             # Get a list of search-space dimensions.
             # Note that we do not check whether the names are really strings.
             dims = [_get(dimension_name=name) for name in dimension_names]

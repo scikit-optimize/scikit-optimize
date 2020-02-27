@@ -600,6 +600,16 @@ def test_dimension_name():
         with pytest.raises(ValueError) as exc:
             real = Real(1, 2, name=n)
             assert("Dimension's name must be either string or None." == exc.value.args[0])
+    s = Space([Real(1, 2, name="a"),
+               Integer(1, 100, name="b"),
+               Categorical(["red, blue"], name="c")])
+    assert s["a"] == (0, s.dimensions[0])
+    assert s["a", "c"] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[["a", "c"]] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[("a", "c")] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[0] == (0, s.dimensions[0])
+    assert s[0, "c"] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[0, 2] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
 
             
 @pytest.mark.parametrize("dimension",
