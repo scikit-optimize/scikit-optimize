@@ -6,7 +6,8 @@ from functools import partial
 from scipy.optimize import OptimizeResult
 
 from skopt import expected_minimum, expected_minimum_random_sampling
-from .space import Categorical, Space
+from .space import Categorical
+from .space import Space
 
 # For plot tests, matplotlib must be set to headless mode early
 if 'pytest' in sys.modules:
