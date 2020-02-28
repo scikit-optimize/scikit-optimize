@@ -168,8 +168,10 @@ def plot_gaussian_process(res, **kwargs):
 
     if ax is None:
         ax = plt.gca()
-    assert res.space.n_dims == 1, "Space dimension must be 1"
-    x, x_model = _evenly_sample(res.space.dimensions[0], n_points)
+    n_dims = res.space.n_dims
+    assert n_dims == 1, "Space dimension must be 1"
+    dimension = res.space.dimensions[0]
+    x, x_model = _evenly_sample(dimension, n_points)
     x = x.reshape(-1, 1)
     x_model = x_model.reshape(-1, 1)
     if res.specs is not None and "args" in res.specs:
@@ -624,31 +626,26 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
         Valid strings:
 
-            - 'random' - `n_samples` random samples will used
-
-            - 'result' - Use only the best observed parameters
-
-            - 'expected_minimum' - Parameters that gives the best
-                  minimum Calculated using scipy's minimize method.
-                  This method currently does not work with categorical values.
-
-            - 'expected_minimum_random' - Parameters that gives the
-                  best minimum when using naive random sampling.
-                  Works with categorical values.
+        - 'random' - `n_samples` random samples will used
+        - 'result' - Use only the best observed parameters
+        - 'expected_minimum' - Parameters that gives the best
+          minimum Calculated using scipy's minimize method.
+          This method currently does not work with categorical values.
+        - 'expected_minimum_random' - Parameters that gives the
+          best minimum when using naive random sampling.
+          Works with categorical values.
 
     minimum : str or list of floats, default = 'result'
         Defines the values for the red points in the plots.
         Valid strings:
 
-            - 'result' - Use best observed parameters
-
-            - 'expected_minimum' - Parameters that gives the best
-                  minimum Calculated using scipy's minimize method.
-                  This method currently does not work with categorical values.
-
-            - 'expected_minimum_random' - Parameters that gives the
-                  best minimum when using naive random sampling.
-                  Works with categorical values
+        - 'result' - Use best observed parameters
+        - 'expected_minimum' - Parameters that gives the best
+          minimum Calculated using scipy's minimize method.
+          This method currently does not work with categorical values.
+        - 'expected_minimum_random' - Parameters that gives the
+          best minimum when using naive random sampling.
+          Works with categorical values
 
     n_minimum_search : int, default = None
         Determines how many points should be evaluated
@@ -661,6 +658,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     -------
     ax : `Matplotlib.Axes`
         A 2-d matrix of Axes-objects with the sub-plots.
+
     """
     # Here we define the values for which to plot the red dot (2d plot) and
     # the red dotted line (1d plot).
@@ -781,6 +779,7 @@ def plot_evaluations(result, bins=20, dimensions=None,
     -------
     ax : `Matplotlib.Axes`
         A 2-d matrix of Axes-objects with the sub-plots.
+
     """
     space = result.space
     # Convert categoricals to integers, so we can ensure consistent ordering.
@@ -858,6 +857,7 @@ def _get_ylim_diagonal(ax):
     -------
     ylim_diagonal : tuple(int)
         The common min and max ylim for the diagonal plots.
+
     """
 
     # Number of search-space dimensions used in this plot.
@@ -919,6 +919,7 @@ def partial_dependence_1D(space, model, i, samples,
     yi : np.array
         The average value of the modelled objective function at
         each point `xi`.
+
     """
     # The idea is to step through one dimension, evaluating the model with
     # that dimension fixed and averaging either over random values or over

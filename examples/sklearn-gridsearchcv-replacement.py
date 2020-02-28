@@ -81,7 +81,7 @@ print("test score: %s" % opt.score(X_test, y_test))
 
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
-from skopt.plots import plot_objective
+from skopt.plots import plot_objective, plot_histogram
 
 from sklearn.datasets import load_digits
 from sklearn.svm import LinearSVC, SVC
@@ -117,7 +117,7 @@ svc_search = {
 
 opt = BayesSearchCV(
     pipe,
-    [(svc_search, 20), (linsvc_search, 16)], # (parameter space, # of evaluations)
+    [(svc_search, 40), (linsvc_search, 16)], # (parameter space, # of evaluations)
     cv=3
 )
 
@@ -129,15 +129,16 @@ print("best params: %s" % str(opt.best_params_))
 
 #############################################################################
 # Partial Dependence plot of the objective function for SVC
-
+#
 plot_objective(opt.optimizer_results_[0],
-               dimensions=["C", "gamma", "degree", "kernel"])
+               dimensions=["C", "degree", "gamma", "kernel"],
+               n_minimum_search=int(1e8))
 plt.show()
 
 #############################################################################
-# Partial Dependence plot of the objective function for LinearSVC
-
-plot_objective(opt.optimizer_results_[1], dimensions=["C"])
+# Plot of the histogram for LinearSVC
+#
+plot_histogram(opt.optimizer_results_[1], 1)
 plt.show()
 
 #############################################################################
@@ -169,7 +170,6 @@ searchcv = BayesSearchCV(
     n_iter=10,
     cv=3
 )
-
 
 # callback handler
 def on_step(optim_result):
