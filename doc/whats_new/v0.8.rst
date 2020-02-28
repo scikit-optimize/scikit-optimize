@@ -17,6 +17,12 @@ Version 0.8.0
 - |Enhancement| Improve sampler and add grid sampler
   :pr:`851` by :user:`Holger Nahrstaedt <holgern>`
 
+:mod:`skopt.space`
+------------------
+- |Enhancement| Add `is_constant`  property to dimension and
+  `n_constant_dimensions` property to Space
+  :pr:`883` by :user:`Holger Nahrstaedt <holgern>`
+
 :mod:`skopt.utils`
 ------------------
 - |Fix| Fix Optimizer for full categorical spaces
