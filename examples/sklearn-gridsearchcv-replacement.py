@@ -130,7 +130,8 @@ print("best params: %s" % str(opt.best_params_))
 #############################################################################
 # Partial Dependence plot of the objective function for SVC
 
-plot_objective(opt.optimizer_results_[0], dimensions=["C", "gamma", "degree", "kernel"])
+plot_objective(opt.optimizer_results_[0],
+               dimensions=["C", "gamma", "degree", "kernel"])
 plt.show()
 
 #############################################################################

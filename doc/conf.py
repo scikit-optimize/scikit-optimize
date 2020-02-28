@@ -308,7 +308,8 @@ sphinx_gallery_conf = {
 # thumbnails for the front page of the scikit-learn home page.
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
-carousel_thumbs = {'sphx_glr_plot_ask-and-tell_002.png': 600,
+carousel_thumbs = {'sphx_glr_sklearn-gridsearchcv-replacement_001.png': 600,
+                   'sphx_glr_plot_ask-and-tell_002.png': 600,
                    'sphx_glr_bayesian-optimization_004.png': 600,
                    'sphx_glr_strategy-comparison_002.png': 600,
                    'sphx_glr_visualizing-results_008.png': 600}
