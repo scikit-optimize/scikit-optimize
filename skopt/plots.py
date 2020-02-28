@@ -578,7 +578,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     # Make various adjustments to the plots.
     return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
                                      plot_dims=plot_dims,
-                                     dimensions=dimensions)
+                                     dim_labels=dimensions)
 
 
 def plot_evaluations(result, bins=20, dimensions=None,
@@ -676,7 +676,7 @@ def plot_evaluations(result, bins=20, dimensions=None,
     # Make various adjustments to the plots.
     return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
                                      plot_dims=plot_dims,
-                                     dimensions=dimensions)
+                                     dim_labels=dimensions)
 
 
 def _get_ylim_diagonal(ax):
