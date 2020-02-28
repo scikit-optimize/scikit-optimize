@@ -117,7 +117,8 @@ svc_search = {
 
 opt = BayesSearchCV(
     pipe,
-    [(svc_search, 40), (linsvc_search, 16)], # (parameter space, # of evaluations)
+    # (parameter space, # of evaluations)
+    [(svc_search, 40), (linsvc_search, 16)],
     cv=3
 )
 
