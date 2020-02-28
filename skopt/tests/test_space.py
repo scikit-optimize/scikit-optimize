@@ -367,6 +367,17 @@ def test_space_from_space():
 
 
 @pytest.mark.fast_test
+def test_constant_property():
+    space = Space([(0.0, 1.0), (1,),
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e",)])
+    assert space.n_constant_dimensions == 2
+    for i in [1, 4]:
+        assert space.dimensions[i].is_constant
+    for i in [0, 2, 3]:
+        assert not space.dimensions[i].is_constant
+
+
+@pytest.mark.fast_test
 def test_set_get_transformer():
     # can you pass a Space instance to the Space constructor?
     space = Space([(0.0, 1.0), (-5, 5),
