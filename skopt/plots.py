@@ -200,7 +200,6 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     # Work out min, max of y axis for the diagonal so we can adjust
     # them all to the same value
     diagonal_ylim = _get_ylim_diagonal(ax)
-    diagonal_ylim = tuple(diagonal_ylim)
 
     # Number of search-space dimensions we are using.
     if isinstance(ax, (list, np.ndarray)):
@@ -447,9 +446,9 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
 
-    plot_dims : list(str), list(int), default=None
-        List of names or indices for search-space dimensions to be
-        used in the plot.
+    plot_dims : list of str and int, default=None
+        List of dimension names or dimension indices from the
+        search-space dimensions to be included in the plot.
         If `None` then use all dimensions from the search-space.
 
     sample_source : str or list of floats, default='random'
@@ -609,9 +608,9 @@ def plot_evaluations(result, bins=20, dimensions=None,
         variables. `None` defaults to `space.dimensions[i].name`, or
         if also `None` to `['X_0', 'X_1', ..]`.
 
-    plot_dims : list(str), list(int), default=None
-        List of names or indices for search-space dimensions to be
-        used in the plot.
+    plot_dims : list of str and int, default=None
+        List of dimension names or dimension indices from the
+        search-space dimensions to be included in the plot.
         If `None` then use all dimensions from the search-space.
 
     Returns
@@ -691,7 +690,7 @@ def _get_ylim_diagonal(ax):
 
     Returns
     -------
-    ylim_diagonal : list(int)
+    ylim_diagonal : tuple(int)
         The common min and max ylim for the diagonal plots.
     """
 
@@ -711,10 +710,7 @@ def _get_ylim_diagonal(ax):
     ylim_min = np.min(ylim_lo)
     ylim_max = np.max(ylim_hi)
 
-    # The common ylim for the diagonal plots.
-    ylim_diagonal = [ylim_min, ylim_max]
-
-    return ylim_diagonal
+    return ylim_min, ylim_max
 
 
 def partial_dependence_1D(space, model, i, samples,
