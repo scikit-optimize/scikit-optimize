@@ -5,12 +5,14 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 from numpy.testing import assert_raises
+from numpy.testing import assert_array_almost_equal
 from skopt.space import Integer, Categorical
 from skopt import plots, gp_minimize
 import matplotlib.pyplot as plt
 from skopt.benchmarks import bench3
 from skopt import expected_minimum, expected_minimum_random_sampling
-from skopt.plots import _evaluate_min_params
+from skopt.plots import _evaluate_min_params, partial_dependence
+from skopt.plots import partial_dependence_1D, partial_dependence_2D
 from skopt import Optimizer
 
 
@@ -42,6 +44,38 @@ def test_plots_work():
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
 
+    x = [[11, 52, 8, 14, 'entropy', 'f'],
+         [14, 90, 10, 2, 'gini', 'a'],
+         [7, 90, 6, 14, 'entropy', 'f']]
+    samples = res.space.transform(x)
+    xi_ = [1., 10.5, 20.]
+    yi_ = [-0.9240883492576596, -0.9240745890422687, -0.9240586402439884]
+    xi, yi = partial_dependence_1D(res.space, res.models[-1], 0,
+                                   samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_, 1e-3)
+
+    xi_ = [0, 1]
+    yi_ = [-0.9241087603770617, -0.9240188905968352]
+    xi, yi = partial_dependence_1D(res.space, res.models[-1], 4,
+                                   samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_, 1e-3)
+
+    xi_ = [0, 1]
+    yi_ = [1., 10.5, 20.]
+    zi_ = [[-0.92412562, -0.92403575],
+           [-0.92411186, -0.92402199],
+           [-0.92409591, -0.92400604]]
+    xi, yi, zi = partial_dependence_2D(res.space, res.models[-1], 0, 4,
+                                       samples, n_points=3)
+    assert_array_almost_equal(xi, xi_)
+    assert_array_almost_equal(yi, yi_)
+    assert_array_almost_equal(zi, zi_, 1e-3)
+
+    x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
+    x_min2, f_min2 = expected_minimum(res, random_state=1)
+
     x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
     x_min2, f_min2 = expected_minimum(res, random_state=1)
 
@@ -51,6 +85,7 @@ def test_plots_work():
     plots.plot_convergence(res)
     plots.plot_evaluations(res)
     plots.plot_objective(res)
+    plots.plot_objective(res, dimensions=["a", "b", "c", "d", "e", "f"])
     plots.plot_objective(res,
                          minimum='expected_minimum_random')
     plots.plot_objective(res,
@@ -59,6 +94,8 @@ def test_plots_work():
     plots.plot_objective(res,
                          sample_source='result')
     plots.plot_regret(res)
+    plots.plot_objective_2D(res, 0, 4)
+    plots.plot_histogram(res, 0, 4)
 
     # TODO: Compare plots to known good results?
     # Look into how matplotlib does this.
@@ -140,4 +177,4 @@ def test_names_dimensions():
         res = opt.tell(next_x, f_val)
 
     # Plot results
-    assert_raises(ValueError, plots.plot_objective, res)
+    plots.plot_objective(res)
