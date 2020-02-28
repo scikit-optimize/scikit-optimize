@@ -206,6 +206,7 @@ class Real(Dimension):
 
     prior : "uniform" or "log-uniform", default="uniform"
         Distribution to use when sampling random points for this dimension.
+
         - If `"uniform"`, points are sampled uniformly between the lower
           and upper bounds.
         - If `"log-uniform"`, points are sampled uniformly between
@@ -218,7 +219,6 @@ class Real(Dimension):
 
     transform : "identity", "normalize", optional
         The following transformations are supported.
-
         - "identity", (default) the transformed space is the same as the
           original space.
         - "normalize", the transformed space is scaled to be between
@@ -230,6 +230,7 @@ class Real(Dimension):
     dtype : str or dtype, default=np.float
         float type which will be used in inverse_transform,
         can be float.
+
     """
     def __init__(self, low, high, prior="uniform", base=10, transform=None,
                  name=None, dtype=np.float):
@@ -383,6 +384,7 @@ class Integer(Dimension):
     prior : "uniform" or "log-uniform", default="uniform"
         Distribution to use when sampling random integers for
         this dimension.
+
         - If `"uniform"`, intgers are sampled uniformly between the lower
           and upper bounds.
         - If `"log-uniform"`, intgers are sampled uniformly between
@@ -391,6 +393,7 @@ class Integer(Dimension):
 
     base : int
         The logarithmic base to use for a log-uniform prior.
+
         - Default 10, otherwise commonly 2.
 
     transform : "identity", "normalize", optional
@@ -409,6 +412,7 @@ class Integer(Dimension):
         can be int, np.int16, np.uint32, np.int32, np.int64 (default).
         When set to int, `inverse_transform` returns a list instead of
         a numpy array
+
     """
     def __init__(self, low, high, prior="uniform", base=10, transform=None,
                  name=None, dtype=np.int64):
@@ -560,7 +564,7 @@ class Categorical(Dimension):
     transform : "onehot", "string", "identity", "label", default="onehot"
         - "identity", the transformed space is the same as the original
           space.
-        -  "string",  the transformed space is a string encoded
+        - "string",  the transformed space is a string encoded
           representation of the original space.
         - "label", the transformed space is a label encoded
           representation (integer) of the original space.
@@ -569,6 +573,7 @@ class Categorical(Dimension):
 
     name : str or None
         Name associated with dimension, e.g., "colors".
+
     """
     def __init__(self, categories, prior=None, transform=None, name=None):
         self.categories = tuple(categories)
@@ -781,12 +786,13 @@ class Space(object):
                   prior: log-uniform
         namespace : str, default=None
            Namespace within configuration file to use, will use first
-             namespace if not provided
+           namespace if not provided
 
         Returns
         -------
         space : Space
            Instantiated Space object
+
         """
         with open(yml_path, 'rb') as f:
             config = yaml.safe_load(f)
