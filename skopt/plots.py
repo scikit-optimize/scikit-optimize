@@ -196,7 +196,7 @@ def plot_regret(*args, **kwargs):
 
 
 def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
-                              dimensions=None):
+                              dim_labels=None):
     # Work out min, max of y axis for the diagonal so we can adjust
     # them all to the same value
     diagonal_ylim = _get_ylim_diagonal(ax)
@@ -208,8 +208,8 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     else:
         n_dims = 1
 
-    if dimensions is None:
-        dimensions = ["$X_{%i}$" % i if d.name is None else d.name
+    if dim_labels is None:
+        dim_labels = ["$X_{%i}$" % i if d.name is None else d.name
                       for i, d in plot_dims]
     # Axes for categorical dimensions are really integers; we have to
     # label them with the category names
@@ -238,7 +238,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
                 else:
                     ax_.set_xlim(*dim_j.bounds)
                 if j == 0:  # only leftmost column (0) gets y labels
-                    ax_.set_ylabel(dimensions[i])
+                    ax_.set_ylabel(dim_labels[i])
                     if iscat[i]:  # Set category labels for left column
                         ax_.yaxis.set_major_formatter(FuncFormatter(
                             partial(_cat_format, dim_i)))
@@ -251,7 +251,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
                 # ... the bottom row
                 else:
                     [l.set_rotation(45) for l in ax_.get_xticklabels()]
-                    ax_.set_xlabel(dimensions[j])
+                    ax_.set_xlabel(dim_labels[j])
 
                 # configure plot for linear vs log-scale
                 if dim_j.prior == 'log-uniform':
@@ -275,7 +275,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
 
                 ax_.xaxis.tick_top()
                 ax_.xaxis.set_label_position('top')
-                ax_.set_xlabel(dimensions[j])
+                ax_.set_xlabel(dim_labels[j])
 
                 if dim_i.prior == 'log-uniform':
                     ax_.set_xscale('log')
