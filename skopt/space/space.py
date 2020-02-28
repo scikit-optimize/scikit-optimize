@@ -737,6 +737,21 @@ class Space(object):
         return iter(self.dimensions)
 
     @property
+    def dimension_names(self):
+        """
+        Names of all the dimensions in the search-space.
+        """
+        index = 0
+        names = []
+        for dim in self.dimensions:
+            if dim.name is None:
+                names.append("X_%d" % index)
+            else:
+                names.append(dim.name)
+            index += 1
+        return names
+
+    @property
     def is_real(self):
         """
         Returns true if all dimensions are Real
@@ -994,6 +1009,58 @@ class Space(object):
             if component not in dim:
                 return False
         return True
+
+    def __getitem__(self, dimension_names):
+        """
+        Lookup and return the search-space dimension with the given name.
+
+        This allows for dict-like lookup of dimensions, for example:
+        `space['foo']` returns the dimension named 'foo' if it exists,
+        otherwise `None` is returned.
+
+        It also allows for lookup of a list of dimension-names, for example:
+        `space[['foo', 'bar']]` returns the two dimensions named
+        'foo' and 'bar' if they exist.
+
+        Parameters
+        ----------
+        dimension_names : str or list(str)
+            Name of a single search-space dimension (str).
+            List of names for search-space dimensions (list(str)).
+
+        Returns
+        -------
+        dims tuple (index, Dimension), list(tuple(index, Dimension)), \
+                (None, None)
+            A single search-space dimension with the given name,
+            or a list of search-space dimensions with the given names.
+        """
+
+        def _get(dimension_name):
+            """Helper-function for getting a single dimension."""
+            index = 0
+            # Get the index of the search-space dimension using its name.
+            for dim in self.dimensions:
+                if dimension_name == dim.name:
+                    return (index, dim)
+                elif dimension_name == index:
+                    return (index, dim)
+                index += 1
+            return (None, None)
+
+        if isinstance(dimension_names, (str, int)):
+            # Get a single search-space dimension.
+            dims = _get(dimension_name=dimension_names)
+        elif isinstance(dimension_names, (list, tuple)):
+            # Get a list of search-space dimensions.
+            # Note that we do not check whether the names are really strings.
+            dims = [_get(dimension_name=name) for name in dimension_names]
+        else:
+            msg = "Dimension name should be either string or" \
+                  "list of strings, but got {}."
+            raise ValueError(msg.format(type(dimension_names)))
+
+        return dims
 
     @property
     def transformed_bounds(self):

@@ -40,6 +40,7 @@ def objective(params):
 #############################################################################
 # Bayesian optimization
 # =====================
+
 SPACE = [
     Integer(1, 20, name='max_depth'),
     Integer(2, 100, name='min_samples_split'),
