@@ -549,6 +549,11 @@ class BayesSearchCV(BaseSearchCV):
         kwargs = self.optimizer_kwargs_.copy()
         kwargs['dimensions'] = dimensions_aslist(params_space)
         optimizer = Optimizer(**kwargs)
+        for i in range(len(optimizer.space.dimensions)):
+            if optimizer.space.dimensions[i].name is not None:
+                continue
+            optimizer.space.dimensions[i].name = list(sorted(
+                params_space.keys()))[i]
 
         return optimizer
 
