@@ -131,15 +131,15 @@ print("best params: %s" % str(opt.best_params_))
 #############################################################################
 # Partial Dependence plot of the objective function for SVC
 #
-plot_objective(opt.optimizer_results_[0],
-               dimensions=["C", "degree", "gamma", "kernel"],
-               n_minimum_search=int(1e8))
+_ = plot_objective(opt.optimizer_results_[0],
+                   dimensions=["C", "degree", "gamma", "kernel"],
+                   n_minimum_search=int(1e8))
 plt.show()
 
 #############################################################################
 # Plot of the histogram for LinearSVC
 #
-plot_histogram(opt.optimizer_results_[1], 1)
+_ = plot_histogram(opt.optimizer_results_[1], 1)
 plt.show()
 
 #############################################################################

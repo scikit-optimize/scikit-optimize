@@ -386,9 +386,9 @@ class Integer(Dimension):
         Distribution to use when sampling random integers for
         this dimension.
 
-        - If `"uniform"`, intgers are sampled uniformly between the lower
+        - If `"uniform"`, integers are sampled uniformly between the lower
           and upper bounds.
-        - If `"log-uniform"`, intgers are sampled uniformly between
+        - If `"log-uniform"`, integers are sampled uniformly between
           `log(lower, base)` and `log(upper, base)` where log
           has base `base`.
 
