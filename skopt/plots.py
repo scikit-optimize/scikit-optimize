@@ -954,7 +954,7 @@ def plot_objective_2D(result, dimension_identifier1, dimension_identifier2,
 
     # Estimate the objective function for these sampled points
     # using the last fitted model for the search-space.
-    xi, yi, zi = partial_dependence_2D(space, last_model, index1, index2,
+    xi, yi, zi = partial_dependence_2D(space, last_model, index2, index1,
                                        samples, n_points=n_points)
 
     if ax is None:
@@ -968,17 +968,18 @@ def plot_objective_2D(result, dimension_identifier1, dimension_identifier2,
 
     # Plot all the parameters that were sampled during optimization.
     # These are plotted as small black dots.
-    ax.scatter(samples2, samples1, c='black', s=10, linewidths=1)
+    ax.scatter(samples1, samples2, c='black', s=10, linewidths=1)
 
     # Plot the best parameters that were sampled during optimization.
     # These are plotted as a big red star.
-    ax.scatter(best_sample2, best_sample1,
+    ax.scatter(best_sample1, best_sample2,
                c='red', s=50, linewidths=1, marker='*')
 
     # Use the dimension-names as the labels for the plot-axes.
-    ax.set_xlabel(dimension2.name)
-    ax.set_ylabel(dimension1.name)
-
+    ax.set_xlabel(dimension1.name)
+    ax.set_ylabel(dimension2.name)
+    ax.autoscale(enable=True, axis='x', tight=True)
+    ax.autoscale(enable=True, axis='y', tight=True)
     # Use log-scale on the x-axis?
     if dimension1.prior == 'log-uniform':
         ax.set_xscale('log')
@@ -986,7 +987,6 @@ def plot_objective_2D(result, dimension_identifier1, dimension_identifier2,
     # Use log-scale on the y-axis?
     if dimension2.prior == 'log-uniform':
         ax.set_yscale('log')
-
     return ax
 
 
