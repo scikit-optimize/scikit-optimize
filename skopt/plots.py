@@ -4,7 +4,7 @@ import numpy as np
 from itertools import count
 from functools import partial
 from scipy.optimize import OptimizeResult
-from .space import Space
+
 from skopt import expected_minimum, expected_minimum_random_sampling
 from .space import Categorical
 
@@ -525,36 +525,22 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
 
-    n_dims = space.n_dims - space.n_constant_dimensions
-    dim_without_constant = []
-    for dim in space.dimensions:
-        if dim.is_constant:
-            continue
-        dim_without_constant.append(dim)
-    space_without_constant = Space(dim_without_constant)
-    fig, ax = plt.subplots(n_dims, n_dims,
-                           figsize=(size * n_dims, size * n_dims))
+    fig, ax = plt.subplots(space.n_dims, space.n_dims,
+                           figsize=(size * space.n_dims, size * space.n_dims))
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
 
-    ax_i = 0
-
     for i in range(space.n_dims):
-        if space.dimensions[i].is_constant:
-            continue
-        ax_j = 0
         for j in range(space.n_dims):
-            if space.dimensions[j].is_constant:
-                continue
             if i == j:
                 xi, yi = partial_dependence(space, result.models[-1], i,
                                             j=None,
                                             sample_points=rvs_transformed,
                                             n_points=n_points, x_eval=x_eval)
 
-                ax[ax_i, ax_i].plot(xi, yi)
-                ax[ax_i, ax_i].axvline(minimum[i], linestyle="--", color="r", lw=1)
+                ax[i, i].plot(xi, yi)
+                ax[i, i].axvline(minimum[i], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
@@ -562,17 +548,14 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                                                 i, j,
                                                 rvs_transformed, n_points,
                                                 x_eval=x_eval)
-                if np.min(zi.shape) > 1:
-                    ax[ax_i, ax_j].contourf(xi, yi, zi, levels,
-                                      locator=locator, cmap='viridis_r')
-                ax[ax_i, ax_j].scatter(samples[:, j], samples[:, i],
+                ax[i, j].contourf(xi, yi, zi, levels,
+                                  locator=locator, cmap='viridis_r')
+                ax[i, j].scatter(samples[:, j], samples[:, i],
                                  c='k', s=10, lw=0.)
-                ax[ax_i, ax_j].scatter(minimum[j], minimum[i],
+                ax[i, j].scatter(minimum[j], minimum[i],
                                  c=['r'], s=20, lw=0.)
-            ax_j += 1
-        ax_i += 1
     ylabel = "Partial dependence"
-    return _format_scatter_plot_axes(ax, space_without_constant, ylabel=ylabel,
+    return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
                                      dim_labels=dimensions)
 
 
