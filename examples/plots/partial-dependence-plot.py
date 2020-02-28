@@ -19,7 +19,6 @@ import numpy as np
 np.random.seed(123)
 import matplotlib.pyplot as plt
 
-
 #############################################################################
 # Objective function
 # ==================
@@ -32,7 +31,6 @@ def funny_func(x):
     for i in range(len(x)):
         s += (x[i] * i) ** 2
     return s
-
 
 #############################################################################
 # Optimisation using decision trees
