@@ -35,6 +35,8 @@ Note: for a manual hyperparameter optimization example, see
 """
 print(__doc__)
 import numpy as np
+np.random.seed(123)
+import matplotlib.pyplot as plt
 
 #############################################################################
 # Minimal example
@@ -79,6 +81,7 @@ print("test score: %s" % opt.score(X_test, y_test))
 
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
+from skopt.plots import plot_objective
 
 from sklearn.datasets import load_digits
 from sklearn.svm import LinearSVC, SVC
@@ -122,6 +125,19 @@ opt.fit(X_train, y_train)
 
 print("val. score: %s" % opt.best_score_)
 print("test score: %s" % opt.score(X_test, y_test))
+print("best params: %s" % str(opt.best_params_))
+
+#############################################################################
+# Partial Dependence plot of the objective function for SVC
+
+plot_objective(opt.optimizer_results_[0], dimensions=["C", "gamma", "degree", "kernel"])
+plt.show()
+
+#############################################################################
+# Partial Dependence plot of the objective function for LinearSVC
+
+plot_objective(opt.optimizer_results_[1], dimensions=["C"])
+plt.show()
 
 #############################################################################
 # Progress monitoring and control using `callback` argument of `fit` method

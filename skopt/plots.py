@@ -609,7 +609,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     plot_dims : list of str and int, default=None
         List of dimension names or dimension indices from the
         search-space dimensions to be included in the plot.
-        If `None` then use all dimensions from the search-space.
+        If `None` then use all dimensions except constant ones
+        from the search-space.
 
     sample_source : str or list of floats, default='random'
         Defines to samples generation to use for averaging the model function
@@ -672,6 +673,8 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         # Get all dimensions.
         plot_dims = []
         for row in range(space.n_dims):
+            if space.dimensions[row].is_constant:
+                continue
             plot_dims.append((row, space.dimensions[row]))
     else:
         plot_dims = space[plot_dims]
@@ -771,7 +774,8 @@ def plot_evaluations(result, bins=20, dimensions=None,
     plot_dims : list of str and int, default=None
         List of dimension names or dimension indices from the
         search-space dimensions to be included in the plot.
-        If `None` then use all dimensions from the search-space.
+        If `None` then use all dimensions except constant ones
+        from the search-space.
 
     Returns
     -------
@@ -790,6 +794,8 @@ def plot_evaluations(result, bins=20, dimensions=None,
         # Get all dimensions.
         plot_dims = []
         for row in range(space.n_dims):
+            if space.dimensions[row].is_constant:
+                continue
             plot_dims.append((row, space.dimensions[row]))
     else:
         plot_dims = space[plot_dims]
