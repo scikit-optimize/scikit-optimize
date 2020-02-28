@@ -1357,8 +1357,6 @@ def _evaluate_min_params(result, params='result',
                 # Use standard of 10^n_parameters. Note this
                 # becomes very slow for many parameters
                 n_minimum_search = 10 ** len(result.x)
-                if n_minimum_search > 100000:
-                    n_minimum_search = 100000
                 x_vals, _ = expected_minimum_random_sampling(
                     result,
                     n_random_starts=n_minimum_search,

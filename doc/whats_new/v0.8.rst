@@ -15,6 +15,14 @@ Version 0.8.0
   :pr:`884` by :user:`Holger Nahrstaedt <holgern>`
   based on :pr:`627` by :user:`JPN <jonathanng>`
 
+:mod:`skopt.plots`
+------------------
+- |Enhancement| Allow dimension selection for plot_objective
+  and plot_evaluations and add plot_histogram and plot_objective_2D.
+  Plot code has been refactored.
+  :pr:`848` by :user:`Holger Nahrstaedt <holgern>`
+  based on :pr:`579` by :user:`Hvass-Labs <Hvass-Labs>`
+
 :mod:`skopt.sampler`
 --------------------
 - |MajorFeature| Initial sampling generation
