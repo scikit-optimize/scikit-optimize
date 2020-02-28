@@ -219,6 +219,7 @@ class Real(Dimension):
 
     transform : "identity", "normalize", optional
         The following transformations are supported.
+
         - "identity", (default) the transformed space is the same as the
           original space.
         - "normalize", the transformed space is scaled to be between
@@ -773,17 +774,19 @@ class Space(object):
         yml_path : str
             Full path to yaml configuration file, example YaML below:
             Space:
-              - Integer:
-                  low: -5
-                  high: 5
-              - Categorical:
-                  categories:
-                  - a
-                  - b
-              - Real:
-                  low: 1.0
-                  high: 5.0
-                  prior: log-uniform
+
+            - Integer:
+              low: -5
+              high: 5
+            - Categorical:
+              categories:
+              - a
+              - b
+            - Real:
+              low: 1.0
+              high: 5.0
+              prior: log-uniform
+
         namespace : str, default=None
            Namespace within configuration file to use, will use first
            namespace if not provided
