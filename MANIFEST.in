@@ -1,4 +1,7 @@
 include *.md
 include *.rst
-include versioneer.py
-include skopt/_version.py
+recursive-include doc *
+recursive-include examples *
+include LICENSE
+include README.rst
+include pyproject.toml

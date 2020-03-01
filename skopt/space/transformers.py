@@ -1,10 +1,12 @@
 from __future__ import division
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import column_or_1d
 
 
-# Base class for all 1-D transformers.
 class Transformer(object):
+    """Base class for all 1-D transformers.
+    """
     def fit(self, X):
         return self
 
@@ -16,7 +18,8 @@ class Transformer(object):
 
 
 class Identity(Transformer):
-    """Identity transform."""
+    """Identity transform.
+    """
 
     def transform(self, X):
         return X
@@ -25,14 +28,71 @@ class Identity(Transformer):
         return Xt
 
 
-class Log10(Transformer):
-    """Base 10 logarithm transform."""
+class StringEncoder(Transformer):
+    """StringEncoder transform.
+       The transform will cast everything to a
+       string and the inverse transform will cast to the type defined in dtype.
+    """
+
+    def __init__(self, dtype=str):
+        super(StringEncoder, self).__init__()
+        self.dtype = dtype
+
+    def fit(self, X):
+        """Fit a list or array of categories. All elements must be from the
+        same type.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_categories,)
+            List of categories.
+        """
+        if len(X) > 0:
+            self.dtype = type(X[0])
 
     def transform(self, X):
-        return np.log10(np.asarray(X, dtype=np.float))
+        """Transform an array of categories to a string encoded representation.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples,)
+            List of categories.
+
+        Returns
+        -------
+        Xt : array-like, shape=(n_samples,)
+            The string encoded categories.
+        """
+        return [str(x) for x in X]
 
     def inverse_transform(self, Xt):
-        return 10.0 ** np.asarray(Xt, dtype=np.float)
+        """Inverse transform string encoded categories back to their original
+           representation.
+
+        Parameters
+        ----------
+        Xt : array-like, shape=(n_samples,)
+            String encoded categories.
+
+        Returns
+        -------
+        X : array-like, shape=(n_samples,)
+            The original categories.
+        """
+        return [self.dtype(x) for x in Xt]
+
+
+class LogN(Transformer):
+    """Base N logarithm transform."""
+
+    def __init__(self, base):
+        self._base = base
+
+    def transform(self, X):
+        return np.log10(np.asarray(X, dtype=np.float)) / np.log10(self._base)
+
+    def inverse_transform(self, Xt):
+        return self._base ** np.asarray(Xt, dtype=np.float)
 
 
 class CategoricalEncoder(Transformer):
@@ -47,7 +107,7 @@ class CategoricalEncoder(Transformer):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_categories,)]:
+        X : array-like, shape=(n_categories,)
             List of categories.
         """
         self.mapping_ = {v: i for i, v in enumerate(X)}
@@ -62,12 +122,12 @@ class CategoricalEncoder(Transformer):
 
         Parameters
         ----------
-        * `X` [array-like, shape=(n_samples,)]:
+        X : array-like, shape=(n_samples,)
             List of categories.
 
         Returns
         -------
-        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+        Xt : array-like, shape=(n_samples, n_categories)
             The one-hot encoded categories.
         """
         return self._lb.transform([self.mapping_[v] for v in X])
@@ -78,17 +138,83 @@ class CategoricalEncoder(Transformer):
 
         Parameters
         ----------
-        * `Xt` [array-like, shape=(n_samples, n_categories)]:
+        Xt : array-like, shape=(n_samples, n_categories)
             One-hot encoded categories.
 
         Returns
         -------
-        * `X` [array-like, shape=(n_samples,)]:
+        X : array-like, shape=(n_samples,)
             The original categories.
         """
         Xt = np.asarray(Xt)
         return [
             self.inverse_mapping_[i] for i in self._lb.inverse_transform(Xt)
+        ]
+
+
+class LabelEncoder(Transformer):
+    """LabelEncoder that can handle categorical variables."""
+    def __init__(self, X=None):
+        if X is not None:
+            self.fit(X)
+
+    def fit(self, X):
+        """Fit a list or array of categories.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_categories,)
+            List of categories.
+        """
+        X = np.asarray(X)
+        if X.dtype == object:
+            self.mapping_ = {v: i for i, v in enumerate(X)}
+        else:
+            i = 0
+            self.mapping_ = {}
+            for v in np.unique(X):
+                self.mapping_[v] = i
+                i += 1
+        self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
+        return self
+
+    def transform(self, X):
+        """Transform an array of categories to a one-hot encoded
+        representation.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples,)
+            List of categories.
+
+        Returns
+        -------
+        Xt : array-like, shape=(n_samples, n_categories)
+            The integer categories.
+        """
+        X = np.asarray(X)
+        return [self.mapping_[v] for v in X]
+
+    def inverse_transform(self, Xt):
+        """Inverse transform integer categories back to their original
+           representation.
+
+        Parameters
+        ----------
+        Xt : array-like, shape=(n_samples, n_categories)
+            Integer categories.
+
+        Returns
+        -------
+        X : array-like, shape=(n_samples,)
+            The original categories.
+        """
+        if isinstance(Xt, (float, np.float64)):
+            Xt = [Xt]
+        else:
+            Xt = np.asarray(Xt)
+        return [
+            self.inverse_mapping_[int(np.round(i))] for i in Xt
         ]
 
 
@@ -98,13 +224,13 @@ class Normalize(Transformer):
 
     Parameters
     ----------
-    * `low` [float]:
+    low : float
         Lower bound.
 
-    * `high` [float]:
+    high : float
         Higher bound.
 
-    * `is_int` [bool, default=True]
+    is_int : bool, default=True
         Round and cast the return value of `inverse_transform` to integer. Set
         to `True` when applying this transform to integers.
     """
@@ -115,11 +241,27 @@ class Normalize(Transformer):
 
     def transform(self, X):
         X = np.asarray(X)
-        if np.any(X > self.high + 1e-8):
-            raise ValueError("All values should be less than %f" % self.high)
-        if np.any(X < self.low - 1e-8):
-            raise ValueError("All values should be greater than %f" % self.low)
-        return (X - self.low) / (self.high - self.low)
+        if self.is_int:
+            if np.any(np.round(X) > self.high):
+                raise ValueError("All integer values should"
+                                 "be less than %f" % self.high)
+            if np.any(np.round(X) < self.low):
+                raise ValueError("All integer values should"
+                                 "be greater than %f" % self.low)
+        else:
+            if np.any(X > self.high + 1e-8):
+                raise ValueError("All values should"
+                                 "be less than %f" % self.high)
+            if np.any(X < self.low - 1e-8):
+                raise ValueError("All values should"
+                                 "be greater than %f" % self.low)
+        if (self.high - self.low) == 0.:
+            return X * 0.
+        if self.is_int:
+            return (np.round(X).astype(np.int) - self.low) /\
+                   (self.high - self.low)
+        else:
+            return (X - self.low) / (self.high - self.low)
 
     def inverse_transform(self, X):
         X = np.asarray(X)
@@ -139,7 +281,7 @@ class Pipeline(Transformer):
 
     Parameters
     ----------
-    * 'transformers' [list]:
+    transformers : list
         A list of Transformer instances.
     """
     def __init__(self, transformers):

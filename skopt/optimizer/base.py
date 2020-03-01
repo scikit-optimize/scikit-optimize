@@ -6,8 +6,12 @@ It is sufficient that one re-implements the base estimator.
 
 import copy
 import inspect
+import warnings
 import numbers
-from collections import Iterable
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 import numpy as np
 
@@ -18,24 +22,27 @@ from ..utils import eval_callbacks
 
 
 def base_minimize(func, dimensions, base_estimator,
-                  n_calls=100, n_random_starts=10,
+                  n_calls=100, n_random_starts=None,
+                  n_initial_points=10,
+                  initial_point_generator="random",
                   acq_func="EI", acq_optimizer="lbfgs",
                   x0=None, y0=None, random_state=None, verbose=False,
                   callback=None, n_points=10000, n_restarts_optimizer=5,
-                  xi=0.01, kappa=1.96, n_jobs=1):
-    """
+                  xi=0.01, kappa=1.96, n_jobs=1, model_queue_size=None):
+    """Base optimizer class
+
     Parameters
     ----------
-    * `func` [callable]:
+    func : callable
         Function to minimize. Should take a single list of parameters
         and return the objective value.
     
         If you have a search-space where all dimensions have names,
-        then you can use `skopt.utils.use_named_args` as a decorator
+        then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
         with the named arguments. See `use_named_args` for an example.
 
-    * `dimensions` [list, shape=(n_dims,)]:
+    dimensions : list, shape (n_dims,)
         List of search space dimensions.
         Each search dimension can be defined either as
 
@@ -47,39 +54,58 @@ def base_minimize(func, dimensions, base_estimator,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-         NOTE: The upper and lower bounds are inclusive for `Integer`
-         dimensions.
+         .. note:: The upper and lower bounds are inclusive for `Integer`
+            dimensions.
 
-    * `base_estimator` [sklearn regressor]:
+    base_estimator : sklearn regressor
         Should inherit from `sklearn.base.RegressorMixin`.
         In addition, should have an optional `return_std` argument,
-        which returns `std(Y | x)`` along with `E[Y | x]`.
+        which returns `std(Y | x)` along with `E[Y | x]`.
 
-    * `n_calls` [int, default=100]:
-        Maximum number of calls to `func`. An objective fucntion will
+    n_calls : int, default: 100
+        Maximum number of calls to `func`. An objective function will
         always be evaluated this number of times; Various options to
         supply initialization points do not affect this value.
 
-    * `n_random_starts` [int, default=10]:
+    n_random_starts : int, default: None
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-    * `acq_func` [string, default=`"EI"`]:
+        .. deprecated:: 0.8
+            use `n_initial_points` instead.
+
+    n_initial_points : int, default: 10
+        Number of evaluations of `func` with initialization points
+        before approximating it with `base_estimator`. Initial point
+        generator can be changed by setting `initial_point_generator`.
+
+    initial_point_generator : str, InitialPointGenerator instance, \
+            default: `"random"`
+        Sets a initial points generator. Can be either
+
+        - `"random"` for uniform random numbers,
+        - `"sobol"` for a Sobol sequence,
+        - `"halton"` for a Halton sequence,
+        - `"hammersly"` for a Hammersly sequence,
+        - `"lhs"` for a latin hypercube sequence,
+        - `"grid"` for a uniform grid sequence
+
+    acq_func : string, default: `"EI"`
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound,
         - `"EI"` for negative expected improvement,
         - `"PI"` for negative probability of improvement.
-        - `"EIps" for negated expected improvement per second to take into
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of `"EIps"`
 
-    * `acq_optimizer` [string, `"sampling"` or `"lbfgs"`, default=`"lbfgs"`]:
-        Method to minimize the acquistion function. The fit model
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default: `"lbfgs"`
+        Method to minimize the acquisition function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
@@ -87,13 +113,14 @@ def base_minimize(func, dimensions, base_estimator,
           `acq_func` at `n_points` randomly sampled points and the smallest
           value found is used.
         - If set to `"lbfgs"`, then
-              - The `n_restarts_optimizer` no. of points which the acquisition
-                function is least are taken as start points.
-              - `"lbfgs"` is run for 20 iterations with these points as initial
-                points to find local minima.
-              - The optimal of these local minima is used to update the prior.
 
-    * `x0` [list, list of lists or `None`]:
+          - The `n_restarts_optimizer` no. of points which the acquisition
+            function is least are taken as start points.
+          - `"lbfgs"` is run for 20 iterations with these points as initial
+            points to find local minima.
+          - The optimal of these local minima is used to update the prior.
+
+    x0 : list, list of lists or `None`
         Initial input points.
 
         - If it is a list of lists, use it as a list of input points. If no
@@ -107,7 +134,7 @@ def base_minimize(func, dimensions, base_estimator,
           outputs are not provided.
         - If it is `None`, no initial input points are used.
 
-    * `y0` [list, scalar or `None`]
+    y0 : list, scalar or `None`
         Objective values at initial input points.
 
         - If it is a list, then it corresponds to evaluations of the function
@@ -118,47 +145,53 @@ def base_minimize(func, dimensions, base_estimator,
         - If it is None and `x0` is provided, then the function is evaluated
           at each element of `x0`.
 
-    * `random_state` [int, RandomState instance, or None (default)]:
+    random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
 
-    * `verbose` [boolean, default=False]:
+    verbose : boolean, default: False
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
-    * `callback` [callable, list of callables, optional]
+    callback : callable, list of callables, optional
         If callable then `callback(res)` is called after each call to `func`.
         If list of callables, then each callable in the list is called.
 
-    * `n_points` [int, default=10000]:
+    n_points : int, default: 10000
         If `acq_optimizer` is set to `"sampling"`, then `acq_func` is
         optimized by computing `acq_func` at `n_points` randomly sampled
         points.
 
-    * `n_restarts_optimizer` [int, default=5]:
+    n_restarts_optimizer : int, default: 5
         The number of restarts of the optimizer when `acq_optimizer`
         is `"lbfgs"`.
 
-    * `xi` [float, default=0.01]:
+    xi : float, default: 0.01
         Controls how much improvement one wants over the previous best
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
-    * `kappa` [float, default=1.96]:
+    kappa : float, default: 1.96
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    * `n_jobs` [int, default=1]:
+    n_jobs : int, default: 1
         Number of cores to run in parallel while running the lbfgs
-        optimizations over the acquisition function. Valid only when
-        `acq_optimizer` is set to "lbfgs."
+        optimizations over the acquisition function and given to
+        the base_estimator. Valid only when
+        `acq_optimizer` is set to "lbfgs". or when the base_estimator
+        supports n_jobs as parameter and was given as string.
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
 
+    model_queue_size : int or None, default: None
+        Keeps list of models only as long as the argument given. In the
+        case of None, the list has no capped length.
+
     Returns
     -------
-    * `res` [`OptimizeResult`, scipy object]:
+    res : `OptimizeResult`, scipy object
         The optimization result returned as a OptimizeResult object.
         Important attributes are:
 
@@ -166,12 +199,12 @@ def base_minimize(func, dimensions, base_estimator,
         - `fun` [float]: function value at the minimum.
         - `models`: surrogate models used for each iteration.
         - `x_iters` [list of lists]: location of function evaluation for each
-           iteration.
+          iteration.
         - `func_vals` [array]: function value for each iteration.
         - `space` [Space]: the optimization space.
         - `specs` [dict]`: the call specifications.
         - `rng` [RandomState instance]: State of the random state
-           at the end of minimization.
+          at the end of minimization.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
@@ -194,28 +227,39 @@ def base_minimize(func, dimensions, base_estimator,
         x0 = [x0]
     if not isinstance(x0, list):
         raise ValueError("`x0` should be a list, but got %s" % type(x0))
-    if n_random_starts <= 0 and not x0:
-        raise ValueError("Either set `n_random_starts` > 0,"
+
+    # Check `n_random_starts` deprecation first
+    if n_random_starts is not None:
+        warnings.warn(("n_random_starts will be removed in favour of "
+                       "n_initial_points. It overwrites n_initial_points."),
+                      DeprecationWarning)
+        n_initial_points = n_random_starts
+
+    if n_initial_points <= 0 and not x0:
+        raise ValueError("Either set `n_initial_points` > 0,"
                          " or provide `x0`")
     # check y0: list-like, requirement of maximal calls
     if isinstance(y0, Iterable):
         y0 = list(y0)
     elif isinstance(y0, numbers.Number):
         y0 = [y0]
-    required_calls = n_random_starts + (len(x0) if not y0 else 0)
+    required_calls = n_initial_points + (len(x0) if not y0 else 0)
     if n_calls < required_calls:
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
     # calculate the total number of initial points
-    n_initial_points = n_random_starts + len(x0)
+    n_initial_points = n_initial_points + len(x0)
 
     # Build optimizer
 
     # create optimizer class
     optimizer = Optimizer(dimensions, base_estimator,
                           n_initial_points=n_initial_points,
+                          initial_point_generator=initial_point_generator,
+                          n_jobs=n_jobs,
                           acq_func=acq_func, acq_optimizer=acq_optimizer,
                           random_state=random_state,
+                          model_queue_size=model_queue_size,
                           acq_optimizer_kwargs=acq_optimizer_kwargs,
                           acq_func_kwargs=acq_func_kwargs)
     # check x0: element-wise data type, dimensionality
@@ -228,7 +272,7 @@ def base_minimize(func, dimensions, base_estimator,
     if verbose:
         callbacks.append(VerboseCallback(
             n_init=len(x0) if not y0 else 0,
-            n_random=n_random_starts,
+            n_random=n_initial_points,
             n_total=n_calls))
 
     # Record provided points

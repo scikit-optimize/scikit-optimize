@@ -12,22 +12,23 @@ def _return_std(X, trees, predictions, min_variance):
 
     Parameters
     ----------
-    * `X` [array-like, shape=(n_samples, n_features)]:
+    X : array-like, shape=(n_samples, n_features)
         Input data.
 
-    * `trees` [list, shape=(n_estimators,)]:
+    trees : list, shape=(n_estimators,)
         List of fit sklearn trees as obtained from the ``estimators_``
         attribute of a fit RandomForestRegressor or ExtraTreesRegressor.
 
-    * `predictions` [array-like, shape=(n_samples,)]:
+    predictions : array-like, shape=(n_samples,)
         Prediction of each data point as returned by RandomForestRegressor
         or ExtraTreesRegressor.
 
     Returns
     -------
-    * `std` [array-like, shape=(n_samples,)]:
+    std : array-like, shape=(n_samples,)
         Standard deviation of `y` at `X`. If criterion
         is set to "mse", then `std[i] ~= std(y | X[i])`.
+
     """
     # This derives std(y | x) as described in 4.3.2 of arXiv:1211.0906
     std = np.zeros(len(X))
@@ -68,6 +69,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
+
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a percentage and
           `int(max_features * n_features)` features are considered at each
@@ -76,9 +78,12 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
-        Note: the search for a split does not stop until at least one
-        valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+
+        .. note::
+            The search for a split does not stop until at least one
+            valid partition of the node samples is found, even if it
+            requires to effectively inspect more than ``max_features``
+            features.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -87,6 +92,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
+
         - If int, then consider `min_samples_split` as the minimum number.
         - If float, then `min_samples_split` is a percentage and
           `ceil(min_samples_split * n_samples)` are the minimum
@@ -94,6 +100,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
+
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` are the minimum
@@ -113,8 +120,10 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
         The weighted impurity decrease equation is the following::
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
+
         where ``N`` is the total number of samples, ``N_t`` is the number of
         samples at the current node, ``N_t_L`` is the number of samples in the
         left child, and ``N_t_R`` is the number of samples in the right child.
@@ -183,11 +192,13 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
     References
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     """
     def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
                  min_weight_fraction_leaf=0.0, max_features='auto',
-                 max_leaf_nodes=None, bootstrap=True, oob_score=False,
+                 max_leaf_nodes=None, min_impurity_decrease=0.,
+                 bootstrap=True, oob_score=False,
                  n_jobs=1, random_state=None, verbose=0, warm_start=False,
                  min_variance=0.0):
         self.min_variance = min_variance
@@ -198,6 +209,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
             bootstrap=bootstrap, oob_score=oob_score,
             n_jobs=n_jobs, random_state=random_state,
             verbose=verbose, warm_start=warm_start)
@@ -222,6 +234,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
         std : array-like of shape=(n_samples,)
             Standard deviation of `y` at `X`. If criterion
             is set to "mse", then `std[i] ~= std(y | X[i])`.
+
         """
         mean = super(RandomForestRegressor, self).predict(X)
 
@@ -252,6 +265,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
+
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a percentage and
           `int(max_features * n_features)` features are considered at each
@@ -260,9 +274,12 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
-        Note: the search for a split does not stop until at least one
-        valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+
+        .. note::
+            The search for a split does not stop until at least one
+            valid partition of the node samples is found, even if it
+            requires to effectively inspect more than ``max_features``
+            features.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -271,6 +288,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
+
         - If int, then consider `min_samples_split` as the minimum number.
         - If float, then `min_samples_split` is a percentage and
           `ceil(min_samples_split * n_samples)` are the minimum
@@ -278,6 +296,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
+
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` are the minimum
@@ -297,8 +316,10 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
         The weighted impurity decrease equation is the following::
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
+
         where ``N`` is the total number of samples, ``N_t`` is the number of
         samples at the current node, ``N_t_L`` is the number of samples in the
         left child, and ``N_t_R`` is the number of samples in the right child.
@@ -367,11 +388,13 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
     References
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
     """
     def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
                  min_weight_fraction_leaf=0.0, max_features='auto',
-                 max_leaf_nodes=None, bootstrap=False, oob_score=False,
+                 max_leaf_nodes=None, min_impurity_decrease=0.,
+                 bootstrap=False, oob_score=False,
                  n_jobs=1, random_state=None, verbose=0, warm_start=False,
                  min_variance=0.0):
         self.min_variance = min_variance
@@ -382,6 +405,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
             bootstrap=bootstrap, oob_score=oob_score,
             n_jobs=n_jobs, random_state=random_state,
             verbose=verbose, warm_start=warm_start)

@@ -2,11 +2,9 @@ import numpy as np
 import pytest
 
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_equal
+from numpy.testing import assert_raises
 
 from skopt import gp_minimize
 from skopt import forest_minimize
@@ -42,6 +40,26 @@ def test_multiple_asks():
     assert_equal(len(opt.Xi), 3)
     opt.ask()
     assert_equal(len(opt.models), 3)
+    assert_equal(len(opt.Xi), 3)
+    assert_equal(opt.ask(), opt.ask())
+    opt.update_next()
+    assert_equal(opt.ask(), opt.ask())
+
+
+@pytest.mark.fast_test
+def test_model_queue_size():
+    # Check if model_queue_size limits the model queue size
+    base_estimator = ExtraTreesRegressor(random_state=2)
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
+                    acq_optimizer="sampling", model_queue_size=2)
+
+    opt.run(bench1, n_iter=3)
+    # tell() computes the next point ready for the next call to ask()
+    # hence there are three after three iterations
+    assert_equal(len(opt.models), 2)
+    assert_equal(len(opt.Xi), 3)
+    opt.ask()
+    assert_equal(len(opt.models), 2)
     assert_equal(len(opt.Xi), 3)
     assert_equal(opt.ask(), opt.ask())
 
@@ -150,7 +168,8 @@ def test_dimension_checking_2D_multiple_points():
     assert "dimensions as the space" in str(e.value)
     # within bounds but one dimension too much
     with pytest.raises(ValueError) as e:
-        opt.tell([[low + 1, low + 1, low + 1], [low + 1, low + 2], [low + 1, low + 3]], 2.)
+        opt.tell([[low + 1, low + 1, low + 1], [low + 1, low + 2],
+                  [low + 1, low + 3]], 2.)
     assert "dimensions as the space" in str(e.value)
 
 
@@ -187,9 +206,9 @@ def test_acq_optimizer_with_time_api(base_estimator, acq_func):
     res = opt.tell(x2, (bench1(x2), 2.0))
 
     # x1 and x2 are random.
-    assert_true(x1 != x2)
+    assert x1 != x2
 
-    assert_true(len(res.models) == 1)
+    assert len(res.models) == 1
     assert_array_equal(res.func_vals.shape, (2,))
     assert_array_equal(res.log_time.shape, (2,))
 
@@ -220,13 +239,13 @@ def test_optimizer_copy(acq_func):
     copied_estimator = opt_copy.base_estimator_
 
     if "ps" in acq_func:
-        assert_true(isinstance(copied_estimator, MultiOutputRegressor))
+        assert isinstance(copied_estimator, MultiOutputRegressor)
         # check that the base_estimator is not wrapped multiple times
         is_multi = isinstance(copied_estimator.estimator,
                               MultiOutputRegressor)
-        assert_false(is_multi)
+        assert not is_multi
     else:
-        assert_false(isinstance(copied_estimator, MultiOutputRegressor))
+        assert not isinstance(copied_estimator, MultiOutputRegressor)
 
     assert_array_equal(opt_copy.Xi, opt.Xi)
     assert_array_equal(opt_copy.yi, opt.yi)
@@ -285,6 +304,13 @@ def test_optimizer_base_estimator_string_smoke(base_estimator):
     opt.run(func=lambda x: x[0]**2, n_iter=3)
 
 
+@pytest.mark.fast_test
+def test_optimizer_base_estimator_string_smoke_njobs():
+    opt = Optimizer([(-2.0, 2.0)], base_estimator="GBRT",
+                    n_initial_points=1, acq_func="EI", n_jobs=-1)
+    opt.run(func=lambda x: x[0]**2, n_iter=3)
+
+
 def test_defaults_are_equivalent():
     # check that the defaults of Optimizer reproduce the defaults of
     # gp_minimize
@@ -296,6 +322,8 @@ def test_defaults_are_equivalent():
         x = opt.ask()
         res_opt = opt.tell(x, branin(x))
 
+
+
     #res_min = forest_minimize(branin, space, n_calls=12, random_state=1)
     res_min = gp_minimize(branin, space, n_calls=12, random_state=1)
 
@@ -303,3 +331,74 @@ def test_defaults_are_equivalent():
     # tolerate small differences in the points sampled
     assert np.allclose(res_min.x_iters, res_opt.x_iters)#, atol=1e-5)
     assert np.allclose(res_min.x, res_opt.x)#, atol=1e-5)
+
+    res_opt2 = opt.get_result()
+    assert np.allclose(res_min.x_iters, res_opt2.x_iters)  # , atol=1e-5)
+    assert np.allclose(res_min.x, res_opt2.x)  # , atol=1e-5)
+
+
+@pytest.mark.fast_test
+def test_dimensions_names():
+    from skopt.space import Real, Categorical, Integer
+    # create search space and optimizer
+    space = [Real(0, 1, name='real'),
+             Categorical(['a', 'b', 'c'], name='cat'),
+             Integer(0, 1, name='int')]
+    opt = Optimizer(space, n_initial_points=1)
+    # result of the optimizer missing dimension names
+    result = opt.tell([(0.5, 'a', 0.5)], [3])
+    names = []
+    for d in result.space.dimensions:
+        names.append(d.name)
+    assert len(names) == 3
+    assert "real" in names
+    assert "cat" in names
+    assert "int" in names
+    assert None not in names
+
+
+@pytest.mark.fast_test
+def test_categorical_only():
+    from skopt.space import Categorical
+    cat1 = Categorical([2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    cat2 = Categorical([2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+
+    opt = Optimizer([cat1, cat2])
+    for n in range(15):
+        x = opt.ask()
+        res = opt.tell(x, 12 * n)
+    assert len(res.x_iters) == 15
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+
+    cat3 = Categorical(["2", "3", "4", "5", "6", "7", "8", "9", "10", "11"])
+    cat4 = Categorical(["2", "3", "4", "5", "6", "7", "8", "9", "10", "11"])
+
+    opt = Optimizer([cat3, cat4])
+    for n in range(15):
+        x = opt.ask()
+        res = opt.tell(x, 12 * n)
+    assert len(res.x_iters) == 15
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+
+
+def test_categorical_only2():
+    from numpy import linalg
+    from skopt.space import Categorical
+    from skopt.learning import GaussianProcessRegressor
+    space = [Categorical([1, 2, 3]), Categorical([4, 5, 6])]
+    opt = Optimizer(space,
+                    base_estimator=GaussianProcessRegressor(alpha=1e-7),
+                    acq_optimizer='lbfgs',
+                    n_initial_points=10,
+                    n_jobs=2)
+
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+    opt.tell(next_x, [linalg.norm(x) for x in next_x])
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4
+    opt.tell(next_x, [linalg.norm(x) for x in next_x])
+    next_x = opt.ask(n_points=4)
+    assert len(next_x) == 4

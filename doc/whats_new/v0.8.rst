@@ -1,0 +1,57 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: skopt
+
+.. _changes_0_8:
+
+Version 0.8.0
+=============
+**In Development**
+
+:mod:`skopt.Optimizer`
+----------------------
+- |Enhancement| n_jobs support was added to Optimizer and
+  fixed for forest_minimize
+  :pr:`884` by :user:`Holger Nahrstaedt <holgern>`
+  based on :pr:`627` by :user:`JPN <jonathanng>`
+
+:mod:`skopt.plots`
+------------------
+- |Enhancement| Allow dimension selection for plot_objective
+  and plot_evaluations and add plot_histogram and plot_objective_2D.
+  Plot code has been refactored.
+  :pr:`848` by :user:`Holger Nahrstaedt <holgern>`
+  based on :pr:`579` by :user:`Hvass-Labs <Hvass-Labs>`
+
+:mod:`skopt.sampler`
+--------------------
+- |MajorFeature| Initial sampling generation
+  from latin hypercube, sobol, hammersly and halton
+  is possible and can be set in all optimizers
+  :pr:`835` by :user:`Holger Nahrstaedt <holgern>`
+- |Enhancement| Improve sampler and add grid sampler
+  :pr:`851` by :user:`Holger Nahrstaedt <holgern>`
+
+:mod:`skopt.space`
+------------------
+- |Enhancement| Add `is_constant`  property to dimension and
+  `n_constant_dimensions` property to Space
+  :pr:`883` by :user:`Holger Nahrstaedt <holgern>`
+- |Enhancement| Skip constant dimensions for plot_objective and
+  plot_evaluations
+  to allow plots using BayesSearchCV
+  :pr:`888` by :user:`Holger Nahrstaedt <holgern>`
+
+:mod:`skopt.utils`
+------------------
+- |Fix| Fix Optimizer for full categorical spaces
+  :pr:`874` by :user:`Holger Nahrstaedt <holgern>`
+
+Miscellaneous
+-------------
+- Improve circle ci
+  :pr:`852` by :user:`Holger Nahrstaedt <holgern>`
+- Add project toml and adapt minimal numpy, scipy, pyyaml and
+  joblib version in setup.py
+  :pr:`850` by :user:`Holger Nahrstaedt <holgern>`
+

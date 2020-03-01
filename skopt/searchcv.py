@@ -1,4 +1,8 @@
-from collections import defaultdict, Sized
+try:
+    from collections.abc import Sized
+except ImportError:
+    from collections import Sized
+from collections import defaultdict
 from functools import partial
 import six
 
@@ -7,12 +11,15 @@ from scipy.stats import rankdata
 
 import sklearn
 from sklearn.base import is_classifier, clone
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
-from sklearn.metrics.scorer import check_scoring
+try:
+    from sklearn.metrics import check_scoring
+except ImportError:
+    from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
@@ -104,10 +111,8 @@ class BayesSearchCV(BaseSearchCV):
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
-
             - An int, giving the exact number of total jobs that are
               spawned
-
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
@@ -119,6 +124,7 @@ class BayesSearchCV(BaseSearchCV):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
+
           - None, to use the default 3-fold cross validation,
           - integer, to specify the number of folds in a `(Stratified)KFold`,
           - An object to be used as a cross-validation generator.
@@ -127,9 +133,6 @@ class BayesSearchCV(BaseSearchCV):
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
-
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -153,38 +156,41 @@ class BayesSearchCV(BaseSearchCV):
         If ``'True'``, the ``cv_results_`` attribute will include training
         scores.
 
-    Example
-    -------
+    Examples
+    --------
 
-    from skopt import BayesSearchCV
-    # parameter ranges are specified by one of below
-    from skopt.space import Real, Categorical, Integer
-
-    from sklearn.datasets import load_iris
-    from sklearn.svm import SVC
-    from sklearn.model_selection import train_test_split
-
-    X, y = load_iris(True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75,
-                                                        random_state=0)
-
-    # log-uniform: understand as search over p = exp(x) by varying x
-    opt = BayesSearchCV(
-        SVC(),
-        {
-            'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            'degree': Integer(1,8),
-            'kernel': Categorical(['linear', 'poly', 'rbf']),
-        },
-        n_iter=32
-    )
-
-    # executes bayesian optimization
-    opt.fit(X_train, y_train)
-
-    # model can be saved, used for predictions or scoring
-    print(opt.score(X_test, y_test))
+    >>> from skopt import BayesSearchCV
+    >>> # parameter ranges are specified by one of below
+    >>> from skopt.space import Real, Categorical, Integer
+    >>>
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.model_selection import train_test_split
+    >>>
+    >>> X, y = load_iris(True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     train_size=0.75,
+    ...                                                     random_state=0)
+    >>>
+    >>> # log-uniform: understand as search over p = exp(x) by varying x
+    >>> opt = BayesSearchCV(
+    ...     SVC(),
+    ...     {
+    ...         'C': Real(1e-6, 1e+6, prior='log-uniform'),
+    ...         'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+    ...         'degree': Integer(1,8),
+    ...         'kernel': Categorical(['linear', 'poly', 'rbf']),
+    ...     },
+    ...     n_iter=32,
+    ...     random_state=0
+    ... )
+    >>>
+    >>> # executes bayesian optimization
+    >>> _ = opt.fit(X_train, y_train)
+    >>>
+    >>> # model can be saved, used for predictions or scoring
+    >>> print(opt.score(X_test, y_test))
+    0.973...
 
     Attributes
     ----------
@@ -236,6 +242,10 @@ class BayesSearchCV(BaseSearchCV):
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
+
+    optimizer_results_ : list of `OptimizeResult`
+        Contains a `OptimizeResult` for each search space. The search space
+        parameter are sorted by its name.
 
     best_score_ : float
         Score of best_estimator on the left out data.
@@ -290,9 +300,14 @@ class BayesSearchCV(BaseSearchCV):
         self.random_state = random_state
         self.optimizer_kwargs = optimizer_kwargs
         self._check_search_space(self.search_spaces)
+        # Temporary fix for compatibility with sklearn 0.20 and 0.21
+        # See scikit-optimize#762
+        # To be consistent with sklearn 0.21+, fit_params should be deprecated
+        # in the constructor and be passed in ``fit``.
+        self.fit_params = fit_params
 
         super(BayesSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
+             estimator=estimator, scoring=scoring,
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
              return_train_score=return_train_score)
@@ -362,6 +377,11 @@ class BayesSearchCV(BaseSearchCV):
         check_is_fitted(self, 'cv_results_')
         return self.cv_results_['params'][self.best_index_]
 
+    @property
+    def optimizer_results_(self):
+        check_is_fitted(self, '_optim_results')
+        return self._optim_results
+
     # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
     def _fit(self, X, y, groups, parameter_iterable):
         """
@@ -369,7 +389,6 @@ class BayesSearchCV(BaseSearchCV):
         Taken from https://github.com/scikit-learn/scikit-learn/blob/0.18.X
                     .../sklearn/model_selection/_search.py
         """
-
         estimator = self.estimator
         cv = sklearn.model_selection._validation.check_cv(
             self.cv, y, classifier=is_classifier(estimator))
@@ -531,6 +550,11 @@ class BayesSearchCV(BaseSearchCV):
         kwargs = self.optimizer_kwargs_.copy()
         kwargs['dimensions'] = dimensions_aslist(params_space)
         optimizer = Optimizer(**kwargs)
+        for i in range(len(optimizer.space.dimensions)):
+            if optimizer.space.dimensions[i].name is not None:
+                continue
+            optimizer.space.dimensions[i].name = list(sorted(
+                params_space.keys()))[i]
 
         return optimizer
 
@@ -542,7 +566,7 @@ class BayesSearchCV(BaseSearchCV):
         params = optimizer.ask(n_points=n_points)
 
         # convert parameters to python native types
-        params = [[np.asscalar(np.array(v)) for v in p] for p in params]
+        params = [[np.array(v).item() for v in p] for p in params]
 
         assert len(params) == n_points, \
             "The number of params we tried should equal the number of" \
@@ -567,6 +591,13 @@ class BayesSearchCV(BaseSearchCV):
                 current_index = self._cur_total_iter + points_iteration
                 all_cv_results[key][current_index] = value
 
+        all_cv_results["rank_test_score"] = list(np.asarray(
+            rankdata(-np.array(all_cv_results['mean_test_score']),
+                     method='min'), dtype=np.int32))
+        if self.return_train_score:
+            all_cv_results["rank_train_score"] = list(np.asarray(
+                rankdata(-np.array(all_cv_results['mean_train_score']),
+                         method='min'), dtype=np.int32))
         self.cv_results_ = all_cv_results
 
         self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
@@ -667,6 +698,7 @@ class BayesSearchCV(BaseSearchCV):
 
         self.best_index_ = None
         self.multimetric_ = False
+        self._optim_results = []
 
         n_points = self.n_points
 
@@ -701,6 +733,7 @@ class BayesSearchCV(BaseSearchCV):
 
                 if eval_callbacks(callbacks, optim_result):
                     break
+            self._optim_results.append(optim_result)
 
         # Refit the best model on the the whole dataset
         if self.refit:

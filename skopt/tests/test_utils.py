@@ -1,21 +1,21 @@
 import pytest
 import tempfile
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
-
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_equal
+from numpy.testing import assert_raises
 import numpy as np
 
-from skopt import gp_minimize
+from skopt import gp_minimize, forest_minimize
 from skopt import load
 from skopt import dump
-from skopt import expected_minimum
+from skopt import expected_minimum, expected_minimum_random_sampling
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench3
 from skopt.learning import ExtraTreesRegressor
 from skopt import Optimizer
 from skopt import Space
+from skopt.space import Dimension
 from skopt.utils import point_asdict
 from skopt.utils import point_aslist
 from skopt.utils import dimensions_aslist
@@ -23,7 +23,12 @@ from skopt.utils import has_gradients
 from skopt.utils import cook_estimator
 from skopt.utils import normalize_dimensions
 from skopt.utils import use_named_args
+from skopt.utils import check_list_types
+from skopt.utils import check_dimension_names
 from skopt.space import Real, Integer, Categorical
+from sklearn.datasets import load_breast_cancer
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_score
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -52,7 +57,7 @@ def test_dump_and_load():
         f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true("func" in res_loaded.specs["args"])
+    assert "func" in res_loaded.specs["args"]
 
     # Test dumping without objective function
     with tempfile.TemporaryFile() as f:
@@ -60,7 +65,7 @@ def test_dump_and_load():
         f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true(not ("func" in res_loaded.specs["args"]))
+    assert not ("func" in res_loaded.specs["args"])
 
     # Delete the objective function and dump the modified object
     del res.specs["args"]["func"]
@@ -69,13 +74,13 @@ def test_dump_and_load():
         f.seek(0)
         res_loaded = load(f)
     check_optimization_results_equality(res, res_loaded)
-    assert_true(not ("func" in res_loaded.specs["args"]))
+    assert not ("func" in res_loaded.specs["args"])
 
 
 @pytest.mark.fast_test
 def test_dump_and_load_optimizer():
     base_estimator = ExtraTreesRegressor(random_state=2)
-    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_random_starts=1,
+    opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,
                     acq_optimizer="sampling")
 
     opt.run(bench1, n_iter=3)
@@ -98,6 +103,24 @@ def test_expected_minimum():
 
     x_min, f_min = expected_minimum(res, random_state=1)
     x_min2, f_min2 = expected_minimum(res, random_state=1)
+
+    assert f_min <= res.fun  # true since noise ~= 0.0
+    assert x_min == x_min2
+    assert f_min == f_min2
+
+
+@pytest.mark.fast_test
+def test_expected_minimum_random_sampling():
+    res = gp_minimize(bench3,
+                      [(-2.0, 2.0)],
+                      x0=[0.],
+                      noise=1e-8,
+                      n_calls=8,
+                      n_random_starts=3,
+                      random_state=1)
+
+    x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
+    x_min2, f_min2 = expected_minimum_random_sampling(res, random_state=1)
 
     assert f_min <= res.fun  # true since noise ~= 0.0
     assert x_min == x_min2
@@ -154,6 +177,14 @@ def test_normalize_dimensions_all_categorical():
     dimensions = (['a', 'b', 'c'], ['1', '2', '3'])
     space = normalize_dimensions(dimensions)
     assert space.is_categorical
+
+
+@pytest.mark.fast_test
+def test_categoricals_mixed_types():
+    domain = [[1, 2, 3, 4], ['a', 'b', 'c'], [True, False]]
+    x = [1, 'a', True]
+    space = normalize_dimensions(domain)
+    assert (space.inverse_transform(space.transform([x])) == [x])
 
 
 @pytest.mark.fast_test
@@ -235,3 +266,45 @@ def test_use_named_args():
     # argument that is an unnamed numpy array.
     res = func(np.array(default_parameters))
     assert (isinstance(res, float))
+
+
+@pytest.mark.fast_test
+def test_space_names_in_use_named_args():
+    space = [Integer(250, 2000, name='n_estimators')]
+
+    @use_named_args(space)
+    def objective(n_estimators):
+        return n_estimators
+
+    res = gp_minimize(objective, space, n_calls=10, random_state=0)
+    best_params = dict(zip((s.name for s in res.space), res.x))
+    assert 'n_estimators' in best_params
+    assert res.space.dimensions[0].name == 'n_estimators'
+
+
+@pytest.mark.fast_test
+def test_check_dimension_names():
+    # Define the search-space dimensions. They must all have names!
+    dim1 = Real(name='foo', low=0.0, high=1.0)
+    dim2 = Real(name='bar', low=0.0, high=1.0)
+    dim3 = Real(name='baz', low=0.0, high=1.0)
+
+    # Gather the search-space dimensions in a list.
+    dimensions = [dim1, dim2, dim3]
+    check_dimension_names(dimensions)
+    dimensions = [dim1, dim2, dim3, Real(-1, 1)]
+    assert_raises(ValueError, check_dimension_names, dimensions)
+
+
+@pytest.mark.fast_test
+def test_check_list_types():
+    # Define the search-space dimensions. They must all have names!
+    dim1 = Real(name='foo', low=0.0, high=1.0)
+    dim2 = Real(name='bar', low=0.0, high=1.0)
+    dim3 = Real(name='baz', low=0.0, high=1.0)
+
+    # Gather the search-space dimensions in a list.
+    dimensions = [dim1, dim2, dim3]
+    check_list_types(dimensions, Dimension)
+    dimensions = [dim1, dim2, dim3, "test"]
+    assert_raises(ValueError, check_list_types, dimensions, Dimension)

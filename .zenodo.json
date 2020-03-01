@@ -1,0 +1,46 @@
+{
+  "title": "scikit-optimize/scikit-optimize",
+  "description": "Scikit-Optimize, or skopt, is a simple and efficient library to minimize (very) expensive and noisy black-box functions. It implements several methods for sequential model-based optimization. skopt aims to be accessible and easy to use in many contexts.",
+  "creators": [
+    {
+      "affiliation": "Wild Tree Tech",
+      "name": "Head, Tim",
+      "orcid": "0000-0003-0931-3698"
+    },
+    {
+      "affiliation": "Google Brain",
+      "name": "Kumar, Manoj"
+    },
+    {
+      "name": "Nahrstaedt, Holger",
+      "orcid": "0000-0002-4796-1082"
+    },
+    {
+      "affiliation": "ULi\u00e8ge",
+      "name": "Louppe, Gilles",
+      "orcid": "0000-0002-2082-3106"
+    },
+    {
+      "affiliation": "Saarland University",
+      "name": "Shcherbatyi, Iaroslav"
+    }
+  ],
+  "keywords": [
+    "bayesopt",
+    "optimization",
+    "scientific-computing",
+    "python",
+    "machine-learning",
+    "hyperparameter",
+    "bayesian-optimization"
+  ],
+  "license": "bsd-3-clause",
+  "related_identifiers": [
+    {
+      "identifier": "https://scikit-optimize.github.io",
+      "relation": "documents",
+      "scheme": "url"
+    }
+  ],
+  "upload_type": "software"
+}
