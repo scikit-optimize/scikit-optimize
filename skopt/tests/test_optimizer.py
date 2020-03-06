@@ -304,6 +304,13 @@ def test_optimizer_base_estimator_string_smoke(base_estimator):
     opt.run(func=lambda x: x[0]**2, n_iter=3)
 
 
+@pytest.mark.fast_test
+def test_optimizer_base_estimator_string_smoke_njobs():
+    opt = Optimizer([(-2.0, 2.0)], base_estimator="GBRT",
+                    n_initial_points=1, acq_func="EI", n_jobs=-1)
+    opt.run(func=lambda x: x[0]**2, n_iter=3)
+
+
 def test_defaults_are_equivalent():
     # check that the defaults of Optimizer reproduce the defaults of
     # gp_minimize
@@ -384,7 +391,8 @@ def test_categorical_only2():
     opt = Optimizer(space,
                     base_estimator=GaussianProcessRegressor(alpha=1e-7),
                     acq_optimizer='lbfgs',
-                    n_initial_points=10)
+                    n_initial_points=10,
+                    n_jobs=2)
 
     next_x = opt.ask(n_points=4)
     assert len(next_x) == 4

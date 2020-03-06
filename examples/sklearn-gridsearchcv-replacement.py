@@ -35,6 +35,8 @@ Note: for a manual hyperparameter optimization example, see
 """
 print(__doc__)
 import numpy as np
+np.random.seed(123)
+import matplotlib.pyplot as plt
 
 #############################################################################
 # Minimal example
@@ -79,6 +81,7 @@ print("test score: %s" % opt.score(X_test, y_test))
 
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
+from skopt.plots import plot_objective, plot_histogram
 
 from sklearn.datasets import load_digits
 from sklearn.svm import LinearSVC, SVC
@@ -114,7 +117,8 @@ svc_search = {
 
 opt = BayesSearchCV(
     pipe,
-    [(svc_search, 20), (linsvc_search, 16)], # (parameter space, # of evaluations)
+    # (parameter space, # of evaluations)
+    [(svc_search, 40), (linsvc_search, 16)],
     cv=3
 )
 
@@ -122,6 +126,21 @@ opt.fit(X_train, y_train)
 
 print("val. score: %s" % opt.best_score_)
 print("test score: %s" % opt.score(X_test, y_test))
+print("best params: %s" % str(opt.best_params_))
+
+#############################################################################
+# Partial Dependence plot of the objective function for SVC
+#
+_ = plot_objective(opt.optimizer_results_[0],
+                   dimensions=["C", "degree", "gamma", "kernel"],
+                   n_minimum_search=int(1e8))
+plt.show()
+
+#############################################################################
+# Plot of the histogram for LinearSVC
+#
+_ = plot_histogram(opt.optimizer_results_[1], 1)
+plt.show()
 
 #############################################################################
 # Progress monitoring and control using `callback` argument of `fit` method
@@ -152,7 +171,6 @@ searchcv = BayesSearchCV(
     n_iter=10,
     cv=3
 )
-
 
 # callback handler
 def on_step(optim_result):

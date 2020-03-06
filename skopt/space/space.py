@@ -183,6 +183,10 @@ class Dimension(object):
         raise NotImplementedError
 
     @property
+    def is_constant(self):
+        raise NotImplementedError
+
+    @property
     def transformed_bounds(self):
         raise NotImplementedError
 
@@ -347,6 +351,10 @@ class Real(Dimension):
     def bounds(self):
         return (self.low, self.high)
 
+    @property
+    def is_constant(self):
+        return self.low == self.high
+
     def __contains__(self, point):
         if isinstance(point, list):
             point = np.array(point)
@@ -402,6 +410,7 @@ class Integer(Dimension):
 
     base : int
         The logarithmic base to use for a log-uniform prior.
+
         - Default 10, otherwise commonly 2.
 
     transform : "identity", "normalize", optional
@@ -525,6 +534,10 @@ class Integer(Dimension):
     @property
     def bounds(self):
         return (self.low, self.high)
+
+    @property
+    def is_constant(self):
+        return self.low == self.high
 
     def __contains__(self, point):
         if isinstance(point, list):
@@ -693,6 +706,10 @@ class Categorical(Dimension):
     def bounds(self):
         return self.categories
 
+    @property
+    def is_constant(self):
+        return len(self.categories) <= 1
+
     def __contains__(self, point):
         return point in self.categories
 
@@ -759,6 +776,21 @@ class Space(object):
 
     def __iter__(self):
         return iter(self.dimensions)
+
+    @property
+    def dimension_names(self):
+        """
+        Names of all the dimensions in the search-space.
+        """
+        index = 0
+        names = []
+        for dim in self.dimensions:
+            if dim.name is None:
+                names.append("X_%d" % index)
+            else:
+                names.append(dim.name)
+            index += 1
+        return names
 
     @property
     def is_real(self):
@@ -998,6 +1030,58 @@ class Space(object):
                 return False
         return True
 
+    def __getitem__(self, dimension_names):
+        """
+        Lookup and return the search-space dimension with the given name.
+
+        This allows for dict-like lookup of dimensions, for example:
+        `space['foo']` returns the dimension named 'foo' if it exists,
+        otherwise `None` is returned.
+
+        It also allows for lookup of a list of dimension-names, for example:
+        `space[['foo', 'bar']]` returns the two dimensions named
+        'foo' and 'bar' if they exist.
+
+        Parameters
+        ----------
+        dimension_names : str or list(str)
+            Name of a single search-space dimension (str).
+            List of names for search-space dimensions (list(str)).
+
+        Returns
+        -------
+        dims tuple (index, Dimension), list(tuple(index, Dimension)), \
+                (None, None)
+            A single search-space dimension with the given name,
+            or a list of search-space dimensions with the given names.
+        """
+
+        def _get(dimension_name):
+            """Helper-function for getting a single dimension."""
+            index = 0
+            # Get the index of the search-space dimension using its name.
+            for dim in self.dimensions:
+                if dimension_name == dim.name:
+                    return (index, dim)
+                elif dimension_name == index:
+                    return (index, dim)
+                index += 1
+            return (None, None)
+
+        if isinstance(dimension_names, (str, int)):
+            # Get a single search-space dimension.
+            dims = _get(dimension_name=dimension_names)
+        elif isinstance(dimension_names, (list, tuple)):
+            # Get a list of search-space dimensions.
+            # Note that we do not check whether the names are really strings.
+            dims = [_get(dimension_name=name) for name in dimension_names]
+        else:
+            msg = "Dimension name should be either string or" \
+                  "list of strings, but got {}."
+            raise ValueError(msg.format(type(dimension_names)))
+
+        return dims
+
     @property
     def transformed_bounds(self):
         """The dimension bounds, in the warped space."""
@@ -1020,6 +1104,17 @@ class Space(object):
     def is_partly_categorical(self):
         """Space contains any categorical dimensions"""
         return any([isinstance(dim, Categorical) for dim in self.dimensions])
+
+    @property
+    def n_constant_dimensions(self):
+        """Returns the number of constant dimensions which have zero degree of
+        freedom, e.g. an Integer dimensions with (0., 0.) as bounds.
+        """
+        n = 0
+        for dim in self.dimensions:
+            if dim.is_constant:
+                n += 1
+        return n
 
     def distance(self, point_a, point_b):
         """Compute distance between two points in this space.

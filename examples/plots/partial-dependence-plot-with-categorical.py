@@ -40,6 +40,7 @@ def objective(params):
 #############################################################################
 # Bayesian optimization
 # =====================
+
 SPACE = [
     Integer(1, 20, name='max_depth'),
     Integer(2, 100, name='min_samples_split'),
@@ -94,6 +95,3 @@ _ = plot_objective(result, n_points=10, sample_source='expected_minimum_random',
 
 _ = plot_objective(result, n_points=10, sample_source=[15, 4, 7, 15, 'b', 'entropy', 'e'],
                    minimum=[15, 4, 7, 15, 'b', 'entropy', 'e'])
-
-
-

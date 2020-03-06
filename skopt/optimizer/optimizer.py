@@ -2,7 +2,8 @@ import sys
 import warnings
 from math import log
 from numbers import Number
-
+import copy
+import inspect
 import numpy as np
 
 from scipy.optimize import fmin_l_bfgs_b
@@ -53,35 +54,35 @@ class Optimizer(object):
           `Categorical`).
 
     base_estimator : `"GP"`, `"RF"`, `"ET"`, `"GBRT"` or sklearn regressor, \
-            default=`"GP"`
+            default: `"GP"`
         Should inherit from :obj:`sklearn.base.RegressorMixin`.
         In addition the `predict` method, should have an optional `return_std`
-        argument, which returns `std(Y | x)`` along with `E[Y | x]`.
+        argument, which returns `std(Y | x)` along with `E[Y | x]`.
         If base_estimator is one of ["GP", "RF", "ET", "GBRT"], a default
         surrogate model of the corresponding type is used corresponding to what
         is used in the minimize functions.
 
-    n_random_starts : int, default=10
-        .. deprecated:: 0.9
+    n_random_starts : int, default: 10
+        .. deprecated:: 0.6
             use `n_initial_points` instead.
 
-    n_initial_points : int, default=10
+    n_initial_points : int, default: 10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Initial point
         generator can be changed by setting `initial_point_generator`.
 
     initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+            default: `"random"`
         Sets a initial points generator. Can be either
 
-        - "random" for uniform random numbers,
-        - "sobol" for a Sobol sequence,
-        - "halton" for a Halton sequence,
-        - "hammersly" for a Hammersly sequence,
-        - "lhs" for a latin hypercube sequence,
-        - "grid" for a uniform grid sequence
+        - `"random"` for uniform random numbers,
+        - `"sobol"` for a Sobol sequence,
+        - `"halton"` for a Halton sequence,
+        - `"hammersly"` for a Hammersly sequence,
+        - `"lhs"` for a latin hypercube sequence,
+        - `"grid"` for a uniform grid sequence
 
-    acq_func : string, default=`"gp_hedge"`
+    acq_func : string, default: `"gp_hedge"`
         Function to minimize over the posterior distribution. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -89,50 +90,60 @@ class Optimizer(object):
         - `"PI"` for negative probability of improvement.
         - `"gp_hedge"` Probabilistically choose one of the above three
           acquisition functions at every iteration.
-            - The gains `g_i` are initialized to zero.
-            - At every iteration,
-                - Each acquisition function is optimised independently to
-                  propose an candidate point `X_i`.
-                - Out of all these candidate points, the next point `X_best` is
-                  chosen by :math:`softmax(\eta g_i)`
-                - After fitting the surrogate model with `(X_best, y_best)`,
-                  the gains are updated such that :math:`g_i -= \mu(X_i)`
-        - `"EIps" for negated expected improvement per second to take into
+
+          - The gains `g_i` are initialized to zero.
+          - At every iteration,
+
+            - Each acquisition function is optimised independently to
+              propose an candidate point `X_i`.
+            - Out of all these candidate points, the next point `X_best` is
+              chosen by :math:`softmax(\\eta g_i)`
+            - After fitting the surrogate model with `(X_best, y_best)`,
+              the gains are updated such that :math:`g_i -= \\mu(X_i)`
+
+        - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
           the second being the time taken in seconds.
         - `"PIps"` for negated probability of improvement per second. The
           return type of the objective function is assumed to be similar to
-          that of `"EIps
+          that of `"EIps"`
 
-    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default=`"auto"`
-        Method to minimize the acquistion function. The fit model
+    acq_optimizer : string, `"sampling"` or `"lbfgs"`, default: `"auto"`
+        Method to minimize the acquisition function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
         - If set to `"auto"`, then `acq_optimizer` is configured on the
           basis of the base_estimator and the space searched over.
           If the space is Categorical or if the estimator provided based on
-          tree-models then this is set to be "sampling"`.
+          tree-models then this is set to be `"sampling"`.
         - If set to `"sampling"`, then `acq_func` is optimized by computing
           `acq_func` at `n_points` randomly sampled points.
         - If set to `"lbfgs"`, then `acq_func` is optimized by
-              - Sampling `n_restarts_optimizer` points randomly.
-              - `"lbfgs"` is run for 20 iterations with these points as initial
-                points to find local minima.
-              - The optimal of these local minima is used to update the prior.
+
+          - Sampling `n_restarts_optimizer` points randomly.
+          - `"lbfgs"` is run for 20 iterations with these points as initial
+            points to find local minima.
+          - The optimal of these local minima is used to update the prior.
 
     random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
 
+    n_jobs : int, default: 1
+        The number of jobs to run in parallel in the base_estimator,
+        if the base_estimator supports n_jobs as parameter and
+        base_estimator was given as string.
+        If -1, then the number of jobs is set to the number of cores.
+
     acq_func_kwargs : dict
-        Additional arguments to be passed to the acquistion function.
+        Additional arguments to be passed to the acquisition function.
 
     acq_optimizer_kwargs : dict
-        Additional arguments to be passed to the acquistion optimizer.
+        Additional arguments to be passed to the acquisition optimizer.
 
-    model_queue_size : int or None, default=None
+    model_queue_size : int or None, default: None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
@@ -154,13 +165,14 @@ class Optimizer(object):
     def __init__(self, dimensions, base_estimator="gp",
                  n_random_starts=None, n_initial_points=10,
                  initial_point_generator="random",
-                 acq_func="gp_hedge",
+                 n_jobs=1, acq_func="gp_hedge",
                  acq_optimizer="auto",
                  random_state=None,
                  model_queue_size=None,
                  acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
-
+        self.specs = {"args": copy.copy(inspect.currentframe().f_locals),
+                      "function": "Optimizer"}
         self.rng = check_random_state(random_state)
 
         # Configure acquisition function
@@ -206,7 +218,8 @@ class Optimizer(object):
         if isinstance(base_estimator, str):
             base_estimator = cook_estimator(
                 base_estimator, space=dimensions,
-                random_state=self.rng.randint(0, np.iinfo(np.int32).max))
+                random_state=self.rng.randint(0, np.iinfo(np.int32).max),
+                n_jobs=n_jobs)
 
         # check if regressor
         if not is_regressor(base_estimator) and base_estimator is not None:
@@ -247,8 +260,7 @@ class Optimizer(object):
         self.n_points = acq_optimizer_kwargs.get("n_points", 10000)
         self.n_restarts_optimizer = acq_optimizer_kwargs.get(
             "n_restarts_optimizer", 5)
-        n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
-        self.n_jobs = n_jobs
+        self.n_jobs = acq_optimizer_kwargs.get("n_jobs", 1)
         self.acq_optimizer_kwargs = acq_optimizer_kwargs
 
         # Configure search space
@@ -288,7 +300,6 @@ class Optimizer(object):
         self.yi = []
 
         # Initialize cache for `ask` method responses
-
         # This ensures that multiple calls to `ask` with n_points set
         # return same sets of points. Reset to {} at every call to `tell`.
         self.cache_ = {}
@@ -316,7 +327,6 @@ class Optimizer(object):
         optimizer._initial_samples = self._initial_samples
         if hasattr(self, "gains_"):
             optimizer.gains_ = np.copy(self.gains_)
-
         if self.Xi:
             optimizer._tell(self.Xi, self.yi)
 
@@ -325,7 +335,7 @@ class Optimizer(object):
     def ask(self, n_points=None, strategy="cl_min"):
         """Query point or multiple points at which objective should be evaluated.
 
-        n_points : int or None, default=None
+        n_points : int or None, default: None
             Number of points returned by the ask method.
             If the value is None, a single point to evaluate is returned.
             Otherwise a list of points to evaluate is returned of size
@@ -333,7 +343,7 @@ class Optimizer(object):
             parallel, and thus obtain more objective function evaluations per
             unit of time.
 
-        strategy : string, default="cl_min"
+        strategy : string, default: "cl_min"
             Method to use to sample multiple points (see also `n_points`
             description). This parameter is ignored if n_points = None.
             Supported options are `"cl_min"`, `"cl_mean"` or `"cl_max"`.
@@ -464,7 +474,7 @@ class Optimizer(object):
         y : scalar or list
             Value of objective at `x`.
 
-        fit : bool, default=True
+        fit : bool, default: True
             Fit a model to observed evaluations of the objective. A model will
             only be fitted after `n_initial_points` points have been told to
             the optimizer irrespective of the value of `fit`.
@@ -598,8 +608,11 @@ class Optimizer(object):
                 next_x.reshape((1, -1)))[0]
 
         # Pack results
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        result = create_result(self.Xi, self.yi, self.space, self.rng,
+                               models=self.models)
+
+        result.specs = self.specs
+        return result
 
     def _check_y_is_valid(self, x, y):
         """Check if the shape and types of x and y are consistent."""
@@ -632,8 +645,10 @@ class Optimizer(object):
             x = self.ask()
             self.tell(x, func(x))
 
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        result = create_result(self.Xi, self.yi, self.space, self.rng,
+                               models=self.models)
+        result.specs = self.specs
+        return result
 
     def update_next(self):
         """Updates the value returned by opt.ask(). Useful if a parameter
@@ -655,5 +670,7 @@ class Optimizer(object):
             OptimizeResult instance with the required information.
 
         """
-        return create_result(self.Xi, self.yi, self.space, self.rng,
-                             models=self.models)
+        result = create_result(self.Xi, self.yi, self.space, self.rng,
+                               models=self.models)
+        result.specs = self.specs
+        return result

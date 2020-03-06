@@ -188,9 +188,14 @@ details.
    :template: function.rst
 
     plots.partial_dependence
+    plots.partial_dependence_1D
+    plots.partial_dependence_2D
     plots.plot_convergence
     plots.plot_evaluations
+    plots.plot_gaussian_process
     plots.plot_objective
+    plots.plot_objective_2D
+    plots.plot_histogram
     plots.plot_regret
 
 .. _utils_ref:

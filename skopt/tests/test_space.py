@@ -368,6 +368,17 @@ def test_space_from_space():
 
 
 @pytest.mark.fast_test
+def test_constant_property():
+    space = Space([(0.0, 1.0), (1,),
+                   ("a", "b", "c"), (1.0, 5.0, "log-uniform"), ("e",)])
+    assert space.n_constant_dimensions == 2
+    for i in [1, 4]:
+        assert space.dimensions[i].is_constant
+    for i in [0, 2, 3]:
+        assert not space.dimensions[i].is_constant
+
+
+@pytest.mark.fast_test
 def test_set_get_transformer():
     # can you pass a Space instance to the Space constructor?
     space = Space([(0.0, 1.0), (-5, 5),
@@ -668,11 +679,30 @@ def test_dimension_bounds(dimension, bounds):
 
 
 @pytest.mark.parametrize("dimension, name",
-                         [(Real(1, 2, name="learning rate"), "learning rate"),
-                          (Integer(1, 100, name="no of trees"), "no of trees"),
+                         [(Real(1, 2, name="learning_rate"), "learning_rate"),
+                          (Integer(1, 100, name="n_trees"), "n_trees"),
                           (Categorical(["red, blue"], name="colors"), "colors")])
 def test_dimension_name(dimension, name):
     assert dimension.name == name
+
+
+def test_dimension_name():
+    notnames = [1, 1., True]
+    for n in notnames:
+        with pytest.raises(ValueError) as exc:
+            real = Real(1, 2, name=n)
+            assert("Dimension's name must be either string or"
+                   "None." == exc.value.args[0])
+    s = Space([Real(1, 2, name="a"),
+               Integer(1, 100, name="b"),
+               Categorical(["red, blue"], name="c")])
+    assert s["a"] == (0, s.dimensions[0])
+    assert s["a", "c"] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[["a", "c"]] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[("a", "c")] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[0] == (0, s.dimensions[0])
+    assert s[0, "c"] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
+    assert s[0, 2] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
 
 
 @pytest.mark.parametrize("dimension",

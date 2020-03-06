@@ -42,7 +42,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
         with the named arguments. See :func:`skopt.utils.use_named_args`
-         for an example.
+        for an example.
 
     dimensions : list, shape (n_dims,)
         List of search space dimensions.
@@ -56,10 +56,10 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-         NOTE: The upper and lower bounds are inclusive for `Integer`
-         dimensions.
+         .. note:: The upper and lower bounds are inclusive for `Integer`
+            dimensions.
 
-    base_estimator : string or `Regressor`, default="ET"
+    base_estimator : string or `Regressor`, default: `"ET"`
         The regressor to use as surrogate model. Can be either
 
         - `"RF"` for random forest regressor
@@ -72,32 +72,33 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         a regressor which returns the mean and standard deviation when
         making predictions.
 
-    n_calls : int, default=100
+    n_calls : int, default: 100
         Number of calls to `func`.
 
-    n_random_starts : int, default=10
+    n_random_starts : int, default: None
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
-        .. deprecated:: 0.9
+
+        .. deprecated:: 0.8
             use `n_initial_points` instead.
 
-    n_initial_points : int, default=10
+    n_initial_points : int, default: 10
         Number of evaluations of `func` with initialization points
         before approximating it with `base_estimator`. Initial point
         generator can be changed by setting `initial_point_generator`.
 
     initial_point_generator : str, InitialPointGenerator instance, \
-            default='random'
+            default: `"random"`
         Sets a initial points generator. Can be either
 
-        - "random" for uniform random numbers,
-        - "sobol" for a Sobol sequence,
-        - "halton" for a Halton sequence,
-        - "hammersly" for a Hammersly sequence,
-        - "lhs" for a latin hypercube sequence,
-        - "grid" for a uniform grid sequence
+        - `"random"` for uniform random numbers,
+        - `"sobol"` for a Sobol sequence,
+        - `"halton"` for a Halton sequence,
+        - `"hammersly"` for a Hammersly sequence,
+        - `"lhs"` for a latin hypercube sequence,
+        - `"grid"` for a uniform grid sequence
 
-    acq_func : string, default="LCB"
+    acq_func : string, default: `"LCB"`
         Function to minimize over the forest posterior. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -133,31 +134,31 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         Set random state to something other than None for reproducible
         results.
 
-    verbose : boolean, default=False
+    verbose : boolean, default: False
         Control the verbosity. It is advised to set the verbosity to True
         for long optimization runs.
 
     callback : callable, optional
         If provided, then `callback(res)` is called after call to func.
 
-    n_points : int, default=10000
+    n_points : int, default: 10000
         Number of points to sample when minimizing the acquisition function.
 
-    xi : float, default=0.01
+    xi : float, default: 0.01
         Controls how much improvement one wants over the previous best
         values. Used when the acquisition is either `"EI"` or `"PI"`.
 
-    kappa : float, default=1.96
+    kappa : float, default: 1.96
         Controls how much of the variance in the predicted values should be
         taken into account. If set to be very high, then we are favouring
         exploration over exploitation and vice versa.
         Used when the acquisition is `"LCB"`.
 
-    n_jobs : int, default=1
+    n_jobs : int, default: 1
         The number of jobs to run in parallel for `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
-    model_queue_size : int or None, default=None
+    model_queue_size : int or None, default: None
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
@@ -168,25 +169,19 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
         Important attributes are:
 
         - `x` [list]: location of the minimum.
-
         - `fun` [float]: function value at the minimum.
-
         - `models`: surrogate models used for each iteration.
-
         - `x_iters` [list of lists]: location of function evaluation for each
-           iteration.
-
+          iteration.
         - `func_vals` [array]: function value for each iteration.
-
         - `space` [Space]: the optimization space.
-
         - `specs` [dict]`: the call specifications.
 
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
 
     .. seealso:: functions :class:`skopt.gp_minimize`,
-        :class:`skopt.dummy_minimize`
+        :class:`skopt.dummy_minimize`, :class:`skopt.gbrt_minimize`
     """
     return base_minimize(func, dimensions, base_estimator,
                          n_calls=n_calls, n_points=n_points,
@@ -194,6 +189,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
                          n_initial_points=n_initial_points,
                          initial_point_generator=initial_point_generator,
                          x0=x0, y0=y0, random_state=random_state,
+                         n_jobs=n_jobs,
                          acq_func=acq_func,
                          xi=xi, kappa=kappa, verbose=verbose,
                          callback=callback, acq_optimizer="sampling",
