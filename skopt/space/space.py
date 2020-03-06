@@ -24,6 +24,22 @@ class _Ellipsis:
         return '...'
 
 
+def _transpose_list_array(x):
+    """Transposes a list matrix
+    """
+
+    n_dims = len(x)
+    assert n_dims > 0
+    n_samples = len(x[0])
+    rows = [None] * n_samples
+    for i in range(n_samples):
+        r = [None] * n_dims
+        for j in range(n_dims):
+            r[j] = x[j][i]
+        rows[i] = r
+    return rows
+
+
 def check_dimension(dimension, transform=None):
     """Turn a provided dimension description into a dimension object.
 
@@ -506,6 +522,8 @@ class Integer(Dimension):
         inv_transform = super(Integer, self).inverse_transform(Xt)
         if isinstance(inv_transform, list):
             inv_transform = np.array(inv_transform)
+        inv_transform = np.clip(inv_transform,
+                                self.low, self.high)
         if self.dtype == int or self.dtype == 'int':
             # necessary, otherwise the type is converted to a numpy type
             return getattr(np.round(inv_transform).astype(self.dtype),
@@ -529,7 +547,7 @@ class Integer(Dimension):
     @property
     def transformed_bounds(self):
         if self.transform_ == "normalize":
-            return 0, 1
+            return 0., 1.
         else:
             return (self.low, self.high)
 
@@ -563,6 +581,7 @@ class Categorical(Dimension):
         are equally likely.
 
     transform : "onehot", "string", "identity", "label", default="onehot"
+
         - "identity", the transformed space is the same as the original
           space.
         - "string",  the transformed space is a string encoded
@@ -621,7 +640,7 @@ class Categorical(Dimension):
         elif transform == "normalize":
             self.transformer = Pipeline(
                 [LabelEncoder(list(self.categories)),
-                 Normalize(0, len(self.categories) - 1)])
+                 Normalize(0, len(self.categories) - 1, is_int=True)])
         else:
             self.transformer = Identity()
             self.transformer.fit(self.categories)
@@ -697,7 +716,7 @@ class Categorical(Dimension):
     @property
     def transformed_bounds(self):
         if self.transformed_size == 1:
-            return (0.0, 1.0)
+            return 0.0, 1.0
         else:
             return [(0.0, 1.0) for i in range(self.transformed_size)]
 
@@ -872,22 +891,10 @@ class Space(object):
         columns = []
 
         for dim in self.dimensions:
-            if sp_version < (0, 16):
-                columns.append(dim.rvs(n_samples=n_samples))
-            else:
-                columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
+            columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
 
         # Transpose
-        rows = []
-
-        for i in range(n_samples):
-            r = []
-            for j in range(self.n_dims):
-                r.append(columns[j][i])
-
-            rows.append(r)
-
-        return rows
+        return _transpose_list_array(columns)
 
     def set_transformer(self, transform):
         """Sets the transformer of all dimension objects to `transform`
@@ -924,10 +931,7 @@ class Space(object):
 
     def get_transformer(self):
         """Returns all transformers as list"""
-        transformer = []
-        for j in range(self.n_dims):
-            transformer.append(self.dimensions[j].transform_)
-        return transformer
+        return [self.dimensions[j].transform_ for j in range(self.n_dims)]
 
     def transform(self, X):
         """Transform samples from the original space into a warped space.
@@ -980,7 +984,7 @@ class Space(object):
         # Inverse transform
         columns = []
         start = 0
-
+        Xt = np.asarray(Xt)
         for j in range(self.n_dims):
             dim = self.dimensions[j]
             offset = dim.transformed_size
@@ -994,16 +998,7 @@ class Space(object):
             start += offset
 
         # Transpose
-        rows = []
-
-        for i in range(len(Xt)):
-            r = []
-            for j in range(self.n_dims):
-                r.append(columns[j][i])
-
-            rows.append(r)
-
-        return rows
+        return _transpose_list_array(columns)
 
     @property
     def n_dims(self):

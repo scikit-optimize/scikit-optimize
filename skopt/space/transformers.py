@@ -238,6 +238,7 @@ class Normalize(Transformer):
         self.low = float(low)
         self.high = float(high)
         self.is_int = is_int
+        self._eps = 1e-8
 
     def transform(self, X):
         X = np.asarray(X)
@@ -249,10 +250,10 @@ class Normalize(Transformer):
                 raise ValueError("All integer values should"
                                  "be greater than %f" % self.low)
         else:
-            if np.any(X > self.high + 1e-8):
+            if np.any(X > self.high + self._eps):
                 raise ValueError("All values should"
                                  "be less than %f" % self.high)
-            if np.any(X < self.low - 1e-8):
+            if np.any(X < self.low - self._eps):
                 raise ValueError("All values should"
                                  "be greater than %f" % self.low)
         if (self.high - self.low) == 0.:
@@ -265,9 +266,9 @@ class Normalize(Transformer):
 
     def inverse_transform(self, X):
         X = np.asarray(X)
-        if np.any(X > 1.0):
+        if np.any(X > 1.0 + self._eps):
             raise ValueError("All values should be less than 1.0")
-        if np.any(X < 0.0):
+        if np.any(X < 0.0 - self._eps):
             raise ValueError("All values should be greater than 0.0")
         X_orig = X * (self.high - self.low) + self.low
         if self.is_int:
