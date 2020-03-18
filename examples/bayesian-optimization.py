@@ -38,9 +38,9 @@ For :math:`t=1:T`:
    probabilistic model for the objective :math:`f`. Integrate out all
    possible true functions, using Gaussian process regression.
 
-2. optimize a cheap acquisition/utility function $u$ based on the posterior
+2. optimize a cheap acquisition/utility function :math:`u` based on the posterior
    distribution for sampling the next point.
-   .. math::`x_{t+1} = arg \\min_x u(x)`
+   :math:`x_{t+1} = arg \\min_x u(x)`
    Exploit uncertainty to balance exploration against exploitation.
 
 3. Sample the next observation :math:`y_{t+1}` at :math:`x_{t+1}`.
