@@ -203,12 +203,8 @@ class BenchmarkFunction(object):
 
     @property
     def minimum(self):
-        noise_level = self.noise_level
-        self.noise_level = 0
-        ret = np.asarray([self.__call__(xstar)
-                          for xstar in self.minimum_pos])
-        self.noise_level = noise_level
-        return ret
+        return np.asarray([self.__call__(xstar)
+                           for xstar in self.minimum_pos])
 
     @property
     def dimensions(self):
@@ -259,14 +255,8 @@ class Branin(BenchmarkFunction):
         self.s = 10
         self.t = 1. / (8 * np.pi)
         self.scaled = scaled
-        if scaled:
-            self.dim = [(0., 1.), (0., 1.)]
-            self.min_loc = np.array([((-np.pi + 5) / 15., 12.275 / 15.),
-                                     ((np.pi + 5.) / 15., 2.275 / 15.),
-                                     ((9.42478 + 5.) / 15., 2.475 / 15.)])
-        else:
-            self.dim = [(-5., 10.), (0., 15.)]
-            self.min_loc = np.array([(-np.pi, 12.275), (np.pi, 2.275), (9.42478, 2.475)])
+        self.min_loc = np.array([(-np.pi, 12.275), (np.pi, 2.275), (9.42478, 2.475)])
+        self.dim = [(-5., 10.), (0., 15.)]
 
     def __call__(self, x):
         x = np.array(x)
@@ -274,9 +264,8 @@ class Branin(BenchmarkFunction):
         if self.scaled:
             x1 = 15 * x[0] - 5
             x2 = 15 * x[1]
-            term1 = x2 - 5.1 * x1 ** 2 / (4 * np.pi ** 2) + 5 * x1 / np.pi - 6
-            term2 = (10 - 10 / (8 * np.pi)) * np.cos(x1)
-            return 1 / 51.95 * (term1 ** 2 + term2 - 44.91) + self.rng.randn() * self.noise_level
+            return 1 / 51.95 * (self.a * (x2 - self.b * x1 ** 2 + self.c * x1 - self.r) ** 2 +
+                   self.s * (1 - self.t) * np.cos(x1) + self.s - 44.91) + self.rng.randn() * self.noise_level
         else:
             return (self.a * (x[1] - self.b * x[0] ** 2 + self.c * x[0] - self.r) ** 2 +
                     self.s * (1 - self.t) * np.cos(x[0]) + self.s) + self.rng.randn() * self.noise_level

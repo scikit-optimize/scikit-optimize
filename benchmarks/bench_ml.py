@@ -41,8 +41,13 @@ import json
 import sys
 import math
 
-from urllib.error import HTTPError
-from urllib import urlopen
+if sys.version_info.major == 2:
+    # Python 2
+    from urllib2 import HTTPError
+    from urllib import urlopen
+else:
+    from urllib.error import HTTPError
+    from urllib import urlopen
 
 
 MODEL_PARAMETERS = "model parameters"
@@ -318,7 +323,7 @@ def evaluate_optimizer(surrogate_minimize, model, dataset, n_calls, random_state
     Parameters
     ----------
     * `surrogate_minimize`:
-        Minimization function from skopt (eg gp_minimize) that is used
+        Minimization function from ProcessOptimizer (eg gp_minimize) that is used
         to minimize the objective.
     * `model`: scikit-learn estimator.
         sklearn estimator used for parameter tuning.
