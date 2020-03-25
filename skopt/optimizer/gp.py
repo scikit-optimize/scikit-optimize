@@ -135,7 +135,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
           that of `"EIps"`
 
     acq_optimizer : string, `"sampling"` or `"lbfgs"`, default: `"lbfgs"`
-        Method to minimize the acquistion function. The fit model
+        Method to minimize the acquisition function. The fit model
         is updated with the optimal value obtained by optimizing `acq_func`
         with `acq_optimizer`.
 
