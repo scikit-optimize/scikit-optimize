@@ -429,8 +429,9 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
 
             else:  # diagonal plots
                 ax_.set_ylim(*diagonal_ylim)
-                low, high = dim_i.bounds
-                ax_.set_xlim(low, high)
+                if not iscat[i]:
+                    low, high = dim_i.bounds
+                    ax_.set_xlim(low, high)
                 ax_.yaxis.tick_right()
                 ax_.yaxis.set_label_position('right')
                 ax_.yaxis.set_ticks_position('both')
