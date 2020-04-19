@@ -717,7 +717,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                 else:
                     ax_ = ax
                 ax_.plot(xi, yi)
-                ax_.axvline(minimum[i], linestyle="--", color="r", lw=1)
+                ax_.axvline(minimum[index], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
