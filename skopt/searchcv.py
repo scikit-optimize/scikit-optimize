@@ -13,13 +13,17 @@ from sklearn.base import is_classifier, clone
 from joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
 try:
     from sklearn.metrics import check_scoring
 except ImportError:
     from sklearn.metrics.scorer import check_scoring
 
+try:
+    from sklearn.utils.fixes import MaskedArray
+except ImportError:
+    from numpy.ma import MaskedArray
+    
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
