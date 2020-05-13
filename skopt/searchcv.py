@@ -23,7 +23,7 @@ try:
     from sklearn.utils.fixes import MaskedArray
 except ImportError:
     from numpy.ma import MaskedArray
-    
+
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
