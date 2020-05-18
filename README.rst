@@ -37,8 +37,7 @@ Important links
 Install
 -------
 
-The latest released version of scikit-optimize is v0.7.2, which you can install
-with:
+You can install the latest release with:
 ::
 
     pip install scikit-optimize
@@ -105,7 +104,7 @@ Development
 
 The library is still experimental and under heavy development. Checkout
 the `next
-milestone <https://github.com/scikit-optimize/scikit-optimize/milestone/6>`__
+milestone <https://github.com/scikit-optimize/scikit-optimize/milestones>`__
 for the plans for the next release or look at some `easy
 issues <https://github.com/scikit-optimize/scikit-optimize/issues?q=is%3Aissue+is%3Aopen+label%3AEasy>`__
 to get started contributing.
