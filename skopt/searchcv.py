@@ -14,6 +14,7 @@ from joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
+
 from sklearn.utils.validation import indexable, check_is_fitted
 try:
     from sklearn.metrics import check_scoring
