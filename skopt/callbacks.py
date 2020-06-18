@@ -221,7 +221,7 @@ class DeltaYStopper(EarlyStopper):
 
 class HollowIterationsStopper(EarlyStopper):
     """
-    Stop the optimization if the improvement over the last n_iterations is too small.
+    Stop if the improvement over the last n iterations is below a threshold.
     """
 
     def __init__(self, n_iterations, threshold=0):
