@@ -181,7 +181,9 @@ def test_searchcv_runs_multiple_subspaces():
     opt.fit(X_train, y_train)
 
     # test if all subspaces are explored
-    total_evaluations = len(opt.cv_results_['mean_test_score'])
+    # Len returns the length of the masked array, while count actually considers how many parts of the masked
+    # array are filled in
+    total_evaluations = opt.cv_results_['mean_test_score'].count()
     assert total_evaluations == 1+1+2, "Not all spaces were explored!"
     assert len(opt.optimizer_results_) == 3
     assert isinstance(opt.optimizer_results_[0].x[0], LinearSVC)
@@ -245,8 +247,8 @@ def test_searchcv_sklearn_compatibility():
     opt.fit(X_train, y_train)
     opt_clone.fit(X_train, y_train)
 
-    total_evaluations = len(opt.cv_results_['mean_test_score'])
-    total_evaluations_clone = len(opt_clone.cv_results_['mean_test_score'])
+    total_evaluations = opt.cv_results_['mean_test_score'].count()
+    total_evaluations_clone = opt_clone.cv_results_['mean_test_score'].count()
 
     # test if expected number of subspaces is explored
     assert total_evaluations == 1

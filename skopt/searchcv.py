@@ -601,10 +601,13 @@ class BayesSearchCV(BaseSearchCV):
                          method='min'), dtype=np.int32))
         self.cv_results_ = all_cv_results
 
-        self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
+        # MaskedArray provides its own argmax, so we use it rather than np.argmax. Additionally, we need to define
+        # fill_value behavior. The cv_results_ is a default dictionary for many kinds of masked arrays, so we give
+        # it a type of python object. There's no defined way to get the max of objects, so we have to coerce all
+        # unfilled values on mean_test_score to a very small float, in this case, -np.inf, to find the max so far.
+        self.best_index_ = self.cv_results_['mean_test_score'].argmax(fill_value=-np.inf)
 
         # feed the point and objective back into optimizer
-
         end_results = self._cur_total_iter + n_points
         begin_results = self._cur_total_iter
         mean_test_score = self.cv_results_['mean_test_score']
