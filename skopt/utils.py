@@ -20,7 +20,6 @@ from .sampler import Sobol, Lhs, Hammersly, Halton, Grid
 from .sampler import InitialPointGenerator
 from .space import Space, Categorical, Integer, Real, Dimension
 
-
 __all__ = (
     "load",
     "dump",
@@ -593,10 +592,10 @@ def normalize_dimensions(dimensions):
     space = Space(dimensions)
     transformed_dimensions = []
     for dimension in space.dimensions:
-		# check if dimension is of a Dimension instance
+        # check if dimension is of a Dimension instance
         if isinstance(dimension, Dimension):
-			# Change the transformer to normalize
-			# and add it to the new transformed dimensions
+            # Change the transformer to normalize
+            # and add it to the new transformed dimensions
             dimension.set_transformer("normalize")
             transformed_dimensions.append(
                 dimension
