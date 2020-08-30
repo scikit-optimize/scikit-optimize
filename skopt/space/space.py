@@ -277,6 +277,16 @@ class Real(Dimension):
         if transform is None:
             transform = "identity"
         self.set_transformer(transform)
+        
+        if prior not in ("uniform", "log-uniform"):
+            raise ValueError("prior must be `uniform` or `log-uniform`"
+                             ", got {}".format(prior))
+            
+        if transform not in ("identity", "normalize"):
+            raise ValueError("prior must be `identity` or `normalize`"
+                             ", got {}".format(transform))
+            
+        
 
     def set_transformer(self, transform="identitiy"):
         """Define rvs and transformer spaces.
@@ -465,6 +475,14 @@ class Integer(Dimension):
         if transform is None:
             transform = "identity"
         self.set_transformer(transform)
+        
+        if prior not in ("uniform", "log-uniform"):
+            raise ValueError("prior must be `uniform` or `log-uniform`"
+                             ", got {}".format(prior))
+            
+        if transform not in ("identity", "normalize"):
+            raise ValueError("prior must be `identity` or `normalize`"
+                             ", got {}".format(transform))
 
     def set_transformer(self, transform="identitiy"):
         """Define _rvs and transformer spaces.
@@ -613,6 +631,11 @@ class Categorical(Dimension):
         else:
             self.prior_ = prior
         self.set_transformer(transform)
+            
+        if transform not in ("identity", "string", "label", "onehot"):
+            raise ValueError("prior must be `identity`, `string`, "
+                             "`label`, or `onehot`"
+                             ", got {}".format(transform))
 
     def set_transformer(self, transform="onehot"):
         """Define _rvs and transformer spaces.
