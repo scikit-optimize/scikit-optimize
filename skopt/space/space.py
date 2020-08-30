@@ -273,7 +273,7 @@ class Real(Dimension):
                 not in [float, np.float, np.float16, np.float32, np.float64]:
             raise ValueError("dtype must be float, np.float"
                              " got {}".format(self.dtype))
-            
+
         if prior not in ("uniform", "log-uniform"):
             raise ValueError("prior must be `uniform` or `log-uniform`"
                              ", got {}".format(prior))
@@ -465,7 +465,7 @@ class Integer(Dimension):
                              "'np.int32', 'np.int64', 'np.uint8',"
                              "'np.uint16', 'np.uint32', or"
                              "'np.uint64', but got {}".format(self.dtype))
-            
+
         if prior not in ("uniform", "log-uniform"):
             raise ValueError("prior must be `uniform` or `log-uniform`"
                              ", got {}".format(prior))
