@@ -281,7 +281,7 @@ class Real(Dimension):
         if transform is None:
             transform = "identity"
         self.set_transformer(transform)
-        
+
     def set_transformer(self, transform="identitiy"):
         """Define rvs and transformer spaces.
 
