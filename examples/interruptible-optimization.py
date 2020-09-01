@@ -63,14 +63,15 @@ else:
 
 checkpoint_saver = CheckpointSaver("./checkpoint.pkl", compress=9) # keyword arguments will be passed to `skopt.dump`
 
-gp_minimize(obj_fun,                      # the function to minimize
-            [(-20.0, 20.0)],              # the bounds on each dimension of x
-            x0=[-20.],                    # the starting point
-            acq_func="LCB",               # the acquisition function (optional)
-            n_calls=10,                   # the number of evaluations of f including at x0
-            n_random_starts=3,            # the number of random initial points
-            callback=[checkpoint_saver],  # a list of callbacks including the checkpoint saver
-            random_state=777);
+gp_minimize(obj_fun,            # the function to minimize
+            [(-20.0, 20.0)],    # the bounds on each dimension of x
+            x0=[-20.],          # the starting point
+            acq_func="LCB",     # the acquisition function (optional)
+            n_calls=10,         # number of evaluations of f including at x0
+            n_random_starts=3,  # the number of random initial points
+            callback=[checkpoint_saver],
+            # a list of callbacks including the checkpoint saver
+            random_state=777)
 
 #############################################################################
 # Now let's assume this did not finish at once but took some long time: you
@@ -111,10 +112,10 @@ gp_minimize(obj_fun,            # the function to minimize
             x0=x0,              # already examined values for x
             y0=y0,              # observed values for x0
             acq_func="LCB",     # the acquisition function (optional)
-            n_calls=10,         # the number of evaluations of f including at x0
+            n_calls=10,         # number of evaluations of f including at x0
             n_random_starts=3,  # the number of random initialization points
             callback=[checkpoint_saver],
-            random_state=777);
+            random_state=777)
 
 #############################################################################
 # Possible problems

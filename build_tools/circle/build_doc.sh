@@ -174,6 +174,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib memory_profiler packaging
 
+export MPLBACKEND="agg"
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc
