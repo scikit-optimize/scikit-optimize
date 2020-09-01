@@ -15,15 +15,16 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-import sys
-import os
 import warnings
+import os
 import re
 from packaging.version import parse
 # import pkg_resources
+import sys
 import skopt
-from github_link import make_linkcode_resolve
+
 sys.path.insert(0, os.path.abspath('sphinxext'))
+from github_link import make_linkcode_resolve
 import sphinx_gallery
 
 
