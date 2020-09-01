@@ -60,7 +60,7 @@ res = gp_minimize(obj_fun,            # the function to minimize
                   x0=[0.],            # the starting point
                   acq_func="LCB",     # the acquisition function (optional)
                   n_calls=15,         # the number of evaluations of f including at x0
-                  n_random_starts=0,  # the number of random initialization points
+                  n_random_starts=3,  # the number of random initialization points
                   random_state=777)
 
 #############################################################################

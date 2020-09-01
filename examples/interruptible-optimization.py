@@ -68,7 +68,7 @@ gp_minimize(obj_fun,                       # the function to minimize
               x0=[-20.],                     # the starting point
               acq_func="LCB",              # the acquisition function (optional)
               n_calls=10,                   # the number of evaluations of f including at x0
-              n_random_starts=0,           # the number of random initialization points
+              n_random_starts=3,           # the number of random initialization points
               callback=[checkpoint_saver], # a list of callbacks including the checkpoint saver
               random_state=777);
 
@@ -112,7 +112,7 @@ gp_minimize(obj_fun,            # the function to minimize
               y0=y0,              # observed values for x0
               acq_func="LCB",     # the acquisition function (optional)
               n_calls=10,         # the number of evaluations of f including at x0
-              n_random_starts=0,  # the number of random initialization points
+              n_random_starts=3,  # the number of random initialization points
               callback=[checkpoint_saver],
               random_state=777);
 

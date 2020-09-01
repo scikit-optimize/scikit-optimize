@@ -19,6 +19,9 @@
 import warnings
 import os
 import re
+import matplotlib
+matplotlib.use('Agg')
+import sphinx_gallery
 from packaging.version import parse
 # import pkg_resources
 import sys
@@ -26,7 +29,6 @@ import skopt
 
 sys.path.insert(0, os.path.abspath('sphinxext'))
 from github_link import make_linkcode_resolve
-import sphinx_gallery
 
 #  __version__ = pkg_resources.get_distribution('skopt').version
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
