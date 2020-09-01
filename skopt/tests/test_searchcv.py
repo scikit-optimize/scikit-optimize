@@ -3,7 +3,6 @@ search with interface similar to those of GridSearchCV
 """
 
 import pytest
-import time
 
 from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
@@ -12,7 +11,6 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 from sklearn.base import BaseEstimator
-from joblib import cpu_count
 from scipy.stats import rankdata
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -449,7 +447,7 @@ def test_search_cv_internal_parameter_types():
             return self
 
         def score(self, X, y):
-            return 0.0
+            return np.random.uniform()
 
     # Below is example code that used to not work.
     X, y = make_classification(10, 4)

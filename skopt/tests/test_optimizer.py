@@ -300,7 +300,7 @@ def test_optimizer_base_estimator_string_invalid():
 @pytest.mark.parametrize("base_estimator", ESTIMATOR_STRINGS)
 def test_optimizer_base_estimator_string_smoke(base_estimator):
     opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
-                    n_initial_points=1, acq_func="EI")
+                    n_initial_points=2, acq_func="EI")
     opt.run(func=lambda x: x[0]**2, n_iter=3)
 
 
@@ -322,8 +322,6 @@ def test_defaults_are_equivalent():
         x = opt.ask()
         res_opt = opt.tell(x, branin(x))
 
-
-
     #res_min = forest_minimize(branin, space, n_calls=12, random_state=1)
     res_min = gp_minimize(branin, space, n_calls=12, random_state=1)
 
@@ -344,7 +342,7 @@ def test_dimensions_names():
     space = [Real(0, 1, name='real'),
              Categorical(['a', 'b', 'c'], name='cat'),
              Integer(0, 1, name='int')]
-    opt = Optimizer(space, n_initial_points=1)
+    opt = Optimizer(space, n_initial_points=2)
     # result of the optimizer missing dimension names
     result = opt.tell([(0.5, 'a', 0.5)], [3])
     names = []
