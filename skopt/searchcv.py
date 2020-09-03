@@ -475,8 +475,7 @@ class BayesSearchCV(BaseSearchCV):
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
-        param_results = defaultdict(partial(
-                                            MaskedArray,
+        param_results = defaultdict(partial(np.ma.array,
                                             np.empty(n_candidates,),
                                             mask=True,
                                             dtype=object))

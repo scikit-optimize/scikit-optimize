@@ -26,9 +26,6 @@ from skopt.utils import use_named_args
 from skopt.utils import check_list_types
 from skopt.utils import check_dimension_names
 from skopt.space import Real, Integer, Categorical
-from sklearn.datasets import load_breast_cancer
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import cross_val_score
 
 
 def check_optimization_results_equality(res_1, res_2):
@@ -48,7 +45,7 @@ def test_dump_and_load():
                       x0=[0.],
                       acq_func="LCB",
                       n_calls=2,
-                      n_random_starts=0,
+                      n_random_starts=1,
                       random_state=1)
 
     # Test normal dumping and loading
