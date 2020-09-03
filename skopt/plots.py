@@ -1,3 +1,4 @@
+# -*- encoding: UTF-8 -*-
 """Plotting functions."""
 import sys
 import numpy as np
@@ -1242,7 +1243,7 @@ def plot_histogram(result, dimension_identifier, bins=20, rotate_labels=0,
         # in which case the histogram can be plotted more easily.
         if dimension.prior == 'log-uniform':
             # Map the number of bins to a log-space for the dimension bounds.
-            bins_mapped = np.logspace(*np.log10(dimension.bounds), bins)
+            bins_mapped = np.logspace(np.log10(dimension.bounds), bins)
         else:
             # Use the original number of bins.
             bins_mapped = bins

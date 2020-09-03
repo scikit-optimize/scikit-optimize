@@ -278,7 +278,7 @@ class Real(Dimension):
             transform = "identity"
         self.set_transformer(transform)
 
-    def set_transformer(self, transform="identitiy"):
+    def set_transformer(self, transform="identity"):
         """Define rvs and transformer spaces.
 
         Parameters
@@ -466,7 +466,7 @@ class Integer(Dimension):
             transform = "identity"
         self.set_transformer(transform)
 
-    def set_transformer(self, transform="identitiy"):
+    def set_transformer(self, transform="identity"):
         """Define _rvs and transformer spaces.
 
         Parameters

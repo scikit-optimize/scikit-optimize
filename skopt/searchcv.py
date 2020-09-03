@@ -53,8 +53,7 @@ class BayesSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    search_spaces : dict, list of dict or list of tuple containing
-        (dict, int).
+    search_spaces : dict, list of dict or list of tuple containing (dict, int).
         One of these cases:
         1. dictionary, where keys are parameter names (strings)
         and values are skopt.space.Dimension instances (Real, Integer
