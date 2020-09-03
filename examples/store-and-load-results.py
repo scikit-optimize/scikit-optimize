@@ -31,10 +31,6 @@ import numpy as np
 import os
 import sys
 
-# The followings are hacks to allow sphinx-gallery to run the example.
-sys.path.insert(0, os.getcwd())
-main_dir = os.path.basename(sys.modules['__main__'].__file__)
-IS_RUN_WITH_SPHINX_GALLERY = main_dir != os.getcwd()
 
 #############################################################################
 # Simple example
@@ -46,14 +42,10 @@ IS_RUN_WITH_SPHINX_GALLERY = main_dir != os.getcwd()
 from skopt import gp_minimize
 noise_level = 0.1
 
-if IS_RUN_WITH_SPHINX_GALLERY:
-    # When this example is run with sphinx gallery, it breaks the pickling
-    # capacity for multiprocessing backend so we have to modify the way we
-    # define our functions. This has nothing to do with the example.
-    from utils import obj_fun
-else:
-    def obj_fun(x, noise_level=noise_level):
-        return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) + np.random.randn() * noise_level
+
+def obj_fun(x, noise_level=noise_level):
+    return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) + np.random.randn() \
+        * noise_level
 
 res = gp_minimize(obj_fun,            # the function to minimize
                   [(-2.0, 2.0)],      # the bounds on each dimension of x
