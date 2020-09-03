@@ -1,0 +1,9 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: skopt
+
+.. _changes_0_8:
+
+Version 0.9.0
+=============
+**In Development**
