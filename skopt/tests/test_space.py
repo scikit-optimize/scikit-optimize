@@ -761,11 +761,12 @@ def test_dimension_with_invalid_names(name):
 def test_purely_categorical_space():
     # Test reproduces the bug in #908, make sure it doesn't come back
     dims = [Categorical(['a', 'b', 'c']), Categorical(['A', 'B', 'C'])]
-    optimizer = Optimizer(dims, n_initial_points=1, random_state=3)
+    optimizer = Optimizer(dims, n_initial_points=2, random_state=3)
 
-    x = optimizer.ask()
-    # before the fix this call raised an exception
-    optimizer.tell(x, 1.)
+    for _ in range(2):
+        x = optimizer.ask()
+        # before the fix this call raised an exception
+        optimizer.tell(x, np.random.uniform())
 
 
 @pytest.mark.fast_test
