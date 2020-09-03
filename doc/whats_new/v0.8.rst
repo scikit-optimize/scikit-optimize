@@ -6,7 +6,7 @@
 
 Version 0.8.0
 =============
-**In Development**
+**September 2020**
 
 :mod:`skopt.Optimizer`
 ----------------------
@@ -31,6 +31,14 @@ Version 0.8.0
   :pr:`835` by :user:`Holger Nahrstaedt <holgern>`
 - |Enhancement| Improve sampler and add grid sampler
   :pr:`851` by :user:`Holger Nahrstaedt <holgern>`
+
+:mod:`skopt.searchcv`
+---------------------
+- |Fix| Fix library for scikit-learn >= 0.23.
+  numpy MaskArray is replaced by numpy.ma.array.
+  y_normalize=False has been added and initial runs
+  has been increased.
+  :pr: `939` by :user:`Lucas Plagwitz <lucasplagwitz>`
 
 :mod:`skopt.space`
 ------------------

@@ -20,7 +20,6 @@ from .sampler import Sobol, Lhs, Hammersly, Halton, Grid
 from .sampler import InitialPointGenerator
 from .space import Space, Categorical, Integer, Real, Dimension
 
-
 __all__ = (
     "load",
     "dump",
@@ -370,7 +369,6 @@ def cook_estimator(base_estimator, space=None, **kwargs):
             space = Space(normalize_dimensions(space.dimensions))
             n_dims = space.transformed_n_dims
             is_cat = space.is_categorical
-
         else:
             raise ValueError("Expected a Space instance, not None.")
 
@@ -594,26 +592,14 @@ def normalize_dimensions(dimensions):
     space = Space(dimensions)
     transformed_dimensions = []
     for dimension in space.dimensions:
-        if isinstance(dimension, Categorical):
-            transformed_dimensions.append(Categorical(dimension.categories,
-                                                      dimension.prior,
-                                                      name=dimension.name,
-                                                      transform="normalize"))
-        # To make sure that GP operates in the [0, 1] space
-        elif isinstance(dimension, Real):
+        # check if dimension is of a Dimension instance
+        if isinstance(dimension, Dimension):
+            # Change the transformer to normalize
+            # and add it to the new transformed dimensions
+            dimension.set_transformer("normalize")
             transformed_dimensions.append(
-                Real(dimension.low, dimension.high, dimension.prior,
-                     name=dimension.name,
-                     transform="normalize",
-                     dtype=dimension.dtype)
-                )
-        elif isinstance(dimension, Integer):
-            transformed_dimensions.append(
-                Integer(dimension.low, dimension.high,
-                        name=dimension.name,
-                        transform="normalize",
-                        dtype=dimension.dtype)
-                )
+                dimension
+            )
         else:
             raise RuntimeError("Unknown dimension type "
                                "(%s)" % type(dimension))
@@ -727,10 +713,10 @@ def use_named_args(dimensions):
     ...                          n_calls=20, base_estimator="ET",
     ...                          random_state=4)
     >>>
-    >>> # Print the best-found results.
-    >>> print("Best fitness:", result.fun)
+    >>> # Print the best-found results in same format as the expected result.
+    >>> print("Best fitness: " + str(result.fun))
     Best fitness: 0.1948080835239698
-    >>> print("Best parameters:", result.x)
+    >>> print("Best parameters: {}".format(result.x))
     Best parameters: [0.44134853091052617, 0.06570954323368307, 0.17586123323419825]
 
     Parameters
