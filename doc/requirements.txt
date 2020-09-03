@@ -4,5 +4,5 @@ matplotlib
 pandas
 ipywidgets
 sphinx
-sphinx-gallery
+sphinx-gallery>=0.6
 numpydoc
