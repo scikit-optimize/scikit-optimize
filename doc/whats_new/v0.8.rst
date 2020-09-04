@@ -4,6 +4,13 @@
 
 .. _changes_0_8:
 
+Version 0.8.1
+=============
+**September 2020**
+
+- |Fix| GaussianProcessRegressor on sklearn 0.23 normalizes the
+  variance to 1, which needs to reverted on predict.
+
 Version 0.8.0
 =============
 **September 2020**

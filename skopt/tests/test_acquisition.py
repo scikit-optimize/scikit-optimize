@@ -120,6 +120,19 @@ def test_acquisition_gradient():
 
 
 @pytest.mark.fast_test
+def test_acquisition_gradient_cookbook():
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 5)
+    y = rng.randn(20)
+    X_new = rng.randn(5)
+    gpr = cook_estimator("GP", Space(((-5.0, 5.0),)), random_state=0)
+    gpr.fit(X, y)
+
+    for acq_func in ["LCB", "PI", "EI"]:
+        check_gradient_correctness(X_new, gpr, acq_func, np.max(y))
+
+
+@pytest.mark.fast_test
 @pytest.mark.parametrize("acq_func", ["EIps", "PIps"])
 def test_acquisition_per_second(acq_func):
     X = np.reshape(np.linspace(4.0, 8.0, 10), (-1, 1))
@@ -160,4 +173,5 @@ def test_acquisition_per_second_gradient(acq_func):
         gpr = cook_estimator("GP", Space(((-5.0, 5.0),)), random_state=0)
         mor = MultiOutputRegressor(gpr)
         mor.fit(X, y)
+        
         check_gradient_correctness(X_new, mor, acq_func, 1.5)
