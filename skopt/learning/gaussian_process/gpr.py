@@ -224,10 +224,15 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         self.K_inv_ = L_inv.dot(L_inv.T)
 
         # Fix deprecation warning #462
-        if int(sklearn.__version__[2:4]) >= 19:
+        if int(sklearn.__version__[2:4]) >= 23:
+            self.y_train_std_ = self._y_train_std
             self.y_train_mean_ = self._y_train_mean
+        elif int(sklearn.__version__[2:4]) >= 19:
+            self.y_train_mean_ = self._y_train_mean
+            self.y_train_std_ = 1
         else:
             self.y_train_mean_ = self.y_train_mean
+            self.y_train_std_ = 1
 
         return self
 
@@ -309,11 +314,14 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)    # Line 4 (y_mean = f_star)
-            y_mean = self.y_train_mean_ + y_mean  # undo normal.
+            # undo normalisation
+            y_mean = self.y_train_std_ * y_mean + self.y_train_mean_
 
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)   # Line 6
+                # undo normalisation
+                y_cov = y_cov * self.y_train_std_**2
                 return y_mean, y_cov
 
             elif return_std:
@@ -330,17 +338,22 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
                     warnings.warn("Predicted variances smaller than 0. "
                                   "Setting those variances to 0.")
                     y_var[y_var_negative] = 0.0
+                # undo normalisation
+                y_var = y_var * self.y_train_std_**2
                 y_std = np.sqrt(y_var)
 
             if return_mean_grad:
                 grad = self.kernel_.gradient_x(X[0], self.X_train_)
                 grad_mean = np.dot(grad.T, self.alpha_)
-
+                # undo normalisation
+                grad_mean = grad_mean * self.y_train_std_
                 if return_std_grad:
                     grad_std = np.zeros(X.shape[1])
                     if not np.allclose(y_std, grad_std):
                         grad_std = -np.dot(K_trans,
                                            np.dot(K_inv, grad))[0] / y_std
+                        # undo normalisation
+                        grad_std = grad_std * self.y_train_std_**2
                     return y_mean, y_std, grad_mean, grad_std
 
                 if return_std:
