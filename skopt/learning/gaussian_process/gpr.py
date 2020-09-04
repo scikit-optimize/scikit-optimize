@@ -344,13 +344,16 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
 
             if return_mean_grad:
                 grad = self.kernel_.gradient_x(X[0], self.X_train_)
-                grad_mean = np.dot(grad.T, self.alpha_) * self.y_train_std_
-
+                grad_mean = np.dot(grad.T, self.alpha_)
+                # undo normalisation
+                grad_mean = grad_mean * self.y_train_std_
                 if return_std_grad:
                     grad_std = np.zeros(X.shape[1])
                     if not np.allclose(y_std, grad_std):
                         grad_std = -np.dot(K_trans,
-                                           np.dot(K_inv, grad))[0] / y_std * self.y_train_std_**2
+                                           np.dot(K_inv, grad))[0] / y_std
+                        # undo normalisation
+                        grad_std = grad_std * self.y_train_std_**2
                     return y_mean, y_std, grad_mean, grad_std
 
                 if return_std:

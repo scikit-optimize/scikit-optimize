@@ -173,5 +173,4 @@ def test_acquisition_per_second_gradient(acq_func):
         gpr = cook_estimator("GP", Space(((-5.0, 5.0),)), random_state=0)
         mor = MultiOutputRegressor(gpr)
         mor.fit(X, y)
-        
         check_gradient_correctness(X_new, mor, acq_func, 1.5)
