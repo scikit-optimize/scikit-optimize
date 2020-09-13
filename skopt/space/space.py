@@ -688,7 +688,9 @@ class Categorical(Dimension):
             else:
                 # in case we have any Iterable parameters, we want to
                 # stop numpy from coercing them into an np.array
-                inv_transform_array = np.ndarray(len(inv_transform), dtype=object)
+                inv_transform_array = np.ndarray(
+                    len(inv_transform), dtype=object
+                )
 
                 for i, item in enumerate(inv_transform):
                     inv_transform_array[i] = item

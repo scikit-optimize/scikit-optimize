@@ -571,7 +571,7 @@ class BayesSearchCV(BaseSearchCV):
                 return item
             try:
                 return np.array(item).item()
-            except:
+            except ValueError:
                 return item
         params = [[try_convert_to_np(v) for v in p] for p in params]
 
