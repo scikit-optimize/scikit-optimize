@@ -311,14 +311,14 @@ class BayesSearchCV(BaseSearchCV):
         # in the constructor and be passed in ``fit``.
         self.fit_params = fit_params
 
-        if self.iid != 'deprecated':
+        if iid != 'deprecated':
             warnings.warn(
                 "The parameter 'iid' is deprecated in sklearn 0.22 and will "
                 "be removed in 0.24.", FutureWarning
             )
-            iid = self.iid
+            self.iid = iid
         else:
-            iid = False
+            self.iid = False
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
