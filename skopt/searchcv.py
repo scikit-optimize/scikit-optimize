@@ -313,8 +313,8 @@ class BayesSearchCV(BaseSearchCV):
 
         if self.iid != 'deprecated':
             warnings.warn(
-                "The parameter 'iid' is deprecated in sklearn 0.22 and will be "
-                "removed in 0.24.", FutureWarning
+                "The parameter 'iid' is deprecated in sklearn 0.22 and will "
+                "be removed in 0.24.", FutureWarning
             )
             iid = self.iid
         else:
