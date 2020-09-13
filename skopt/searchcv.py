@@ -21,6 +21,8 @@ try:
 except ImportError:
     from sklearn.metrics.scorer import check_scoring
 
+import warnings
+
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
@@ -115,10 +117,14 @@ class BayesSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=True
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
+    iid : bool, default=False
+        If True, return the average score across folds, weighted by the number
+        of samples in each test set. In this case, the data is assumed to be
+        identically distributed across the folds, and the loss minimized is
+        the total loss per sample, and not the mean loss across the folds.
+
+        .. deprecated:: 0.22
+            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -289,7 +295,7 @@ class BayesSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
-                 n_points=1, iid=True, refit=True, cv=None, verbose=0,
+                 n_points=1, iid='deprecated', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=False):
 
@@ -304,6 +310,15 @@ class BayesSearchCV(BaseSearchCV):
         # To be consistent with sklearn 0.21+, fit_params should be deprecated
         # in the constructor and be passed in ``fit``.
         self.fit_params = fit_params
+
+        if self.iid != 'deprecated':
+            warnings.warn(
+                "The parameter 'iid' is deprecated in sklearn 0.22 and will be "
+                "removed in 0.24.", FutureWarning
+            )
+            iid = self.iid
+        else:
+            iid = False
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
