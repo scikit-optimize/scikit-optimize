@@ -20,7 +20,6 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from scipy.stats import norm
 from .base import InitialPointGenerator
 from ..space import Space
 from sklearn.utils import check_random_state
@@ -167,9 +166,10 @@ class Sobol(InitialPointGenerator):
         #  Check parameters.
         if dim_num < 1 or self.dim_max < dim_num:
             raise ValueError(f'I4_SOBOL - Fatal error!\n'
-                             f' The spatial dimension DIM_NUM should satisfy:\n'
-                             f' 1 <= DIM_NUM <= {self.dim_max}\n'
-                             f' But this input value is DIM_NUM = {dim_num}')
+                             f'  The spatial dimension DIM_NUM should '
+                             f'satisfy:\n'
+                             f'  1 <= DIM_NUM <= {self.dim_max}\n'
+                             f'  But this input value is DIM_NUM = {dim_num}')
 
         #  Initialize the remaining rows of V.
         for i in range(2, dim_num + 1):
@@ -249,7 +249,8 @@ class Sobol(InitialPointGenerator):
                           .format(self.num_generated, n_samples,
                                   total_n_samples))
         if self.skip != 0 and total_n_samples > self.skip:
-            raise ValueError(f"{self.skip} points have been skipped: generating "
+            raise ValueError(f"{self.skip} points have been skipped: "
+                             f"generating "
                              f"{n_samples} more points would cause the "
                              f"sequence to repeat.")
 
