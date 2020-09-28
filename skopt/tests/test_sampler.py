@@ -123,6 +123,8 @@ def test_bit():
 @pytest.mark.fast_test
 def test_sobol():
     sobol = Sobol()
+    x, seed = sobol._sobol(3, 0)
+    assert_array_equal(x, [0., 0., 0.])
     x, seed = sobol._sobol(3, 1)
     assert_array_equal(x, [0.5, 0.5, 0.5])
     x, seed = sobol._sobol(3, 2)
@@ -139,15 +141,16 @@ def test_sobol():
 
 @pytest.mark.fast_test
 def test_generate():
-    sobol = Sobol(min_skip=1, max_skip=1)
-    x = sobol.generate([(0., 1.), ] * 3, 3)
+    sobol = Sobol(randomize=False)
+    x = sobol.generate([(0., 1.), ] * 3, 4)
     x = np.array(x)
-    assert_array_equal(x[0, :], [0.5, 0.5, 0.5])
-    assert_array_equal(x[1, :], [0.75, 0.25, 0.75])
-    assert_array_equal(x[2, :], [0.25, 0.75, 0.25])
+    assert_array_equal(x[0, :], [0., 0., 0.])
+    assert_array_equal(x[1, :], [0.5, 0.5, 0.5])
+    assert_array_equal(x[2, :], [0.75, 0.25, 0.75])
+    assert_array_equal(x[3, :], [0.25, 0.75, 0.25])
 
-    sobol.set_params(max_skip=2)
-    assert sobol.max_skip == 2
+    sobol.set_params(skip=2)
+    assert sobol.skip == 2
     assert isinstance(sobol, InitialPointGenerator)
 
 
