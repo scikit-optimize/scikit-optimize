@@ -52,14 +52,14 @@ def test_plots_work():
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 0,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
-    assert_array_almost_equal(yi, yi_, 3)
+    assert_array_almost_equal(yi, yi_, 2)
 
     xi_ = [0, 1]
     yi_ = [-0.9241087603770617, -0.9240188905968352]
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 4,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
-    assert_array_almost_equal(yi, yi_, 3)
+    assert_array_almost_equal(yi, yi_, 2)
 
     xi_ = [0, 1]
     yi_ = [1., 10.5, 20.]
@@ -70,7 +70,7 @@ def test_plots_work():
                                        samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
     assert_array_almost_equal(yi, yi_)
-    assert_array_almost_equal(zi, zi_, 3)
+    assert_array_almost_equal(zi, zi_, 2)
 
     x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
     x_min2, f_min2 = expected_minimum(res, random_state=1)
