@@ -16,64 +16,91 @@
 """
 
 from __future__ import division
+
+import warnings
+
 import numpy as np
-from scipy.stats import norm
 from .base import InitialPointGenerator
 from ..space import Space
 from sklearn.utils import check_random_state
 
 
 class Sobol(InitialPointGenerator):
-    """Generates a new quasirandom Sobol vector with each call.
-
-    The routine adapts the ideas of Antonov and Saleev.
+    """Generates a new quasirandom Sobol' vector with each call.
 
     Parameters
     ----------
-    min_skip : int
-        minimum skipped seed number. When `min_skip != max_skip`
-        a random number is picked.
-    max_skip : int
-        maximum skipped seed number. When `min_skip != max_skip`
-        a random number is picked.
+    skip : int
+        Skipped seed number.
 
     randomize : bool, default=False
-        When set to True, random shift is applied
+        When set to True, random shift is applied.
+
+    Notes
+    -----
+    Sobol' sequences [1]_ provide :math:`n=2^m` low discrepancy points in
+    :math:`[0,1)^{dim}`. Scrambling them makes them suitable for singular
+    integrands, provides a means of error estimation, and can improve their
+    rate of convergence.
+
+    There are many versions of Sobol' sequences depending on their
+    'direction numbers'. Here, the maximum number of dimension is 40.
+
+    The routine adapts the ideas of Antonov and Saleev [2]_.
+
+    .. warning::
+
+       Sobol' sequences are a quadrature rule and they lose their balance
+       properties if one uses a sample size that is not a power of 2, or skips
+       the first point, or thins the sequence [5]_.
+
+       If :math:`n=2^m` points are not enough then one should take :math:`2^M`
+       points for :math:`M>m`. When scrambling, the number R of independent
+       replicates does not have to be a power of 2.
+
+       Sobol' sequences are generated to some number :math:`B` of bits. Then
+       after :math:`2^B` points have been generated, the sequence will repeat.
+       Currently :math:`B=30`.
 
     References
     ----------
-    Antonov, Saleev,
-    USSR Computational Mathematics and Mathematical Physics,
-    Volume 19, 1980, pages 252 - 256.
+    .. [1] I. M. Sobol. The distribution of points in a cube and the accurate
+       evaluation of integrals. Zh. Vychisl. Mat. i Mat. Phys., 7:784-802,
+       1967.
 
-    Paul Bratley, Bennett Fox,
-    Algorithm 659:
-    Implementing Sobol's Quasirandom Sequence Generator,
-    ACM Transactions on Mathematical Software,
-    Volume 14, Number 1, pages 88-100, 1988.
+    .. [2] Antonov, Saleev,
+       USSR Computational Mathematics and Mathematical Physics,
+       Volume 19, 1980, pages 252 - 256.
 
-    Bennett Fox,
-    Algorithm 647:
-    Implementation and Relative Efficiency of Quasirandom
-    Sequence Generators,
-    ACM Transactions on Mathematical Software,
-    Volume 12, Number 4, pages 362-376, 1986.
+    .. [3] Paul Bratley, Bennett Fox,
+       Algorithm 659:
+       Implementing Sobol's Quasirandom Sequence Generator,
+       ACM Transactions on Mathematical Software,
+       Volume 14, Number 1, pages 88-100, 1988.
 
-    Ilya Sobol,
-    USSR Computational Mathematics and Mathematical Physics,
-    Volume 16, pages 236-242, 1977.
+    .. [4] Bennett Fox,
+       Algorithm 647:
+       Implementation and Relative Efficiency of Quasirandom
+       Sequence Generators,
 
-    Ilya Sobol, Levitan,
-    The Production of Points Uniformly Distributed in a Multidimensional
-    Cube (in Russian),
-    Preprint IPM Akad. Nauk SSSR,
-    Number 40, Moscow 1976.
+    .. [5] Art B. Owen. On dropping the first Sobol' point. arXiv 2008.08051,
+       2020.
+
     """
-    def __init__(self, min_skip=0, max_skip=1000, randomize=False):
+    def __init__(self, skip=0, randomize=True):
 
-        self.min_skip = min_skip
-        self.max_skip = max_skip
+        if not (skip & (skip - 1) == 0):
+            raise ValueError("The balance properties of Sobol' points require"
+                             " skipping a power of 2.")
+        if skip != 0:
+            warnings.warn(f"{skip} points have been skipped: "
+                          f"{skip} points can be generated before the "
+                          f"sequence repeats.")
+        self.skip = skip
+
+        self.num_generated = 0
         self.randomize = randomize
+
         self.dim_max = 40
         self.log_max = 30
         self.atmost = 2 ** self.log_max - 1
@@ -84,7 +111,6 @@ class Sobol(InitialPointGenerator):
         self.seed_save = -1
         self.v = np.zeros((self.dim_max, self.log_max))
         self.dim_num_save = -1
-        self.initialized = 1
 
     def init(self, dim_num):
         self.dim_num_save = dim_num
@@ -139,11 +165,11 @@ class Sobol(InitialPointGenerator):
 
         #  Check parameters.
         if dim_num < 1 or self.dim_max < dim_num:
-            print('I4_SOBOL - Fatal error!')
-            print('  The spatial dimension DIM_NUM should satisfy:')
-            print('    1 <= DIM_NUM <= %d' % self.dim_max)
-            print('  But this input value is DIM_NUM = %d' % dim_num)
-            return
+            raise ValueError(f'I4_SOBOL - Fatal error!\n'
+                             f'  The spatial dimension DIM_NUM should '
+                             f'satisfy:\n'
+                             f'  1 <= DIM_NUM <= {self.dim_max}\n'
+                             f'  But this input value is DIM_NUM = {dim_num}')
 
         #  Initialize the remaining rows of V.
         for i in range(2, dim_num + 1):
@@ -188,7 +214,7 @@ class Sobol(InitialPointGenerator):
         self.lastq = np.zeros(dim_num)
 
     def generate(self, dimensions, n_samples, random_state=None):
-        """Creates samples from Sobol set.
+        """Creates samples from Sobol' set.
 
         Parameters
         ----------
@@ -204,57 +230,75 @@ class Sobol(InitialPointGenerator):
             - an instance of a `Dimension` object (`Real`, `Integer` or
               `Categorical`).
         n_samples : int
-            The order of the Sobol sequence. Defines the number of samples.
+            The order of the Sobol' sequence. Defines the number of samples.
         random_state : int, RandomState instance, or None (default)
             Set random state to something other than None for reproducible
             results.
 
         Returns
         -------
-        np.array, shape=(n_dim, n_samples)
-            Sobol set
+        sample : array_like (n_samples, dim)
+            Sobol' set.
+
         """
+        total_n_samples = self.num_generated + n_samples
+        if not (total_n_samples & (total_n_samples - 1) == 0):
+            warnings.warn("The balance properties of Sobol' points require "
+                          "n to be a power of 2. {0} points have been "
+                          "previously generated, then: n={0}+{1}={2}. "
+                          .format(self.num_generated, n_samples,
+                                  total_n_samples))
+        if self.skip != 0 and total_n_samples > self.skip:
+            raise ValueError(f"{self.skip} points have been skipped: "
+                             f"generating "
+                             f"{n_samples} more points would cause the "
+                             f"sequence to repeat.")
+
         rng = check_random_state(random_state)
         space = Space(dimensions)
         n_dim = space.n_dims
         transformer = space.get_transformer()
         space.set_transformer("normalize")
         r = np.full((n_samples, n_dim), np.nan)
-        if self.min_skip == self.max_skip:
-            seed = self.min_skip
-        else:
-            seed = rng.randint(self.min_skip, self.max_skip)
+
+        seed = self.skip
         for j in range(n_samples):
             r[j, 0:n_dim], seed = self._sobol(n_dim, seed)
+
         if self.randomize:
-            r = space.inverse_transform(_random_shift(r, rng))
+            r = _random_shift(r, rng)
+
         r = space.inverse_transform(r)
         space.set_transformer(transformer)
+
+        self.num_generated += n_samples
+
         return r
 
     def _sobol(self, dim_num, seed):
-        """Generates a new quasirandom Sobol vector with each call.
+        """Generates a new quasirandom Sobol' vector with each call.
 
         Parameters
         ----------
         dim_num : int
-          number of spatial dimensions.
+          Number of spatial dimensions.
           `dim_num` must satisfy 1 <= DIM_NUM <= 40.
 
         seed : int
-          the "seed" for the sequence.
+          the `seed` for the sequence.
           This is essentially the index in the sequence of the quasirandom
-          value to be generated.  On output, SEED has been set to the
-          appropriate next value, usually simply SEED+1.
-          If SEED is less than 0 on input, it is treated as though it were 0.
+          value to be generated. On output, `seed` has been set to the
+          appropriate next value, usually simply `seed`+1.
+          If `seed` is less than 0 on input, it is treated as though it were 0.
           An input value of 0 requests the first (0-th) element of
           the sequence.
 
         Returns
         -------
-        the next quasirandom vector.
-        """
+        vector, seed : np.array (n_dim,), int
+            The next quasirandom vector and the seed of its next vector.
 
+        """
         #  Things to do only if the dimension changed.
         if dim_num != self.dim_num_save:
             self.init(dim_num)
@@ -300,11 +344,10 @@ class Sobol(InitialPointGenerator):
 
         #  Check that the user is not calling too many times!
         if self.maxcol < pos_lo0:
-            print('I4_SOBOL - Fatal error!')
-            print('  Too many calls!')
-            print('  MAXCOL = %d\n' % self.maxcol)
-            print('  L =      %d\n' % pos_lo0)
-            return
+            raise ValueError(f'I4_SOBOL - Fatal error!\n'
+                             f' Too many calls!\n'
+                             f' MAXCOL = {self.maxcol}\n'
+                             f' L =      {pos_lo0}\n')
 
         #  Calculate the new components of QUASI.
         quasi = np.zeros(dim_num)
@@ -320,13 +363,13 @@ class Sobol(InitialPointGenerator):
 
 
 def _bit_hi1(n):
-    """
-    Returns the position of the high 1 bit base 2 in an integer.
+    """Returns the position of the high 1 bit base 2 in an integer.
 
     Parameters
     ----------
     n : int
-        input, should be positive
+        Input, should be positive.
+
     """
     bin_repr = np.binary_repr(n)
     most_left_one = bin_repr.find('1')
@@ -337,13 +380,12 @@ def _bit_hi1(n):
 
 
 def _bit_lo0(n):
-    """
-    Returns the position of the low 0 bit base 2 in an integer.
+    """Returns the position of the low 0 bit base 2 in an integer.
 
     Parameters
     ----------
     n : int
-        input, should be positive
+        Input, should be positive.
 
     """
     bin_repr = np.binary_repr(n)
@@ -354,27 +396,30 @@ def _bit_lo0(n):
 
 
 def _random_shift(dm, random_state=None):
-    """Random shifting of a vector
-    Randomization of the quasi-MC samples can be achieved
-    in the easiest manner by
-    random shift (or the Cranley-Patterson rotation).
-    Refereences
+    """Random shifting of a vector.
+
+    Randomization of the quasi-MC samples can be achieved in the easiest manner
+    by random shift (or the Cranley-Patterson rotation).
+
+    References
     -----------
-    C. Lemieux, "Monte Carlo and Quasi-Monte Carlo Sampling," Springer
-    Series in Statistics 692, Springer Science+Business Media, New York,
-    2009
+    .. [1] C. Lemieux, "Monte Carlo and Quasi-Monte Carlo Sampling," Springer
+       Series in Statistics 692, Springer Science+Business Media, New York,
+       2009
 
     Parameters
     ----------
-    dm : array, shape(n,d)
-        input matrix
+    dm : array, shape(n, d)
+        Input matrix.
     random_state : int, RandomState instance, or None (default)
         Set random state to something other than None for reproducible
         results.
 
     Returns
     -------
-    Randomized Sobol' design matrix
+    dm :  array, shape(n, d)
+        Randomized Sobol' design matrix.
+
     """
     rng = check_random_state(random_state)
     # Generate random shift matrix from uniform distribution

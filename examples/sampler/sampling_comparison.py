@@ -14,7 +14,7 @@ performance of:
 
 * Halton sequence,
 * Hammersly sequence,
-* Sobol sequence and
+* Sobol' sequence and
 * Latin hypercube sampling
 
 as initial points. The purely random point generation is used as
@@ -153,7 +153,7 @@ grid_res = run_measure("grid", n_initial_points)
 plot = plot_convergence([("random", dummy_res),
                         ("lhs", lhs_res),
                         ("lhs_maximin", lhs2_res),
-                        ("sobol", sobol_res),
+                        ("sobol'", sobol_res),
                         ("halton", halton_res),
                         ("hammersly", hammersly_res),
                         ("grid", grid_res)],
