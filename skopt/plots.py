@@ -542,7 +542,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear', dimensions=None, sample_source='random',
                    minimum='result', n_minimum_search=None, plot_dims=None,
-                   show_points=True, cmap='viridis_r'):
+                   ax=None, show_points=True, cmap='viridis_r'):
     """Plot a 2-d matrix with so-called Partial Dependence plots
     of the objective function. This shows the influence of each
     search-space dimension on the objective function.
@@ -711,8 +711,13 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
 
-    fig, ax = plt.subplots(n_dims, n_dims,
-                           figsize=(size * n_dims, size * n_dims))
+    # Handling figure and axis
+    if ax is None:
+        fig, ax = plt.subplots(space.n_dims, space.n_dims,
+                               figsize=(size * space.n_dims, 
+                                        size * space.n_dims))
+    else:
+        fig = plt.gcf()
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
