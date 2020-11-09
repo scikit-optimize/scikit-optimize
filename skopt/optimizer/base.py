@@ -84,7 +84,7 @@ def base_minimize(func, dimensions, base_estimator,
         Sets a initial points generator. Can be either
 
         - `"random"` for uniform random numbers,
-        - `"sobol"` for a Sobol sequence,
+        - `"sobol"` for a Sobol' sequence,
         - `"halton"` for a Halton sequence,
         - `"hammersly"` for a Hammersly sequence,
         - `"lhs"` for a latin hypercube sequence,

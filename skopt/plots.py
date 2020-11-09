@@ -1,3 +1,4 @@
+# -*- encoding: UTF-8 -*-
 """Plotting functions."""
 import sys
 import numpy as np
@@ -429,6 +430,9 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
 
             else:  # diagonal plots
                 ax_.set_ylim(*diagonal_ylim)
+                if not iscat[i]:
+                    low, high = dim_i.bounds
+                    ax_.set_xlim(low, high)
                 ax_.yaxis.tick_right()
                 ax_.yaxis.set_label_position('right')
                 ax_.yaxis.set_ticks_position('both')
@@ -537,7 +541,8 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear', dimensions=None, sample_source='random',
-                   minimum='result', n_minimum_search=None, plot_dims=None, ax=None):
+                   minimum='result', n_minimum_search=None, plot_dims=None, 
+                   ax=None, show_points=True, cmap='viridis_r'):
     """Plot a 2-d matrix with so-called Partial Dependence plots
     of the objective function. This shows the influence of each
     search-space dimension on the objective function.
@@ -586,7 +591,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
     levels : int, default=10
         Number of levels to draw on the contour plot, passed directly
-        to `plt.contour()`.
+        to `plt.contourf()`.
 
     n_points : int, default=40
         Number of points at which to evaluate the partial dependence
@@ -654,6 +659,14 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         `sample_source` and/or `minimum` is set to
         'expected_minimum' or 'expected_minimum_random'.
 
+    show_points: bool, default = True
+        Choose whether to show evaluated points in the
+        contour plots.
+
+    cmap: str or Colormap, default = 'viridis_r'
+        Color map for contour plots. Passed directly to
+        `plt.contourf()`
+
     Returns
     -------
     ax : `Matplotlib.Axes`
@@ -698,10 +711,10 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
 
-    ## Handling figure and axis
+    # Handling figure and axis
     if ax is None:
         fig, ax = plt.subplots(space.n_dims, space.n_dims,
-                            figsize=(size * space.n_dims, size * space.n_dims))
+                               figsize=(size * space.n_dims, size * space.n_dims))
     else:
         fig = plt.gcf()
 
@@ -721,7 +734,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                 else:
                     ax_ = ax
                 ax_.plot(xi, yi)
-                ax_.axvline(minimum[i], linestyle="--", color="r", lw=1)
+                ax_.axvline(minimum[index], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
@@ -732,9 +745,10 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                                                    index1, index2,
                                                    samples, n_points)
                 ax_.contourf(xi, yi, zi, levels,
-                             locator=locator, cmap='viridis_r')
-                ax_.scatter(x_samples[:, index2], x_samples[:, index1],
-                            c='k', s=10, lw=0.)
+                             locator=locator, cmap=cmap)
+                if show_points:
+                    ax_.scatter(x_samples[:, index2], x_samples[:, index1],
+                                c='k', s=10, lw=0.)
                 ax_.scatter(minimum[index2], minimum[index1],
                             c=['r'], s=100, lw=0., marker='*')
     ylabel = "Partial dependence"

@@ -49,7 +49,7 @@ from sklearn.datasets import load_digits
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 
-X, y = load_digits(10, True)
+X, y = load_digits(n_class=10, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=.25, random_state=0)
 
 # log-uniform: understand as search over p = exp(x) by varying x
@@ -88,7 +88,7 @@ from sklearn.svm import LinearSVC, SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 
-X, y = load_digits(10, True)
+X, y = load_digits(n_class=10, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # pipeline class is used as estimator to enable
@@ -163,7 +163,7 @@ from skopt import BayesSearchCV
 from sklearn.datasets import load_iris
 from sklearn.svm import SVC
 
-X, y = load_iris(True)
+X, y = load_iris(return_X_y=True)
 
 searchcv = BayesSearchCV(
     SVC(gamma='scale'),

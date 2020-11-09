@@ -4,7 +4,6 @@ import pytest
 from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
-from numpy.testing import assert_raises
 from numpy.testing import assert_array_almost_equal
 from skopt.space import Integer, Categorical
 from skopt import plots, gp_minimize
@@ -53,14 +52,14 @@ def test_plots_work():
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 0,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
-    assert_array_almost_equal(yi, yi_, 1e-3)
+    assert_array_almost_equal(yi, yi_, 2)
 
     xi_ = [0, 1]
     yi_ = [-0.9241087603770617, -0.9240188905968352]
     xi, yi = partial_dependence_1D(res.space, res.models[-1], 4,
                                    samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
-    assert_array_almost_equal(yi, yi_, 1e-3)
+    assert_array_almost_equal(yi, yi_, 2)
 
     xi_ = [0, 1]
     yi_ = [1., 10.5, 20.]
@@ -71,10 +70,7 @@ def test_plots_work():
                                        samples, n_points=3)
     assert_array_almost_equal(xi, xi_)
     assert_array_almost_equal(yi, yi_)
-    assert_array_almost_equal(zi, zi_, 1e-3)
-
-    x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
-    x_min2, f_min2 = expected_minimum(res, random_state=1)
+    assert_array_almost_equal(zi, zi_, 2)
 
     x_min, f_min = expected_minimum_random_sampling(res, random_state=1)
     x_min2, f_min2 = expected_minimum(res, random_state=1)
@@ -168,10 +164,10 @@ def test_names_dimensions():
                np.random.randn() * noise_level
 
     # Initialize Optimizer
-    opt = Optimizer([(-2.0, 2.0)], n_initial_points=1)
+    opt = Optimizer([(-2.0, 2.0)], n_initial_points=2)
 
     # Optimize
-    for i in range(2):
+    for i in range(3):
         next_x = opt.ask()
         f_val = objective(next_x)
         res = opt.tell(next_x, f_val)

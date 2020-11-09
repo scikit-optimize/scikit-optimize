@@ -123,6 +123,8 @@ def test_bit():
 @pytest.mark.fast_test
 def test_sobol():
     sobol = Sobol()
+    x, seed = sobol._sobol(3, 0)
+    assert_array_equal(x, [0., 0., 0.])
     x, seed = sobol._sobol(3, 1)
     assert_array_equal(x, [0.5, 0.5, 0.5])
     x, seed = sobol._sobol(3, 2)
@@ -139,41 +141,46 @@ def test_sobol():
 
 @pytest.mark.fast_test
 def test_generate():
-    sobol = Sobol(min_skip=1, max_skip=1)
-    x = sobol.generate([(0., 1.), ] * 3, 3)
+    sobol = Sobol(randomize=False)
+    x = sobol.generate([(0., 1.), ] * 3, 4)
     x = np.array(x)
-    assert_array_equal(x[0, :], [0.5, 0.5, 0.5])
-    assert_array_equal(x[1, :], [0.75, 0.25, 0.75])
-    assert_array_equal(x[2, :], [0.25, 0.75, 0.25])
+    assert_array_equal(x[0, :], [0., 0., 0.])
+    assert_array_equal(x[1, :], [0.5, 0.5, 0.5])
+    assert_array_equal(x[2, :], [0.75, 0.25, 0.75])
+    assert_array_equal(x[3, :], [0.25, 0.75, 0.25])
 
-    sobol.set_params(max_skip=2)
-    assert sobol.max_skip == 2
+    sobol.set_params(skip=2)
+    assert sobol.skip == 2
     assert isinstance(sobol, InitialPointGenerator)
 
 
 @pytest.mark.fast_test
 def test_van_der_corput():
-    x = _van_der_corput_samples(range(11), number_base=10)
-    y = [0.1,  0.2,  0.3,  0.4,  0.5,  0.6,  0.7,  0.8,  0.9, 0.01, 0.11]
+    x = _van_der_corput_samples(range(12), number_base=10)
+    y = [0., 0.1,  0.2,  0.3,  0.4,  0.5,  0.6,  0.7,  0.8,  0.9, 0.01, 0.11]
     assert_array_equal(x, y)
 
-    x = _van_der_corput_samples(range(8), number_base=2)
-    y = [0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, 0.0625]
+    x = _van_der_corput_samples(range(9), number_base=2)
+    y = [0., 0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, 0.0625]
     assert_array_equal(x, y)
 
 
 @pytest.mark.fast_test
 def test_halton():
     h = Halton()
-    x = h.generate([(0., 1.), ] * 2, 3)
-    y = np.array([[0.125, 0.625, 0.375], [0.4444, 0.7778, 0.2222]]).T
-    assert_array_almost_equal(x, y, 1e-3)
+    x = h.generate([(0., 1.), ], 9)
+    y = _van_der_corput_samples(range(9), number_base=2)
+    assert_array_almost_equal(np.array(x).flatten(), y)
 
     h = Halton()
-    x = h.generate([(0., 1.), ] * 2, 4)
-    y = np.array([[0.125, 0.625, 0.375, 0.875],
-                  [0.4444, 0.7778, 0.2222, 0.5556]]).T
-    assert_array_almost_equal(x, y, 1e-3)
+    x = h.generate([(0., 1.), ] * 2, 6)
+    y = np.array([[0, 0], [1 / 2, 1 / 3], [1 / 4, 2 / 3], [3 / 4, 1 / 9],
+                  [1 / 8, 4 / 9], [5 / 8, 7 / 9]])
+    assert_array_almost_equal(x, y)
+
+    h = Halton(min_skip=0, max_skip=3)
+    x = h.generate([(0., 1.), ] * 2, 4, random_state=12345)
+    assert_array_almost_equal(x, y[2:])
 
     samples = h.generate([(0., 1.), ] * 2, 200)
     assert len(samples) == 200
@@ -183,11 +190,8 @@ def test_halton():
 @pytest.mark.fast_test
 def test_hammersly():
     h = Hammersly()
-    x = h.generate([(0., 1.), ] * 2, 3)
-    y = np.array([[0.75, 0.125, 0.625], [0.25, 0.5, 0.75]]).T
-    assert_almost_equal(x, y)
     x = h.generate([(0., 1.), ] * 2, 4)
-    y = np.array([[0.75, 0.125, 0.625, 0.375], [0.2, 0.4, 0.6, 0.8]]).T
+    y = np.array([[0, 0], [1 / 2, 0.25], [1 / 4, 0.5], [3 / 4, 0.75]])
     assert_almost_equal(x, y)
 
     samples = h.generate([(0., 1.), ] * 2, 200)

@@ -14,6 +14,7 @@ from joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import MaskedArray
+
 from sklearn.utils.validation import indexable, check_is_fitted
 try:
     from sklearn.metrics import check_scoring
@@ -52,8 +53,7 @@ class BayesSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    search_spaces : dict, list of dict or list of tuple containing
-        (dict, int).
+    search_spaces : dict, list of dict or list of tuple containing (dict, int).
         One of these cases:
         1. dictionary, where keys are parameter names (strings)
         and values are skopt.space.Dimension instances (Real, Integer
@@ -474,8 +474,7 @@ class BayesSearchCV(BaseSearchCV):
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
-        param_results = defaultdict(partial(
-                                            MaskedArray,
+        param_results = defaultdict(partial(np.ma.array,
                                             np.empty(n_candidates,),
                                             mask=True,
                                             dtype=object))

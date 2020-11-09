@@ -1,4 +1,3 @@
-from math import log
 import numpy as np
 import pytest
 
@@ -26,7 +25,6 @@ class ConstSurrogate:
         X = np.array(X)
         return np.zeros(X.shape[0]), np.ones(X.shape[0])
 
-
 # This is used to test that given constant acquisition values at
 # different points, acquisition functions "EIps" and "PIps"
 # prefer candidate points that take lesser time.
@@ -44,8 +42,7 @@ class ConstantGPRSurrogate(object):
         models the logarithm of the time.
         """
         X = np.array(X)
-        y = np.array(y)
-        gpr = cook_estimator("GP", self.space, random_state=0)
+        gpr = cook_estimator("GP", self.space, normalize_y=False)
         gpr.fit(X, np.log(np.ravel(X)))
         self.estimators_ = []
         self.estimators_.append(ConstSurrogate())
@@ -123,6 +120,19 @@ def test_acquisition_gradient():
 
 
 @pytest.mark.fast_test
+def test_acquisition_gradient_cookbook():
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 5)
+    y = rng.randn(20)
+    X_new = rng.randn(5)
+    gpr = cook_estimator("GP", Space(((-5.0, 5.0),)), random_state=0)
+    gpr.fit(X, y)
+
+    for acq_func in ["LCB", "PI", "EI"]:
+        check_gradient_correctness(X_new, gpr, acq_func, np.max(y))
+
+
+@pytest.mark.fast_test
 @pytest.mark.parametrize("acq_func", ["EIps", "PIps"])
 def test_acquisition_per_second(acq_func):
     X = np.reshape(np.linspace(4.0, 8.0, 10), (-1, 1))
@@ -146,7 +156,7 @@ def test_acquisition_per_second(acq_func):
 def test_gaussian_acquisition_check_inputs():
     model = ConstantGPRSurrogate(Space(((1.0, 9.0),)))
     with pytest.raises(ValueError) as err:
-        vals = _gaussian_acquisition(np.arange(1, 5), model)
+        _gaussian_acquisition(np.arange(1, 5), model)
     assert("it must be 2-dimensional" in err.value.args[0])
 
 

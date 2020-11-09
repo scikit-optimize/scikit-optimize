@@ -219,6 +219,25 @@ class DeltaYStopper(EarlyStopper):
             return None
 
 
+class HollowIterationsStopper(EarlyStopper):
+    """
+    Stop if the improvement over the last n iterations is below a threshold.
+    """
+
+    def __init__(self, n_iterations, threshold=0):
+        super(HollowIterationsStopper, self).__init__()
+        self.n_iterations = n_iterations
+        self.threshold = abs(threshold)
+
+    def _criterion(self, result):
+
+        if len(result.func_vals) <= self.n_iterations:
+            return False
+
+        cummin = np.minimum.accumulate(result.func_vals)
+        return cummin[-self.n_iterations - 1] - cummin[-1] <= self.threshold
+
+
 class DeadlineStopper(EarlyStopper):
     """
     Stop the optimization before running out of a fixed budget of time.

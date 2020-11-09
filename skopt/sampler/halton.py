@@ -10,6 +10,7 @@ from sklearn.utils import check_random_state
 
 class Halton(InitialPointGenerator):
     """Creates `Halton` sequence samples.
+
     In statistics, Halton sequences are sequences used to generate
     points in space for numerical methods such as Monte Carlo simulations.
     Although these sequences are deterministic, they are of low discrepancy,
@@ -23,16 +24,17 @@ class Halton(InitialPointGenerator):
     Parameters
     ----------
     min_skip : int
-        minimum skipped seed number. When `min_skip != max_skip`
+        Minimum skipped seed number. When `min_skip != max_skip`
         a random number is picked.
     max_skip : int
-        maximum skipped seed number. When `min_skip != max_skip`
+        Maximum skipped seed number. When `min_skip != max_skip`
         a random number is picked.
     primes : tuple, default=None
         The (non-)prime base to calculate values along each axis. If
         empty or None, growing prime values starting from 2 will be used.
+
     """
-    def __init__(self, min_skip=-1, max_skip=-1, primes=None):
+    def __init__(self, min_skip=0, max_skip=0, primes=None):
         self.primes = primes
         self.min_skip = min_skip
         self.max_skip = max_skip
@@ -62,7 +64,8 @@ class Halton(InitialPointGenerator):
         Returns
         -------
         np.array, shape=(n_dim, n_samples)
-            Halton set
+            Halton set.
+
         """
         rng = check_random_state(random_state)
         if self.primes is None:
@@ -81,10 +84,11 @@ class Halton(InitialPointGenerator):
 
             primes = primes[:n_dim]
         assert len(primes) == n_dim, "not enough primes"
-        if self.min_skip < 0 and self.max_skip < 0:
-            skip = max(primes)
-        elif self.min_skip == self.max_skip:
+
+        if self.min_skip == self.max_skip:
             skip = self.min_skip
+        elif self.min_skip < 0 and self.max_skip < 0:
+            skip = max(primes)
         elif self.min_skip < 0 or self.max_skip < 0:
             skip = np.max(self.min_skip, self.max_skip)
         else:
@@ -101,8 +105,7 @@ class Halton(InitialPointGenerator):
 
 
 def _van_der_corput_samples(idx, number_base=2):
-    """
-    Create `Van Der Corput` low discrepancy sequence samples.
+    """Create `Van Der Corput` low discrepancy sequence samples.
 
     A van der Corput sequence is an example of the simplest one-dimensional
     low-discrepancy sequence over the unit interval; it was first described in
@@ -125,10 +128,11 @@ def _van_der_corput_samples(idx, number_base=2):
     -------
     float, numpy.ndarray
         Van der Corput samples.
+
     """
     assert number_base > 1
 
-    idx = np.asarray(idx).flatten() + 1
+    idx = np.asarray(idx).flatten()
     out = np.zeros(len(idx), dtype=float)
 
     base = float(number_base)

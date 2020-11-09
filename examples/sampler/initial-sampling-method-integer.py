@@ -13,7 +13,7 @@ optimizer suggests purely random samples for the first n_initial_points
 (10 by default). The downside to this is that there is no guarantee that
 these samples are spread out evenly across all the dimensions.
 
-Sampling methods as Latin hypercube, Sobol, Halton and Hammersly
+Sampling methods as Latin hypercube, Sobol', Halton and Hammersly
 take advantage of the fact that we know beforehand how many random
 points we want to sample. Then these points can be "spread out" in
 such a way that each dimension is explored.
@@ -64,15 +64,15 @@ pdist_data.append(pdist(x).flatten())
 x_label.append("random")
 
 #############################################################################
-# Sobol
-# -----
+# Sobol'
+# ------
 
 sobol = Sobol()
 x = sobol.generate(space.dimensions, n_samples)
-plot_searchspace(x, 'Sobol')
+plot_searchspace(x, "Sobol'")
 print("empty fields: %d" % (36 - np.size(np.unique(x, axis=0), 0)))
 pdist_data.append(pdist(x).flatten())
-x_label.append("sobol")
+x_label.append("sobol'")
 
 #############################################################################
 # Classic latin hypercube sampling

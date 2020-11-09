@@ -32,11 +32,6 @@ import numpy as np
 np.random.seed(777)
 import os
 
-# The followings are hacks to allow sphinx-gallery to run the example.
-sys.path.insert(0, os.getcwd())
-main_dir = os.path.basename(sys.modules['__main__'].__file__)
-IS_RUN_WITH_SPHINX_GALLERY = main_dir != os.getcwd()
-
 #############################################################################
 # Simple example
 # ==============
@@ -52,25 +47,22 @@ from skopt.callbacks import CheckpointSaver
 
 noise_level = 0.1
 
-if IS_RUN_WITH_SPHINX_GALLERY:
-    # When this example is run with sphinx gallery, it breaks the pickling
-    # capacity for multiprocessing backend so we have to modify the way we
-    # define our functions. This has nothing to do with the example.
-    from utils import obj_fun
-else:
-    def obj_fun(x, noise_level=noise_level):
-        return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) + np.random.randn() * noise_level
+
+def obj_fun(x, noise_level=noise_level):
+    return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) + np.random.randn() \
+        * noise_level
 
 checkpoint_saver = CheckpointSaver("./checkpoint.pkl", compress=9) # keyword arguments will be passed to `skopt.dump`
 
-gp_minimize(obj_fun,                       # the function to minimize
-              [(-20.0, 20.0)],             # the bounds on each dimension of x
-              x0=[-20.],                     # the starting point
-              acq_func="LCB",              # the acquisition function (optional)
-              n_calls=10,                   # the number of evaluations of f including at x0
-              n_random_starts=0,           # the number of random initialization points
-              callback=[checkpoint_saver], # a list of callbacks including the checkpoint saver
-              random_state=777);
+gp_minimize(obj_fun,            # the function to minimize
+            [(-20.0, 20.0)],    # the bounds on each dimension of x
+            x0=[-20.],          # the starting point
+            acq_func="LCB",     # the acquisition function (optional)
+            n_calls=10,         # number of evaluations of f including at x0
+            n_random_starts=3,  # the number of random initial points
+            callback=[checkpoint_saver],
+            # a list of callbacks including the checkpoint saver
+            random_state=777)
 
 #############################################################################
 # Now let's assume this did not finish at once but took some long time: you
@@ -107,14 +99,14 @@ x0 = res.x_iters
 y0 = res.func_vals
 
 gp_minimize(obj_fun,            # the function to minimize
-              [(-20.0, 20.0)],    # the bounds on each dimension of x
-              x0=x0,              # already examined values for x
-              y0=y0,              # observed values for x0
-              acq_func="LCB",     # the acquisition function (optional)
-              n_calls=10,         # the number of evaluations of f including at x0
-              n_random_starts=0,  # the number of random initialization points
-              callback=[checkpoint_saver],
-              random_state=777);
+            [(-20.0, 20.0)],    # the bounds on each dimension of x
+            x0=x0,              # already examined values for x
+            y0=y0,              # observed values for x0
+            acq_func="LCB",     # the acquisition function (optional)
+            n_calls=10,         # number of evaluations of f including at x0
+            n_random_starts=3,  # the number of random initialization points
+            callback=[checkpoint_saver],
+            random_state=777)
 
 #############################################################################
 # Possible problems
