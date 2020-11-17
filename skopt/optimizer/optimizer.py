@@ -147,6 +147,10 @@ class Optimizer(object):
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
+    space_constraint: callable
+        Function that takes a list of values (i.e. a point in space) and
+        returns True if the combination of values satisfies the constraint.
+
     Attributes
     ----------
     Xi : list
@@ -169,6 +173,7 @@ class Optimizer(object):
                  acq_optimizer="auto",
                  random_state=None,
                  model_queue_size=None,
+                 space_constraint=None,
                  acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
         self.specs = {"args": copy.copy(inspect.currentframe().f_locals),
@@ -268,7 +273,7 @@ class Optimizer(object):
         # normalize space if GP regressor
         if isinstance(self.base_estimator_, GaussianProcessRegressor):
             dimensions = normalize_dimensions(dimensions)
-        self.space = Space(dimensions)
+        self.space = Space(dimensions, constraint=space_constraint)
 
         self._initial_samples = None
         self._initial_point_generator = cook_initial_point_generator(

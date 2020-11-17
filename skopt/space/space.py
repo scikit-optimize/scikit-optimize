@@ -761,8 +761,9 @@ class Space(object):
             The upper and lower bounds are inclusive for `Integer`
             dimensions.
     """
-    def __init__(self, dimensions):
+    def __init__(self, dimensions, constraint=None):
         self.dimensions = [check_dimension(dim) for dim in dimensions]
+        self.constraint = constraint
 
     def __eq__(self, other):
         return all([a == b for a, b in zip(self.dimensions, other.dimensions)])
@@ -887,14 +888,22 @@ class Space(object):
         """
         rng = check_random_state(random_state)
 
-        # Draw
-        columns = []
+        points = []
+        while len(points) < n_samples:
+            # Draw
+            columns = []
+            for dim in self.dimensions:
+                columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
 
-        for dim in self.dimensions:
-            columns.append(dim.rvs(n_samples=n_samples, random_state=rng))
+            # Transpose
+            rows = _transpose_list_array(columns)
 
-        # Transpose
-        return _transpose_list_array(columns)
+            # Filter
+            if self.constraint is not None:
+                rows = [row for row in rows if self.constraint(row)]
+
+            points.extend(rows)
+        return points[:n_samples]
 
     def set_transformer(self, transform):
         """Sets the transformer of all dimension objects to `transform`
