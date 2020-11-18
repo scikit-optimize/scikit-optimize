@@ -760,6 +760,13 @@ class Space(object):
         .. note::
             The upper and lower bounds are inclusive for `Integer`
             dimensions.
+
+    constraint : callable or None, default: None
+        Constraint function. Should take a single list of parameters
+        (i.e. a point in space) and return True if the point satisfies
+        the constraints.
+        If None, the space is not conditionally constrained.
+        ...
     """
     def __init__(self, dimensions, constraint=None):
         self.dimensions = [check_dimension(dim) for dim in dimensions]

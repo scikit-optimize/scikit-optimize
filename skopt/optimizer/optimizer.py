@@ -147,9 +147,11 @@ class Optimizer(object):
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
-    space_constraint: callable
-        Function that takes a list of values (i.e. a point in space) and
-        returns True if the combination of values satisfies the constraint.
+    space_constraint : callable or None, default: None
+        Constraint function. Should take a single list of parameters
+        (i.e. a point in space) and return True if the point satisfies
+        the constraints.
+        If None, the space is not conditionally constrained.
 
     Attributes
     ----------
