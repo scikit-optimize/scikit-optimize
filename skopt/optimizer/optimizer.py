@@ -272,6 +272,10 @@ class Optimizer(object):
 
         # Configure search space
 
+        if space_constraint is not None and not callable(space_constraint):
+            raise ValueError('Expected space_constraint to be callable '
+                             'or None, got {}'.format(space_constraint))
+
         # normalize space if GP regressor
         if isinstance(self.base_estimator_, GaussianProcessRegressor):
             dimensions = normalize_dimensions(dimensions)
