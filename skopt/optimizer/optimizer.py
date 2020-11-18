@@ -249,6 +249,8 @@ class Optimizer(object):
             else:
                 acq_optimizer = "sampling"
 
+        if space_constraint is not None:
+            acq_optimizer = "sampling"
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
