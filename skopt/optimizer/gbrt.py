@@ -184,4 +184,4 @@ def gbrt_minimize(func, dimensions, base_estimator=None,
                          x0=x0, y0=y0, random_state=random_state, xi=xi,
                          kappa=kappa, acq_func=acq_func, verbose=verbose,
                          callback=callback, acq_optimizer="sampling",
-                         model_queue_size=model_queue_size)
+                         model_queue_size=model_queue_size, n_jobs=n_jobs)
