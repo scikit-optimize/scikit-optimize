@@ -794,3 +794,21 @@ def test_normalize_bounds():
         check_limits(x[0][0], -999, 189000)
         y = space.transform(x)
         check_limits(y, 0., 1.)
+
+
+@pytest.mark.fast_test
+def test_constraint():
+    def constraint(params):
+        x, y, cond = params
+        return cond == 'ok' and x**2 + y**2 <= 1
+
+    space = Space([Integer(-1, 3),
+                   Real(-1, 3),
+                   Categorical(['ok', 'skip'])],
+                  constraint=constraint)
+    for params in space.rvs(1000, random_state=0):
+        assert constraint(params)
+
+    space = Space(space, constraint=None)
+    for params in space.rvs(1000, random_state=0):
+        assert constraint(params)
