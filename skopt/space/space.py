@@ -1047,6 +1047,8 @@ class Space(object):
         for component, dim in zip(point, self.dimensions):
             if component not in dim:
                 return False
+        if self.constraint is not None:
+            return bool(self.constraint(point))
         return True
 
     def __getitem__(self, dimension_names):
