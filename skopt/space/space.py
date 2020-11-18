@@ -770,6 +770,9 @@ class Space(object):
     """
     def __init__(self, dimensions, constraint=None):
         self.dimensions = [check_dimension(dim) for dim in dimensions]
+        if constraint is None and isinstance(dimensions, Space):
+            constraint = dimensions.constraint
+        assert constraint is None or callable(constraint)
         self.constraint = constraint
 
     def __eq__(self, other):
