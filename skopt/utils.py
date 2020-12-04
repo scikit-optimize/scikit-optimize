@@ -6,12 +6,14 @@ from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize as sp_minimize
 from sklearn.base import is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
+from lightgbm import LGBMRegressor
 from joblib import dump as dump_
 from joblib import load as load_
 from collections import OrderedDict
 from .learning import ExtraTreesRegressor
 from .learning import GaussianProcessRegressor
 from .learning import GradientBoostingQuantileRegressor
+from .learning import LGBMQuantileRegressor
 from .learning import RandomForestRegressor
 from .learning.gaussian_process.kernels import ConstantKernel
 from .learning.gaussian_process.kernels import HammingKernel
@@ -309,7 +311,7 @@ def has_gradients(estimator):
     """
     tree_estimators = (
             ExtraTreesRegressor, RandomForestRegressor,
-            GradientBoostingQuantileRegressor
+            GradientBoostingQuantileRegressor, LGBMQuantileRegressor,
     )
 
     # cook_estimator() returns None for "dummy minimize" aka random values only
@@ -356,9 +358,9 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     """
     if isinstance(base_estimator, str):
         base_estimator = base_estimator.upper()
-        if base_estimator not in ["GP", "ET", "RF", "GBRT", "DUMMY"]:
+        if base_estimator not in ["GP", "ET", "RF", "GBRT", "LGBRT", "DUMMY"]:
             raise ValueError("Valid strings for the base_estimator parameter "
-                             " are: 'RF', 'ET', 'GP', 'GBRT' or 'DUMMY' not "
+                             " are: 'RF', 'ET', 'GP', 'GBRT', 'LGBRT' or 'DUMMY' not "
                              "%s." % base_estimator)
     elif not is_regressor(base_estimator):
         raise ValueError("base_estimator has to be a regressor.")
@@ -394,6 +396,10 @@ def cook_estimator(base_estimator, space=None, **kwargs):
     elif base_estimator == "GBRT":
         gbrt = GradientBoostingRegressor(n_estimators=30, loss="quantile")
         base_estimator = GradientBoostingQuantileRegressor(base_estimator=gbrt)
+
+    elif base_estimator == "LGBRT":
+        lightgbrt = LGBMRegressor(objective='quantile')
+        base_estimator = LGBMQuantileRegressor(base_estimator=lightgbrt)
 
     elif base_estimator == "DUMMY":
         return None

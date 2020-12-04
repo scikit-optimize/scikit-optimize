@@ -12,17 +12,19 @@ from skopt.benchmarks import bench1, bench1_with_time
 from skopt.benchmarks import branin
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
 from skopt.learning import GradientBoostingQuantileRegressor
+from skopt.learning import LGBMQuantileRegressor
 from skopt.optimizer import Optimizer
 from scipy.optimize import OptimizeResult
 
 
 TREE_REGRESSORS = (ExtraTreesRegressor(random_state=2),
                    RandomForestRegressor(random_state=2),
-                   GradientBoostingQuantileRegressor(random_state=2))
+                   GradientBoostingQuantileRegressor(random_state=2),
+                   LGBMQuantileRegressor(random_state=2))
 ACQ_FUNCS_PS = ["EIps", "PIps"]
 ACQ_FUNCS_MIXED = ["EI", "EIps"]
-ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "DUMMY",
-                     "gp", "rf", "et", "gbrt", "dummy"]
+ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "LGBRT", "DUMMY",
+                     "gp", "rf", "et", "gbrt", "lgbrt", "dummy"]
 
 
 @pytest.mark.fast_test
@@ -293,7 +295,7 @@ def test_optimizer_base_estimator_string_invalid():
     with pytest.raises(ValueError) as e:
         Optimizer([(-2.0, 2.0)], base_estimator="rtr",
                   n_initial_points=1)
-    assert "'RF', 'ET', 'GP', 'GBRT' or 'DUMMY'" in str(e.value)
+    assert "'RF', 'ET', 'GP', 'GBRT', 'LGBRT' or 'DUMMY'" in str(e.value)
 
 
 @pytest.mark.fast_test

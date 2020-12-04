@@ -50,6 +50,7 @@ else:
     from .optimizer import dummy_minimize
     from .optimizer import forest_minimize
     from .optimizer import gbrt_minimize
+    from .optimizer import lgbrt_minimize
     from .optimizer import gp_minimize
     from .optimizer import Optimizer
     from .searchcv import BayesSearchCV
@@ -71,6 +72,7 @@ else:
         "dummy_minimize",
         "forest_minimize",
         "gbrt_minimize",
+        "lgbrt_minimize",
         "Optimizer",
         "dump",
         "load",

@@ -6,6 +6,7 @@ import pytest
 from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt import gbrt_minimize
+from skopt import lgbrt_minimize
 from skopt import Optimizer
 from skopt.learning import ExtraTreesRegressor
 
@@ -21,6 +22,8 @@ for est, acq in product(["ET", "RF"], ACQUISITION):
         partial(forest_minimize, base_estimator=est, acq_func=acq))
 for acq in ACQUISITION:
     MINIMIZERS.append(partial(gbrt_minimize, acq_func=acq))
+for acq in ACQUISITION:
+    MINIMIZERS.append(partial(lgbrt_minimize, acq_func=acq))
 
 
 def test_n_random_starts_Optimizer():

@@ -14,8 +14,10 @@ choices for what kind of surrogate model to use. This notebook compares the
 performance of:
 
 * gaussian processes,
-* extra trees, and
-* random forests
+* extra trees,
+* random forests,
+* GBM (sklearn and lightgbm)
+
 
 as surrogate models. A purely random optimization strategy is also used as
 a baseline.
@@ -23,6 +25,8 @@ a baseline.
 
 print(__doc__)
 import numpy as np
+import time
+
 np.random.seed(123)
 import matplotlib.pyplot as plt
 
@@ -36,8 +40,10 @@ import matplotlib.pyplot as plt
 
 from skopt.benchmarks import branin as _branin
 
+
 def branin(x, noise_level=0.):
     return _branin(x) + noise_level * np.random.randn()
+
 
 #############################################################################
 
@@ -93,11 +99,12 @@ plot_branin()
 # "lucky".
 
 from functools import partial
-from skopt import gp_minimize, forest_minimize, dummy_minimize
+from skopt import gp_minimize, forest_minimize, dummy_minimize, gbrt_minimize, lgbrt_minimize
 
 func = partial(branin, noise_level=2.0)
 bounds = [(-5.0, 10.0), (0.0, 15.0)]
 n_calls = 60
+
 
 #############################################################################
 
@@ -106,17 +113,36 @@ def run(minimizer, n_iter=5):
     return [minimizer(func, bounds, n_calls=n_calls, random_state=n)
             for n in range(n_iter)]
 
+
 # Random search
+tic = time.time()
 dummy_res = run(dummy_minimize)
+print("RND running time: {0:2.2f} s".format(time.time()-tic))
 
 # Gaussian processes
+tic = time.time()
 gp_res = run(gp_minimize)
+print("GP running time: {0:2.2f} s".format(time.time()-tic))
 
 # Random forest
+tic = time.time()
 rf_res = run(partial(forest_minimize, base_estimator="RF"))
+print("RF running time: {0:2.2f} s".format(time.time()-tic))
 
 # Extra trees
+tic = time.time()
 et_res = run(partial(forest_minimize, base_estimator="ET"))
+print("ET running time: {0:2.2f} s".format(time.time()-tic))
+
+# Gradient boosting
+tic = time.time()
+gbrt_res = run(gbrt_minimize)
+print("GBRT running time: {0:2.2f} s".format(time.time()-tic))
+
+# Lightgbm
+tic = time.time()
+lgb_res = run(lgbrt_minimize)
+print("LGB running time: {0:2.2f} s".format(time.time() - tic))
 
 #############################################################################
 # Note that this can take a few minutes.
@@ -127,6 +153,8 @@ plot = plot_convergence(("dummy_minimize", dummy_res),
                         ("gp_minimize", gp_res),
                         ("forest_minimize('rf')", rf_res),
                         ("forest_minimize('et)", et_res),
+                        ("gbrt_minimize", gbrt_res),
+                        ("lgb_minimize", lgb_res),
                         true_minimum=0.397887, yscale="log")
 
 plot.legend(loc="best", prop={'size': 6}, numpoints=1)

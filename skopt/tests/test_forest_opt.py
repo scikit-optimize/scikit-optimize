@@ -3,6 +3,7 @@ from sklearn.tree import DecisionTreeClassifier
 import pytest
 
 from skopt import gbrt_minimize
+from skopt import lgbrt_minimize
 from skopt import forest_minimize
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench2

@@ -45,6 +45,7 @@ scikit-optimize requires
 * joblib (>= 0.11)
 * scikit-learn >= 0.20
 * matplotlib >= 2.0.0
+* lightgbm >= 3.0.0
 
 You can install the latest release with:
 ::

@@ -6,7 +6,6 @@ from .base import base_minimize
 from ..utils import cook_estimator
 
 
-
 def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
                     n_random_starts=None, n_initial_points=10, acq_func="EI",
                     initial_point_generator="random",

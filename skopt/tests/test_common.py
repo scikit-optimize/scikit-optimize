@@ -17,13 +17,13 @@ from skopt import dummy_minimize
 from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt import gbrt_minimize
+from skopt import lgbrt_minimize
 from skopt.benchmarks import branin
 from skopt.benchmarks import bench1
 from skopt.benchmarks import bench4
 from skopt.benchmarks import bench5
 from skopt.callbacks import DeltaXStopper
 from skopt.space import Space
-
 
 # dummy_minimize does not support same parameters so
 # treated separately
@@ -36,11 +36,13 @@ for est, acq in product(["ET", "RF"], ACQUISITION):
         partial(forest_minimize, base_estimator=est, acq_func=acq))
 for acq in ACQUISITION:
     MINIMIZERS.append(partial(gbrt_minimize, acq_func=acq))
+for acq in ACQUISITION:
+    MINIMIZERS.append(partial(lgbrt_minimize, acq_func=acq))
 
 
 def check_minimizer_api(result, n_calls, n_models=None):
     # assumes the result was produced on branin
-    assert(isinstance(result.space, Space))
+    assert (isinstance(result.space, Space))
 
     if n_models is not None:
         assert_equal(len(result.models), n_models)
@@ -48,37 +50,37 @@ def check_minimizer_api(result, n_calls, n_models=None):
     assert_equal(len(result.x_iters), n_calls)
     assert_array_equal(result.func_vals.shape, (n_calls,))
 
-    assert(isinstance(result.x, list))
+    assert (isinstance(result.x, list))
     assert_equal(len(result.x), 2)
 
-    assert(isinstance(result.x_iters, list))
+    assert (isinstance(result.x_iters, list))
     for n in range(n_calls):
-        assert(isinstance(result.x_iters[n], list))
+        assert (isinstance(result.x_iters[n], list))
         assert_equal(len(result.x_iters[n]), 2)
 
-        assert(isinstance(result.func_vals[n], float))
+        assert (isinstance(result.func_vals[n], float))
         assert_almost_equal(result.func_vals[n], branin(result.x_iters[n]))
 
     assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
     assert_almost_equal(result.fun, branin(result.x))
 
-    assert(isinstance(result.specs, dict))
-    assert("args" in result.specs)
-    assert("function" in result.specs)
+    assert (isinstance(result.specs, dict))
+    assert ("args" in result.specs)
+    assert ("function" in result.specs)
 
 
 def check_minimizer_bounds(result, n_calls):
     # no values should be below or above the bounds
     eps = 10e-9  # check for assert_array_less OR equal
-    assert_array_less(result.x_iters, np.tile([10+eps, 15+eps], (n_calls, 1)))
-    assert_array_less(np.tile([-5-eps, 0-eps], (n_calls, 1)), result.x_iters)
+    assert_array_less(result.x_iters, np.tile([10 + eps, 15 + eps], (n_calls, 1)))
+    assert_array_less(np.tile([-5 - eps, 0 - eps], (n_calls, 1)), result.x_iters)
 
 
 def check_result_callable(res):
     """
     Check that the result instance is set right at every callable call.
     """
-    assert(isinstance(res, OptimizeResult))
+    assert (isinstance(res, OptimizeResult))
     assert_equal(len(res.x_iters), len(res.func_vals))
     assert_equal(np.min(res.func_vals), res.fun)
 
@@ -190,7 +192,7 @@ def test_minimizer_with_space(minimizer):
 @pytest.mark.slow_test
 @pytest.mark.parametrize("n_initial_points", [0, 1, 2, 3, 4])
 @pytest.mark.parametrize("optimizer_func",
-                         [gp_minimize, forest_minimize, gbrt_minimize])
+                         [gp_minimize, forest_minimize, gbrt_minimize, lgbrt_minimize])
 def test_init_vals_and_models(n_initial_points, optimizer_func):
     # test how many models are fitted when using initial points, y0 values
     # and random starts
@@ -209,7 +211,7 @@ def test_init_vals_and_models(n_initial_points, optimizer_func):
 @pytest.mark.slow_test
 @pytest.mark.parametrize("n_initial_points", [0, 1, 2, 3, 4])
 @pytest.mark.parametrize("optimizer_func",
-                         [gp_minimize, forest_minimize, gbrt_minimize])
+                         [gp_minimize, forest_minimize, gbrt_minimize, lgbrt_minimize])
 def test_init_points_and_models(n_initial_points, optimizer_func):
     # test how many models are fitted when using initial points and random
     # starts (no y0 in this case)
@@ -226,7 +228,7 @@ def test_init_points_and_models(n_initial_points, optimizer_func):
 @pytest.mark.slow_test
 @pytest.mark.parametrize("n_initial_points", [2, 5])
 @pytest.mark.parametrize("optimizer_func",
-                         [gp_minimize, forest_minimize, gbrt_minimize])
+                         [gp_minimize, forest_minimize, gbrt_minimize, lgbrt_minimize])
 def test_init_vals(n_initial_points, optimizer_func):
     space = [(-5.0, 10.0), (0.0, 15.0)]
     x0 = [[1, 2], [3, 4], [5, 6]]
@@ -246,10 +248,12 @@ def test_init_vals_dummy_minimize():
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("optimizer", [
-        dummy_minimize,
-        partial(gp_minimize, n_initial_points=3),
-        partial(forest_minimize, n_initial_points=3),
-        partial(gbrt_minimize, n_initial_points=3)])
+    dummy_minimize,
+    partial(gp_minimize, n_initial_points=3),
+    partial(forest_minimize, n_initial_points=3),
+    partial(gbrt_minimize, n_initial_points=3),
+    partial(lgbrt_minimize, n_initial_points=3)
+])
 def test_categorical_init_vals(optimizer):
     space = [("-2", "-1", "0", "1", "2")]
     x0 = [["0"], ["1"], ["2"]]
@@ -259,10 +263,12 @@ def test_categorical_init_vals(optimizer):
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("optimizer", [
-        dummy_minimize,
-        partial(gp_minimize, n_initial_points=2),
-        partial(forest_minimize, n_initial_points=2),
-        partial(gbrt_minimize, n_initial_points=2)])
+    dummy_minimize,
+    partial(gp_minimize, n_initial_points=2),
+    partial(forest_minimize, n_initial_points=2),
+    partial(gbrt_minimize, n_initial_points=2),
+    partial(lgbrt_minimize, n_initial_points=2)
+])
 def test_mixed_spaces(optimizer):
     space = [("-2", "-1", "0", "1", "2"), (-2.0, 2.0)]
     x0 = [["0", 2.0], ["1", 1.0], ["2", 1.0]]
@@ -397,7 +403,7 @@ def test_consistent_x_iter_dimensions(minimizer):
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("minimizer",
-                         [gp_minimize, forest_minimize, gbrt_minimize])
+                         [gp_minimize, forest_minimize, gbrt_minimize, lgbrt_minimize])
 def test_early_stopping_delta_x(minimizer):
     n_calls = 11
     res = minimizer(bench1,
@@ -411,7 +417,7 @@ def test_early_stopping_delta_x(minimizer):
 
 @pytest.mark.slow_test
 @pytest.mark.parametrize("minimizer",
-                         [gp_minimize, forest_minimize, gbrt_minimize])
+                         [gp_minimize, forest_minimize, gbrt_minimize, lgbrt_minimize])
 def test_early_stopping_delta_x_empty_result_object(minimizer):
     # check that the callback handles the case of being passed an empty
     # results object, e.g. at the start of the optimization loop
@@ -426,7 +432,7 @@ def test_early_stopping_delta_x_empty_result_object(minimizer):
 
 @pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
 @pytest.mark.parametrize("minimizer",
-                         [gp_minimize, forest_minimize, gbrt_minimize])
+                         [gp_minimize, forest_minimize, gbrt_minimize, lgbrt_minimize])
 def test_per_second_api(acq_func, minimizer):
     def bench1_with_time(x):
         return bench1(x), np.abs(x[0])
