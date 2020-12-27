@@ -899,7 +899,7 @@ class Space(object):
         rng = check_random_state(random_state)
 
         points = []
-        while len(points) < n_samples:
+        for _ in range(10000):
             # Draw
             columns = []
             for dim in self.dimensions:
@@ -912,7 +912,15 @@ class Space(object):
             if self.constraint is not None:
                 rows = [row for row in rows if self.constraint(row)]
 
+            # If we have enough valid samples
             points.extend(rows)
+            if len(points) >= n_samples:
+                break
+        else:
+            raise RuntimeError(
+                'Could not find enough valid samples in constrained '
+                'space. Please check that the constraint allows for '
+                'valid samples to be drawn.')
         return points[:n_samples]
 
     def set_transformer(self, transform):

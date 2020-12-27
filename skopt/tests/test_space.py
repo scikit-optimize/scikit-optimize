@@ -809,6 +809,11 @@ def test_constraint():
     for params in space.rvs(1000, random_state=0):
         assert constraint(params)
 
+    # Constraint inherited from space
     space = Space(space, constraint=None)
     for params in space.rvs(1000, random_state=0):
         assert constraint(params)
+
+    # Terminates on unsatisfiable constraint
+    space = Space([space.dimensions[0]], constraint=lambda _: False)
+    assert_raises_regex(RuntimeError, 'constraint', space.rvs, 1)
