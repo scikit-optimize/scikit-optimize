@@ -427,8 +427,16 @@ class BayesSearchCV(BaseSearchCV):
             (train_scores, test_scores, test_sample_counts,
              fit_time, score_time, parameters) = zip(*out)
         else:
-            (test_scores, test_sample_counts,
+            (train_scores, test_scores, test_sample_counts,
              fit_time, score_time, parameters) = zip(*out)
+
+        v = {k: [dic[k] for dic in out] for k in out[0]}
+        train_scores = v.get('train_scores')
+        test_scores = v.get('test_scores')
+        test_sample_counts = v.get('n_test_samples')
+        fit_time = v.get('fit_time')
+        score_time = v.get('score_time')
+        parameters = v.get('parameters')
 
         candidate_params = parameters[::n_splits]
         n_candidates = len(candidate_params)
