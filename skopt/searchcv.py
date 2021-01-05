@@ -422,8 +422,13 @@ class BayesSearchCV(BaseSearchCV):
             for parameters in parameter_iterable
             for train, test in cv_iter)
 
+        # convert list of dicts returned by _fit_and_score to
+        # dict of lists (sklearn >0.24).
         v = {k: [dic[k] for dic in out] for k in out[0]}
-        train_scores = v.get('train_scores')
+
+        if self.return_train_score:
+            train_scores = v.get('train_scores')
+
         test_scores = v.get('test_scores')
         test_sample_counts = v.get('n_test_samples')
         fit_time = v.get('fit_time')
