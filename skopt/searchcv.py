@@ -422,14 +422,6 @@ class BayesSearchCV(BaseSearchCV):
             for parameters in parameter_iterable
             for train, test in cv_iter)
 
-        # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score:
-            (train_scores, test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
-        else:
-            (train_scores, test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
-
         v = {k: [dic[k] for dic in out] for k in out[0]}
         train_scores = v.get('train_scores')
         test_scores = v.get('test_scores')
