@@ -1,3 +1,5 @@
+import warnings
+
 try:
     from collections.abc import Sized
 except ImportError:
@@ -13,7 +15,6 @@ from sklearn.base import is_classifier, clone
 from joblib import Parallel, delayed
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import MaskedArray
 
 from sklearn.utils.validation import indexable, check_is_fitted
 try:
@@ -114,11 +115,6 @@ class BayesSearchCV(BaseSearchCV):
               spawned
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
-
-    iid : boolean, default=True
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -289,7 +285,7 @@ class BayesSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
-                 n_points=1, iid=True, refit=True, cv=None, verbose=0,
+                 n_points=1, iid='deprecated', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=False):
 
@@ -305,9 +301,13 @@ class BayesSearchCV(BaseSearchCV):
         # in the constructor and be passed in ``fit``.
         self.fit_params = fit_params
 
+        if iid != "deprecated":
+            warnings.warn("The `iid` parameter has been deprecated "
+                          "and will be unused.")
+
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
-             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+             n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
              return_train_score=return_train_score)
 
@@ -456,13 +456,7 @@ class BayesSearchCV(BaseSearchCV):
                 results["rank_%s" % key_name] = np.asarray(
                     rankdata(-array_means, method='min'), dtype=np.int32)
 
-        # Computed the (weighted) mean and std for test scores alone
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=np.int)
-
-        _store('test_score', test_scores, splits=True, rank=True,
-               weights=test_sample_counts if self.iid else None)
+        _store('test_score', test_scores, splits=True, rank=True)
         if self.return_train_score:
             _store('train_score', train_scores, splits=True)
         _store('fit_time', fit_time)
