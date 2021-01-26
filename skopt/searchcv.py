@@ -435,7 +435,7 @@ class BayesSearchCV(BaseSearchCV):
 
         results = dict()
 
-        def _store(key_name, array, weights=None, splits=False, rank=False):
+        def _store(key_name, array, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             array = np.array(array, dtype=np.float64).reshape(n_candidates,
                                                               n_splits)
@@ -444,12 +444,12 @@ class BayesSearchCV(BaseSearchCV):
                     results["split%d_%s"
                             % (split_i, key_name)] = array[:, split_i]
 
-            array_means = np.average(array, axis=1, weights=weights)
+            array_means = np.average(array, axis=1)
             results['mean_%s' % key_name] = array_means
             # Weighted std is not directly available in numpy
             array_stds = np.sqrt(np.average((array -
                                              array_means[:, np.newaxis]) ** 2,
-                                            axis=1, weights=weights))
+                                            axis=1))
             results['std_%s' % key_name] = array_stds
 
             if rank:
