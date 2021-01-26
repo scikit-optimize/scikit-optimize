@@ -303,7 +303,7 @@ class BayesSearchCV(BaseSearchCV):
 
         if iid != "deprecated":
             warnings.warn("The `iid` parameter has been deprecated "
-                          "and will be unused.")
+                          "and will be ignored.")
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
