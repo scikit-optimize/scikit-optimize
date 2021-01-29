@@ -4,6 +4,7 @@ except ImportError:
     from collections import Sized
 from collections import defaultdict
 from functools import partial
+import six
 
 import numpy as np
 from scipy.stats import rankdata
@@ -566,6 +567,10 @@ class BayesSearchCV(BaseSearchCV):
         # convert parameters to python native types
         params = [[np.array(v).item() for v in p] for p in params]
 
+        assert len(params) == n_points, \
+            "The number of params we tried should equal the number of" \
+            "points we were asked to try"
+
         # make lists into dictionaries
         params_dict = [point_asdict(search_space, p) for p in params]
 
@@ -578,9 +583,12 @@ class BayesSearchCV(BaseSearchCV):
         self._fit(X, y, groups, params_dict)
         self.refit = refit
 
-        # merge existing and new cv_results_
-        for k in self.cv_results_:
-            all_cv_results[k].extend(self.cv_results_[k])
+        for key in six.iterkeys(self.cv_results_):
+            assert len(self.cv_results_[key]) == n_points
+            for points_iteration, value in enumerate(self.cv_results_[key]):
+
+                current_index = self._cur_total_iter + points_iteration
+                all_cv_results[key][current_index] = value
 
         all_cv_results["rank_test_score"] = list(np.asarray(
             rankdata(-np.array(all_cv_results['mean_test_score']),
@@ -590,10 +598,18 @@ class BayesSearchCV(BaseSearchCV):
                 rankdata(-np.array(all_cv_results['mean_train_score']),
                          method='min'), dtype=np.int32))
         self.cv_results_ = all_cv_results
-        self.best_index_ = np.argmax(self.cv_results_['mean_test_score'])
+
+        # MaskedArray provides its own argmax, so we use it rather than np.argmax. Additionally, we need to define
+        # fill_value behavior. The cv_results_ is a default dictionary for many kinds of masked arrays, so we give
+        # it a type of python object. There's no defined way to get the max of objects, so we have to coerce all
+        # unfilled values on mean_test_score to a very small float, in this case, -np.inf, to find the max so far.
+        self.best_index_ = self.cv_results_['mean_test_score'].argmax(fill_value=-np.inf)
 
         # feed the point and objective back into optimizer
-        local_results = self.cv_results_['mean_test_score'][-len(params):]
+        end_results = self._cur_total_iter + n_points
+        begin_results = self._cur_total_iter
+        mean_test_score = self.cv_results_['mean_test_score']
+        local_results = mean_test_score[begin_results:end_results]
 
         # optimizer minimizes objective, hence provide negative score
         return optimizer.tell(params, [-score for score in local_results])
@@ -668,14 +684,35 @@ class BayesSearchCV(BaseSearchCV):
             optimizers.append(self._make_optimizer(search_space))
         self.optimizers_ = optimizers  # will save the states of the optimizers
 
-        self.cv_results_ = defaultdict(list)
+        n_candidates = len(search_spaces) * self.n_iter
+
+        # We use a masked array as the type of list to store our results in
+        # since not all params are guaranteed to show up in every search -
+        # especially if we take in a list of dicts approach
+        self.cv_results_ = defaultdict(
+            partial(
+                MaskedArray,
+                np.empty(n_candidates),
+                mask=True,
+                dtype=object
+            )
+        )
+
         self.best_index_ = None
         self.multimetric_ = False
         self._optim_results = []
 
         n_points = self.n_points
 
+        # This is the current iteration out of total that we're on
+        self._cur_total_iter = 0
+
         for search_space, optimizer in zip(search_spaces, optimizers):
+
+            assert self._cur_total_iter < n_candidates, \
+                "Current overall iteration should be lower than number of" \
+                " potential iterations"
+
             # if not provided with search subspace, n_iter is taken as
             # self.n_iter
             if isinstance(search_space, tuple):
@@ -693,6 +730,8 @@ class BayesSearchCV(BaseSearchCV):
                     groups=groups, n_points=n_points_adjusted
                 )
                 n_iter -= n_points
+
+                self._cur_total_iter += n_points_adjusted
 
                 if eval_callbacks(callbacks, optim_result):
                     break
