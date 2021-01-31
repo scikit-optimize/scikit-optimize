@@ -1,7 +1,0 @@
-include *.md
-include *.rst
-recursive-include doc *
-recursive-include examples *
-include LICENSE
-include README.rst
-include pyproject.toml

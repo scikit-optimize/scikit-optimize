@@ -142,18 +142,15 @@ The release procedure is almost completely automated. By tagging a new release
 travis will build all required packages and push them to PyPI. To make a release
 create a new issue and work through the following checklist:
 
-* update the version tag in ``__init__.py``
-* update the version tag mentioned in the README
 * check if the dependencies in ``setup.py`` are valid or need unpinning
 * check that the ``doc/whats_new/v0.X.rst`` is up to date
 * did the last build of master succeed?
 * create a `new release <https://github.com/scikit-optimize/scikit-optimize/releases>`__
 * ping `conda-forge <https://github.com/conda-forge/scikit-optimize-feedstock>`__
 
-Before making a release we usually create a release candidate. If the next
-release is v0.X then the release candidate should be tagged v0.Xrc1 in
-``__init__.py``. Mark a release candidate as a "pre-release"
-on GitHub when you tag it.
+Before making a release, we usually create a release candidate. If the next
+release is v0.X then the release candidate should be tagged v0.Xrc1.
+Mark the release candidate as a "pre-release" on GitHub when you tag it.
 
 
 Commercial support
