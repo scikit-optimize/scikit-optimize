@@ -1,6 +1,6 @@
 """
-Scikit-Optimize, or `skopt`, is a simple and efficient library to
-minimize (very) expensive and noisy black-box functions. It implements
+Scikit-Optimize, or `skopt`, is a simple and efficient library for
+optimizing (very) expensive and noisy black-box functions. It implements
 several methods for sequential model-based optimization. `skopt` aims
 to be accessible and easy to use in many contexts.
 """

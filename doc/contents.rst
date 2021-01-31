@@ -19,4 +19,3 @@ Table Of Contents
     user_guide
     auto_examples/index
     modules/classes
-    development

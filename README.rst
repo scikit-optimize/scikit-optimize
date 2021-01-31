@@ -6,61 +6,54 @@
 Scikit-Optimize
 ===============
 
-Scikit-Optimize, or ``skopt``, is a simple and efficient library to
-minimize (very) expensive and noisy black-box functions. It implements
+Scikit-Optimize, or ``skopt``, is a simple and efficient library for
+optimizing (very) expensive and noisy black-box functions. It implements
 several methods for sequential model-based optimization. ``skopt`` aims
 to be accessible and easy to use in many contexts.
 
-The library is built on top of NumPy, SciPy and Scikit-Learn.
+The library is built on top of NumPy, SciPy, and Scikit-Learn.
 
 We do not perform gradient-based optimization. For gradient-based
-optimization algorithms look at
-``scipy.optimize``
-`here <http://docs.scipy.org/doc/scipy/reference/optimize.html>`_.
+optimization algorithms, look at |scipy.optimize|_.
 
-.. figure:: https://github.com/scikit-optimize/scikit-optimize/blob/master/media/bo-objective.png
+.. figure:: https://github.com/scikit-optimize/scikit-optimize/blob/master/doc/image/bo-objective.png
    :alt: Approximated objective
 
 Approximated objective function after 50 iterations of ``gp_minimize``.
 Plot made using ``skopt.plots.plot_objective``.
 
+
 Important links
 ---------------
 
--  Static documentation - `Static
-   documentation <https://scikit-optimize.github.io/>`__
+-  `Project website <https://scikit-optimize.github.io/>`__
 -  Example notebooks - can be found in examples_.
--  Issue tracker -
-   https://github.com/scikit-optimize/scikit-optimize/issues
--  Releases - https://pypi.python.org/pypi/scikit-optimize
+-  `Discussion forum
+   <https://github.com/scikit-optimize/scikit-optimize/discussions>`__
+-  `Issue tracker
+   <https://github.com/scikit-optimize/scikit-optimize/issues>`__
+-  Releases - https://pypi.org/project/scikit-optimize
+
 
 Install
 -------
 
-scikit-optimize requires
-
-* Python >= 3.6
-* NumPy (>= 1.13.3)
-* SciPy (>= 0.19.1)
-* joblib (>= 0.11)
-* scikit-learn >= 0.20
-* matplotlib >= 2.0.0
-
+scikit-optimize requires Python >= 3.6.
 You can install the latest release with:
 ::
 
     pip install scikit-optimize
 
-This installs an essential version of scikit-optimize. To install scikit-optimize
-with plotting functionality, you can instead do:
+This installs the essentials. To install plotting functionality,
+you can instead do:
 ::
 
     pip install 'scikit-optimize[plots]'
 
-This will install matplotlib along with scikit-optimize.
+This will additionally install Matplotlib.
 
-In addition there is a `conda-forge <https://conda-forge.org/>`_ package
-of scikit-optimize:
+If you're using Anaconda platform, there is a `conda-forge <https://conda-forge.org/>`_
+package of scikit-optimize:
 ::
 
     conda install -c conda-forge scikit-optimize
@@ -111,46 +104,7 @@ and the other examples_.
 Development
 -----------
 
-The library is still experimental and under heavy development. Checkout
-the `next
-milestone <https://github.com/scikit-optimize/scikit-optimize/milestones>`__
-for the plans for the next release or look at some `easy
-issues <https://github.com/scikit-optimize/scikit-optimize/issues?q=is%3Aissue+is%3Aopen+label%3AEasy>`__
-to get started contributing.
-
-The development version can be installed through:
-
-::
-
-    git clone https://github.com/scikit-optimize/scikit-optimize.git
-    cd scikit-optimize
-    pip install -e.
-
-Run all tests by executing ``pytest`` in the top level directory.
-
-To only run the subset of tests with short run time, you can use ``pytest -m 'fast_test'`` (``pytest -m 'slow_test'`` is also possible). To exclude all slow running tests try ``pytest -m 'not slow_test'``.
-
-This is implemented using pytest `attributes <https://docs.pytest.org/en/latest/mark.html>`__. If a tests runs longer than 1 second, it is marked as slow, else as fast.
-
-All contributors are welcome!
-
-
-Making a Release
-~~~~~~~~~~~~~~~~
-
-The release procedure is almost completely automated. By tagging a new release
-travis will build all required packages and push them to PyPI. To make a release
-create a new issue and work through the following checklist:
-
-* check if the dependencies in ``setup.py`` are valid or need unpinning
-* check that the ``doc/whats_new/v0.X.rst`` is up to date
-* did the last build of master succeed?
-* create a `new release <https://github.com/scikit-optimize/scikit-optimize/releases>`__
-* ping `conda-forge <https://github.com/conda-forge/scikit-optimize-feedstock>`__
-
-Before making a release, we usually create a release candidate. If the next
-release is v0.X then the release candidate should be tagged v0.Xrc1.
-Mark the release candidate as a "pre-release" on GitHub when you tag it.
+See `CONTRIBUTING.md <CONTRIBUTING.md>`_.
 
 
 Commercial support
@@ -168,7 +122,7 @@ The scikit-optimize project was made possible with the support of
 
 .. image:: https://avatars1.githubusercontent.com/u/18165687?v=4&s=128
    :alt: Wild Tree Tech
-   :target: http://wildtreetech.com
+   :target: https://wildtreetech.com
 
 .. image:: https://i.imgur.com/lgxboT5.jpg
     :alt: NYU Center for Data Science
@@ -180,7 +134,7 @@ The scikit-optimize project was made possible with the support of
 
 .. image:: https://i.imgur.com/3enQ6S8.jpg
     :alt: Northrop Grumman
-    :target: http://www.northropgrumman.com/Pages/default.aspx
+    :target: https://www.northropgrumman.com
 
 If your employer allows you to work on scikit-optimize during the day and would like
 recognition, feel free to add them to the "Made possible by" list.
@@ -199,4 +153,6 @@ recognition, feel free to add them to the "Made possible by" list.
    :target: https://gitter.im/scikit-optimize/Lobby
 .. |Zenodo DOI| image:: https://zenodo.org/badge/54340642.svg
    :target: https://zenodo.org/badge/latestdoi/54340642
+.. |scipy.optimize| replace:: ``scipy.optimize``
+.. _scipy.optimize: https://docs.scipy.org/doc/scipy/reference/optimize.html
 .. _examples: https://scikit-optimize.github.io/stable/auto_examples/index.html
