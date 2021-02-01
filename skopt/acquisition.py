@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 
 from scipy.stats import norm
+from filterpy.kalman import sigma_points, unscented_transform
 
 
 def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB",
@@ -46,9 +47,11 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         else:
             acq_vals = func_and_grad
 
-    elif acq_func in ["EI", "PI", "EIps", "PIps"]:
+    elif acq_func in ["EI", "PI", "EIps", "PIps", "UEI"]:
         if acq_func in ["EI", "EIps"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
+        elif acq_func in ["UEI"]:
+            func_and_grad = gaussian_unscented_ei(X, model, y_opt, xi, return_grad)
         else:
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
 
@@ -319,3 +322,66 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         return values, grad
 
     return values
+
+
+def gaussian_unscented_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
+    """
+    Use the unscented expected improvement to calculate the acquisition values.
+
+    The conditional probability `P(y=f(x) | x)` form a gaussian with a certain
+    mean and standard deviation approximated by the model.
+
+    The EI condition is derived by computing ``E[u(f(x))]``
+    where ``u(f(x)) = 0``, if ``f(x) > y_opt`` and ``u(f(x)) = y_opt - f(x)``,
+    if``f(x) < y_opt``.
+
+    This approach uses the unscented transform to approximate the output of 
+    EI and finding minima faster.
+
+    This solves one of the issues of the PI condition by giving a reward
+    proportional to the amount of improvement got.
+
+    Note that the value returned by this function should be maximized to
+    obtain the ``X`` with maximum improvement.
+
+    Parameters
+    ----------
+    X : array-like, shape=(n_samples, n_features)
+        Values where the acquisition function should be computed.
+
+    model : sklearn estimator that implements predict with ``return_std``
+        The fit estimator that approximates the function through the
+        method ``predict``.
+        It should have a ``return_std`` parameter that returns the standard
+        deviation.
+
+    y_opt : float, default 0
+        Previous minimum value which we would like to improve upon.
+
+    xi : float, default=0.01
+        Controls how much improvement one wants over the previous best
+        values. Useful only when ``method`` is set to "EI"
+
+    return_grad : boolean, optional
+        Whether or not to return the grad. Implemented only for the case where
+        ``X`` is a single sample.
+
+    Returns
+    -------
+    values : array-like, shape=(X.shape[0],)
+        Acquisition function values computed at X.
+    """
+    n_dim = X.shape[1]
+    cov = 0.001 * np.eye(n_dim)
+    sigma_gen = sigma_points.MerweScaledSigmaPoints(
+        n=n_dim, alpha=.3, beta=2., kappa=.1)
+    pts = [sigma_gen.sigma_points(xx, cov) for xx in X]
+    sigma_ei = np.asarray([gaussian_ei(xx, model, y_opt, xi, return_grad) for xx in pts])
+    uei = np.asarray([unscented_transform(eis[:, 0], sigma_gen.Wm, sigma_gen.Wc) for eis in sigma_ei])
+    if return_grad:
+        ugrad = np.asarray([unscented_transform(eis[:, 1], sigma_gen.Wm, sigma_gen.Wc) for eis in sigma_ei])
+        return uei, ugrad
+    else:
+        return uei
+
+    
