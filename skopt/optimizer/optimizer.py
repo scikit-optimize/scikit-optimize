@@ -180,7 +180,8 @@ class Optimizer(object):
         self.acq_func = acq_func
         self.acq_func_kwargs = acq_func_kwargs
 
-        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps", "UEI"]
+        allowed_acq_funcs = [
+            "gp_hedge", "EI", "LCB", "PI", "EIps", "PIps", "UEI"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
@@ -332,7 +333,8 @@ class Optimizer(object):
         return optimizer
 
     def ask(self, n_points=None, strategy="cl_min"):
-        """Query point or multiple points at which objective should be evaluated.
+        """
+        Query point or multiple points at which objective should be evaluated.
 
         n_points : int or None, default: None
             Number of points returned by the ask method.
@@ -399,13 +401,16 @@ class Optimizer(object):
 
             if strategy == "cl_min":
                 y_lie = np.min(opt.yi) if opt.yi else 0.0  # CL-min lie
-                t_lie = np.min(ti) if ti is not None else log(sys.float_info.max)
+                t_lie = np.min(ti) if ti is not None else log(
+                    sys.float_info.max)
             elif strategy == "cl_mean":
                 y_lie = np.mean(opt.yi) if opt.yi else 0.0  # CL-mean lie
-                t_lie = np.mean(ti) if ti is not None else log(sys.float_info.max)
+                t_lie = np.mean(ti) if ti is not None else log(
+                    sys.float_info.max)
             else:
                 y_lie = np.max(opt.yi) if opt.yi else 0.0  # CL-max lie
-                t_lie = np.max(ti) if ti is not None else log(sys.float_info.max)
+                t_lie = np.max(ti) if ti is not None else log(
+                    sys.float_info.max)
 
             # Lie to the optimizer.
             if "ps" in self.acq_func:
@@ -564,37 +569,19 @@ class Optimizer(object):
                     next_x = X[np.argmin(values)]
 
                 elif self.acq_optimizer == "UOI":
-                    # if 'sigma_cov' in self.acq_func_kwargs and self.acq_func_kwargs['sigma_cov'] is not None:
-                    #     cov = self.acq_func_kwargs['sigma_cov']
-                    #     if type(cov) is np.ndarray and len(cov.shape) == 2 and \
-                    #         cov.shape[0] == cov.shape[1] == X.shape[1]:
-                    #         cov = self.acq_func_kwargs['sigma_cov']
-                    #     elif type(cov) == float or type(cov) == int:
-                    #         cov = np.eye(X.shape[1]) * cov
-                    #     else:
-                    #         raise ValueError("Wrong Sigma Covariance value. it should be either a scalar or a Square matrix")
-                    # else: #default
-                    #     cov = 0.001 * np.eye(X.shape[1]) 
-                    # if 'sigma_params' in self.acq_func_kwargs and self.acq_func_kwargs['sigma_params'] is not None:
-                    #     if type(self.acq_func_kwargs['sigma_kwargs']) is tuple:
-                    #         alpha = self.acq_func_kwargs['sigma_params']['alpha']
-                    #         beta = self.acq_func_kwargs['sigma_params']['beta']
-                    #         kappa = self.acq_func_kwargs['sigma_params']['kappa']
-                    #     else:
-                    #         raise ValueError("Wrong Sigma Param values value. it should be a triple ")    
-                    # else:
-                    #     alpha, beta, kappa = .3, 2., .1
-                    # sigma_gen = sigma_points.MerweScaledSigmaPoints(
-                    #     n=X.shape[1], alpha=alpha, beta=beta, kappa=kappa)
-                    sigma_generator = self.acq_optimizer_kwargs['UT_kwargs']['sigma_generator']
-                    transform_f = self.acq_optimizer_kwargs['UT_kwargs']['transform_f']
+
+                    sigma_generator = self.acq_optimizer_kwargs[
+                        'UT_kwargs']['sigma_generator']
+                    transform_f = self.acq_optimizer_kwargs[
+                        'UT_kwargs']['transform_f']
                     pts = [sigma_generator(xx) for xx in X]
                     sigma_pred = est.predict(
-                        np.asarray(pts).reshape(-1, 2)).reshape(X.shape[0], X.shape[1] * 2 + 1)
+                        np.asarray(pts).reshape(-1, 2)
+                        ).reshape(X.shape[0], X.shape[1] * 2 + 1)
                     uoi = np.asarray(
                         [transform_f(
-                            np.expand_dims(pred, axis=1))[0] \
-                                for pred in sigma_pred]).squeeze()
+                            np.expand_dims(pred, axis=1))[0]
+                            for pred in sigma_pred]).squeeze()
                     next_x = X[np.argmin(uoi)]
 
                 # Use BFGS to find the mimimum of the acquisition function, the
