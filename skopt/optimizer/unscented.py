@@ -4,6 +4,7 @@ import copy
 import inspect
 import warnings
 import numbers
+from functools import partial
 
 import numpy as np
 try:
@@ -11,6 +12,7 @@ try:
 except ImportError:
     from collections import Iterable
 
+from filterpy.kalman import sigma_points, unscented_transform
 from sklearn.utils import check_random_state
 
 from ..utils import cook_estimator
@@ -273,12 +275,19 @@ def ugp_minimize(func, dimensions, base_estimator=None,
             "GP", space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
             noise=noise)
 
+    sigma_gen = sigma_points.MerweScaledSigmaPoints(n=len(dimensions), **sigma_params)
+
+    UT_kwargs = {
+        # 'sigma_cov': sigma_cov,
+        'sigma_generator': partial(sigma_gen.sigma_points, P=sigma_cov),
+        'transform_f':partial(unscented_transform, Wc=sigma_gen.Wc, Wm=sigma_gen.Wm)}
+    
     acq_optimizer_kwargs = {
         "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
-        "n_jobs": n_jobs, "sigma_kwargs": sigma_params, 'sigma_cov':sigma_cov}
+        "n_jobs": n_jobs, "UT_kwargs": UT_kwargs}
 
     acq_func_kwargs = {"xi": xi, "kappa": kappa, 
-        "sigma_kwargs": sigma_params, 'sigma_cov':sigma_cov}
+        "UT_kwargs": UT_kwargs}
 
         # Initialize optimization
     # Suppose there are points provided (x0 and y0), record them

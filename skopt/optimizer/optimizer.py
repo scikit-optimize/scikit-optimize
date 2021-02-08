@@ -7,7 +7,6 @@ import inspect
 import numpy as np
 
 from scipy.optimize import fmin_l_bfgs_b
-from filterpy.kalman import sigma_points, unscented_transform
 from sklearn.base import clone
 from sklearn.base import is_regressor
 from joblib import Parallel, delayed
@@ -565,35 +564,36 @@ class Optimizer(object):
                     next_x = X[np.argmin(values)]
 
                 elif self.acq_optimizer == "UOI":
-                    if 'sigma_cov' in self.acq_func_kwargs and self.acq_func_kwargs['sigma_cov'] is not None:
-                        cov = self.acq_func_kwargs['sigma_cov']
-                        if type(cov) is np.ndarray and len(cov.shape) == 2 and \
-                            cov.shape[0] == cov.shape[1] == X.shape[1]:
-                            cov = self.acq_func_kwargs['sigma_cov']
-                        elif type(cov) == float or type(cov) == int:
-                            cov = np.eye(X.shape[1]) * cov
-                        else:
-                            raise ValueError("Wrong Sigma Covariance value. it should be either a scalar or a Square matrix")
-                    else: #default
-                        cov = 0.001 * np.eye(X.shape[1]) 
-                    if 'sigma_params' in self.acq_func_kwargs and self.acq_func_kwargs['sigma_params'] is not None:
-                        if type(self.acq_func_kwargs['sigma_kwargs']) is tuple:
-                            alpha = self.acq_func_kwargs['sigma_params']['alpha']
-                            beta = self.acq_func_kwargs['sigma_params']['beta']
-                            kappa = self.acq_func_kwargs['sigma_params']['kappa']
-                        else:
-                            raise ValueError("Wrong Sigma Param values value. it should be a triple ")    
-                    else:
-                        alpha, beta, kappa = .3, 2., .1
-                    sigma_gen = sigma_points.MerweScaledSigmaPoints(
-                        n=X.shape[1], alpha=alpha, beta=beta, kappa=kappa)
-                    pts = [sigma_gen.sigma_points(xx, cov) for xx in X]
+                    # if 'sigma_cov' in self.acq_func_kwargs and self.acq_func_kwargs['sigma_cov'] is not None:
+                    #     cov = self.acq_func_kwargs['sigma_cov']
+                    #     if type(cov) is np.ndarray and len(cov.shape) == 2 and \
+                    #         cov.shape[0] == cov.shape[1] == X.shape[1]:
+                    #         cov = self.acq_func_kwargs['sigma_cov']
+                    #     elif type(cov) == float or type(cov) == int:
+                    #         cov = np.eye(X.shape[1]) * cov
+                    #     else:
+                    #         raise ValueError("Wrong Sigma Covariance value. it should be either a scalar or a Square matrix")
+                    # else: #default
+                    #     cov = 0.001 * np.eye(X.shape[1]) 
+                    # if 'sigma_params' in self.acq_func_kwargs and self.acq_func_kwargs['sigma_params'] is not None:
+                    #     if type(self.acq_func_kwargs['sigma_kwargs']) is tuple:
+                    #         alpha = self.acq_func_kwargs['sigma_params']['alpha']
+                    #         beta = self.acq_func_kwargs['sigma_params']['beta']
+                    #         kappa = self.acq_func_kwargs['sigma_params']['kappa']
+                    #     else:
+                    #         raise ValueError("Wrong Sigma Param values value. it should be a triple ")    
+                    # else:
+                    #     alpha, beta, kappa = .3, 2., .1
+                    # sigma_gen = sigma_points.MerweScaledSigmaPoints(
+                    #     n=X.shape[1], alpha=alpha, beta=beta, kappa=kappa)
+                    sigma_generator = self.acq_optimizer_kwargs['UT_kwargs']['sigma_generator']
+                    transform_f = self.acq_optimizer_kwargs['UT_kwargs']['transform_f']
+                    pts = [sigma_generator(xx) for xx in X]
                     sigma_pred = est.predict(
                         np.asarray(pts).reshape(-1, 2)).reshape(X.shape[0], X.shape[1] * 2 + 1)
                     uoi = np.asarray(
-                        [unscented_transform(
-                            np.expand_dims(pred, axis=1), 
-                            sigma_gen.Wm, sigma_gen.Wc)[0] \
+                        [transform_f(
+                            np.expand_dims(pred, axis=1))[0] \
                                 for pred in sigma_pred]).squeeze()
                     next_x = X[np.argmin(uoi)]
 

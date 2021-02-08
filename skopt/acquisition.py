@@ -2,7 +2,6 @@ import numpy as np
 import warnings
 
 from scipy.stats import norm
-from filterpy.kalman import sigma_points, unscented_transform
 
 
 def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB",
@@ -51,7 +50,9 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         if acq_func in ["EI", "EIps"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
         elif acq_func in ["UEI"]:
-            func_and_grad = gaussian_unscented_ei(X, model, y_opt, xi, return_grad)
+            sigma_generator = acq_func_kwargs['UT_kwargs']['sigma_generator']
+            transform_f = acq_func_kwargs['UT_kwargs']['transform_f']
+            func_and_grad = gaussian_unscented_ei(X, model, sigma_generator, transform_f, y_opt, xi, return_grad)
         else:
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
 
@@ -324,7 +325,7 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     return values
 
 
-def gaussian_unscented_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
+def gaussian_unscented_ei(X, model, sigma_generator, transform_f, y_opt=0.0, xi=0.01, return_grad=False):
     """
     Use the unscented expected improvement to calculate the acquisition values.
 
@@ -373,10 +374,10 @@ def gaussian_unscented_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
     """
     n_dim = X.shape[1]
     n_sigma = n_dim * 2 + 1
-    cov = 0.001 * np.eye(n_dim)
-    sigma_gen = sigma_points.MerweScaledSigmaPoints(
-        n=n_dim, alpha=.3, beta=2., kappa=.1)
-    pts = [sigma_gen.sigma_points(xx, cov) for xx in X]
+    # cov = 0.001 * np.eye(n_dim)
+    # sigma_gen = sigma_points.MerweScaledSigmaPoints(
+    #     n=n_dim, alpha=.3, beta=2., kappa=.1)
+    pts = [sigma_generator(xx) for xx in X]
     grads = []
     eis = []
     for i in range(n_sigma):
@@ -389,19 +390,19 @@ def gaussian_unscented_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         else:
             eis.append(res)
     uei = np.asarray(
-            [unscented_transform(
-                np.expand_dims(ei, axis=0).T, sigma_gen.Wm, sigma_gen.Wc)[0] \
+            [transform_f(
+                np.expand_dims(ei, axis=0).T)[0] \
                     for ei in np.asarray(eis).T])
     if return_grad:
         ugrad = np.asarray(
-            [unscented_transform(
-                np.expand_dims(grad, axis=0).T, sigma_gen.Wm, sigma_gen.Wc)[0] \
+            [transform_f(
+                np.expand_dims(grad, axis=0).T)[0] \
                     for grad in np.asarray(grads).T]).T
         return uei.squeeze(), ugrad#.squeeze()
     else:
         uei = np.asarray(
-            [unscented_transform(
-                np.expand_dims(ei, axis=0).T, sigma_gen.Wm, sigma_gen.Wc)[0] \
+            [transform_f(
+                np.expand_dims(ei, axis=0).T)[0] \
                     for ei in np.asarray(eis).T])
         return uei.squeeze()
 
