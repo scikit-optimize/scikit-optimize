@@ -49,7 +49,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
     elif acq_func in ["EI", "PI", "EIps", "PIps", "UEI"]:
         if acq_func in ["EI", "EIps"]:
             func_and_grad = gaussian_ei(X, model, y_opt, xi, return_grad)
-        elif acq_func in ["UEI"]:
+        elif acq_func in ["UEI"]: 
+            # Unscented EI  
             sigma_generator = acq_func_kwargs['UT_kwargs']['sigma_generator']
             transform_f = acq_func_kwargs['UT_kwargs']['transform_f']
             func_and_grad = gaussian_unscented_ei(X, model, sigma_generator, transform_f, y_opt, xi, return_grad)
@@ -383,37 +384,34 @@ def gaussian_unscented_ei(X, model, sigma_generator, transform_f, y_opt=0.0, xi=
         Acquisition function values computed at X.
     """
     n_dim = X.shape[1]
-    n_sigma = n_dim * 2 + 1
-    # cov = 0.001 * np.eye(n_dim)
-    # sigma_gen = sigma_points.MerweScaledSigmaPoints(
-    #     n=n_dim, alpha=.3, beta=2., kappa=.1)
+    n_sigma = n_dim * 2 + 1 # the number of sigmas is 2*dim + 1
+    
+    # Compute sigma points
     pts = [sigma_generator(xx) for xx in X]
     grads = []
     eis = []
     for i in range(n_sigma):
+        # estimate EI
         res = gaussian_ei(
             np.asarray(pts)[:, i, :], 
-            model, y_opt, xi, return_grad)
+            model, y_opt, xi, return_grad) 
         if return_grad:
+            # in case the gradient is requested. (compatibility lbfgs)
             grads.append(res[1])
             eis.append(res[0])
         else:
             eis.append(res)
     uei = np.asarray(
-            [transform_f(
+            [transform_f( # Transform the output of EI
                 np.expand_dims(ei, axis=0).T)[0] \
                     for ei in np.asarray(eis).T])
     if return_grad:
         ugrad = np.asarray(
-            [transform_f(
+            [transform_f( # Transform the gradients
                 np.expand_dims(grad, axis=0).T)[0] \
                     for grad in np.asarray(grads).T]).T
-        return uei.squeeze(), ugrad#.squeeze()
+        return uei.squeeze(), ugrad
     else:
-        uei = np.asarray(
-            [transform_f(
-                np.expand_dims(ei, axis=0).T)[0] \
-                    for ei in np.asarray(eis).T])
         return uei.squeeze()
 
     
