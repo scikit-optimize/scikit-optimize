@@ -337,7 +337,11 @@ def gaussian_unscented_ei(X, model, sigma_generator, transform_f, y_opt=0.0, xi=
     if``f(x) < y_opt``.
 
     This approach uses the unscented transform to approximate the output of 
-    EI and finding minima faster.
+    EI and finding minima faster. For reference:
+    J. Nogueira, R. Martinez-Cantin, A. Bernardino and L. Jamone, 
+    "Unscented Bayesian optimization for safe robot grasping,"
+    2016 IEEE/RSJ International Conference on Intelligent Robots and Systems,
+    Daejeon, 2016, pp. 1967-1972, doi: 10.1109/IROS.2016.7759310. 
 
     This solves one of the issues of the PI condition by giving a reward
     proportional to the amount of improvement got.
@@ -355,6 +359,12 @@ def gaussian_unscented_ei(X, model, sigma_generator, transform_f, y_opt=0.0, xi=
         method ``predict``.
         It should have a ``return_std`` parameter that returns the standard
         deviation.
+
+    sigma_generator :  function. takes as an input the center point of the 
+        sigma points to compute the unscented transform.
+
+    transform_f : function. Takes as an input the value computed on the sigma
+        points and returns an estimation of the output mean and covariance.
 
     y_opt : float, default 0
         Previous minimum value which we would like to improve upon.

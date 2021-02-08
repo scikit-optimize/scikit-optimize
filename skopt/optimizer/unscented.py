@@ -46,6 +46,14 @@ def ugp_minimize(func, dimensions, base_estimator=None,
     next parameter to evaluate can be made by the acquisition function
     over the Gaussian prior which is much quicker to evaluate.
 
+    Unlike the vanilla Bayesian Optimisation, this version modifies the 
+    Expected Improvement (EI) and the Optimal Intercept using the Unscented
+    Transform. For additional information, please refer to:
+    J. Nogueira, R. Martinez-Cantin, A. Bernardino and L. Jamone, 
+    "Unscented Bayesian optimization for safe robot grasping,"
+    2016 IEEE/RSJ International Conference on Intelligent Robots and Systems,
+    Daejeon, 2016, pp. 1967-1972, doi: 10.1109/IROS.2016.7759310. 
+
     The total number of evaluations, `n_calls`, are performed like the
     following. If `x0` is provided but not `y0`, then the elements of `x0`
     are first evaluated, followed by `n_initial_points` evaluations.
@@ -237,6 +245,14 @@ def ugp_minimize(func, dimensions, base_estimator=None,
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
+    sigma_params : dict containing the parameters of the sigma points generator class.
+        the values of the dict correspond to those of the MerweSigmapoints class in the
+        filterpy library. (alpha, beta, kappa).
+
+    sigma_cov : float or numpy ndarray NxN. It's the covariance matrix representing the 
+        uncertainty of the unscented transform. In case it's a scalar it will be interpreted
+        as sigma_cov * np.eye(N).
+
     Returns
     -------
     res : `OptimizeResult`, scipy object
@@ -275,8 +291,10 @@ def ugp_minimize(func, dimensions, base_estimator=None,
             "GP", space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
             noise=noise)
 
+    # This function associates a set of 2N+1 sigma points according to the Merwe scheme
     sigma_gen = sigma_points.MerweScaledSigmaPoints(n=len(dimensions), **sigma_params)
-
+    
+    # Init the Unscented Transfrom args
     UT_kwargs = {
         # 'sigma_cov': sigma_cov,
         'sigma_generator': partial(sigma_gen.sigma_points, P=sigma_cov),
