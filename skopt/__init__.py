@@ -69,7 +69,7 @@ else:
         "sampler",
         "space",
         "gp_minimize",
-        "ugp_minimize"
+        "ugp_minimize",
         "dummy_minimize",
         "forest_minimize",
         "gbrt_minimize",

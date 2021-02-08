@@ -1,4 +1,7 @@
-"""Gaussian process-based minimization algorithms using unscented transform approximation."""
+"""
+Gaussian process-based minimization algorithm
+using unscented transform approximation.
+"""
 
 import copy
 import inspect
@@ -23,14 +26,16 @@ from ..callbacks import VerboseCallback
 from .optimizer import Optimizer
 from ..utils import eval_callbacks
 
+
 def ugp_minimize(func, dimensions, base_estimator=None,
-                n_calls=100, n_random_starts=None,
-                n_initial_points=10,
-                initial_point_generator="random",
-                acq_func="UEI", acq_optimizer="auto", x0=None, y0=None,
-                random_state=None, verbose=False, callback=None,
-                n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
-                noise="gaussian", n_jobs=1, model_queue_size=None, sigma_params=None, sigma_cov=1):
+                 n_calls=100, n_random_starts=None,
+                 n_initial_points=10,
+                 initial_point_generator="random",
+                 acq_func="UEI", acq_optimizer="auto", x0=None, y0=None,
+                 random_state=None, verbose=False, callback=None,
+                 n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
+                 noise="gaussian", n_jobs=1, model_queue_size=None,
+                 sigma_params=None, sigma_cov=1):
     """Unscented Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -46,13 +51,13 @@ def ugp_minimize(func, dimensions, base_estimator=None,
     next parameter to evaluate can be made by the acquisition function
     over the Gaussian prior which is much quicker to evaluate.
 
-    Unlike the vanilla Bayesian Optimisation, this version modifies the 
+    Unlike the vanilla Bayesian Optimisation, this version modifies the
     Expected Improvement (EI) and the Optimal Intercept using the Unscented
     Transform. For additional information, please refer to:
-    J. Nogueira, R. Martinez-Cantin, A. Bernardino and L. Jamone, 
+    J. Nogueira, R. Martinez-Cantin, A. Bernardino and L. Jamone,
     "Unscented Bayesian optimization for safe robot grasping,"
     2016 IEEE/RSJ International Conference on Intelligent Robots and Systems,
-    Daejeon, 2016, pp. 1967-1972, doi: 10.1109/IROS.2016.7759310. 
+    Daejeon, 2016, pp. 1967-1972, doi: 10.1109/IROS.2016.7759310.
 
     The total number of evaluations, `n_calls`, are performed like the
     following. If `x0` is provided but not `y0`, then the elements of `x0`
@@ -71,7 +76,7 @@ def ugp_minimize(func, dimensions, base_estimator=None,
     func : callable
         Function to minimize. Should take a single list of parameters
         and return the objective value.
-    
+
         If you have a search-space where all dimensions have names,
         then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
@@ -245,13 +250,14 @@ def ugp_minimize(func, dimensions, base_estimator=None,
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
-    sigma_params : dict containing the parameters of the sigma points generator class.
-        the values of the dict correspond to those of the MerweSigmapoints class in the
-        filterpy library. (alpha, beta, kappa).
+    sigma_params : dict containing the parameters of the sigma points
+        generator class. the values of the dict correspond to those of
+        the MerweSigmapoints class in the filterpy library.
+        (alpha, beta, kappa).
 
-    sigma_cov : float or numpy ndarray NxN. It's the covariance matrix representing the 
-        uncertainty of the unscented transform. In case it's a scalar it will be interpreted
-        as sigma_cov * np.eye(N).
+    sigma_cov : float or numpy ndarray NxN. It's the covariance matrix
+        representing the uncertainty of the unscented transform. In case
+        it's a scalar it will be interpreted as sigma_cov * np.eye(N).
 
     Returns
     -------
@@ -277,7 +283,8 @@ def ugp_minimize(func, dimensions, base_estimator=None,
         :class:`skopt.dummy_minimize`, :class:`skopt.gbrt_minimize`
 
     """
-    specs = {"args": copy.copy(inspect.currentframe().f_locals),
+    specs = {
+        "args": copy.copy(inspect.currentframe().f_locals),
         "function": inspect.currentframe().f_code.co_name}
 
     # Check params
@@ -288,26 +295,31 @@ def ugp_minimize(func, dimensions, base_estimator=None,
 
     if base_estimator is None:
         base_estimator = cook_estimator(
-            "GP", space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
+            "GP", space=space,
+            random_state=rng.randint(0, np.iinfo(np.int32).max),
             noise=noise)
 
-    # This function associates a set of 2N+1 sigma points according to the Merwe scheme
-    sigma_gen = sigma_points.MerweScaledSigmaPoints(n=len(dimensions), **sigma_params)
-    
+    # This function associates a set of 2N+1 sigma points
+    # according to the Merwe scheme
+    sigma_gen = sigma_points.MerweScaledSigmaPoints(
+        n=len(dimensions), **sigma_params)
+
     # Init the Unscented Transfrom args
     UT_kwargs = {
         # 'sigma_cov': sigma_cov,
         'sigma_generator': partial(sigma_gen.sigma_points, P=sigma_cov),
-        'transform_f':partial(unscented_transform, Wc=sigma_gen.Wc, Wm=sigma_gen.Wm)}
-    
+        'transform_f': partial(
+            unscented_transform, Wc=sigma_gen.Wc, Wm=sigma_gen.Wm)}
+
     acq_optimizer_kwargs = {
         "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
         "n_jobs": n_jobs, "UT_kwargs": UT_kwargs}
 
-    acq_func_kwargs = {"xi": xi, "kappa": kappa, 
+    acq_func_kwargs = {
+        "xi": xi, "kappa": kappa,
         "UT_kwargs": UT_kwargs}
 
-        # Initialize optimization
+    # Initialize optimization
     # Suppose there are points provided (x0 and y0), record them
 
     # check x0: list-like, requirement of minimal points
@@ -384,8 +396,7 @@ def ugp_minimize(func, dimensions, base_estimator=None,
         if eval_callbacks(callbacks, result):
             return result
 
-
-        # Optimize
+    # Optimize
     for n in range(n_calls):
         next_x = optimizer.ask()
         next_y = func(next_x)
