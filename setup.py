@@ -46,7 +46,8 @@ setup(name='scikit-optimize',
                         'scipy>=0.19.1',
                         'scikit-learn>=0.20.0'],
       extras_require={
-        'plots':  ["matplotlib>=2.0.0"]
+        'plots':  ["matplotlib>=2.0.0"],
+        'unscented': ["filterpy>=1.4.4"]
         }
 
       )
