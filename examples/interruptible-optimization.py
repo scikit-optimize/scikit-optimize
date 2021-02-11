@@ -112,7 +112,7 @@ gp_minimize(obj_fun,                        # the function to minimize
             n_calls=10,                     # number of evaluations of f including at x0
             n_random_starts=3,              # the number of random initialization points
             random_state=random_state       # warm-started random state from checkpoint
-            callback=[checkpoint_saver],    
+            callback=[checkpoint_saver],
             random_state=777)
 
 #############################################################################
