@@ -273,7 +273,8 @@ class DeadlineStopper(EarlyStopper):
 
 class ThresholdStopper(EarlyStopper):
     """
-    Stop the optimization if the best func_vals is lower than the given threshold
+    Stop the optimization if the best func_vals is lower than the given
+    threshold
     """
     def __init__(self, threshold: float) -> bool:
         super(EarlyStopper, self).__init__()
