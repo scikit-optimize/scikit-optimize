@@ -13,6 +13,7 @@ from skopt.callbacks import DeltaYStopper
 from skopt.callbacks import DeadlineStopper
 from skopt.callbacks import CheckpointSaver
 from skopt.callbacks import HollowIterationsStopper
+from skopt.callbacks import ThresholdStopper
 
 from skopt.utils import load
 
@@ -33,6 +34,16 @@ def test_deltay_stopper():
     assert deltay(Result([0, 1, 2, 3, 4, 0.1, 0.19]))
     assert not deltay(Result([0, 1, 2, 3, 4, 0.1]))
     assert deltay(Result([0, 1])) is None
+
+
+@pytest.mark.fast_test
+def test_threshold_stopper():
+    threshold = ThresholdStopper(3.0)
+
+    Result = namedtuple('Result', ['func_vals'])
+
+    assert not threshold(Result([3.1, 4, 4.6, 100]))
+    assert threshold(Result([3.0, 3, 2.9, 0, 0.0]))
 
 
 @pytest.mark.fast_test
