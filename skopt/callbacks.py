@@ -271,6 +271,21 @@ class DeadlineStopper(EarlyStopper):
             return None
 
 
+class ThresholdStopper(EarlyStopper):
+    """
+    Stop the optimization if the best func_vals is lower than the given threshold
+    """
+    def __init__(self, threshold: float) -> bool:
+        super(EarlyStopper, self).__init__()
+        self.threshold = threshold
+
+    def _criterion(self, result):
+        func_vals = np.sort(result.func_vals)
+        best = func_vals[0]
+        # True if best < threshold given by the user
+        return best <= self.threshold
+
+
 class CheckpointSaver(object):
     """
     Save current state after each iteration with :class:`skopt.dump`.
