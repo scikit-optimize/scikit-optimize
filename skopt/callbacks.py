@@ -281,7 +281,7 @@ class ThresholdStopper(EarlyStopper):
         self.threshold = threshold
 
     def _criterion(self, result) -> bool:
-        return np.any([val < self.threshold for val in result.func_vals])
+        return np.any([val <= self.threshold for val in result.func_vals])
 
 
 class CheckpointSaver(object):
