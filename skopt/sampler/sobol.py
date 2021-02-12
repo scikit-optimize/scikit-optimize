@@ -93,7 +93,7 @@ class Sobol(InitialPointGenerator):
             raise ValueError("The balance properties of Sobol' points require"
                              " skipping a power of 2.")
         if skip != 0:
-            warnings.warn("(%s) points have been skipped: " 
+            warnings.warn("(%s) points have been skipped: "
                           "(%s) points can be generated before the "
                           "sequence repeats." % (skip, skip))
         self.skip = skip
