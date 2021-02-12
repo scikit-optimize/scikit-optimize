@@ -276,15 +276,12 @@ class ThresholdStopper(EarlyStopper):
     Stop the optimization when the objective value is lower
     than the given threshold.
     """
-    def __init__(self, threshold: float) -> bool:
+    def __init__(self, threshold: float) -> None:
         super(EarlyStopper, self).__init__()
         self.threshold = threshold
 
-    def _criterion(self, result):
-        func_vals = np.sort(result.func_vals)
-        best = func_vals[0]
-        # True if best < threshold given by the user
-        return best <= self.threshold
+    def _criterion(self, result) -> bool:
+        return np.any([val < self.threshold for val in result.func_vals])
 
 
 class CheckpointSaver(object):
