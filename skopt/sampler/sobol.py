@@ -169,7 +169,8 @@ class Sobol(InitialPointGenerator):
                              '  The spatial dimension DIM_NUM should '
                              'satisfy:\n'
                              '  1 <= DIM_NUM <= (%d)\n'
-                             '  But this input value is DIM_NUM = (%d)' % (self.dim_max, dim_num))
+                             '  But this input value is'
+                             'DIM_NUM = (%d)' % (self.dim_max, dim_num))
 
         #  Initialize the remaining rows of V.
         for i in range(2, dim_num + 1):
