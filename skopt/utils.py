@@ -718,8 +718,8 @@ def use_named_args(dimensions):
     >>> print("Best fitness: " + str(result.fun))
     Best fitness: 0.1948080835239698
     >>> print("Best parameters: {}".format(result.x))
-    Best parameters: 
-    [0.44134853091052617, 0.06570954323368307, 0.17586123323419825]
+    Best parameters:
+        [0.44134853091052617, 0.06570954323368307, 0.17586123323419825]
 
     Parameters
     ----------
