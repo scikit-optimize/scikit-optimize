@@ -274,7 +274,7 @@ class DeadlineStopper(EarlyStopper):
 class CheckpointSaver(object):
     """
     Save current state after each iteration with :class:`skopt.dump`.
-
+    Allows to re-use previously computed function evaluations.
 
     Examples
     --------
@@ -285,6 +285,13 @@ class CheckpointSaver(object):
     >>> skopt.gp_minimize(obj_fun, [(-2, 2)], n_calls=10,
     ...                   callback=[checkpoint_callback]) # doctest: +SKIP
 
+
+    When re-using stored results.
+    >>> checkpoint_callback = skopt.callbacks.CheckpointSaver("./result.pkl")
+    >>> x0,y0 = checkpoint_callback.load_previous_evaluations()
+    >>> skopt.gp_minimize(obj_fun, [(-2, 2)], n_calls=10,
+    ...                   x0=x0, y0=y0,
+    ...                   callback=[checkpoint_callback]) # doctest: +SKIP
     Parameters
     ----------
     checkpoint_path : string
@@ -304,3 +311,15 @@ class CheckpointSaver(object):
             The optimization as a OptimizeResult object.
         """
         dump(res, self.checkpoint_path, **self.dump_options)
+
+    def load_previous_evaluations(self):
+        """
+        Loads from disk previously evaluated points.
+        Returns
+        -------
+        X, y : np.ndarray, np.ndarray
+        """
+        if os.path.exists(self.checkpoint_path):
+            result = load(self.checkpoint_path)
+            return result.x_iters, result.func_vals
+        return None, None
