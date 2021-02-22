@@ -11,10 +11,11 @@ except ImportError:
     from collections import Callable
 
 from time import time
+import os
 
 import numpy as np
 
-from skopt.utils import dump
+from skopt.utils import dump, load
 
 def check_callback(callback):
     """
