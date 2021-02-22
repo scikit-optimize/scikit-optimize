@@ -328,5 +328,5 @@ class CheckpointSaver(object):
         if os.path.exists(self.checkpoint_path):
             result = load(self.checkpoint_path)
             return {'x0': result.x_iters, 'y0': result.func_vals,
-                    'base_estimator': result.models[-1]}
+                    'base_estimator': result.models[-1] if result.models else None}
         return {}
