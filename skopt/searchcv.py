@@ -304,6 +304,7 @@ class BayesSearchCV(BaseSearchCV):
         if iid != "deprecated":
             warnings.warn("The `iid` parameter has been deprecated "
                           "and will be ignored.")
+        self.iid = iid  # For sklearn repr pprint
 
         super(BayesSearchCV, self).__init__(
              estimator=estimator, scoring=scoring,
@@ -424,11 +425,13 @@ class BayesSearchCV(BaseSearchCV):
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_scores, test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
+            (_fit_fail, train_scores, test_scores, test_sample_counts,
+             fit_time, score_time, parameters) = zip(*[dic.values()
+                                                       for dic in out])
         else:
-            (test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
+            (_fit_fail, test_scores, test_sample_counts,
+             fit_time, score_time, parameters) = zip(*[dic.values()
+                                                       for dic in out])
 
         candidate_params = parameters[::n_splits]
         n_candidates = len(candidate_params)
