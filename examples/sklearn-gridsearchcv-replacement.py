@@ -103,7 +103,7 @@ pipe = Pipeline([
 # But that's fine, this is just an example.
 linsvc_search = {
     'model': [LinearSVC(max_iter=1000)],
-    'model__C': (1e-6, 1e+6, 'log-uniform'),
+    'model__C': Real(1e-6, 1e+6, 'log-uniform'),
 }
 
 # explicit dimension classes can be specified like this
