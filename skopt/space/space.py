@@ -254,6 +254,9 @@ class Real(Dimension):
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
                              " upper bound {}".format(low, high))
+        if prior not in ["uniform", "log-uniform"]:
+            raise ValueError("prior should be 'uniform' or 'log-uniform'"
+                             " got {}".format(prior))
         self.low = low
         self.high = high
         self.prior = prior
@@ -436,6 +439,9 @@ class Integer(Dimension):
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
                              " upper bound {}".format(low, high))
+        if prior not in ["uniform", "log-uniform"]:
+            raise ValueError("prior should be 'uniform' or 'log-uniform'"
+                             " got {}".format(prior))
         self.low = low
         self.high = high
         self.prior = prior
