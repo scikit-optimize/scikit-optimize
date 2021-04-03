@@ -230,7 +230,7 @@ class Normalize(Transformer):
     high : float
         Higher bound.
 
-    is_int : bool, default=True
+    is_int : bool, default=False
         Round and cast the return value of `inverse_transform` to integer. Set
         to `True` when applying this transform to integers.
     """
