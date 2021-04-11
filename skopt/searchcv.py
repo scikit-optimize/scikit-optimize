@@ -434,6 +434,7 @@ class BayesSearchCV(BaseSearchCV):
 
         return total_iter
 
+    # TODO: Accept callbacks via the constructor?
     def fit(self, X, y=None, *, groups=None, callback=None, **fit_params):
         """Run fit on the estimator with randomly drawn parameters.
 
