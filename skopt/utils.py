@@ -609,7 +609,7 @@ def normalize_dimensions(dimensions):
                 )
         elif isinstance(dimension, Integer):
             transformed_dimensions.append(
-                Integer(dimension.low, dimension.high, dimension.prior,
+                Integer(dimension.low, dimension.high,
                         name=dimension.name,
                         transform="normalize",
                         dtype=dimension.dtype)
