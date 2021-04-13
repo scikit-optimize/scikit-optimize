@@ -7,3 +7,10 @@
 Version 0.9.0
 =============
 **In Development**
+
+:mod:`skopt.searchcv`
+---------------------
+- |Fix| Fix :obj:`skopt.searchcv.BayesSearchCV` for scikit-learn >= 0.24.
+  :pr:`988`
+- |API| Deprecate :class:`skopt.searchcv.BayesSearchCV` parameter `iid=`.
+    :pr:`988`
