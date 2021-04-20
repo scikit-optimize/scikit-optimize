@@ -89,10 +89,10 @@ class LogN(Transformer):
         self._base = base
 
     def transform(self, X):
-        return np.log10(np.asarray(X, dtype=np.float)) / np.log10(self._base)
+        return np.log10(np.asarray(X, dtype=float)) / np.log10(self._base)
 
     def inverse_transform(self, Xt):
-        return self._base ** np.asarray(Xt, dtype=np.float)
+        return self._base ** np.asarray(Xt, dtype=float)
 
 
 class CategoricalEncoder(Transformer):
