@@ -378,7 +378,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin,
 
         if np.iterable(length_scale):
             if len(length_scale) > 1:
-                length_scale = np.asarray(length_scale, dtype=np.float)
+                length_scale = np.asarray(length_scale, dtype=float)
             else:
                 length_scale = float(length_scale[0])
         else:

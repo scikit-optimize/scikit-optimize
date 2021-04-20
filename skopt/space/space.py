@@ -244,13 +244,13 @@ class Real(Dimension):
     name : str or None
         Name associated with the dimension, e.g., "learning rate".
 
-    dtype : str or dtype, default=np.float
+    dtype : str or dtype, default=np.float64
         float type which will be used in inverse_transform,
         can be float.
 
     """
     def __init__(self, low, high, prior="uniform", base=10, transform=None,
-                 name=None, dtype=np.float):
+                 name=None, dtype=float):
         if high <= low:
             raise ValueError("the lower bound {} has to be less than the"
                              " upper bound {}".format(low, high))
@@ -273,8 +273,8 @@ class Real(Dimension):
                              "or 'float64'"
                              " got {}".format(self.dtype))
         elif isinstance(self.dtype, type) and self.dtype\
-                not in [float, np.float, np.float16, np.float32, np.float64]:
-            raise ValueError("dtype must be float, np.float"
+                not in [float, np.float16, np.float32, np.float64]:
+            raise ValueError("dtype must be float, np.float64"
                              " got {}".format(self.dtype))
 
         if transform is None:
