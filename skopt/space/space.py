@@ -244,7 +244,7 @@ class Real(Dimension):
     name : str or None
         Name associated with the dimension, e.g., "learning rate".
 
-    dtype : str or dtype, default=np.float64
+    dtype : str or dtype, default=float
         float type which will be used in inverse_transform,
         can be float.
 
@@ -272,8 +272,8 @@ class Real(Dimension):
             raise ValueError("dtype must be 'float', 'float16', 'float32'"
                              "or 'float64'"
                              " got {}".format(self.dtype))
-        elif isinstance(self.dtype, type) and self.dtype\
-                not in [float, np.float16, np.float32, np.float64]:
+        elif isinstance(self.dtype, type) and \
+                np.issubdtype(self.dtype, np.floating):
             raise ValueError("dtype must be float, np.float64"
                              " got {}".format(self.dtype))
 
