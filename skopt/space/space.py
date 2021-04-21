@@ -274,7 +274,7 @@ class Real(Dimension):
                              " got {}".format(self.dtype))
         elif isinstance(self.dtype, type) and \
                 not np.issubdtype(self.dtype, np.floating):
-            raise ValueError("dtype must be a np.floating subtype"
+            raise ValueError("dtype must be a np.floating subtype;"
                              " got {}".format(self.dtype))
 
         if transform is None:
