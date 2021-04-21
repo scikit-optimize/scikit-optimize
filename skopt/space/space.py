@@ -273,7 +273,7 @@ class Real(Dimension):
                              "or 'float64'"
                              " got {}".format(self.dtype))
         elif isinstance(self.dtype, type) and \
-                np.issubdtype(self.dtype, np.floating):
+                np.issubdtype(type(self.dtype), np.floating):
             raise ValueError("dtype must be float, np.float64"
                              " got {}".format(self.dtype))
 
