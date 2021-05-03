@@ -1,10 +1,5 @@
 import warnings
 
-try:
-    from collections.abc import Sized
-except ImportError:
-    from collections import Sized
-
 import numpy as np
 from scipy.stats import rankdata
 
@@ -12,16 +7,20 @@ from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 
 from sklearn.utils.validation import check_is_fitted
-try:
-    from sklearn.metrics import check_scoring
-except ImportError:
-    from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
 from .callbacks import check_callback
 
+def _get_score_names(results, *, kind="test"):
+    key_parts = [key.rsplit("_", 1) for key in results.keys()]
+    prefix = "mean_%s" % kind
+    return {
+        parts[1]
+        for parts in key_parts
+        if len(parts) == 2 and parts[0] == prefix
+    }
 
 class BayesSearchCV(BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -406,9 +405,23 @@ class BayesSearchCV(BaseSearchCV):
         params_dict = [point_asdict(search_space, p) for p in params]
 
         all_results = evaluate_candidates(params_dict)
+
+        # self.scoring is a callable, we had to wait until here
+        # to choose between single metric or multimetric based on
+        # the returned type
+        if self._target_score is None:
+            score_names = _get_score_names(all_results)
+            if len(score_names) > 1:
+                # multimetric
+                self._check_refit_for_multimetric(score_names)
+                self._target_score = self.refit
+            else:
+                # single metric
+                self._target_score = "score"
+
         # Feed the point and objective value back into optimizer
         # Optimizer minimizes objective, hence provide negative score
-        local_results = all_results["mean_test_score"][-len(params):]
+        local_results = all_results["mean_test_%s" % self._target_score][-len(params):]
         return optimizer.tell(params, [-score for score in local_results])
 
     @property
@@ -462,15 +475,34 @@ class BayesSearchCV(BaseSearchCV):
             self.optimizer_kwargs_ = {}
         else:
             self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
+        
+        if callable(self.refit):
+            raise ValueError("BayesSearchCV doesn't support callable refit")
+
+        # Adapted from BaseSearchCV fit() method
+        if callable(self.scoring):
+            # will be determined later
+            self._target_score = None
+        elif self.scoring is None or isinstance(self.scoring, str):
+            self._target_score = "score"
+        else:
+            # proper checking will be performed in BaseSearchCV.fit()
+            self._target_score = self.refit
+        
 
         super().fit(X=X, y=y, groups=groups, **fit_params)
 
         # BaseSearchCV never ranked train scores,
         # but apparently we used to ship this (back-compat)
         if self.return_train_score:
-            self.cv_results_["rank_train_score"] = \
-                rankdata(-np.array(self.cv_results_["mean_train_score"]),
-                         method='min').astype(int)
+            for score in _get_score_names(self.cv_results_, kind="train"):
+                self.cv_results_["rank_train_%s" % score] = (
+                    rankdata(
+                        -np.array(self.cv_results_["mean_train_%s" % score]),
+                        method='min'
+                    )
+                    .astype(int)
+                )
         return self
 
     def _run_search(self, evaluate_candidates):
@@ -518,3 +550,20 @@ class BayesSearchCV(BaseSearchCV):
                 if eval_callbacks(callbacks, optim_result):
                     break
             self._optim_results.append(optim_result)
+    
+    def _check_refit_for_multimetric(self, scores):
+        """Check `refit` is compatible with `scores` and valid"""
+        # override to exclude False and callables
+        multimetric_refit_msg = (
+            "For multi-metric scoring, the parameter refit must be set to a "
+            "scorer key used to guide the bayesian optimization process "
+            "and refit an estimator with the best parameter settings in the "
+            "whole data and make the best_* attributes available for that "
+            f" metric. {self.refit!r} was passed."
+            )
+
+        valid_refit_dict = (isinstance(self.refit, str) and
+                            self.refit in scores)
+
+        if (not valid_refit_dict):
+            raise ValueError(multimetric_refit_msg)
