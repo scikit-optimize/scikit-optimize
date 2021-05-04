@@ -209,8 +209,8 @@ def base_minimize(func, dimensions, base_estimator,
         For more details related to the OptimizeResult object, refer
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
-    specs = {"args": copy.copy(inspect.currentframe().f_locals),
-             "function": inspect.currentframe().f_code.co_name}
+    specs = {"args": copy.deepcopy(locals()),
+             "function": copy.deepcopy(inspect.currentframe().f_code.co_name)}
 
     acq_optimizer_kwargs = {
         "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
