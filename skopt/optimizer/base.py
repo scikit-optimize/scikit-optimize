@@ -210,7 +210,7 @@ def base_minimize(func, dimensions, base_estimator,
         http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.OptimizeResult.html
     """
     specs = {"args": copy.deepcopy(locals()),
-             "function": copy.deepcopy(inspect.currentframe().f_code.co_name)}
+             "function": "base_minimize"}
 
     acq_optimizer_kwargs = {
         "n_points": n_points, "n_restarts_optimizer": n_restarts_optimizer,
