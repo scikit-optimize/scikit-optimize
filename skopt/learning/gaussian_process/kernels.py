@@ -316,7 +316,7 @@ class DotProduct(Kernel, sk_DotProduct):
 
 class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin,
                     Kernel):
-    """
+    r"""
     The HammingKernel is used to handle categorical inputs.
 
     ``K(x_1, x_2) = exp(\sum_{j=1}^{d} -ls_j * (I(x_1j != x_2j)))``
@@ -378,7 +378,7 @@ class HammingKernel(sk_StationaryKernelMixin, sk_NormalizedKernelMixin,
 
         if np.iterable(length_scale):
             if len(length_scale) > 1:
-                length_scale = np.asarray(length_scale, dtype=np.float)
+                length_scale = np.asarray(length_scale, dtype=float)
             else:
                 length_scale = float(length_scale[0])
         else:
