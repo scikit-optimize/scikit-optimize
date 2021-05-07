@@ -530,8 +530,8 @@ def test_searchcv_multimetric_scoring():
     def confusion_matrix_score(clf, X, y):
         y_pred = clf.predict(X)
         cm = confusion_matrix(y, y_pred)
-        return {'tn': cm[0, 0], 'fp': cm[0, 1],
-                'fn': cm[1, 0], 'tp': cm[1, 1]}
+        return {'tn': int(cm[0, 0]), 'fp': int(cm[0, 1]),
+                'fn': int(cm[1, 0]), 'tp': int(cm[1, 1])}
     opt = BayesSearchCV(
         SVC(random_state=random_state),
         {
