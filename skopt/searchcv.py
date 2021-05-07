@@ -13,6 +13,7 @@ from .utils import point_asdict, dimensions_aslist, eval_callbacks
 from .space import check_dimension
 from .callbacks import check_callback
 
+
 def _get_score_names(results, *, kind="test"):
     key_parts = [key.rsplit("_", 1) for key in results.keys()]
     prefix = "mean_%s" % kind
@@ -273,7 +274,7 @@ class BayesSearchCV(BaseSearchCV):
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
-    
+
     refit_time_ : float
         Seconds used for refitting the best model on the whole dataset.
 
@@ -431,7 +432,7 @@ class BayesSearchCV(BaseSearchCV):
 
         all_results = evaluate_candidates(params_dict)
 
-        # self.scoring is a callable, we had to wait until here
+        # if self.scoring is a callable, we have to wait until here
         # to choose between single metric or multimetric
         if self._target_score is None:
             score_names = _get_score_names(all_results)
@@ -453,7 +454,8 @@ class BayesSearchCV(BaseSearchCV):
 
         # Feed the point and objective value back into optimizer
         # Optimizer minimizes objective, hence provide negative score
-        local_results = all_results["mean_test_%s" % self._target_score][-len(params):]
+        score = "mean_test_%s" % self._target_score
+        local_results = all_results[score][-len(params):]
         return optimizer.tell(params, [-score for score in local_results])
 
     @property
@@ -507,7 +509,7 @@ class BayesSearchCV(BaseSearchCV):
             self.optimizer_kwargs_ = {}
         else:
             self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
-        
+
         if callable(self.refit):
             raise ValueError("BayesSearchCV doesn't support callable refit")
 
@@ -520,7 +522,7 @@ class BayesSearchCV(BaseSearchCV):
         else:
             # proper checking will be performed in BaseSearchCV.fit()
             self._target_score = self.refit
-        
+
 
         super().fit(X=X, y=y, groups=groups, **fit_params)
 
@@ -582,7 +584,7 @@ class BayesSearchCV(BaseSearchCV):
                 if eval_callbacks(callbacks, optim_result):
                     break
             self._optim_results.append(optim_result)
-    
+
     def _check_refit_for_multimetric(self, scores):
         """Check `refit` is compatible with `scores` and valid"""
         # override to exclude False and callables
