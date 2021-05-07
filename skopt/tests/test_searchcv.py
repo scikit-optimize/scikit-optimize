@@ -4,6 +4,7 @@ search with interface similar to those of GridSearchCV
 
 import pytest
 
+import sklearn as skl
 from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, f1_score
@@ -12,6 +13,7 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 from sklearn.base import BaseEstimator
+from sklearn.utils import parse_version
 from scipy.stats import rankdata
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -526,29 +528,31 @@ def test_searchcv_multimetric_scoring():
     )
 
     # test callable scoring
-    # sample code taken from scikit-learn
-    def confusion_matrix_score(clf, X, y):
-        y_pred = clf.predict(X)
-        cm = confusion_matrix(y, y_pred)
-        return {'tn': int(cm[0, 0]), 'fp': int(cm[0, 1]),
-                'fn': int(cm[1, 0]), 'tp': int(cm[1, 1])}
-    opt = BayesSearchCV(
-        SVC(random_state=random_state),
-        {
-            'C': Real(1e-6, 1e+6, prior='log-uniform'),
-            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-            'degree': Integer(1, 8),
-            'kernel': Categorical(['linear', 'poly', 'rbf']),
-        },
-        scoring=confusion_matrix_score,
-        refit="tp",
-        n_iter=11,
-        random_state=random_state
-    )
-    opt.fit(X_train, y_train)
-    assert opt._target_score == "tp"
-    assert confusion_matrix_score(opt, X_test, y_test)["tp"] > 0.9
-    assert (
-        len(opt.cv_results_["mean_test_tp"])
-        == len(opt.cv_results_["mean_test_fp"])
-    )
+    # Scoring functions returning dicts are only supported in sklearn >=0.24
+    if parse_version(skl.__version__) >= parse_version("0.24dev0"):
+        # sample code taken from scikit-learn
+        def confusion_matrix_score(clf, X, y):
+            y_pred = clf.predict(X)
+            cm = confusion_matrix(y, y_pred)
+            return {'tn': cm[0, 0], 'fp': cm[0, 1],
+                    'fn': cm[1, 0], 'tp': cm[1, 1]}
+        opt = BayesSearchCV(
+            SVC(random_state=random_state),
+            {
+                'C': Real(1e-6, 1e+6, prior='log-uniform'),
+                'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+                'degree': Integer(1, 8),
+                'kernel': Categorical(['linear', 'poly', 'rbf']),
+            },
+            scoring=confusion_matrix_score,
+            refit="tp",
+            n_iter=11,
+            random_state=random_state
+        )
+        opt.fit(X_train, y_train)
+        assert opt._target_score == "tp"
+        assert confusion_matrix_score(opt, X_test, y_test)["tp"] > 0.9
+        assert (
+            len(opt.cv_results_["mean_test_tp"])
+            == len(opt.cv_results_["mean_test_fp"])
+        )
