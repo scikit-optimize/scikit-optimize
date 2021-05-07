@@ -13,7 +13,7 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone
 from sklearn.base import BaseEstimator
-from sklearn.utils import parse_version
+from packaging.version import parse as parse_version
 from scipy.stats import rankdata
 import numpy as np
 from numpy.testing import assert_array_equal
