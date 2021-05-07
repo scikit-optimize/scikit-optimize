@@ -169,7 +169,7 @@ class Optimizer(object):
                  model_queue_size=None,
                  acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
-        args = locals()
+        args = locals().copy()
         del args['self']
         self.specs = {"args": args,
                       "function": "Optimizer"}
