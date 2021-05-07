@@ -552,4 +552,3 @@ def test_searchcv_multimetric_scoring():
         len(opt.cv_results_["mean_test_tp"])
         == len(opt.cv_results_["mean_test_fp"])
     )
-
