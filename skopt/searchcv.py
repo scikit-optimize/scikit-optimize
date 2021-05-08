@@ -360,6 +360,12 @@ class BayesSearchCV(BaseSearchCV):
                 "Search space should be provided as a dict or list of dict,"
                 "got %s" % search_space)
 
+    # copied for compatibility with 0.19 sklearn from 0.18 BaseSearchCV
+    @property
+    def best_score_(self):
+        check_is_fitted(self, 'cv_results_')
+        return self.cv_results_['mean_test_score'][self.best_index_]
+
     @property
     def optimizer_results_(self):
         check_is_fitted(self, '_optim_results')
