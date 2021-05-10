@@ -174,7 +174,7 @@ searchcv = BayesSearchCV(
 
 # callback handler
 def on_step(optim_result):
-    score = searchcv.best_score_
+    score = -optim_result['fun']
     print("best score: %s" % score)
     if score >= 0.98:
         print('Interrupting!')
