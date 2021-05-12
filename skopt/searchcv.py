@@ -457,7 +457,10 @@ class BayesSearchCV(BaseSearchCV):
         local_results = all_results[score_name][-len(params):]
         # return the score_name to cache it if callable refit
         # this avoids checking self.refit all the time
-        return optimizer.tell(params, [-score for score in local_results]), score_name
+        return (
+                optimizer.tell(params, [-score for score in local_results]),
+                score_name
+        )
 
     @property
     def total_iterations(self):

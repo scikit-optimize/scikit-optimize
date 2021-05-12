@@ -524,6 +524,7 @@ def test_searchcv_multimetric_scoring():
         == len(opt.cv_results_["mean_test_f1"])
     )
 
+
 @pytest.mark.skipif(parse_version(skl.__version__) < parse_version("0.24"),
                     reason="requires sklearn>=0.24")
 def test_searchcv_multimetric_callable_scoring():
