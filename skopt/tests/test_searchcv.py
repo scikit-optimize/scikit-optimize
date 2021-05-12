@@ -471,7 +471,6 @@ def test_search_cv_internal_parameter_types():
 def test_searchcv_multimetric_scoring():
     # test that multi-metric scoring works as intened
     # for BayesSearchCV
-
     random_state = 42
 
     X, y = make_classification(n_classes=2, random_state=random_state)
@@ -494,7 +493,6 @@ def test_searchcv_multimetric_scoring():
     )
     opt.fit(X_train, y_train)
     y_pred = opt.predict(X_test)
-    assert opt._target_score == "f1"
     assert f1_score(y_test, y_pred) > 0.9
     assert (
         len(opt.cv_results_["mean_test_accuracy"])
@@ -520,39 +518,45 @@ def test_searchcv_multimetric_scoring():
     )
     opt.fit(X_train, y_train)
     y_pred = opt.predict(X_test)
-    assert opt._target_score == "f1"
     assert f1_score(y_test, y_pred) > 0.9
     assert (
         len(opt.cv_results_["mean_test_accuracy"])
         == len(opt.cv_results_["mean_test_f1"])
     )
 
-    # test callable scoring
-    # Scoring functions returning dicts are only supported in sklearn >=0.24
-    if parse_version(skl.__version__) >= parse_version("0.24dev0"):
-        # sample code taken from scikit-learn
-        def confusion_matrix_score(clf, X, y):
-            y_pred = clf.predict(X)
-            cm = confusion_matrix(y, y_pred)
-            return {'tn': cm[0, 0], 'fp': cm[0, 1],
-                    'fn': cm[1, 0], 'tp': cm[1, 1]}
-        opt = BayesSearchCV(
-            SVC(random_state=random_state),
-            {
-                'C': Real(1e-6, 1e+6, prior='log-uniform'),
-                'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-                'degree': Integer(1, 8),
-                'kernel': Categorical(['linear', 'poly', 'rbf']),
-            },
-            scoring=confusion_matrix_score,
-            refit="tp",
-            n_iter=11,
-            random_state=random_state
-        )
-        opt.fit(X_train, y_train)
-        assert opt._target_score == "tp"
-        assert confusion_matrix_score(opt, X_test, y_test)["tp"] > 0.9
-        assert (
-            len(opt.cv_results_["mean_test_tp"])
-            == len(opt.cv_results_["mean_test_fp"])
-        )
+@pytest.mark.skipif(parse_version(skl.__version__) < parse_version("0.24"),
+                    reason="requires sklearn>=0.24")
+def test_searchcv_multimetric_callable_scoring():
+    random_state = 42
+
+    X, y = make_classification(n_classes=2, random_state=random_state)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.75, random_state=0
+    )
+
+    # sample code taken from scikit-learn
+    def confusion_matrix_score(clf, X, y):
+        y_pred = clf.predict(X)
+        cm = confusion_matrix(y, y_pred)
+        return {'tn': cm[0, 0], 'fp': cm[0, 1],
+                'fn': cm[1, 0], 'tp': cm[1, 1]}
+
+    opt = BayesSearchCV(
+        SVC(random_state=random_state),
+        {
+            'C': Real(1e-6, 1e+6, prior='log-uniform'),
+            'gamma': Real(1e-6, 1e+1, prior='log-uniform'),
+            'degree': Integer(1, 8),
+            'kernel': Categorical(['linear', 'poly', 'rbf']),
+        },
+        scoring=confusion_matrix_score,
+        refit="tp",
+        n_iter=11,
+        random_state=random_state
+    )
+    opt.fit(X_train, y_train)
+    assert confusion_matrix_score(opt, X_test, y_test)["tp"] > 0.9
+    assert (
+        len(opt.cv_results_["mean_test_tp"])
+        == len(opt.cv_results_["mean_test_fp"])
+    )

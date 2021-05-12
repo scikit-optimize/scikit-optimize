@@ -14,14 +14,11 @@ from .space import check_dimension
 from .callbacks import check_callback
 
 
-def _get_score_names(results, *, kind="test"):
-    key_parts = [key.rsplit("_", 1) for key in results.keys()]
-    prefix = "mean_%s" % kind
-    return {
-        parts[1]
-        for parts in key_parts
-        if len(parts) == 2 and parts[0] == prefix
-    }
+def _get_score_names(cv_results, *, kind="test"):
+    prefix = f"mean_{kind}_"
+    return {key[len(prefix):]
+            for key in cv_results.keys()
+            if key.startswith(prefix)}
 
 class BayesSearchCV(BaseSearchCV):
     """Bayesian optimization over hyper parameters.
@@ -418,7 +415,8 @@ class BayesSearchCV(BaseSearchCV):
 
         return optimizer
 
-    def _step(self, search_space, optimizer, evaluate_candidates, n_points=1):
+    def _step(self, search_space, optimizer, score_name,
+              evaluate_candidates, n_points=1):
         """Generate n_jobs parameters and evaluate them in parallel.
         """
         # get parameter values to evaluate
@@ -433,18 +431,20 @@ class BayesSearchCV(BaseSearchCV):
         all_results = evaluate_candidates(params_dict)
 
         # if self.scoring is a callable, we have to wait until here
-        # to choose between single metric or multimetric
-        if self._target_score is None:
+        # to get the score name
+        if score_name is None:
             score_names = _get_score_names(all_results)
             if len(score_names) > 1:
-                # multimetric
+                # multimetric case
+                # early check to fail before lengthy computations, as
+                # BaseSearchCV only performs this check *after* _run_search
                 self._check_refit_for_multimetric(score_names)
-                self._target_score = self.refit
+                score_name = f"mean_test_{self.refit}"
             elif len(score_names) == 1:
-                # single metric, or a callable self.scoring returned a dict
+                # single metric, or a callable self.scoring returning a dict
                 # with a single value
                 # In both case, we just use the score that is available
-                self._target_score = score_names.pop()
+                score_name = f"mean_test_{score_names.pop()}"
             else:
                 # failsafe, shouldn't happen
                 raise ValueError(
@@ -454,9 +454,10 @@ class BayesSearchCV(BaseSearchCV):
 
         # Feed the point and objective value back into optimizer
         # Optimizer minimizes objective, hence provide negative score
-        score = "mean_test_%s" % self._target_score
-        local_results = all_results[score][-len(params):]
-        return optimizer.tell(params, [-score for score in local_results])
+        local_results = all_results[score_name][-len(params):]
+        # return the score_name to cache it if callable refit
+        # this avoids checking self.refit all the time
+        return optimizer.tell(params, [-score for score in local_results]), score_name
 
     @property
     def total_iterations(self):
@@ -513,26 +514,15 @@ class BayesSearchCV(BaseSearchCV):
         if callable(self.refit):
             raise ValueError("BayesSearchCV doesn't support callable refit")
 
-        # Adapted from BaseSearchCV fit() method
-        if callable(self.scoring):
-            # will be determined later
-            self._target_score = None
-        elif self.scoring is None or isinstance(self.scoring, str):
-            self._target_score = "score"
-        else:
-            # proper checking will be performed in BaseSearchCV.fit()
-            self._target_score = self.refit
-
-
         super().fit(X=X, y=y, groups=groups, **fit_params)
 
         # BaseSearchCV never ranked train scores,
         # but apparently we used to ship this (back-compat)
         if self.return_train_score:
             for score in _get_score_names(self.cv_results_, kind="train"):
-                self.cv_results_["rank_train_%s" % score] = (
+                self.cv_results_[f"rank_train_{score}"] = (
                     rankdata(
-                        -np.array(self.cv_results_["mean_train_%s" % score]),
+                        -np.array(self.cv_results_[f"mean_train_{score}"]),
                         method='min'
                     )
                     .astype(int)
@@ -549,6 +539,16 @@ class BayesSearchCV(BaseSearchCV):
 
         random_state = check_random_state(self.random_state)
         self.optimizer_kwargs_['random_state'] = random_state
+
+        # Adapted from BaseSearchCV fit() method
+        if callable(self.scoring):
+            # will be determined later
+            score_name = None
+        elif self.scoring is None or isinstance(self.scoring, str):
+            score_name = "mean_test_score"
+        else:
+            # proper checking took place before in BaseSearchCV.fit()
+            score_name = f"mean_test_{self.refit}"
 
         # Instantiate optimizers for all the search spaces.
         optimizers = []
@@ -575,8 +575,8 @@ class BayesSearchCV(BaseSearchCV):
                 # when n_iter < n_points points left for evaluation
                 n_points_adjusted = min(n_iter, n_points)
 
-                optim_result = self._step(
-                    search_space, optimizer,
+                optim_result, score_name = self._step(
+                    search_space, optimizer, score_name,
                     evaluate_candidates, n_points=n_points_adjusted
                 )
                 n_iter -= n_points
