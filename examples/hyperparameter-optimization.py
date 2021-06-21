@@ -22,7 +22,7 @@ often results in a very time consuming operation.
 
 In this notebook, we illustrate how to couple :class:`gp_minimize` with sklearn's
 estimators to tune hyper-parameters using sequential model-based optimisation,
-hopefully resulting in equivalent or better solutions, but within less
+hopefully resulting in equivalent or better solutions, but within fewer
 evaluations.
 
 Note: scikit-optimize provides a dedicated interface for estimator tuning via
