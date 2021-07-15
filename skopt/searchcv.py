@@ -515,7 +515,9 @@ class BayesSearchCV(BaseSearchCV):
             self.optimizer_kwargs_ = dict(self.optimizer_kwargs)
 
         if callable(self.refit):
-            raise ValueError("BayesSearchCV doesn't support callable refit")
+            raise ValueError("BayesSearchCV doesn't support a callable refit, "
+                             "as it doesn't define an implicit score to "
+                             "optimize")
 
         super().fit(X=X, y=y, groups=groups, **fit_params)
 
