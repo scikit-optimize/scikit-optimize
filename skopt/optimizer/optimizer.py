@@ -335,7 +335,8 @@ class Optimizer(object):
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
-            random_state=random_state
+            space_constraint=self.space.constraint,
+            random_state=random_state,
         )
         optimizer._initial_samples = self._initial_samples
         if hasattr(self, "gains_"):
