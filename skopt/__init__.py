@@ -4,6 +4,8 @@ minimize (very) expensive and noisy black-box functions. It implements
 several methods for sequential model-based optimization. `skopt` aims
 to be accessible and easy to use in many contexts.
 """
+import importlib
+import multiprocessing as mp
 import platform
 import struct
 try:
@@ -37,6 +39,7 @@ from .utils import expected_minimum_random_sampling
 from .utils import load
 
 __all__ = (
+    "show_versions",
     "acquisition",
     "benchmarks",
     "callbacks",
@@ -56,5 +59,16 @@ __all__ = (
     "BayesSearchCV",
     "Space"
 )
-IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
+
+
+def show_versions():
+    """Provide useful information, important for bug reports."""
+    print('Platform:', platform.platform())
+    print('Python:', platform.python_version())
+    print('CPU count:', mp.cpu_count())
+    print('scikit-optimize', __version__)
+    for pkg in ('sklearn',
+                'numpy',
+                'scipy'):
+        print(f'{pkg}:', importlib.import_module(pkg).__version__)
