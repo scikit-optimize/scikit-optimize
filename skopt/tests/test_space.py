@@ -749,6 +749,43 @@ def test_space_from_yaml():
         tmp.close()
         os.unlink(tmp.name)
 
+
+@pytest.mark.fast_test
+def test_space_from_df():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({
+        "a": [1.5, 1., 2.],
+        "b": [50, 1, 100],
+        "c": ["red", "blue", "blue"],
+        4: [True, False, True]
+    })
+
+    result = Space.from_df(df, 
+                           priors={"a": "log-uniform"}, 
+                           bases={"b": 2}, 
+                           transforms={"b": "normalize", "c": "label"})
+    expected = Space([Real(1.0, 2.0, prior="log-uniform", name="a"),
+                      Integer(1, 100, base=2, name="b", transform="normalize"),
+                      Categorical(["red", "blue"], transform="label", name="c"),
+                      Categorical([True, False], name="4")])
+
+    assert_equal(result, expected)
+
+
+@pytest.mark.fast_test
+def test_pandas_dependency_message():
+    try:
+        import pandas  # noqa
+
+        pytest.skip("This test requires pandas to not be installed")
+    except ImportError:
+        # Check that pandas is imported lazily and that an informative error
+        # message is raised when pandas is missing:
+        expected_msg = "from_df requires pandas"
+        with pytest.raises(ImportError, match=expected_msg):
+            result = Space.from_df(None)
+
+
 @pytest.mark.parametrize("name", [1, 1., True])
 def test_dimension_with_invalid_names(name):
     with pytest.raises(ValueError) as exc:
