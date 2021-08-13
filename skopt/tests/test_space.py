@@ -760,13 +760,14 @@ def test_space_from_df():
         4: [True, False, True]
     })
 
-    result = Space.from_df(df, 
-                           priors={"a": "log-uniform"}, 
-                           bases={"b": 2}, 
+    result = Space.from_df(df,
+                           priors={"a": "log-uniform"},
+                           bases={"b": 2},
                            transforms={"b": "normalize", "c": "label"})
     expected = Space([Real(1.0, 2.0, prior="log-uniform", name="a"),
                       Integer(1, 100, base=2, name="b", transform="normalize"),
-                      Categorical(["red", "blue"], transform="label", name="c"),
+                      Categorical(["red", "blue"],
+                                  transform="label", name="c"),
                       Categorical([True, False], name="4")])
 
     assert_equal(result, expected)
@@ -783,7 +784,7 @@ def test_pandas_dependency_message():
         # message is raised when pandas is missing:
         expected_msg = "from_df requires pandas"
         with pytest.raises(ImportError, match=expected_msg):
-            result = Space.from_df(None)
+            _ = Space.from_df(None)
 
 
 @pytest.mark.parametrize("name", [1, 1., True])

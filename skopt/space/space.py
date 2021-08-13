@@ -886,13 +886,13 @@ class Space(object):
         ----------
         df : `pandas.DataFrame`
             A Pandas `DataFrame` object
-        
+
         priors : dict, default=None
             A mapping of `DataFrame` column names to corresponding priors
-        
+
         bases : dict, default=None
             A mapping of `DataFrame` column names to corresponding bases
-        
+
         transforms : dict, default=None
             A mapping of `DataFrame` column names to corresponding transforms
 
@@ -901,7 +901,7 @@ class Space(object):
         space : Space
            Instantiated Space object
         """
-        pd  = check_pandas_support("from_df")
+        pd = check_pandas_support("from_df")
 
         if priors is None:
             priors = {}
@@ -929,7 +929,7 @@ class Space(object):
             else:
                 return Categorical(series.unique(), **kwargs)
 
-        dimensions = [_check_series_dimension(df[col_name], priors, bases, 
+        dimensions = [_check_series_dimension(df[col_name], priors, bases,
                       transforms) for col_name in df.columns]
 
         return cls(dimensions)
