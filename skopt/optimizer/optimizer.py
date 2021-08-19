@@ -446,8 +446,11 @@ class Optimizer(object):
             min_delta_x = min([self.space.distance(next_x, xi)
                                for xi in self.Xi])
             if abs(min_delta_x) <= 1e-8:
-                warnings.warn("The objective has been evaluated "
-                              "at this point before.")
+                next_x_new = self.space.rvs(random_state=self.rng)[0]
+                warnings.warn("The objective has been evaluated at point {} "
+                              "before, using {} instead"
+                              .format(next_x, next_x_new))
+                next_x = next_x_new
 
             # return point computed from last call to tell()
             return next_x
