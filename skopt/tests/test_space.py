@@ -415,7 +415,7 @@ def test_normalize_types():
     # can you pass a Space instance to the Space constructor?
     space = Space([(0.0, 1.0), Integer(-5, 5, dtype=int), (True, False)])
     space.set_transformer("normalize")
-    X = [[0., -5, False]]
+    X = [[0., -5, True]]
     Xt = np.zeros((1, 3))
     assert_array_equal(space.transform(X), Xt)
     assert_array_equal(space.inverse_transform(Xt), X)
