@@ -172,8 +172,9 @@ class LabelEncoder(Transformer):
         else:
             i = 0
             self.mapping_ = {}
-            for v in np.unique(X):
-                self.mapping_[v] = i
+            _, indexes = np.unique(X, return_index=True)
+            for index in sorted(indexes):
+                self.mapping_[X[index]] = i
                 i += 1
         self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
         return self
