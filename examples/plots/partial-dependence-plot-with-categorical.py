@@ -12,18 +12,14 @@ Plot objective now supports optional use of partial dependence as well as
 different methods of defining parameter values for dependency plots.
 """
 print(__doc__)
-import sys
-from skopt.plots import plot_objective
-from skopt import forest_minimize
+
 import numpy as np
 np.random.seed(123)
-import matplotlib.pyplot as plt
-import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 from skopt.space import Integer, Categorical
-from skopt import plots, gp_minimize
+from skopt import gp_minimize
 from skopt.plots import plot_objective
 
 #############################################################################
@@ -35,7 +31,7 @@ def objective(params):
     clf = DecisionTreeClassifier(
         **{dim.name: val for dim, val in
            zip(SPACE, params) if dim.name != 'dummy'})
-    return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
+    return -np.mean(cross_val_score(clf, *load_breast_cancer(return_X_y=True)))
 
 #############################################################################
 # Bayesian optimization

@@ -1,6 +1,5 @@
 from copy import deepcopy
 from functools import wraps
-from sklearn.utils import check_random_state
 import numpy as np
 from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize as sp_minimize
@@ -18,7 +17,7 @@ from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 from .sampler import Sobol, Lhs, Hammersly, Halton, Grid
 from .sampler import InitialPointGenerator
-from .space import Space, Categorical, Integer, Real, Dimension
+from .space import Space, Dimension
 
 __all__ = (
     "load",

@@ -16,6 +16,7 @@ import numpy as np
 
 from skopt.utils import dump
 
+
 def check_callback(callback):
     """
     Check if callback is a callable or a list of callables.

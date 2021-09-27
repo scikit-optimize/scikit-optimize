@@ -2,7 +2,6 @@ import pytest
 import numbers
 import numpy as np
 import os
-import yaml
 from tempfile import NamedTemporaryFile
 
 from numpy.testing import assert_array_almost_equal
@@ -296,6 +295,7 @@ def test_space_consistency():
     s3 = Space([np.array([True, False])])
     assert s1 == s2 == s3
 
+
 @pytest.mark.fast_test
 def test_space_api():
     space = Space([(0.0, 1.0), (-5, 5),
@@ -423,6 +423,7 @@ def test_normalize_types():
     assert isinstance(space.inverse_transform(Xt)[0][0], float)
     assert isinstance(space.inverse_transform(Xt)[0][1], int)
     assert isinstance(space.inverse_transform(Xt)[0][2], (np.bool_, bool))
+
 
 @pytest.mark.fast_test
 def test_normalize_real():
@@ -567,8 +568,9 @@ def test_normalize_categorical():
                                                            random_state=1))))
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
+
 @pytest.mark.fast_test
-def test_normalize_integer():
+def test_normalize_int():
     for dtype in ['int', 'int8', 'int16', 'int32', 'int64',
                   'uint8', 'uint16', 'uint32', 'uint64']:
         a = Integer(2, 30, transform="normalize", dtype=dtype)
@@ -674,7 +676,7 @@ def test_real_distance():
                           (Real, (2, 2)), (Integer, (2, 2))])
 def test_dimension_bounds(dimension, bounds):
     with pytest.raises(ValueError) as exc:
-        dim = dimension(*bounds)
+        _ = dimension(*bounds)
         assert "has to be less than the upper bound " in exc.value.args[0]
 
 
@@ -686,11 +688,11 @@ def test_dimension_name(dimension, name):
     assert dimension.name == name
 
 
-def test_dimension_name():
+def test_dimension_name2():
     notnames = [1, 1., True]
     for n in notnames:
         with pytest.raises(ValueError) as exc:
-            real = Real(1, 2, name=n)
+            _ = Real(1, 2, name=n)
             assert("Dimension's name must be either string or"
                    "None." == exc.value.args[0])
     s = Space([Real(1, 2, name="a"),
@@ -748,6 +750,7 @@ def test_space_from_yaml():
         assert_equal(space, space2)
         tmp.close()
         os.unlink(tmp.name)
+
 
 @pytest.mark.parametrize("name", [1, 1., True])
 def test_dimension_with_invalid_names(name):

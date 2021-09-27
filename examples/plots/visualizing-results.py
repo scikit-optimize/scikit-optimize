@@ -109,9 +109,8 @@ plot_branin()
 # :class:`benchmarks.branin` function. Then we visualize at which points the objective is being
 # evaluated using :class:`plots.plot_evaluations`.
 
-from functools import partial
 from skopt.plots import plot_evaluations
-from skopt import gp_minimize, forest_minimize, dummy_minimize
+from skopt import forest_minimize, dummy_minimize
 
 
 bounds = [(-5.0, 10.0), (0.0, 15.0)]
@@ -192,7 +191,7 @@ _ = plot_evaluations(dummy_res, bins=10)
 # The next example uses class:`benchmarks.hart6` which has six dimensions and shows both
 # :class:`plots.plot_evaluations` and :class:`plots.plot_objective`.
 
-bounds = [(0., 1.),] * 6
+bounds = [(0., 1.)] * 6
 
 forest_res = forest_minimize(hart6, bounds, n_calls=n_calls,
                              base_estimator="ET", random_state=4)
@@ -212,7 +211,7 @@ _ = plot_objective(forest_res, n_samples=40)
 # in both the placement of samples and the partial dependence plots.
 
 
-bounds = [(0., 1.),] * 8
+bounds = [(0., 1.)] * 8
 n_calls = 200
 
 forest_res = forest_minimize(hart6, bounds, n_calls=n_calls,

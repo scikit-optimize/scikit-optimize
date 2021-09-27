@@ -48,7 +48,7 @@ def branin(x, noise_level=0.):
 
 from matplotlib.pyplot import cm
 import time
-from skopt import gp_minimize, forest_minimize, dummy_minimize
+from skopt import gp_minimize
 
 def plot_convergence(result_list, true_minimum=None, yscale=None, title="Convergence plot"):
 
@@ -68,7 +68,7 @@ def plot_convergence(result_list, true_minimum=None, yscale=None, title="Converg
         mins = [[np.min(r.func_vals[:i]) for i in iterations]
                 for r in results]
         ax.plot(iterations, np.mean(mins, axis=0), c=color, label=name)
-        #ax.errorbar(iterations, np.mean(mins, axis=0),
+        # ax.errorbar(iterations, np.mean(mins, axis=0),
         #             yerr=np.std(mins, axis=0), c=color, label=name)
     if true_minimum:
         ax.axhline(true_minimum, linestyle="--",
@@ -93,10 +93,9 @@ def run_measure(initial_point_generator, n_initial_points=10):
     res = run(gp_minimize, initial_point_generator,
               n_initial_points=n_initial_points, n_repeats=n_repeats)
     duration = time.time() - start
-    # print("%s %s: %.2f s" % (initial_point_generator,
-    #                          str(init_point_gen_kwargs),
-    #                          duration))
+    print("%s: %.2f s" % (initial_point_generator, duration))
     return res
+
 #############################################################################
 # Objective
 # =========
@@ -127,7 +126,7 @@ else:
     true_minimum = 0.397887
     n_calls = 30
     n_initial_points = 10
-    yscale="log"
+    yscale = "log"
     title = "Convergence plot - branin"
 
 #############################################################################

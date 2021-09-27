@@ -7,7 +7,6 @@ from scipy.stats.distributions import rv_discrete
 from scipy.stats.distributions import uniform
 
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import sp_version
 
 from .transformers import CategoricalEncoder
 from .transformers import StringEncoder
@@ -346,7 +345,7 @@ class Real(Dimension):
                                 self.low, self.high).astype(self.dtype)
         if self.dtype == float or self.dtype == 'float':
             # necessary, otherwise the type is converted to a numpy type
-            return getattr(inv_transform, "tolist", lambda: value)()
+            return getattr(inv_transform, "tolist", lambda: inv_transform)()
         else:
             return inv_transform
 
@@ -532,8 +531,8 @@ class Integer(Dimension):
                                 self.low, self.high)
         if self.dtype == int or self.dtype == 'int':
             # necessary, otherwise the type is converted to a numpy type
-            return getattr(np.round(inv_transform).astype(self.dtype),
-                           "tolist", lambda: value)()
+            value = np.round(inv_transform).astype(self.dtype)
+            return getattr(value, "tolist", lambda: value)()
         else:
             return np.round(inv_transform).astype(self.dtype)
 

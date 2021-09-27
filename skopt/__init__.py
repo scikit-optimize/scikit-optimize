@@ -19,24 +19,25 @@ except PackageNotFoundError:
     __version__ = '?.?.?'  # Not installed
 
 
-from . import acquisition
-from . import benchmarks
-from . import callbacks
-from . import learning
-from . import optimizer
-from . import sampler
-from . import space
-from .optimizer import dummy_minimize
-from .optimizer import forest_minimize
-from .optimizer import gbrt_minimize
-from .optimizer import gp_minimize
-from .optimizer import Optimizer
+from . import (
+    acquisition,
+    benchmarks,
+    callbacks,
+    learning,
+    optimizer,
+    sampler,
+    space,
+)
+from .optimizer import (
+    dummy_minimize,
+    forest_minimize,
+    gbrt_minimize,
+    gp_minimize,
+    Optimizer,
+)
 from .searchcv import BayesSearchCV
 from .space import Space
-from .utils import dump
-from .utils import expected_minimum
-from .utils import expected_minimum_random_sampling
-from .utils import load
+from .utils import dump, load, expected_minimum, expected_minimum_random_sampling
 
 __all__ = (
     "show_versions",
@@ -56,6 +57,7 @@ __all__ = (
     "dump",
     "load",
     "expected_minimum",
+    "expected_minimum_random_sampling",
     "BayesSearchCV",
     "Space"
 )

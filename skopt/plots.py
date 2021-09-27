@@ -412,7 +412,8 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
                     ax_.set_xticklabels([])
                 # ... the bottom row
                 else:
-                    [l.set_rotation(45) for l in ax_.get_xticklabels()]
+                    for label in ax_.get_xticklabels():
+                        label.set_rotation(45)
                     ax_.set_xlabel(dim_labels[j])
 
                 # configure plot for linear vs log-scale
@@ -880,7 +881,6 @@ def _get_ylim_diagonal(ax):
         # Get ylim for all diagonal plots.
         ylim = [ax[row, row].get_ylim() for row in range(n_dims)]
     else:
-        n_dim = 1
         ylim = [ax.get_ylim()]
 
     # Separate into two lists with low and high ylim.
@@ -1342,7 +1342,6 @@ def _evaluate_min_params(result, params='result',
                          random_state=None):
     """Returns the minimum based on `params`"""
     x_vals = None
-    space = result.space
     if isinstance(params, str):
         if params == 'result':
             # Using the best observed result

@@ -1,10 +1,5 @@
 import warnings
 
-try:
-    from collections.abc import Sized
-except ImportError:
-    from collections import Sized
-
 import numpy as np
 from scipy.stats import rankdata
 
@@ -12,10 +7,6 @@ from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
 
 from sklearn.utils.validation import check_is_fitted
-try:
-    from sklearn.metrics import check_scoring
-except ImportError:
-    from sklearn.metrics.scorer import check_scoring
 
 from . import Optimizer
 from .utils import point_asdict, dimensions_aslist, eval_callbacks
@@ -157,7 +148,7 @@ class BayesSearchCV(BaseSearchCV):
     >>> from sklearn.svm import SVC
     >>> from sklearn.model_selection import train_test_split
     >>>
-    >>> X, y = load_iris(True)
+    >>> X, y = load_iris(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ...                                                     train_size=0.75,
     ...                                                     random_state=0)

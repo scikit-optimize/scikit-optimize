@@ -111,7 +111,7 @@ svc_search = {
     'model': Categorical([SVC()]),
     'model__C': Real(1e-6, 1e+6, prior='log-uniform'),
     'model__gamma': Real(1e-6, 1e+1, prior='log-uniform'),
-    'model__degree': Integer(1,8),
+    'model__degree': Integer(1, 8),
     'model__kernel': Categorical(['linear', 'poly', 'rbf']),
 }
 
@@ -198,13 +198,13 @@ from skopt import BayesSearchCV
 from sklearn.datasets import load_iris
 from sklearn.svm import SVC
 
-X, y = load_iris(True)
+X, y = load_iris(return_X_y=True)
 
 searchcv = BayesSearchCV(
     SVC(),
     search_spaces=[
         ({'C': (0.1, 1.0)}, 19),  # 19 iterations for this subspace
-        {'gamma':(0.1, 1.0)}
+        {'gamma': (0.1, 1.0)}
     ],
     n_iter=23
 )

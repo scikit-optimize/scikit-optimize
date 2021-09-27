@@ -2,4 +2,4 @@
 Utilities to define a search space.
 """
 
-from .space import *
+from .space import *  # noqa: E401,F401,F403

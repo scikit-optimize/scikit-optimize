@@ -46,7 +46,7 @@ def objective_wo_noise(x):
 #############################################################################
 
 opt_gp = Optimizer([(-2.0, 2.0)], base_estimator="GP", n_initial_points=5,
-                acq_optimizer="sampling", random_state=42)
+                   acq_optimizer="sampling", random_state=42)
 
 #############################################################################
 
@@ -101,9 +101,6 @@ plt.plot()
 # ----------------------
 
 from skopt.learning import GaussianProcessRegressor
-from skopt.learning.gaussian_process.kernels import ConstantKernel, Matern
-# Gaussian process with Matérn kernel as surrogate model
-
 from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
                                               ConstantKernel)

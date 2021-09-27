@@ -1,22 +1,11 @@
 import pytest
-import numbers
 import numpy as np
-import os
-import yaml
-from tempfile import NamedTemporaryFile
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 from scipy import spatial
-from skopt import Optimizer
-from skopt.space import Space
-from skopt.space import Real
-from skopt.space import Integer
-from skopt.space import Categorical
-from skopt.space import check_dimension as space_check_dimension
 from skopt.sampler.sobol import _bit_lo0, _bit_hi1
 from skopt.sampler.halton import _van_der_corput_samples, _create_primes
 from skopt.sampler import Hammersly, Halton, Lhs, Sobol, Grid

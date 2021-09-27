@@ -10,7 +10,7 @@ from skopt import plots, gp_minimize
 import matplotlib.pyplot as plt
 from skopt.benchmarks import bench3
 from skopt import expected_minimum, expected_minimum_random_sampling
-from skopt.plots import _evaluate_min_params, partial_dependence
+from skopt.plots import _evaluate_min_params
 from skopt.plots import partial_dependence_1D, partial_dependence_2D
 from skopt import Optimizer
 
@@ -39,7 +39,7 @@ def test_plots_work():
                                      **{dim.name: val
                                         for dim, val in zip(SPACE, params)
                                         if dim.name != 'dummy'})
-        return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
+        return -np.mean(cross_val_score(clf, *load_breast_cancer(return_X_y=True)))
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
 
@@ -112,7 +112,7 @@ def test_plots_work_without_cat():
                                      **{dim.name: val
                                         for dim, val in zip(SPACE, params)
                                         if dim.name != 'dummy'})
-        return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
+        return -np.mean(cross_val_score(clf, *load_breast_cancer(return_X_y=True)))
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
     plots.plot_convergence(res)

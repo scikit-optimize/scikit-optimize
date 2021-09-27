@@ -8,7 +8,6 @@
 import platform
 import sys
 from distutils.version import LooseVersion
-import os
 
 import pytest
 from _pytest.doctest import DoctestItem
