@@ -282,7 +282,7 @@ class SubSectionTitleOrder:
 sphinx_gallery_conf = {
     'doc_module': 'skopt',
     'backreferences_dir': os.path.join('modules', 'generated'),
-    'show_memory': True,
+    'show_memory': False,
     'reference_url': {
         'skopt': None},
     'examples_dirs': ['../examples'],

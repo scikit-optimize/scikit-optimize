@@ -162,7 +162,7 @@ class BayesSearchCV(BaseSearchCV):
     ...         'degree': Integer(1,8),
     ...         'kernel': Categorical(['linear', 'poly', 'rbf']),
     ...     },
-    ...     n_iter=32,
+    ...     n_iter=10, n_jobs=-1,
     ...     random_state=0
     ... )
     >>>

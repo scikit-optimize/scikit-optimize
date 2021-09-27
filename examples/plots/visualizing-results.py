@@ -114,9 +114,10 @@ from skopt import forest_minimize, dummy_minimize
 
 
 bounds = [(-5.0, 10.0), (0.0, 15.0)]
-n_calls = 160
+n_calls = 20
+n_jobs = -1
 
-forest_res = forest_minimize(branin, bounds, n_calls=n_calls,
+forest_res = forest_minimize(branin, bounds, n_calls=n_calls, n_jobs=n_jobs,
                              base_estimator="ET", random_state=4)
 
 _ = plot_evaluations(forest_res, bins=10)
@@ -144,7 +145,7 @@ _ = plot_evaluations(forest_res, bins=10)
 # ------------------------
 #
 # Partial dependence plots were proposed by
-# [Friedman (2001)]_
+# `Friedman (2001)`_
 # as a method for interpreting the importance of input features used in
 # gradient boosting machines. Given a function of :math:`k`: variables
 # :math:`y=f\left(x_1, x_2, ..., x_k\right)`: the
@@ -155,10 +156,12 @@ _ = plot_evaluations(forest_res, bins=10)
 #
 # The idea is to visualize how the value of :math:`x_j`: influences the function
 # :math:`f`: after averaging out the influence of all other variables.
+#
+# .. _Friedman (2001): https://dx.doi.org/10.1214/aos/1013203451
 
 from skopt.plots import plot_objective
 
-_ = plot_objective(forest_res)
+_ = plot_objective(forest_res, n_samples=10, n_points=10)
 
 #############################################################################
 # The two dimensional partial dependence plot can look like the true
@@ -193,13 +196,13 @@ _ = plot_evaluations(dummy_res, bins=10)
 
 bounds = [(0., 1.)] * 6
 
-forest_res = forest_minimize(hart6, bounds, n_calls=n_calls,
+forest_res = forest_minimize(hart6, bounds, n_calls=n_calls, n_jobs=n_jobs,
                              base_estimator="ET", random_state=4)
 
 #############################################################################
 
 _ = plot_evaluations(forest_res)
-_ = plot_objective(forest_res, n_samples=40)
+_ = plot_objective(forest_res, n_samples=10, n_points=10)
 
 #############################################################################
 # Going from 6 to 6+2 dimensions
@@ -212,12 +215,9 @@ _ = plot_objective(forest_res, n_samples=40)
 
 
 bounds = [(0., 1.)] * 8
-n_calls = 200
 
-forest_res = forest_minimize(hart6, bounds, n_calls=n_calls,
+forest_res = forest_minimize(hart6, bounds, n_calls=n_calls, n_jobs=n_jobs,
                              base_estimator="ET", random_state=4)
 
 _ = plot_evaluations(forest_res)
-_ = plot_objective(forest_res, n_samples=40)
-
-# .. [Friedman (2001)] `doi:10.1214/aos/1013203451 section 8.2 <http://projecteuclid.org/euclid.aos/1013203451>`
+_ = plot_objective(forest_res, n_samples=10, n_points=10)

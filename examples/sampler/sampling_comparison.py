@@ -116,7 +116,7 @@ if example == "hart6":
     func = partial(hart6, noise_level=0.1)
     bounds = [(0., 1.), ] * 6
     true_minimum = -3.32237
-    n_calls = 40
+    n_calls = 30
     n_initial_points = 10
     yscale = None
     title = "Convergence plot - hart6"

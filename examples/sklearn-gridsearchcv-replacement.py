@@ -206,7 +206,7 @@ searchcv = BayesSearchCV(
         ({'C': (0.1, 1.0)}, 19),  # 19 iterations for this subspace
         {'gamma': (0.1, 1.0)}
     ],
-    n_iter=23
+    n_iter=10
 )
 
 print(searchcv.total_iterations)

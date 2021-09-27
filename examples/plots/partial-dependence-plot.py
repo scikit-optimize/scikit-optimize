@@ -35,7 +35,7 @@ def funny_func(x):
 # =================================
 # We run forest_minimize on the function
 bounds = [(-1, 1.), ] * 3
-n_calls = 150
+n_calls = 50
 
 result = forest_minimize(funny_func, bounds, n_calls=n_calls,
                          base_estimator="ET",
