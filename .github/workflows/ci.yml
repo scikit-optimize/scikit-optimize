@@ -45,7 +45,7 @@ jobs:
       matrix:
         # When bumping, note to revise TEST_WITH_COVERAGE below
         python-version: [ 3.7, 3.8, 3.9, "pypy-3.7" ]
-        scikit-version: [ 0.20.4, "0.*", "1.*" ]
+        scikit-version: [ "0.*", "1.*" ]
 
     env:
       TEST_WITH_COVERAGE: ${{ matrix.python-version == '3.9' && matrix.scikit-version == '1.*' }}
@@ -76,6 +76,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip setuptools wheel twine
+          pip install numpy cython  # scikit-learn build deps if wheel missing
           pip install scikit-learn==${{ matrix.scikit-version }}
           pip install .[dev,plots]
 
