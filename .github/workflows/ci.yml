@@ -59,11 +59,19 @@ jobs:
       - name: Set up caches
         uses: actions/cache@v2
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-py${{ matrix.python-version }}
+          path: |
+            ~/.cache/pip
+            ~/.cache/
+            ~/.ccache/
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.scikit-version }}
 
       - name: Checkout repo
         uses: actions/checkout@v2
+
+      - name: Set up ccache
+        run: |
+          sudo apt-get install -yq ccache
+          echo /usr/lib/ccache >> $GITHUB_PATH
 
       - name: Install dependencies
         run: |
