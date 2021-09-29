@@ -602,7 +602,7 @@ class BayesSearchCV(BaseSearchCV):
             )
 
         is_refit_valid = (isinstance(self.refit, str) and
-                            self.refit in scores)
+                          self.refit in scores)
 
         if (not is_refit_valid):
             raise ValueError(multimetric_refit_msg)
