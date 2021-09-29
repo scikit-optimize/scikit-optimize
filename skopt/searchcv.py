@@ -137,7 +137,7 @@ class BayesSearchCV(BaseSearchCV):
     refit : bool, str, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
-        this RandomizedSearchCV instance after fitting.
+        this BayesSearchCV instance after fitting.
 
         For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to direct the optimization process, and find
@@ -592,17 +592,17 @@ class BayesSearchCV(BaseSearchCV):
 
     def _check_refit_for_multimetric(self, scores):
         """Check `refit` is compatible with `scores` and valid"""
-        # override to exclude False and callables
+        # override parent method to exclude False and callables
         multimetric_refit_msg = (
-            "For multi-metric scoring, the parameter refit must be set to a "
-            "scorer key used to guide the bayesian optimization process "
-            "and refit an estimator with the best parameter settings in the "
-            "whole data and make the best_* attributes available for that "
-            f" metric. {self.refit!r} was passed."
+            "For multi-metric scoring, the 'refit' parameter must be set to a "
+            "scorer key, used to guide the bayesian optimization process "
+            "and refit an estimator with the best parameter settings on the "
+            "whole dataset (making the best_* attributes available for that "
+            f" metric). {self.refit!r} was passed."
             )
 
-        valid_refit_dict = (isinstance(self.refit, str) and
+        is_refit_valid = (isinstance(self.refit, str) and
                             self.refit in scores)
 
-        if (not valid_refit_dict):
+        if (not is_refit_valid):
             raise ValueError(multimetric_refit_msg)
