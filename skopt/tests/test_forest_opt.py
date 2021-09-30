@@ -54,7 +54,7 @@ def test_tree_based_minimize(name, minimizer):
     check_minimize(minimizer, bench3, -0.4,
                    [(-2.0, 2.0)], 0.05, 10, 5)
     check_minimize(minimizer, bench4, 1.,
-                   [("-2", "-1", "0", "1", "2")], 0.05, 5, 1)
+                   [["-2", "-1", "0", "1", "2"]], 0.05, 5, 1)
 
 
 @pytest.mark.slow_test

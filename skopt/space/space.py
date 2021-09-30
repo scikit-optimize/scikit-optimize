@@ -1,5 +1,6 @@
 import numbers
 import numpy as np
+import warnings
 import yaml
 
 from scipy.stats.distributions import randint
@@ -39,7 +40,6 @@ def _transpose_list_array(x):
         rows[i] = r
     return rows
 
-
 def check_dimension(dimension, transform=None):
     """Turn a provided dimension description into a dimension object.
 
@@ -55,13 +55,17 @@ def check_dimension(dimension, transform=None):
         Search space Dimension.
         Each search dimension can be defined either as
 
-        - a `(lower_bound, upper_bound)` tuple (for `Real` or `Integer`
-          dimensions),
-        - a `(lower_bound, upper_bound, "prior")` tuple (for `Real`
-          dimensions),
-        - as a list of categories (for `Categorical` dimensions), or
-        - an instance of a `Dimension` object (`Real`, `Integer` or
-          `Categorical`).
+        - a list or numpy array of choices, for `Categorical` dimension
+        - a 2-, 3- or 4-tuple, for `Real` and `Integer` dimensions, of
+          the form ``(low, high [, prior [, base]])`` (values in square
+          brackets are optional). If both ``low`` and ``high`` are integral
+          numbers (as per the `number.Integral`), a `Integer` dimension is
+          returned, else a `Real` dimension is returned.
+
+          NOTE: tuple, list and array currently all undergo dimension
+          inference. This behavior will change in an upcoming version, a
+          warning is raised if the upcoming inference code would change the
+          result.
 
     transform : "identity", "normalize", "string", "label", "onehot" optional
         - For `Categorical` dimensions, the following transformations are
@@ -84,11 +88,54 @@ def check_dimension(dimension, transform=None):
     dimension : Dimension
         Dimension instance.
     """
+    old_dim = _check_dimension_old(dimension, transform=transform)
+    try:
+        new_dim = _check_dimension(dimension, transform=transform)
+    except Exception as err:
+        new_dim = str(err)
+    if new_dim != old_dim:
+        warnings.warn(f"Dimension {dimension} was inferred to {old_dim}. In "
+                      "upcoming versions of scikit-optimize, it will be "
+                      f"inferred to {new_dim}. See the documentation of the "
+                      "check_dimension function for the upcoming API.")
+    return old_dim
+
+
+def _check_dimension(dimension, transform=None):
+    if isinstance(dimension, Dimension):
+        return dimension
+    elif isinstance(dimension, (list, np.ndarray)):
+        if (len(dimension) <= 4
+                and any(isinstance(e, numbers.Real) for e in dimension)
+                and len(set(map(type, dimension))) > 1):
+            warnings.warn(
+                "A dimension was specified as a list with numeric types mixed "
+                "with other types. Inferred a Categorical object. Previously, "
+                "Integer or Real object could be inferred. Pass an "
+                "explicit Categorical object to disable this warning",
+                RuntimeWarning
+            )
+        return Categorical(dimension, transform=transform)
+    elif isinstance(dimension, tuple) and 1 <= len(dimension) <= 4:
+        low, high, *args = dimension
+        if (isinstance(low, numbers.Integral)
+                and isinstance(high, numbers.Integral)):
+            return Integer(int(low), int(high), *args, transform=transform)
+        elif isinstance(low, numbers.Real) and isinstance(high, numbers.Real):
+            return Real(float(low), float(high), *args, transform=transform)
+    # Unconditionned so handle all cases that make it here
+    raise ValueError(f"Invalid dimension {dimension!r}. See the "
+                     "documentation of check_dimension for supported values.")
+
+
+def _check_dimension_old(dimension, transform=None):
     if isinstance(dimension, Dimension):
         return dimension
 
     if not isinstance(dimension, (list, tuple, np.ndarray)):
-        raise ValueError("Dimension has to be a list or tuple.")
+        raise ValueError(f"Invalid dimension {dimension!r}. See the "
+                         "documentation of check_dimension for supported "
+                         "values.")
 
     # A `Dimension` described by a single value is assumed to be
     # a `Categorical` dimension. This can be used in `BayesSearchCV`
@@ -99,41 +146,47 @@ def check_dimension(dimension, transform=None):
         return Categorical(dimension, transform=transform)
 
     if len(dimension) == 2:
-        if any([isinstance(d, (str, bool)) or isinstance(d, np.bool_)
-                for d in dimension]):
+        if any(isinstance(d, (str, bool)) or isinstance(d, np.bool_)
+                for d in dimension):
             return Categorical(dimension, transform=transform)
-        elif all([isinstance(dim, numbers.Integral) for dim in dimension]):
-            return Integer(*dimension, transform=transform)
-        elif any([isinstance(dim, numbers.Real) for dim in dimension]):
-            return Real(*dimension, transform=transform)
+        elif all(isinstance(dim, numbers.Integral) for dim in dimension):
+            return Integer(*map(int, dimension), transform=transform)
+        elif any(isinstance(dim, numbers.Real) for dim in dimension):
+            return Real(*map(float, dimension), transform=transform)
         else:
-            raise ValueError("Invalid dimension {}. Read the documentation for"
-                             " supported types.".format(dimension))
+            raise ValueError(f"Invalid dimension {dimension!r}. See the "
+                             "documentation of check_dimension for supported "
+                             "values.")
 
     if len(dimension) == 3:
-        if (any([isinstance(dim, int) for dim in dimension[:2]]) and
+        if (all(isinstance(dim, numbers.Integral) for dim in dimension[:2]) and
                 dimension[2] in ["uniform", "log-uniform"]):
-            return Integer(*dimension, transform=transform)
-        elif (any([isinstance(dim, (float, int)) for dim in dimension[:2]]) and
+            return Integer(*map(int, dimension[:2]), *dimension[2:],
+                           transform=transform)
+        elif (all(isinstance(dim, numbers.Real) for dim in dimension[:2]) and
               dimension[2] in ["uniform", "log-uniform"]):
-            return Real(*dimension, transform=transform)
+            return Real(*map(float, dimension[:2]), *dimension[2:],
+                        transform=transform)
         else:
             return Categorical(dimension, transform=transform)
 
     if len(dimension) == 4:
-        if (any([isinstance(dim, int) for dim in dimension[:2]]) and
+        if (all(isinstance(dim, numbers.Integral) for dim in dimension[:2]) and
                 dimension[2] == "log-uniform" and isinstance(dimension[3],
                                                              int)):
-            return Integer(*dimension, transform=transform)
-        elif (any([isinstance(dim, (float, int)) for dim in dimension[:2]]) and
+            return Integer(*map(int, dimension[:2]), *dimension[2:],
+                           transform=transform)
+        elif (all(isinstance(dim, numbers.Real) for dim in dimension[:2]) and
               dimension[2] == "log-uniform" and isinstance(dimension[3], int)):
-            return Real(*dimension, transform=transform)
+            return Real(*map(float, dimension[:2]), *dimension[2:],
+                        transform=transform)
 
     if len(dimension) > 3:
         return Categorical(dimension, transform=transform)
 
-    raise ValueError("Invalid dimension {}. Read the documentation for "
-                     "supported types.".format(dimension))
+    raise ValueError(f"Invalid dimension {dimension!r}. See the "
+                     "documentation of check_dimension for supported "
+                     "values.")
 
 
 class Dimension(object):

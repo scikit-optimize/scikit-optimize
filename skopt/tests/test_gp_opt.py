@@ -67,7 +67,7 @@ def test_gp_minimize_bench4(search, acq):
     # this particular random_state picks "2" twice so we can make an extra
     # call to the objective without repeating options
     check_minimize(bench4, 0,
-                   [("-2", "-1", "0", "1", "2")], search, acq, 1.05, 20)
+                   [["-2", "-1", "0", "1", "2"]], search, acq, 1.05, 20)
 
 
 @pytest.mark.fast_test

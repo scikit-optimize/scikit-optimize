@@ -251,7 +251,7 @@ def test_init_vals_dummy_minimize():
         partial(forest_minimize, n_initial_points=3),
         partial(gbrt_minimize, n_initial_points=3)])
 def test_categorical_init_vals(optimizer):
-    space = [("-2", "-1", "0", "1", "2")]
+    space = [["-2", "-1", "0", "1", "2"]]
     x0 = [["0"], ["1"], ["2"]]
     n_calls = 6
     check_init_vals(optimizer, bench4, space, x0, n_calls)
@@ -264,7 +264,7 @@ def test_categorical_init_vals(optimizer):
         partial(forest_minimize, n_initial_points=2),
         partial(gbrt_minimize, n_initial_points=2)])
 def test_mixed_spaces(optimizer):
-    space = [("-2", "-1", "0", "1", "2"), (-2.0, 2.0)]
+    space = [["-2", "-1", "0", "1", "2"], (-2.0, 2.0)]
     x0 = [["0", 2.0], ["1", 1.0], ["2", 1.0]]
     n_calls = 5
     check_init_vals(optimizer, bench5, space, x0, n_calls)
@@ -358,7 +358,7 @@ def test_repeated_x(minimizer):
     assert "has been evaluated at" in str(w.message)
 
     with pytest.warns(None) as record:
-        minimizer(bench4, dimensions=[("0", "1")], x0=[["0"], ["1"]],
+        minimizer(bench4, dimensions=[["0", "1"]], x0=[["0"], ["1"]],
                   n_calls=3, n_initial_points=0)
         assert len(record) > 0
         w = record.pop(UserWarning)
