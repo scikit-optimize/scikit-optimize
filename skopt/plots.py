@@ -827,7 +827,7 @@ def plot_evaluations(result, bins=20, dimensions=None,
         for j in range(n_dims):
             if i == j:
                 index, dim = plot_dims[i]
-                if iscat[j]:
+                if iscat[index]:
                     bins_ = len(dim.categories)
                 elif dim.prior == 'log-uniform':
                     low, high = space.bounds[index]
