@@ -131,6 +131,7 @@ def test_plots_work_without_cat():
     # TODO: Compare plots to known good results?
     # Look into how matplotlib does this.
 
+
 def test_plots_skip_constant():
     """Test that constant dimension are properly skipped"""
     SPACE = [
@@ -151,6 +152,7 @@ def test_plots_skip_constant():
     print(res.space)
     print(plots._map_categories(res.space, res.x_iters, res.x))
     plots.plot_evaluations(res)
+
 
 @pytest.mark.fast_test
 def test_evaluate_min_params():
