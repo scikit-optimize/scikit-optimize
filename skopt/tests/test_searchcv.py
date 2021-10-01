@@ -16,7 +16,6 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from skopt.space import Real, Categorical, Integer
 from skopt import BayesSearchCV
-from packaging.version import parse as parse_version
 
 
 def _fit_svc(n_jobs=1, n_points=1, cv=None):
