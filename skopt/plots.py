@@ -839,7 +839,7 @@ def plot_evaluations(result, bins=20, dimensions=None,
                 else:
                     ax_ = ax[i, i]
                 ax_.hist(samples[:, index], bins=bins_,
-                         range=None if iscat[j] else dim.bounds)
+                         range=None if iscat[index] else dim.bounds)
 
             # lower triangle
             elif i > j:
