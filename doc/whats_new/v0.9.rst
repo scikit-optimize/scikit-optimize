@@ -31,4 +31,4 @@ Version 0.9.0
 Version 0.9.1
 =============
 - |Feature| Add support for multimetric scoring to :obj:`skopt.searchcv.BayesSearchCV`.
-  :pr:`1030`
+  :pr:`1062`
