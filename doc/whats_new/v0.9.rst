@@ -26,3 +26,13 @@ Version 0.9.0
   for scikit-learn >= 1.0. :pr:`1063`
 - Minor documentation improvements.
 - Various small bugs and fixes.
+    :pr:`988`
+
+Version 0.9.1
+=============
+- |API| Improve and tighten the inference of `skopt.space.space.Dimension`
+  objects from `tuple`, `dict` and numpy array. See the documentation of
+  `skopt.space.space.check_dimension` for details. The old behavior is
+  retained for a transitionary period; a warning is raised if the inference
+  would change under the new scheme.
+  :pr:`1067`

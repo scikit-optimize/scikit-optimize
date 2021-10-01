@@ -92,7 +92,7 @@ def check_dimension(dimension, transform=None):
     try:
         new_dim = _check_dimension(dimension, transform=transform)
     except Exception as err:
-        new_dim = str(err)
+        new_dim = f"<{err.__class__.__name__}: {err}>"
     if new_dim != old_dim:
         warnings.warn(f"Dimension {dimension} was inferred to {old_dim}. In "
                       "upcoming versions of scikit-optimize, it will be "
