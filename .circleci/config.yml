@@ -12,7 +12,7 @@ jobs:
       - PYTHON_VERSION: 3.6
       - NUMPY_VERSION: 1.14.6
       - SKLEARN_VERSION: 0.20.4
-      - SCIPY_VERSION: 0.19.1
+      - SCIPY_VERSION: 1.1.0
       - MATPLOTLIB_VERSION: 2.1.1
       # on conda, this is the latest for python 3.5
       # The following places need to be in sync with regard to Cython version:
