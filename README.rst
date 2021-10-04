@@ -1,7 +1,7 @@
 
 |Logo|
 
-|pypi| |conda| |Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
+|pypi| |conda| |CI| |Travis Status| |CircleCI Status| |binder| |gitter| |Zenodo DOI|
 
 Scikit-Optimize
 ===============
@@ -193,6 +193,8 @@ recognition, feel free to add them to the "Made possible by" list.
    :target: https://pypi.python.org/pypi/scikit-optimize
 .. |conda| image:: https://anaconda.org/conda-forge/scikit-optimize/badges/version.svg
    :target: https://anaconda.org/conda-forge/scikit-optimize
+.. |CI| image:: https://github.com/scikit-optimize/scikit-optimize/actions/workflows/ci.yml/badge.svg?branch=master
+   :target: https://github.com/scikit-optimize/scikit-optimize/actions/workflows/ci.yml?query=branch%3Amaster
 .. |Travis Status| image:: https://travis-ci.org/scikit-optimize/scikit-optimize.svg?branch=master
    :target: https://travis-ci.org/scikit-optimize/scikit-optimize
 .. |CircleCI Status| image:: https://circleci.com/gh/scikit-optimize/scikit-optimize/tree/master.svg?style=shield&circle-token=:circle-token
