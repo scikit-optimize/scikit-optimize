@@ -147,7 +147,7 @@ jobs:
           make test-doc
           make test-sphinxext
           make -C doc doctest
-#          make -C doc linkcheck
+          make -C doc linkcheck
 
       - name: Build docs
         run: |

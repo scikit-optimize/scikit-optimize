@@ -381,3 +381,7 @@ warnings.filterwarnings("ignore", category=UserWarning,
 
 
 # -- Extension configuration -------------------------------------------------
+
+linkcheck_ignore = [
+    r'(../)?auto_examples/',
+]

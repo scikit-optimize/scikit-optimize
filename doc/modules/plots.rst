@@ -22,7 +22,7 @@ plot_evaluations
 :class:`plot_evaluations` visualize the order in which points where sampled.
 
 .. figure:: ../auto_examples/plots/images/sphx_glr_visualizing-results_002.png
-   :target: ../auto_examples/plots/visualizing-results.htm
+   :target: ../auto_examples/plots/visualizing-results.html
    :align: center
 
 plot_objective
