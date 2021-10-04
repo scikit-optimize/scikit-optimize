@@ -62,10 +62,12 @@ def check_dimension(dimension, transform=None):
           numbers (as per the `number.Integral`), a `Integer` dimension is
           returned, else a `Real` dimension is returned.
 
-          NOTE: tuple, list and array currently all undergo dimension
-          inference. This behavior will change in an upcoming version, a
-          warning is raised if the upcoming inference code would change the
-          result.
+          NOTE: For a transitionary period, tuple, list and array currently all
+          undergo dimension inference as describe in the tuple entry above. If
+          no `Integer` or `Real` dimension can be inferred, a `Categorical` is
+          returned. This behavior will be tightened to the above description in
+          an upcoming version, and a warning is raised if the upcoming
+          inference would differ from the current behavior.
 
     transform : "identity", "normalize", "string", "label", "onehot" optional
         - For `Categorical` dimensions, the following transformations are
@@ -105,16 +107,6 @@ def _check_dimension(dimension, transform=None):
     if isinstance(dimension, Dimension):
         return dimension
     elif isinstance(dimension, (list, np.ndarray)):
-        if (len(dimension) <= 4
-                and any(isinstance(e, numbers.Real) for e in dimension)
-                and len(set(map(type, dimension))) > 1):
-            warnings.warn(
-                "A dimension was specified as a list with numeric types mixed "
-                "with other types. Inferred a Categorical object. Previously, "
-                "Integer or Real object could be inferred. Pass an "
-                "explicit Categorical object to disable this warning",
-                RuntimeWarning
-            )
         return Categorical(dimension, transform=transform)
     elif isinstance(dimension, tuple) and 1 <= len(dimension) <= 4:
         low, high, *args = dimension
