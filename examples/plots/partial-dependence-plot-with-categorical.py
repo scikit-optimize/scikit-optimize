@@ -35,7 +35,7 @@ def objective(params):
     clf = DecisionTreeClassifier(
         **{dim.name: val for dim, val in
            zip(SPACE, params) if dim.name != 'dummy'})
-    return -np.mean(cross_val_score(clf, *load_breast_cancer(True)))
+    return -np.mean(cross_val_score(clf, *load_breast_cancer(return_X_y=True)))
 
 #############################################################################
 # Bayesian optimization
