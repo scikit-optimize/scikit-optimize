@@ -5,7 +5,6 @@ from scipy.linalg import cho_solve
 from scipy.linalg import solve_triangular
 
 import sklearn
-from packaging.version import parse as parse_version
 from sklearn.gaussian_process import GaussianProcessRegressor as sk_GaussianProcessRegressor
 from sklearn.utils import check_array
 
@@ -14,10 +13,6 @@ from .kernels import Sum
 from .kernels import RBF
 from .kernels import WhiteKernel
 
-# Cache the version objects
-_SKLEARN_VERSION = parse_version(sklearn.__version__)
-_V_0_23 = parse_version("0.23")
-_V_0_19 = parse_version("0.19")
 
 def _param_for_white_kernel_in_Sum(kernel, kernel_str=""):
     """
@@ -229,10 +224,10 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         self.K_inv_ = L_inv.dot(L_inv.T)
 
         # Fix deprecation warning #462
-        if _SKLEARN_VERSION >= _V_0_23:
+        if sklearn.__version__ >= "0.23":
             self.y_train_std_ = self._y_train_std
             self.y_train_mean_ = self._y_train_mean
-        elif _SKLEARN_VERSION >= _V_0_19:
+        elif sklearn.__version__ >= "0.19":
             self.y_train_mean_ = self._y_train_mean
             self.y_train_std_ = 1
         else:
