@@ -53,8 +53,10 @@ def check_dimension(dimension, transform=None):
     ----------
     dimension : Dimension
         Search space Dimension.
-        Each search dimension can be defined either as
+        Each search dimension can be defined either as:
 
+        - an instance of a `Dimension` object (`Real`, `Integer` or
+          `Categorical`).
         - a list or numpy array of choices, for `Categorical` dimension
         - a 2-, 3- or 4-tuple, for `Real` and `Integer` dimensions, of
           the form ``(low, high [, prior [, base]])`` (values in square
@@ -62,12 +64,13 @@ def check_dimension(dimension, transform=None):
           numbers (as per the `number.Integral`), a `Integer` dimension is
           returned, else a `Real` dimension is returned.
 
-          NOTE: For a transitionary period, tuple, list and array currently all
-          undergo dimension inference as describe in the tuple entry above. If
-          no `Integer` or `Real` dimension can be inferred, a `Categorical` is
-          returned. This behavior will be tightened to the above description in
-          an upcoming version, and a warning is raised if the upcoming
-          inference would differ from the current behavior.
+          ..note::
+            For a transitionary period, tuple, list and array currently all
+            undergo dimension inference as describe in the tuple entry above.
+            If no `Integer` or `Real` dimension can be inferred, a
+            `Categorical` is returned. This behavior will be tightened to the
+            above description in an upcoming version, and a warning is raised
+            if the upcoming inference would differ from the current behavior.
 
     transform : "identity", "normalize", "string", "label", "onehot" optional
         - For `Categorical` dimensions, the following transformations are
@@ -108,7 +111,7 @@ def _check_dimension(dimension, transform=None):
         return dimension
     elif isinstance(dimension, (list, np.ndarray)):
         return Categorical(dimension, transform=transform)
-    elif isinstance(dimension, tuple) and 1 <= len(dimension) <= 4:
+    elif isinstance(dimension, tuple) and 2 <= len(dimension) <= 4:
         low, high, *args = dimension
         if (isinstance(low, numbers.Integral)
                 and isinstance(high, numbers.Integral)):
