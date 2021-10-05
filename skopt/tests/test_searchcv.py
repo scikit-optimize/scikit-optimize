@@ -93,7 +93,7 @@ def test_searchcv_runs(surrogate, n_jobs, n_points, cv=None):
 
     """
 
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
@@ -140,7 +140,7 @@ def test_searchcv_runs_multiple_subspaces():
     multiple subspaces are given.
     """
 
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
@@ -193,7 +193,7 @@ def test_searchcv_sklearn_compatibility():
     such as clone, set_params, get_params.
     """
 
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
@@ -257,7 +257,7 @@ def test_searchcv_reproducibility():
     random state.
     """
 
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
@@ -305,7 +305,7 @@ def test_searchcv_rank():
     random state.
     """
 
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
@@ -341,7 +341,7 @@ def test_searchcv_refit():
     random state.
     """
 
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=0.75, random_state=0
     )
@@ -383,7 +383,7 @@ def test_searchcv_callback():
     # Test whether callback is used in BayesSearchCV and
     # whether is can be used to interrupt the search loop
 
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     opt = BayesSearchCV(
         DecisionTreeClassifier(),
         {

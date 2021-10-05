@@ -198,7 +198,7 @@ from skopt import BayesSearchCV
 from sklearn.datasets import load_iris
 from sklearn.svm import SVC
 
-X, y = load_iris(True)
+X, y = load_iris(return_X_y=True)
 
 searchcv = BayesSearchCV(
     SVC(),
