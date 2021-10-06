@@ -121,9 +121,6 @@ if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" 
 then
     # PDF linked into HTML
     make_args="dist LATEXMKOPTS=-halt-on-error"
-elif [[ "$build_type" =~ ^QUICK ]]
-then
-    make_args=html-noplot
 elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
 then
     # pattern for examples to run is the last line of output
@@ -168,10 +165,10 @@ fi
 
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
-  cython="${CYTHON_VERSION:-*}" pytest coverage \
-  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
-  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
+  numpy scipy \
+  cython pytest coverage \
+  matplotlib sphinx pillow \
+  scikit-image pandas \
   joblib memory_profiler packaging
 
 export MPLBACKEND="agg"
