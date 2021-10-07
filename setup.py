@@ -40,7 +40,9 @@ if __name__ == '__main__':
                 'pytest-xdist',
             ],
             'doc': [
+                'sphinx',
                 'sphinx-gallery>=0.6',
+                'memory_profiler',
                 'numpydoc',
             ],
         },
