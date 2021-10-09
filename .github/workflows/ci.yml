@@ -15,10 +15,10 @@ env:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [ 3.9 ]
     steps:
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -43,13 +43,11 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        # When bumping, note to revise TEST_WITH_COVERAGE below
+        # When bumping, note to revise env.TEST_WITH_COVERAGE below
         python-version: [ 3.7, 3.8, 3.9, "pypy-3.7" ]
         scikit-version: [ "0.*", "1.*" ]
-
     env:
       TEST_WITH_COVERAGE: ${{ matrix.python-version == '3.9' && matrix.scikit-version == '1.*' }}
-
     steps:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -60,10 +58,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ~/.cache/pip
-            ~/.cache/
-            ~/.ccache/
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.scikit-version }}
+            ~/.cache
+            ~/.ccache
+          key: ${{ runner.os }}-py${{ matrix.python-version }}
 
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -79,6 +76,7 @@ jobs:
           pip install numpy cython  # scikit-learn build deps if wheel missing
           pip install scikit-learn==${{ matrix.scikit-version }}
           pip install .[dev,plots]
+          python -c 'import skopt; skopt.show_versions()'
 
       - name: Python sdist
         run: |
@@ -88,13 +86,11 @@ jobs:
       - name: Test
         if: env.TEST_WITH_COVERAGE != 'true'
         run: |
-          python -c 'import skopt; skopt.show_versions()'
           make test-code-parallel
 
       - name: Test with Coverage
         if: env.TEST_WITH_COVERAGE == 'true'
         run: |
-          python -c 'import skopt; skopt.show_versions()'
           make test-coverage
           bash <(curl -s https://codecov.io/bash)
 
@@ -112,7 +108,6 @@ jobs:
         python-version: [ 3.9 ]
     env:
       MPLBACKEND: "agg"
-
     steps:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
