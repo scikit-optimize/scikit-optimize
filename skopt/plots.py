@@ -17,7 +17,7 @@ if 'pytest' in sys.modules:
 
     matplotlib.use('Agg')
 
-import matplotlib.pyplot as plt
+from matplotlib import gridspec, pyplot as plt
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator, FuncFormatter  # noqa: E402
@@ -380,7 +380,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     # Deal with formatting of the axes
     for i in range(n_dims):  # rows
         for j in range(n_dims):  # columns
-            if n_dims > 1:
+            if isinstance(ax, np.ndarray):
                 ax_ = ax[i, j]
             else:
                 ax_ = ax
@@ -452,6 +452,32 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
                             partial(_cat_format, dim_i)))
 
     return ax
+
+
+def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs=None, **gridspec_kwargs):
+    """
+    Makes a subgrid inside an existing axis object
+    """
+    if n_cols is None:
+        n_cols = n_rows
+    fig_kwargs = fig_kwargs or {}
+    if ax is None:
+        fig, ax = plt.subplots(**fig_kwargs)
+    else:
+        fig = ax.get_figure()
+
+    grid_spec = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
+                                                 subplot_spec=ax.get_subplotspec(),
+                                                 **gridspec_kwargs)
+    axes = np.empty((n_rows, n_cols), dtype=object)
+    for i in range(n_rows):
+        for j in range(n_cols):
+            axes[i, j] = fig.add_subplot(grid_spec[i, j])
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    return ax, axes
 
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
@@ -542,7 +568,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear', dimensions=None, sample_source='random',
                    minimum='result', n_minimum_search=None, plot_dims=None,
-                   show_points=True, cmap='viridis_r'):
+                   show_points=True, cmap='viridis_r', ax=None):
     """Plot a 2-d matrix with so-called Partial Dependence plots
     of the objective function. This shows the influence of each
     search-space dimension on the objective function.
@@ -666,11 +692,14 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     cmap: str or Colormap, default = 'viridis_r'
         Color map for contour plots. Passed directly to
         `plt.contourf()`
+    
+    ax: `Matplotlib.Axes`, default= None
+        An axis object in which to plot the dependence plot.
 
     Returns
     -------
     ax : `Matplotlib.Axes`
-        A 2-d matrix of Axes-objects with the sub-plots.
+        The axes object the plot was drawn in
 
     """
     # Here we define the values for which to plot the red dot (2d plot) and
@@ -710,36 +739,32 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     else:
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
-
-    fig, ax = plt.subplots(n_dims, n_dims,
-                           figsize=(size * n_dims, size * n_dims))
-
-    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
-                        hspace=0.1, wspace=0.1)
+    
+    fig_kwargs = dict(figsize=(size * n_dims, size * n_dims))
+    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs=fig_kwargs, wspace=0.1, hspace=0.1)
 
     for i in range(n_dims):
         for j in range(n_dims):
+            
             if i == j:
-                index, dim = plot_dims[i]
+                index, _ = plot_dims[i]
                 xi, yi = partial_dependence_1D(space, result.models[-1],
                                                index,
                                                samples=samples,
                                                n_points=n_points)
-                if n_dims > 1:
-                    ax_ = ax[i, i]
-                else:
-                    ax_ = ax
+                ax_ = axes[i, j]
                 ax_.plot(xi, yi)
                 ax_.axvline(minimum[index], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
-                index1, dim1 = plot_dims[i]
-                index2, dim2 = plot_dims[j]
-                ax_ = ax[i, j]
+                index1, _ = plot_dims[i]
+                index2, _ = plot_dims[j]
+                #ax_ = ax[i, j]
                 xi, yi, zi = partial_dependence_2D(space, result.models[-1],
                                                    index1, index2,
                                                    samples, n_points)
+                ax_ = axes[i, j]
                 ax_.contourf(xi, yi, zi, levels,
                              locator=locator, cmap=cmap)
                 if show_points:
@@ -750,9 +775,10 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     ylabel = "Partial dependence"
 
     # Make various adjustments to the plots.
-    return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
+    _format_scatter_plot_axes(axes, space, ylabel=ylabel,
                                      plot_dims=plot_dims,
                                      dim_labels=dimensions)
+    return ax
 
 
 def plot_evaluations(result, bins=20, dimensions=None,
