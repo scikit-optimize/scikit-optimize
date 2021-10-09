@@ -5,12 +5,7 @@ on:
     tags: [ 'v[0-9]+\.[0-9]+.*' ]
   pull_request: { branches: [master] }
   schedule: [ cron: '20 16 * * 6' ]
-
-env:
-  DO_PUBLISH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
-  DO_PUBLISH_DOCS: |
-    ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' ||
-                                        startsWith(github.ref, 'refs/tags/')) }}
+  workflow_call:
 
 jobs:
   lint:
@@ -94,11 +89,11 @@ jobs:
           make test-coverage
           bash <(curl -s https://codecov.io/bash)
 
-      - name: Publish 📦 on PyPI
-        if: env.DO_PUBLISH == 'true'
-        uses: pypa/gh-action-pypi-publish@master
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          name: package
+          path: dist
 
   docs:
     name: Docs
@@ -148,9 +143,8 @@ jobs:
         run: |
           .github/scripts/build_docs.sh
 
-      - name: Publish docs
-        if: env.DO_PUBLISH_DOCS == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_DOCS_TOKEN }}
-        run: |
-          .github/scripts/publish_docs.sh doc/_build/html/stable
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docs
+          path: doc/_build/html/stable
