@@ -65,7 +65,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Set up ccache
+      - name: Install ccache
         run: |
           sudo apt-get install -yq ccache
           echo /usr/lib/ccache >> $GITHUB_PATH
