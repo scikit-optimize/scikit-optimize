@@ -39,7 +39,8 @@ def test_plots_work():
                                      **{dim.name: val
                                         for dim, val in zip(SPACE, params)
                                         if dim.name != 'dummy'})
-        return -np.mean(cross_val_score(clf, *load_breast_cancer(return_X_y=True)))
+        X, y = load_breast_cancer(return_X_y=True)
+        return -np.mean(cross_val_score(clf, X, y))
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
 
@@ -112,7 +113,8 @@ def test_plots_work_without_cat():
                                      **{dim.name: val
                                         for dim, val in zip(SPACE, params)
                                         if dim.name != 'dummy'})
-        return -np.mean(cross_val_score(clf, *load_breast_cancer(return_X_y=True)))
+        X, y = load_breast_cancer(return_X_y=True)
+        return -np.mean(cross_val_score(clf, X, y))
 
     res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
     plots.plot_convergence(res)

@@ -224,10 +224,10 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         self.K_inv_ = L_inv.dot(L_inv.T)
 
         # Fix deprecation warning #462
-        if sklearn.__version__ >= '0.23':
+        if sklearn.__version__ >= "0.23":
             self.y_train_std_ = self._y_train_std
             self.y_train_mean_ = self._y_train_mean
-        elif sklearn.__version__ >= '0.19':
+        elif sklearn.__version__ >= "0.19":
             self.y_train_mean_ = self._y_train_mean
             self.y_train_std_ = 1
         else:
