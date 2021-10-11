@@ -16,32 +16,11 @@ env:
 
 matrix:
   include:
-    # Linux environment to test scikit-learn against numpy and scipy master
-    # installed from their CI wheels in a virtualenv with the Python
-    # interpreter provided by travis.
-    - name: "Python 3.6 - scikit 0.20.4"
-      python: "3.6"
-      env: DISTRIB="conda" PYTHON_VERSION="3.6"
-           NUMPY_VERSION="1.13.3" SCIPY_VERSION="0.19.1" PYAML_VERSION="16.9.0"
-           SCIKIT_LEARN_VERSION="0.20.4" MATPLOTLIB_VERSION="2.0.0" COVERAGE="false"
-           JOBLIB_VERSION="0.11"
-    - name: "Python 3.6 - scikit 0.21.3"
-      python: "3.6"
-      env: DISTRIB="conda" PYTHON_VERSION="3.6"
-           NUMPY_VERSION="1.14.0" SCIPY_VERSION="1.0.0" PYAML_VERSION="16.12.0"
-           SCIKIT_LEARN_VERSION="0.21.3" MATPLOTLIB_VERSION="2.0.0" COVERAGE="false"
-           JOBLIB_VERSION="0.11"
-    - name: "Python 3.7 - scikit 0.22.1"
+    - name: "Python 3.7  - scikit 0.24.2"
       python: "3.7"
-      env: DISTRIB="conda" PYTHON_VERSION="3.7"
-         NUMPY_VERSION="1.16.0" SCIPY_VERSION="1.2.0" PYAML_VERSION="17.8.0"
-         SCIKIT_LEARN_VERSION="0.22.1" MATPLOTLIB_VERSION="*" COVERAGE="true"
-         JOBLIB_VERSION="0.13"
-    - name: "Python 3.8  - scikit 0.23.2"
-      python: "3.8"
-      env: DISTRIB="conda" PYTHON_VERSION="3.8.1" COVERAGE="false"
+      env: DISTRIB="conda" PYTHON_VERSION="3.7" COVERAGE="false"
            NUMPY_VERSION="1.19.1" SCIPY_VERSION="1.5.2" PYAML_VERSION="20.4.0"
-           SCIKIT_LEARN_VERSION="0.23.2" JOBLIB_VERSION="0.16.0"
+           SCIKIT_LEARN_VERSION="0.24.2" JOBLIB_VERSION="0.16.0"
     - name: "Python 3.7 - sdist check"
       python: "3.7"
       env: DISTRIB="conda" PYTHON_VERSION="3.7"
@@ -64,7 +43,7 @@ deploy:
   on:
     tags: true
     repo: scikit-optimize/scikit-optimize
-    condition: "$PYTHON_VERSION = 3.6"
+    condition: "$PYTHON_VERSION = 3.7"
   skip_cleanup: true
   skip_existing: true
   password:

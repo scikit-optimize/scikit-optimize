@@ -6,17 +6,23 @@
 
 Version 0.9.0
 =============
-**In Development**
+**October 2021**
 
-:mod:`skopt.searchcv`
----------------------
+- |Fix| :obj:`skopt.learning.gaussian_process.gpr.GaussianProcessRegressor`
+  for sklearn >= 0.23. :pr:`943`
+- Change `skip=` parameter in :obj:`skopt.sampler.sobol.Sobol`
+  initial point generator. :pr:`955`
+- |Feature| :obj:`skopt.callbacks.HollowIterationsStopper` callback. :pr:`917`
+- |Feature| :obj:`skopt.callbacks.ThresholdStopper` callback. :pr:`1000`
 - |Fix| Fix :obj:`skopt.searchcv.BayesSearchCV` for scikit-learn >= 0.24.
   :pr:`988`
 - |API| Deprecate :class:`skopt.searchcv.BayesSearchCV` parameter `iid=`.
-    :pr:`988`
-
-:mod:`skopt.learning.gaussian_process.gpr`
-------------------------------------------
-- |Fix| Fix :class:`skopt.learning.gaussian_process.gpr.GaussianProcessRegressor`
-  for scikit-learn >= 1.0
-  :pr:`1063`
+  :pr:`988`
+- |Fix| NumPy deprecation errors. :pr:`1023`
+- |Fix| issue with :class:`skopt.optimizer.optimizer.Optimizer` not being
+  garbage-collectable. :pr:`1029`
+- |Fix| version check in
+  :class:`skopt.learning.gaussian_process.gpr.GaussianProcessRegressor`
+  for scikit-learn >= 1.0. :pr:`1063`
+- Minor documentation improvements.
+- Various small bugs and fixes.
