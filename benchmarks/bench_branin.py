@@ -7,6 +7,7 @@ from skopt import forest_minimize
 from skopt import gbrt_minimize
 from skopt import dummy_minimize
 
+
 def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
     bounds = [(-5.0, 10.0), (0.0, 15.0)]
     optimizers = [("gp_minimize", gp_minimize),
@@ -18,7 +19,6 @@ def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
         print(name)
         results = []
         min_func_calls = []
-        time_ = 0.0
 
         for random_state in range(n_runs):
             if name == "gp_minimize":
@@ -51,6 +51,7 @@ def run(n_calls=200, n_runs=10, acq_optimizer="lbfgs"):
         print("Mean func_calls to reach min: " + str(mean_fcalls))
         print("Std func_calls to reach min: " + str(std_fcalls))
         print("Fastest no of func_calls to reach min: " + str(best_fcalls))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

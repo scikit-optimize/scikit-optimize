@@ -49,7 +49,6 @@ from skopt import gbrt_minimize
 from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt.space import Categorical
-from skopt.space import Integer
 from skopt.space import Real
 
 
@@ -58,14 +57,19 @@ MODEL_BACKEND = "model backend"
 
 # functions below are used to apply non - linear maps to parameter values, eg
 # -3.0 -> 0.001
+
+
 def pow10map(x):
     return 10.0 ** x
+
 
 def pow2intmap(x):
     return int(2.0 ** x)
 
+
 def nop(x):
     return x
+
 
 nnparams = {
     # up to 1024 neurons
@@ -111,6 +115,7 @@ DATASETS = {
     "Climate Model Crashes": ClassifierMixin,
 }
 
+
 # bunch of dataset preprocessing functions below
 def split_normalize(X, y, random_state):
     """
@@ -130,7 +135,8 @@ def split_normalize(X, y, random_state):
     Split of data into training and validation sets.
     70% of data is used for training, rest for validation.
     """
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, random_state=random_state)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.7, random_state=random_state)
     sc = StandardScaler()
     sc.fit(X_train, y_train)
     X_train, X_test = sc.transform(X_train), sc.transform(X_test)
@@ -146,15 +152,15 @@ def load_data_target(name):
         data = load_boston()
     elif name == "Housing":
         data = fetch_california_housing()
-        dataset_size = 1000 # this is necessary so that SVR does not slow down too much
+        dataset_size = 1000  # this is necessary so that SVR does not slow down too much
         data["data"] = data["data"][:dataset_size]
-        data["target"] =data["target"][:dataset_size]
+        data["target"] = data["target"][:dataset_size]
     elif name == "digits":
         data = load_digits()
     elif name == "Climate Model Crashes":
         try:
             data = fetch_mldata("climate-model-simulation-crashes")
-        except HTTPError as e:
+        except HTTPError:
             url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
             data = urlopen(url).read().split('\n')[1:]
             data = [[float(v) for v in d.split()] for d in data]
@@ -193,7 +199,6 @@ class MLBench(object):
         self.model = model
         self.space = MODELS[model]
 
-
     def evaluate(self, point):
         """
         Fits model using the particular setting of hyperparameters and
@@ -228,25 +233,29 @@ class MLBench(object):
         # catch below, infeasible parameters yield assumed smallest objective.
         try:
             model_instance.fit(X_train, y_train)
-            if isinstance(model_instance, RegressorMixin): # r^2 metric
+            if isinstance(model_instance, RegressorMixin):  # r^2 metric
                 y_predicted = model_instance.predict(X_test)
                 score = r2_score(y_test, y_predicted)
-            elif isinstance(model_instance, ClassifierMixin): # log loss
+            elif isinstance(model_instance, ClassifierMixin):  # log loss
                 y_predicted = model_instance.predict_proba(X_test)
-                score = -log_loss(y_test, y_predicted) # in the context of this function, the higher score is better
-            # avoid any kind of singularitites, eg probability being zero, and thus breaking the log_loss
+                # in the context of this function, the higher score is better
+                score = -log_loss(y_test, y_predicted)
+            # avoid any kind of singularitites, eg probability being zero,
+            # and thus breaking the log_loss
             if math.isnan(score):
                 score = min_obj_val
-            score = max(score, min_obj_val) # this is necessary to avoid -inf or NaN
-        except BaseException as ex:
-            score = min_obj_val # on error: return assumed smallest value of objective function
+            score = max(score, min_obj_val)  # this is necessary to avoid -inf or NaN
+        except BaseException:
+            score = min_obj_val  # on error: return assumed smallest value of objective function
 
         return score
+
 
 # this is necessary to generate table for README in the end
 table_template = """|Blackbox Function| Minimum | Best minimum | Mean f_calls to min | Std f_calls to min | Fastest f_calls to min
 ------------------|------------|-----------|---------------------|--------------------|-----------------------
-| """
+| """  # noqa: E501
+
 
 def calculate_performance(all_data):
     """
@@ -270,11 +279,13 @@ def calculate_performance(all_data):
                 # leave only best objective values at particular iteration
                 best = [[v[-1] for v in d] for d in data]
 
-                supervised_learning_type = "Regression" if ("Regressor" in model) else "Classification"
+                supervised_learning_type = ("Regression"
+                                            if "Regressor" in model else
+                                            "Classification")
 
-                # for every item in sorted_traces it is 2d array, where first dimension corresponds to
-                # particular repeat of experiment, and second dimension corresponds to index
-                # of optimization step during optimization
+                # for every item in sorted_traces it is 2d array, where first dimension
+                # corresponds to particular repeat of experiment, and second dimension
+                # corresponds to index of optimization step during optimization
                 key = (algorithm, supervised_learning_type)
                 sorted_traces[key].append(best)
 
@@ -298,7 +309,8 @@ def calculate_performance(all_data):
             return ("%.3f" % float_value)
 
         output = str(key[0]) + " | " + " | ".join(
-            [fmt(min_mean) + " +/- " + fmt(min_stdd)] + [fmt(v) for v in [min_best, f_mean, f_stdd, f_best]])
+            [fmt(min_mean) + " +/- " + fmt(min_stdd)] +
+            [fmt(v) for v in [min_best, f_mean, f_stdd, f_best]])
         result = table_template + output
         print("")
         print(key[1])
@@ -403,13 +415,14 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
                 all_data[model][dataset][surrogate_minimizer.__name__] = raw_trace
 
     # convert the model keys to strings so that results can be saved as json
-    all_data = {k.__name__: v for k,v in all_data.items()}
+    all_data = {k.__name__: v for k, v in all_data.items()}
 
     # dump the recorded objective values as json
     if save_traces:
         with open(datetime.now().strftime("%m_%Y_%d_%H_%m_%s")+'.json', 'w') as f:
             json.dump(all_data, f)
     calculate_performance(all_data)
+
 
 if __name__ == "__main__":
     import argparse

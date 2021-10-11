@@ -35,9 +35,7 @@ interface is as follows:
 4. Provide points and corresponding objectives using the `tell` method of an optimizer instance
 5. Continue from step 2 until eg maximum number of evaluations reached
 """
-
 print(__doc__)
-import numpy as np
 
 #############################################################################
 # Example

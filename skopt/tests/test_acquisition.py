@@ -31,6 +31,7 @@ class ConstSurrogate:
 # The second estimator mimics the GP regressor that is fit on
 # the log of the input.
 
+
 class ConstantGPRSurrogate(object):
     def __init__(self, space):
         self.space = space
@@ -98,8 +99,10 @@ def test_acquisition_api():
 def check_gradient_correctness(X_new, model, acq_func, y_opt):
     analytic_grad = gaussian_acquisition_1D(
         X_new, model, y_opt, acq_func)[1]
-    num_grad_func = lambda x:  gaussian_acquisition_1D(
-        x, model, y_opt, acq_func=acq_func)[0]
+
+    def num_grad_func(x):
+        return gaussian_acquisition_1D(
+            x, model, y_opt, acq_func=acq_func)[0]
     num_grad = optimize.approx_fprime(X_new, num_grad_func, 1e-5)
     assert_array_almost_equal(analytic_grad, num_grad, 3)
 

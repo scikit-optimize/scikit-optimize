@@ -1,10 +1,7 @@
 import pytest
-import numbers
 import numpy as np
 from numpy.testing import assert_raises
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
-from numpy.testing import assert_raises_regex
 from skopt.space import LogN, Normalize
 from skopt.space.transformers import StringEncoder, LabelEncoder, Identity
 

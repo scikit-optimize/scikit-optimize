@@ -6,7 +6,7 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 import numpy as np
 
-from skopt import gp_minimize, forest_minimize
+from skopt import gp_minimize
 from skopt import load
 from skopt import dump
 from skopt import expected_minimum, expected_minimum_random_sampling
@@ -204,7 +204,7 @@ def test_normalize_dimensions(dimensions, normalizations):
                          [(Real(1, 2, name="learning rate"), "learning rate"),
                           (Integer(1, 100, name="no of trees"), "no of trees"),
                           (Categorical(["red, blue"], name="colors"), "colors")])
-def test_normalize_dimensions(dimension, name):
+def test_normalize_dimensions2(dimension, name):
     space = normalize_dimensions([dimension])
     assert space.dimensions[0].name == name
 

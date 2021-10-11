@@ -246,7 +246,7 @@ class ExpSineSquared(Kernel, sk_ExpSineSquared):
         grad_wrt_exp = -2 * np.sin(2 * pi_by_period) / length_scale**2
 
         # When x_i -> y_i for all i in [0, D), the gradient becomes
-        # zero. See https://github.com/MechCoder/Notebooks/blob/master/ExpSineSquared%20Kernel%20gradient%20computation.ipynb
+        # zero. See https://github.com/MechCoder/Notebooks/blob/master/ExpSineSquared%20Kernel%20gradient%20computation.ipynb   # noqa: E501
         # for a detailed math explanation
         # grad_wrt_theta can be anything since diff is zero
         # for this corner case, hence we set to zero.

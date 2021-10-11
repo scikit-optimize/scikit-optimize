@@ -1,8 +1,0 @@
-ipykernel
-numpy
-matplotlib
-pandas
-ipywidgets
-sphinx
-sphinx-gallery>=0.6
-numpydoc

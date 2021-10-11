@@ -1,6 +1,5 @@
 from copy import deepcopy
 from functools import wraps
-from sklearn.utils import check_random_state
 import numpy as np
 from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize as sp_minimize
@@ -18,7 +17,7 @@ from .learning.gaussian_process.kernels import HammingKernel
 from .learning.gaussian_process.kernels import Matern
 from .sampler import Sobol, Lhs, Hammersly, Halton, Grid
 from .sampler import InitialPointGenerator
-from .space import Space, Categorical, Integer, Real, Dimension
+from .space import Categorical, Space, Dimension
 
 __all__ = (
     "load",
@@ -592,17 +591,16 @@ def normalize_dimensions(dimensions):
     space = Space(dimensions)
     transformed_dimensions = []
     for dimension in space.dimensions:
-        # check if dimension is of a Dimension instance
-        if isinstance(dimension, Dimension):
+        if isinstance(dimension, Categorical):
+            dimension.set_transformer("onehot")
+        elif isinstance(dimension, Dimension):
             # Change the transformer to normalize
             # and add it to the new transformed dimensions
             dimension.set_transformer("normalize")
-            transformed_dimensions.append(
-                dimension
-            )
         else:
             raise RuntimeError("Unknown dimension type "
                                "(%s)" % type(dimension))
+        transformed_dimensions.append(dimension)
 
     return Space(transformed_dimensions)
 

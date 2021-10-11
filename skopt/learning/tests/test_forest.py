@@ -1,11 +1,7 @@
 import numpy as np
 import pytest
 
-from scipy import stats
-
-from numpy.testing import assert_equal
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_almost_equal
 
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
 
