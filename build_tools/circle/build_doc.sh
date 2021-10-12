@@ -188,8 +188,15 @@ then
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
+# Install this noise maker on CircleCI to prevent
+# "Too long with no output (exceeded 10m0s): context deadline exceeded"
+while true; do sleep $((60 * 5)); echo -e '\nStill working ...\n'; done &
+noise_maker=$!
+
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
+
+kill $noise_maker
 
 # Insert the version warning for deployment
 find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
