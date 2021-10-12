@@ -145,6 +145,12 @@ class Optimizer(object):
         Keeps list of models only as long as the argument given. In the
         case of None, the list has no capped length.
 
+    space_constraint : callable or None, default: None
+        Constraint function. Should take a single list of parameters
+        (i.e. a point in space) and return True if the point satisfies
+        the constraints.
+        If None, the space is not conditionally constrained.
+
     Attributes
     ----------
     Xi : list
@@ -167,6 +173,7 @@ class Optimizer(object):
                  acq_optimizer="auto",
                  random_state=None,
                  model_queue_size=None,
+                 space_constraint=None,
                  acq_func_kwargs=None,
                  acq_optimizer_kwargs=None):
         args = locals().copy()
@@ -242,6 +249,8 @@ class Optimizer(object):
             else:
                 acq_optimizer = "sampling"
 
+        if space_constraint is not None:
+            acq_optimizer = "sampling"
         if acq_optimizer not in ["lbfgs", "sampling"]:
             raise ValueError("Expected acq_optimizer to be 'lbfgs' or "
                              "'sampling', got {0}".format(acq_optimizer))
@@ -265,10 +274,14 @@ class Optimizer(object):
 
         # Configure search space
 
+        if space_constraint is not None and not callable(space_constraint):
+            raise ValueError('Expected space_constraint to be callable '
+                             'or None, got {}'.format(space_constraint))
+
         # normalize space if GP regressor
         if isinstance(self.base_estimator_, GaussianProcessRegressor):
             dimensions = normalize_dimensions(dimensions)
-        self.space = Space(dimensions)
+        self.space = Space(dimensions, constraint=space_constraint)
 
         self._initial_samples = None
         self._initial_point_generator = cook_initial_point_generator(
@@ -322,7 +335,8 @@ class Optimizer(object):
             acq_optimizer=self.acq_optimizer,
             acq_func_kwargs=self.acq_func_kwargs,
             acq_optimizer_kwargs=self.acq_optimizer_kwargs,
-            random_state=random_state
+            space_constraint=self.space.constraint,
+            random_state=random_state,
         )
         optimizer._initial_samples = self._initial_samples
         if hasattr(self, "gains_"):
