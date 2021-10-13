@@ -71,9 +71,9 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
 
     for index, (arg, color) in enumerate(zip(args, colors)):
         if isinstance(arg, tuple):
-            name, opt_res = arg
+            label, arg = arg
         else:
-            name = None
+            label = None
 
         if isinstance(arg, OptimizeResult):
             opt_res = arg
@@ -81,7 +81,7 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
             mins = [np.min(opt_res.func_vals[:i+1])
                     for i in range(n_calls)]
             ax.plot(range(1, n_calls + 1), mins, c=color,
-                    marker=".", markersize=12, lw=2, label=name)
+                    marker=".", markersize=12, lw=2, label=label)
 
         elif (isinstance(arg, Iterable)
               and all(isinstance(elem, OptimizeResult) for elem in arg)):
@@ -103,7 +103,7 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
                               f"argument at pos {index}")
 
             ax.plot(range(1, 1 + max_n_calls), np.nanmean(mins, axis=0),
-                    c=color, marker=".", markersize=12, lw=2, label=name)
+                    c=color, marker=".", markersize=12, lw=2, label=label)
 
         else:
             raise ValueError("Cannot plot convergence trace for "
@@ -114,7 +114,7 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
                    color="r", lw=1,
                    label="True minimum")
 
-    if true_minimum or name:
+    if true_minimum or label:
         ax.legend(loc="best")
 
     return ax
