@@ -132,6 +132,28 @@ def test_plots_work_without_cat():
     # Look into how matplotlib does this.
 
 
+def test_plots_skip_constant():
+    """Test that constant dimension are properly skipped"""
+    SPACE = [
+        Categorical([0], name="dummy"),
+        Categorical([0], name="dummy"),
+        Integer(1, 20, name='max_depth'),
+        Integer(1, 20, name='max_depth'),
+    ]
+    X, y = load_breast_cancer(return_X_y=True)
+
+    def objective(params):
+        clf = DecisionTreeClassifier(random_state=3,
+                                     **{dim.name: val
+                                        for dim, val in zip(SPACE, params)
+                                        if dim.name != 'dummy'})
+        return -np.mean(cross_val_score(clf, X, y))
+    res = gp_minimize(objective, SPACE, n_calls=10, random_state=3)
+    print(res.space)
+    print(plots._map_categories(res.space, res.x_iters, res.x))
+    plots.plot_evaluations(res)
+
+
 @pytest.mark.fast_test
 def test_evaluate_min_params():
     res = gp_minimize(bench3,

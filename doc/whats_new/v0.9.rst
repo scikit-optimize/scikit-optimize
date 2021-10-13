@@ -26,3 +26,12 @@ Version 0.9.0
   for scikit-learn >= 1.0. :pr:`1063`
 - Minor documentation improvements.
 - Various small bugs and fixes.
+    :pr:`988`
+
+Version 0.9.1
+=============
+
+- |Fix| Fix `skopt.plots.plot_evaluations` incorrectly handling dimensions
+  as categorical dimensions when constant dimension are ignored due to wrong
+  indexing.
+  :pr:`1066`
