@@ -39,10 +39,10 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
           plot as well as the average convergence trace
         - if a tuple, the label names the trace(s) and the behavior is as
           specified above.
-    
+
     true_minimum : float, optional
         The true minimum value of the function, if known.
-    
+
     yscale : None or string, optional
         The scale for the y-axis.
 
@@ -84,11 +84,11 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
                     marker=".", markersize=12, lw=2, label=name)
 
         elif (isinstance(arg, Iterable)
-                  and all(isinstance(elem, OptimizeResult) for elem in arg)):
+              and all(isinstance(elem, OptimizeResult) for elem in arg)):
             mins = [[np.min(opt_res.func_vals[:i+1])
-                        for i in range(len(opt_res.x_iters))]
+                     for i in range(len(opt_res.x_iters))]
                     for opt_res in arg]
-            
+
             # graciously handle "ragged" array, i.e. differing length arrays
             max_n_calls = max(len(m) for m in mins)
             mean_arr = np.empty((len(mins), max_n_calls))
@@ -97,14 +97,14 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
             for i, m in enumerate(mins):
                 ax.plot(range(1, 1 + len(m)), m, c=color, alpha=0.2)
                 mean_arr[i, :len(m)] = m
-            
+
             if np.isnan(mean_arr).any():
                 warnings.warn("Inconsistent number of function calls in "
                               f"argument at pos {index}")
 
-            ax.plot(range(1, 1 + max_n_calls), np.nanmean(mins, axis=0), c=color,
-                    marker=".", markersize=12, lw=2, label=name)
-        
+            ax.plot(range(1, 1 + max_n_calls), np.nanmean(mins, axis=0),
+                    c=color, marker=".", markersize=12, lw=2, label=name)
+
         else:
             raise ValueError("Cannot plot convergence trace for "
                              f"{arg.__class__.__name__} object {arg}")
@@ -468,7 +468,8 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     return ax
 
 
-def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs_=None, **gridspec_kwargs):
+def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs_=None,
+                  **gridspec_kwargs):
     """
     Makes a subgrid inside an existing axis object
     """
@@ -481,7 +482,7 @@ def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs_=None, **gridspec_kwargs):
         fig = ax.get_figure()
 
     grid_spec = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
-                                                 subplot_spec=ax.get_subplotspec(),
+                                                 subplot_spec=ax.get_subplotspec(), # noqa
                                                  **gridspec_kwargs)
     axes = np.empty((n_rows, n_cols), dtype=object)
     for i in range(n_rows):
@@ -706,7 +707,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     cmap: str or Colormap, default = 'viridis_r'
         Color map for contour plots. Passed directly to
         `plt.contourf()`
-    
+
     ax: `Matplotlib.Axes`, default= None
         An axis object in which to plot the dependence plot.
 
@@ -714,7 +715,6 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     -------
     ax : `Matplotlib.Axes`
         The axes object the plot was drawn in
-
     """
     # Here we define the values for which to plot the red dot (2d plot) and
     # the red dotted line (1d plot).
@@ -753,13 +753,14 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     else:
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
-    
+
     fig_kwargs = dict(figsize=(size * n_dims, size * n_dims))
-    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs, wspace=0.1, hspace=0.1)
+    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs,
+                             wspace=0.1, hspace=0.1)
 
     for i in range(n_dims):
         for j in range(n_dims):
-            
+
             if i == j:
                 index, _ = plot_dims[i]
                 xi, yi = partial_dependence_1D(space, result.models[-1],
@@ -774,7 +775,6 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
             elif i > j:
                 index1, _ = plot_dims[i]
                 index2, _ = plot_dims[j]
-                #ax_ = ax[i, j]
                 xi, yi, zi = partial_dependence_2D(space, result.models[-1],
                                                    index1, index2,
                                                    samples, n_points)
@@ -828,14 +828,14 @@ def plot_evaluations(result, bins=20, dimensions=None,
         search-space dimensions to be included in the plot.
         If `None` then use all dimensions except constant ones
         from the search-space.
-    
+
     size : float, default=2
         Height (in inches) of each facet.
 
     cmap: str or Colormap, default = 'viridis'
         Color map for scatter plots. Passed directly to
         `plt.scatter()`
-    
+
     ax: `Matplotlib.Axes`, default= None
         An axis object in which to plot the dependence plot.
 
@@ -843,7 +843,6 @@ def plot_evaluations(result, bins=20, dimensions=None,
     -------
     ax : `Matplotlib.Axes`
         Matplotlib axis the plto was drawn in
-
     """
     space = result.space
     # Convert categoricals to integers, so we can ensure consistent ordering.
@@ -868,7 +867,8 @@ def plot_evaluations(result, bins=20, dimensions=None,
         assert len(dimensions) == n_dims
 
     fig_kwargs = dict(figsize=(size * n_dims, size * n_dims))
-    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs, wspace=0.1, hspace=0.1)
+    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs,
+                             wspace=0.1, hspace=0.1)
 
     for i in range(n_dims):
         for j in range(n_dims):
