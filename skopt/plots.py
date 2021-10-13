@@ -10,6 +10,8 @@ from .acquisition import _gaussian_acquisition
 from skopt import expected_minimum, expected_minimum_random_sampling
 from .space import Categorical
 from collections import Counter
+from collections.abc import Iterable
+import warnings
 
 # For plot tests, matplotlib must be set to headless mode early
 if 'pytest' in sys.modules:
@@ -23,39 +25,36 @@ from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator, FuncFormatter  # noqa: E402
 
 
-def plot_convergence(*args, **kwargs):
+def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
     """Plot one or several convergence traces.
 
     Parameters
     ----------
-    args[i] :  `OptimizeResult`, list of `OptimizeResult`, or tuple
+    results: `OptimizeResult`, iterable of `OptimizeResult`, or a 2-tuple
+        of a label and a `OptimizeResult` or an iterable of `OptimizeResult`.
         The result(s) for which to plot the convergence trace.
 
-        - if `OptimizeResult`, then draw the corresponding single trace;
-        - if list of `OptimizeResult`, then draw the corresponding convergence
-          traces in transparency, along with the average convergence trace;
-        - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
-          an `OptimizeResult` or a list of `OptimizeResult`.
+        - if an `OptimizeResult`, draw the correcponding single trace
+        - if an iterable of `OptimizeResult`, draw all traces in the same
+          plot as well as the average convergence trace
+        - if a tuple, the label names the trace(s) and the behavior is as
+          specified above.
+    
+    true_minimum : float, optional
+        The true minimum value of the function, if known.
+    
+    yscale : None or string, optional
+        The scale for the y-axis.
 
     ax : `Axes`, optional
         The matplotlib axes on which to draw the plot, or `None` to create
         a new one.
 
-    true_minimum : float, optional
-        The true minimum value of the function, if known.
-
-    yscale : None or string, optional
-        The scale for the y-axis.
-
     Returns
     -------
     ax : `Axes`
-        The matplotlib axes.
+        The matplotlib axes the plot was drawn in
     """
-    # <3 legacy python
-    ax = kwargs.get("ax", None)
-    true_minimum = kwargs.get("true_minimum", None)
-    yscale = kwargs.get("yscale", None)
 
     if ax is None:
         ax = plt.gca()
@@ -70,30 +69,45 @@ def plot_convergence(*args, **kwargs):
 
     colors = cm.viridis(np.linspace(0.25, 1.0, len(args)))
 
-    for results, color in zip(args, colors):
-        if isinstance(results, tuple):
-            name, results = results
+    for index, (arg, color) in enumerate(zip(args, colors)):
+        if isinstance(arg, tuple):
+            name, opt_res = arg
         else:
             name = None
 
-        if isinstance(results, OptimizeResult):
-            n_calls = len(results.x_iters)
-            mins = [np.min(results.func_vals[:i])
-                    for i in range(1, n_calls + 1)]
+        if isinstance(arg, OptimizeResult):
+            opt_res = arg
+            n_calls = len(opt_res.x_iters)
+            mins = [np.min(opt_res.func_vals[:i+1])
+                    for i in range(n_calls)]
             ax.plot(range(1, n_calls + 1), mins, c=color,
                     marker=".", markersize=12, lw=2, label=name)
 
-        elif isinstance(results, list):
-            n_calls = len(results[0].x_iters)
-            iterations = range(1, n_calls + 1)
-            mins = [[np.min(r.func_vals[:i]) for i in iterations]
-                    for r in results]
+        elif (isinstance(arg, Iterable)
+                  and all(isinstance(elem, OptimizeResult) for elem in arg)):
+            mins = [[np.min(opt_res.func_vals[:i+1])
+                        for i in range(len(opt_res.x_iters))]
+                    for opt_res in arg]
+            
+            # graciously handle "ragged" array, i.e. differing length arrays
+            max_n_calls = max(len(m) for m in mins)
+            mean_arr = np.empty((len(mins), max_n_calls))
+            mean_arr[:] = np.nan
 
-            for m in mins:
-                ax.plot(iterations, m, c=color, alpha=0.2)
+            for i, m in enumerate(mins):
+                ax.plot(range(1, 1 + len(m)), m, c=color, alpha=0.2)
+                mean_arr[i, :len(m)] = m
+            
+            if np.isnan(mean_arr).any():
+                warnings.warn("Inconsistent number of function calls in "
+                              f"argument at pos {index}")
 
-            ax.plot(iterations, np.mean(mins, axis=0), c=color,
+            ax.plot(range(1, 1 + max_n_calls), np.nanmean(mins, axis=0), c=color,
                     marker=".", markersize=12, lw=2, label=name)
+        
+        else:
+            raise ValueError("Cannot plot convergence trace for "
+                             f"{arg.__class__.__name__} object {arg}")
 
     if true_minimum:
         ax.axhline(true_minimum, linestyle="--",
