@@ -482,7 +482,7 @@ def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs_=None,
         fig = ax.get_figure()
 
     grid_spec = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
-                                                 subplot_spec=ax.get_subplotspec(), # noqa
+                                                 subplot_spec=ax.get_subplotspec(),  # noqa
                                                  **gridspec_kwargs)
     axes = np.empty((n_rows, n_cols), dtype=object)
     for i in range(n_rows):
