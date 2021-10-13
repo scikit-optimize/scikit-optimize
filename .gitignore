@@ -1,6 +1,9 @@
 *.py[co]
 *~
 .ipynb_checkpoints/
+venv
+.venv
+.python-version
 # created by installing scikit-learn from git
 src/*
 build/
@@ -19,3 +22,6 @@ doc/auto_examples
 
 # vim users
 .*.swp
+
+# vscode users
+.vscode
