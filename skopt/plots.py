@@ -454,15 +454,15 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     return ax
 
 
-def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs=None, **gridspec_kwargs):
+def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs_=None, **gridspec_kwargs):
     """
     Makes a subgrid inside an existing axis object
     """
     if n_cols is None:
         n_cols = n_rows
-    fig_kwargs = fig_kwargs or {}
+    fig_kwargs_ = fig_kwargs_ or {}
     if ax is None:
-        fig, ax = plt.subplots(**fig_kwargs)
+        fig, ax = plt.subplots(**fig_kwargs_)
     else:
         fig = ax.get_figure()
 
@@ -741,7 +741,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                          " not '%s'." % zscale)
     
     fig_kwargs = dict(figsize=(size * n_dims, size * n_dims))
-    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs=fig_kwargs, wspace=0.1, hspace=0.1)
+    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs, wspace=0.1, hspace=0.1)
 
     for i in range(n_dims):
         for j in range(n_dims):
@@ -782,7 +782,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
 
 def plot_evaluations(result, bins=20, dimensions=None,
-                     plot_dims=None):
+                     plot_dims=None, size=2, cmap="viridis", ax=None):
     """Visualize the order in which points were sampled during optimization.
 
     This creates a 2-d matrix plot where the diagonal plots are histograms
@@ -814,11 +814,21 @@ def plot_evaluations(result, bins=20, dimensions=None,
         search-space dimensions to be included in the plot.
         If `None` then use all dimensions except constant ones
         from the search-space.
+    
+    size : float, default=2
+        Height (in inches) of each facet.
+
+    cmap: str or Colormap, default = 'viridis'
+        Color map for scatter plots. Passed directly to
+        `plt.scatter()`
+    
+    ax: `Matplotlib.Axes`, default= None
+        An axis object in which to plot the dependence plot.
 
     Returns
     -------
     ax : `Matplotlib.Axes`
-        A 2-d matrix of Axes-objects with the sub-plots.
+        Matplotlib axis the plto was drawn in
 
     """
     space = result.space
@@ -843,11 +853,8 @@ def plot_evaluations(result, bins=20, dimensions=None,
     if dimensions is not None:
         assert len(dimensions) == n_dims
 
-    fig, ax = plt.subplots(n_dims, n_dims,
-                           figsize=(2 * n_dims, 2 * n_dims))
-
-    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
-                        hspace=0.1, wspace=0.1)
+    fig_kwargs = dict(figsize=(size * n_dims, size * n_dims))
+    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs, wspace=0.1, hspace=0.1)
 
     for i in range(n_dims):
         for j in range(n_dims):
@@ -861,9 +868,9 @@ def plot_evaluations(result, bins=20, dimensions=None,
                 else:
                     bins_ = bins
                 if n_dims == 1:
-                    ax_ = ax
+                    ax_ = axes
                 else:
-                    ax_ = ax[i, i]
+                    ax_ = axes[i, i]
                 ax_.hist(samples[:, index], bins=bins_,
                          range=None if iscat[j] else dim.bounds)
 
@@ -871,16 +878,17 @@ def plot_evaluations(result, bins=20, dimensions=None,
             elif i > j:
                 index_i, dim_i = plot_dims[i]
                 index_j, dim_j = plot_dims[j]
-                ax_ = ax[i, j]
+                ax_ = axes[i, j]
                 ax_.scatter(samples[:, index_j], samples[:, index_i],
-                            c=order, s=40, lw=0., cmap='viridis')
+                            c=order, s=40, lw=0., cmap=cmap)
                 ax_.scatter(minimum[index_j], minimum[index_i],
                             c=['r'], s=100, lw=0., marker='*')
 
     # Make various adjustments to the plots.
-    return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
+    _format_scatter_plot_axes(axes, space, ylabel="Number of samples",
                                      plot_dims=plot_dims,
                                      dim_labels=dimensions)
+    return ax
 
 
 def _get_ylim_diagonal(ax):
