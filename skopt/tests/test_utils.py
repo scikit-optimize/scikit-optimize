@@ -164,7 +164,7 @@ def test_has_gradients(estimator, gradients):
 
 @pytest.mark.fast_test
 def test_categorical_gp_has_gradients():
-    space = Space([('a', 'b')])
+    space = Space([['a', 'b']])
 
     assert not has_gradients(cook_estimator('GP', space=space))
 
