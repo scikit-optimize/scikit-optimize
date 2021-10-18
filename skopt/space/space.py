@@ -68,7 +68,7 @@ def check_dimension(dimension, transform=None):
 
           ..note::
             For a transitionary period, the old behavior is retained. This
-            means tuple, list and array currently all undergo dimension 
+            means tuple, list and array currently all undergo dimension
             inference as describe in the tuple entry above. If no `Integer`
             or `Real` dimension can be inferred, a `Categorical` is returned.
             This behavior will be tightened to the above description in an

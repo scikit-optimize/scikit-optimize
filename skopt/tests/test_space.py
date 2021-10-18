@@ -615,7 +615,8 @@ DIMENSION_TESTS = [((0, 1), Integer(0, 1)),
 NEW_DIMENSION_TEST = [({"key": "value"}, ValueError("Invalid dimension"),
                        Categorical(["key"]), None),
                       ([0, 1], Integer(0, 1), Categorical([0, 1]), None),
-                      ([0.0, 1.0, "log-uniform"], Real(0.0, 1.0, "log-uniform"),
+                      ([0.0, 1.0, "log-uniform"],
+                       Real(0.0, 1.0, "log-uniform"),
                        Categorical([0.0, 1.0, "log-uniform"]), None),
                       (("0", 1), Categorical(["0", 1]), Categorical(["0", 1]),
                        UserWarning("miss-spelled"))]
@@ -651,7 +652,7 @@ def test_new_check_dimension_inference(arg, old_result_or_error,
                 assert new_check_dimension(arg) == new_result
         else:
             assert new_check_dimension(arg) == new_result
-    
+
     # test that the wrapper warns of the difference
     # and still returns the old value or error
     if isinstance(old_result_or_error, Exception):
@@ -662,8 +663,8 @@ def test_new_check_dimension_inference(arg, old_result_or_error,
         old_result = old_result_or_error
         if old_result != new_result:
             with pytest.warns(UserWarning,
-                            match=re.escape(f"Dimension {arg!r} was inferred "
-                                    f"to {old_result}.")):
+                              match=re.escape(f"Dimension {arg!r} was "
+                                              f"inferred to {old_result}.")):
                 assert space_check_dimension(arg) == old_result
         else:
             assert space_check_dimension(arg) == old_result
