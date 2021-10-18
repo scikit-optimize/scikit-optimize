@@ -4,6 +4,7 @@ import numpy as np
 import os
 import yaml
 from tempfile import NamedTemporaryFile
+import re
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -16,6 +17,7 @@ from skopt.space import Real
 from skopt.space import Integer
 from skopt.space import Categorical
 from skopt.space import check_dimension as space_check_dimension
+from skopt.space.space import _check_dimension as new_check_dimension
 from skopt.utils import normalize_dimensions
 
 
@@ -600,23 +602,72 @@ def test_invalid_dimension():
     space_check_dimension([23])
 
 
+DIMENSION_TESTS = [((0, 1), Integer(0, 1)),
+                   ((0, 1, "uniform"), Integer(0, 1, "uniform")),
+                   ((0, 1, "log-uniform"), Integer(0, 1, "log-uniform")),
+                   ((0.0, 1), Real(0, 1)),
+                   ((0, 1.0), Real(0, 1)),
+                   ((0.0, 1.0), Real(0, 1)),
+                   ((0.0, 1.0, "uniform"), Real(0, 1, "uniform")),
+                   ((0.0, 1.0, "log-uniform"), Real(0, 1, "log-uniform")),
+                   ((1j, 2), ValueError("Invalid dimension"))]
+
+NEW_DIMENSION_TEST = [({"key": "value"}, ValueError("Invalid dimension"),
+                       Categorical(["key"]), None),
+                      ([0, 1], Integer(0, 1), Categorical([0, 1]), None),
+                      ([0.0, 1.0, "log-uniform"], Real(0.0, 1.0, "log-uniform"),
+                       Categorical([0.0, 1.0, "log-uniform"]), None),
+                      (("0", 1), Categorical(["0", 1]), Categorical(["0", 1]),
+                       UserWarning("miss-spelled"))]
+
+
 @pytest.mark.fast_test
-def test_check_dimension_inference():
-    assert space_check_dimension((0, 1)) == Integer(0, 1)
-    assert (space_check_dimension((0, 1, "uniform"))
-            == Integer(0, 1, "uniform"))
-    assert (space_check_dimension((0, 1, "log-uniform"))
-            == Integer(0, 1, "log-uniform"))
-    assert space_check_dimension([0, 1]) == Categorical([0, 1])
-    assert space_check_dimension((0.0, 1)) == Real(0, 1)
-    assert space_check_dimension((0, 1.0)) == Real(0, 1)
-    assert space_check_dimension((0.0, 1.0)) == Real(0, 1)
-    assert (space_check_dimension((0.0, 1.0, "uniform"))
-            == Real(0, 1, "uniform"))
-    assert (space_check_dimension((0.0, 1.0, "log-uniform"))
-            == Real(0, 1, "log-uniform"))
-    assert (space_check_dimension([0.0, 1.0, "log-uniform"])
-            == Categorical([0.0, 1.0, "log-uniform"]))
+@pytest.mark.parametrize("arg,result_or_error", DIMENSION_TESTS)
+def test_check_dimension_inference(arg, result_or_error):
+    if isinstance(result_or_error, Exception):
+        error = result_or_error
+        with pytest.raises(type(error), match=re.escape(str(error))):
+            space_check_dimension(arg)
+    else:
+        result = result_or_error
+        assert space_check_dimension(arg) == result
+
+
+@pytest.mark.fast_test
+@pytest.mark.parametrize(
+                         "arg,old_result_or_error,new_result_or_error,warning",
+                         NEW_DIMENSION_TEST)
+def test_new_check_dimension_inference(arg, old_result_or_error,
+                                       new_result_or_error, warning):
+    # test new function interface
+    if isinstance(new_result_or_error, Exception):
+        error = new_result_or_error
+        with pytest.raises(type(error), match=re.escape(str(error))):
+            new_check_dimension(arg)
+    else:
+        new_result = new_result_or_error
+        if warning is not None:
+            with pytest.warns(type(warning), match=re.escape(warning.args[0])):
+                assert new_check_dimension(arg) == new_result
+        else:
+            assert new_check_dimension(arg) == new_result
+    
+    # test that the wrapper warns of the difference
+    # and still returns the old value or error
+    if isinstance(old_result_or_error, Exception):
+        error = old_result_or_error
+        with pytest.raises(type(error), match=str(error)):
+            space_check_dimension(arg)
+    else:
+        old_result = old_result_or_error
+        if old_result != new_result:
+            with pytest.warns(UserWarning,
+                            match=re.escape(f"Dimension {arg!r} was inferred "
+                                    f"to {old_result}.")):
+                assert space_check_dimension(arg) == old_result
+        else:
+            assert space_check_dimension(arg) == old_result
+
 
 
 @pytest.mark.fast_test

@@ -349,21 +349,13 @@ def test_invalid_n_calls_arguments(minimizer):
 @pytest.mark.fast_test
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_repeated_x(minimizer):
-    with pytest.warns(None) as record:
+    with pytest.warns(UserWarning, match="has been evaluated at"):
         minimizer(lambda x: x[0], dimensions=[[0, 1]], x0=[[0], [1]],
                   n_initial_points=0, n_calls=3)
-    assert len(record) > 0
-    w = record.pop(UserWarning)
-    assert issubclass(w.category, UserWarning)
-    assert "has been evaluated at" in str(w.message)
 
-    with pytest.warns(None) as record:
+    with pytest.warns(UserWarning, match="has been evaluated at"):
         minimizer(bench4, dimensions=[["0", "1"]], x0=[["0"], ["1"]],
                   n_calls=3, n_initial_points=0)
-        assert len(record) > 0
-        w = record.pop(UserWarning)
-        assert issubclass(w.category, UserWarning)
-        assert "has been evaluated at" in str(w.message)
 
 
 @pytest.mark.fast_test
