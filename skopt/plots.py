@@ -10,6 +10,8 @@ from .acquisition import _gaussian_acquisition
 from skopt import expected_minimum, expected_minimum_random_sampling
 from .space import Categorical
 from collections import Counter
+from collections.abc import Iterable
+import warnings
 
 # For plot tests, matplotlib must be set to headless mode early
 if 'pytest' in sys.modules:
@@ -17,29 +19,26 @@ if 'pytest' in sys.modules:
 
     matplotlib.use('Agg')
 
-import matplotlib.pyplot as plt
+from matplotlib import gridspec, pyplot as plt
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator
 from matplotlib.ticker import MaxNLocator, FuncFormatter  # noqa: E402
 
 
-def plot_convergence(*args, **kwargs):
+def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
     """Plot one or several convergence traces.
 
     Parameters
     ----------
-    args[i] :  `OptimizeResult`, list of `OptimizeResult`, or tuple
+    results: `OptimizeResult`, iterable of `OptimizeResult`, or a 2-tuple
+        of a label and a `OptimizeResult` or an iterable of `OptimizeResult`.
         The result(s) for which to plot the convergence trace.
 
-        - if `OptimizeResult`, then draw the corresponding single trace;
-        - if list of `OptimizeResult`, then draw the corresponding convergence
-          traces in transparency, along with the average convergence trace;
-        - if tuple, then `args[i][0]` should be a string label and `args[i][1]`
-          an `OptimizeResult` or a list of `OptimizeResult`.
-
-    ax : `Axes`, optional
-        The matplotlib axes on which to draw the plot, or `None` to create
-        a new one.
+        - if an `OptimizeResult`, draw the corresponding single trace
+        - if an iterable of `OptimizeResult`, draw all traces in the same
+          plot as well as the average convergence trace
+        - if a tuple, the label names the trace(s) and the behavior is as
+          specified above.
 
     true_minimum : float, optional
         The true minimum value of the function, if known.
@@ -47,15 +46,15 @@ def plot_convergence(*args, **kwargs):
     yscale : None or string, optional
         The scale for the y-axis.
 
+    ax : `Axes`, optional
+        The matplotlib axes on which to draw the plot, or `None` to create
+        a new one.
+
     Returns
     -------
     ax : `Axes`
-        The matplotlib axes.
+        The matplotlib axes the plot was drawn in
     """
-    # <3 legacy python
-    ax = kwargs.get("ax", None)
-    true_minimum = kwargs.get("true_minimum", None)
-    yscale = kwargs.get("yscale", None)
 
     if ax is None:
         ax = plt.gca()
@@ -70,43 +69,62 @@ def plot_convergence(*args, **kwargs):
 
     colors = cm.viridis(np.linspace(0.25, 1.0, len(args)))
 
-    for results, color in zip(args, colors):
-        if isinstance(results, tuple):
-            name, results = results
+    for index, (arg, color) in enumerate(zip(args, colors)):
+        if isinstance(arg, tuple):
+            label, arg = arg
         else:
-            name = None
+            label = None
 
-        if isinstance(results, OptimizeResult):
-            n_calls = len(results.x_iters)
-            mins = [np.min(results.func_vals[:i])
-                    for i in range(1, n_calls + 1)]
+        if isinstance(arg, OptimizeResult):
+            opt_res = arg
+            n_calls = len(opt_res.x_iters)
+            mins = [np.min(opt_res.func_vals[:i+1])
+                    for i in range(n_calls)]
             ax.plot(range(1, n_calls + 1), mins, c=color,
-                    marker=".", markersize=12, lw=2, label=name)
+                    marker=".", markersize=12, lw=2, label=label)
 
-        elif isinstance(results, list):
-            n_calls = len(results[0].x_iters)
-            iterations = range(1, n_calls + 1)
-            mins = [[np.min(r.func_vals[:i]) for i in iterations]
-                    for r in results]
+        elif (isinstance(arg, Iterable)
+              and all(isinstance(elem, OptimizeResult) for elem in arg)):
+            mins = [[np.min(opt_res.func_vals[:i+1])
+                     for i in range(len(opt_res.x_iters))]
+                    for opt_res in arg]
 
-            for m in mins:
-                ax.plot(iterations, m, c=color, alpha=0.2)
+            # graciously handle "ragged" array, i.e. differing length arrays
+            max_n_calls = max(len(m) for m in mins)
+            mean_arr = np.empty((len(mins), max_n_calls))
+            mean_arr[:] = np.nan
 
-            ax.plot(iterations, np.mean(mins, axis=0), c=color,
-                    marker=".", markersize=12, lw=2, label=name)
+            for i, m in enumerate(mins):
+                ax.plot(range(1, 1 + len(m)), m, c=color, alpha=0.2)
+                mean_arr[i, :len(m)] = m
+
+            if np.isnan(mean_arr).any():
+                warnings.warn("Inconsistent number of function calls in "
+                              f"argument at pos {index}")
+
+            ax.plot(range(1, 1 + max_n_calls), np.nanmean(mins, axis=0),
+                    c=color, marker=".", markersize=12, lw=2, label=label)
+
+        else:
+            raise ValueError("Cannot plot convergence trace for "
+                             f"{arg.__class__.__name__} object {arg}")
 
     if true_minimum:
         ax.axhline(true_minimum, linestyle="--",
                    color="r", lw=1,
                    label="True minimum")
 
-    if true_minimum or name:
+    if true_minimum or label:
         ax.legend(loc="best")
 
     return ax
 
 
-def plot_gaussian_process(res, **kwargs):
+def plot_gaussian_process(res, ax=None, n_calls=-1, objective=None,
+                          n_points=1000, noise_level=0, show_legend=True,
+                          show_title=True, show_acq_func=False,
+                          show_next_point=False, show_observations=True,
+                          show_mu=True):
     """Plots the optimization results and the gaussian process
     for 1-D objective functions.
 
@@ -155,17 +173,6 @@ def plot_gaussian_process(res, **kwargs):
     ax : `Axes`
         The matplotlib axes.
     """
-    ax = kwargs.get("ax", None)
-    n_calls = kwargs.get("n_calls", -1)
-    objective = kwargs.get("objective", None)
-    noise_level = kwargs.get("noise_level", 0)
-    show_legend = kwargs.get("show_legend", True)
-    show_title = kwargs.get("show_title", True)
-    show_acq_func = kwargs.get("show_acq_func", False)
-    show_next_point = kwargs.get("show_next_point", False)
-    show_observations = kwargs.get("show_observations", True)
-    show_mu = kwargs.get("show_mu", True)
-    n_points = kwargs.get("n_points", 1000)
 
     if ax is None:
         ax = plt.gca()
@@ -267,7 +274,7 @@ def plot_gaussian_process(res, **kwargs):
     return ax
 
 
-def plot_regret(*args, **kwargs):
+def plot_regret(*args, ax=None, true_minimum=None, yscale=None):
     """Plot one or several cumulative regret traces.
 
     Parameters
@@ -297,10 +304,6 @@ def plot_regret(*args, **kwargs):
     ax : `Axes`
         The matplotlib axes.
     """
-    # <3 legacy python
-    ax = kwargs.get("ax", None)
-    true_minimum = kwargs.get("true_minimum", None)
-    yscale = kwargs.get("yscale", None)
 
     if ax is None:
         ax = plt.gca()
@@ -380,7 +383,7 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
     # Deal with formatting of the axes
     for i in range(n_dims):  # rows
         for j in range(n_dims):  # columns
-            if n_dims > 1:
+            if isinstance(ax, np.ndarray):
                 ax_ = ax[i, j]
             else:
                 ax_ = ax
@@ -452,6 +455,33 @@ def _format_scatter_plot_axes(ax, space, ylabel, plot_dims,
                             partial(_cat_format, dim_i)))
 
     return ax
+
+
+def _make_subgrid(ax, n_rows, n_cols=None, fig_kwargs_=None,
+                  **gridspec_kwargs):
+    """
+    Makes a subgrid inside an existing axis object
+    """
+    if n_cols is None:
+        n_cols = n_rows
+    fig_kwargs_ = fig_kwargs_ or {}
+    if ax is None:
+        fig, ax = plt.subplots(**fig_kwargs_)
+    else:
+        fig = ax.get_figure()
+
+    grid_spec = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
+                                                 subplot_spec=ax.get_subplotspec(),  # noqa
+                                                 **gridspec_kwargs)
+    axes = np.empty((n_rows, n_cols), dtype=object)
+    for i in range(n_rows):
+        for j in range(n_cols):
+            axes[i, j] = fig.add_subplot(grid_spec[i, j])
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    return ax, axes
 
 
 def partial_dependence(space, model, i, j=None, sample_points=None,
@@ -542,7 +572,7 @@ def partial_dependence(space, model, i, j=None, sample_points=None,
 def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
                    zscale='linear', dimensions=None, sample_source='random',
                    minimum='result', n_minimum_search=None, plot_dims=None,
-                   show_points=True, cmap='viridis_r'):
+                   show_points=True, cmap='viridis_r', ax=None):
     """Plot a 2-d matrix with so-called Partial Dependence plots
     of the objective function. This shows the influence of each
     search-space dimension on the objective function.
@@ -602,7 +632,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         at each of the `n_points` when `sample_method` is set to 'random'.
 
     size : float, default=2
-        Height (in inches) of each facet.
+        Height (in inches) of each facet. Ignored if ``ax`` is provided.
 
     zscale : str, default='linear'
         Scale to use for the z axis of the contour plots. Either 'linear'
@@ -667,11 +697,15 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         Color map for contour plots. Passed directly to
         `plt.contourf()`
 
+    ax: `Matplotlib.Axes`, default= None
+        An axis object in which to plot the dependence plot. If provided,
+        ``size`` is ignored and the caller is responsible for the size of the
+        plot.
+
     Returns
     -------
     ax : `Matplotlib.Axes`
-        A 2-d matrix of Axes-objects with the sub-plots.
-
+        The axes object the plot was drawn in
     """
     # Here we define the values for which to plot the red dot (2d plot) and
     # the red dotted line (1d plot).
@@ -711,35 +745,31 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         raise ValueError("Valid values for zscale are 'linear' and 'log',"
                          " not '%s'." % zscale)
 
-    fig, ax = plt.subplots(n_dims, n_dims,
-                           figsize=(size * n_dims, size * n_dims))
-
-    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
-                        hspace=0.1, wspace=0.1)
+    fig_kwargs = dict(figsize=(size * n_dims, size * n_dims))
+    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs,
+                             wspace=0.1, hspace=0.1)
 
     for i in range(n_dims):
         for j in range(n_dims):
+
             if i == j:
-                index, dim = plot_dims[i]
+                index, _ = plot_dims[i]
                 xi, yi = partial_dependence_1D(space, result.models[-1],
                                                index,
                                                samples=samples,
                                                n_points=n_points)
-                if n_dims > 1:
-                    ax_ = ax[i, i]
-                else:
-                    ax_ = ax
+                ax_ = axes[i, j]
                 ax_.plot(xi, yi)
                 ax_.axvline(minimum[index], linestyle="--", color="r", lw=1)
 
             # lower triangle
             elif i > j:
-                index1, dim1 = plot_dims[i]
-                index2, dim2 = plot_dims[j]
-                ax_ = ax[i, j]
+                index1, _ = plot_dims[i]
+                index2, _ = plot_dims[j]
                 xi, yi, zi = partial_dependence_2D(space, result.models[-1],
                                                    index1, index2,
                                                    samples, n_points)
+                ax_ = axes[i, j]
                 ax_.contourf(xi, yi, zi, levels,
                              locator=locator, cmap=cmap)
                 if show_points:
@@ -750,13 +780,14 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
     ylabel = "Partial dependence"
 
     # Make various adjustments to the plots.
-    return _format_scatter_plot_axes(ax, space, ylabel=ylabel,
+    _format_scatter_plot_axes(axes, space, ylabel=ylabel,
                                      plot_dims=plot_dims,
                                      dim_labels=dimensions)
+    return ax
 
 
 def plot_evaluations(result, bins=20, dimensions=None,
-                     plot_dims=None):
+                     plot_dims=None, size=2, cmap="viridis", ax=None):
     """Visualize the order in which points were sampled during optimization.
 
     This creates a 2-d matrix plot where the diagonal plots are histograms
@@ -789,11 +820,20 @@ def plot_evaluations(result, bins=20, dimensions=None,
         If `None` then use all dimensions except constant ones
         from the search-space.
 
+    size : float, default=2
+        Height (in inches) of each facet.
+
+    cmap: str or Colormap, default = 'viridis'
+        Color map for scatter plots. Passed directly to
+        `plt.scatter()`
+
+    ax: `Matplotlib.Axes`, default= None
+        An axis object in which to plot the dependence plot.
+
     Returns
     -------
     ax : `Matplotlib.Axes`
-        A 2-d matrix of Axes-objects with the sub-plots.
-
+        Matplotlib axis the plto was drawn in
     """
     space = result.space
     # Convert categoricals to integers, so we can ensure consistent ordering.
@@ -817,11 +857,9 @@ def plot_evaluations(result, bins=20, dimensions=None,
     if dimensions is not None:
         assert len(dimensions) == n_dims
 
-    fig, ax = plt.subplots(n_dims, n_dims,
-                           figsize=(2 * n_dims, 2 * n_dims))
-
-    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
-                        hspace=0.1, wspace=0.1)
+    fig_kwargs = dict(figsize=(size * n_dims, size * n_dims))
+    ax, axes = _make_subgrid(ax, n_dims, fig_kwargs_=fig_kwargs,
+                             wspace=0.1, hspace=0.1)
 
     for i in range(n_dims):
         for j in range(n_dims):
@@ -835,9 +873,9 @@ def plot_evaluations(result, bins=20, dimensions=None,
                 else:
                     bins_ = bins
                 if n_dims == 1:
-                    ax_ = ax
+                    ax_ = axes
                 else:
-                    ax_ = ax[i, i]
+                    ax_ = axes[i, i]
                 ax_.hist(samples[:, index], bins=bins_,
                          range=None if iscat[j] else dim.bounds)
 
@@ -845,16 +883,17 @@ def plot_evaluations(result, bins=20, dimensions=None,
             elif i > j:
                 index_i, dim_i = plot_dims[i]
                 index_j, dim_j = plot_dims[j]
-                ax_ = ax[i, j]
+                ax_ = axes[i, j]
                 ax_.scatter(samples[:, index_j], samples[:, index_i],
-                            c=order, s=40, lw=0., cmap='viridis')
+                            c=order, s=40, lw=0., cmap=cmap)
                 ax_.scatter(minimum[index_j], minimum[index_i],
                             c=['r'], s=100, lw=0., marker='*')
 
     # Make various adjustments to the plots.
-    return _format_scatter_plot_axes(ax, space, ylabel="Number of samples",
+    _format_scatter_plot_axes(axes, space, ylabel="Number of samples",
                                      plot_dims=plot_dims,
                                      dim_labels=dimensions)
+    return ax
 
 
 def _get_ylim_diagonal(ax):
