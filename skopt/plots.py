@@ -34,7 +34,7 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
         of a label and a `OptimizeResult` or an iterable of `OptimizeResult`.
         The result(s) for which to plot the convergence trace.
 
-        - if an `OptimizeResult`, draw the correcponding single trace
+        - if an `OptimizeResult`, draw the corresponding single trace
         - if an iterable of `OptimizeResult`, draw all traces in the same
           plot as well as the average convergence trace
         - if a tuple, the label names the trace(s) and the behavior is as
@@ -120,7 +120,11 @@ def plot_convergence(*args, true_minimum=None, yscale=None, ax=None):
     return ax
 
 
-def plot_gaussian_process(res, **kwargs):
+def plot_gaussian_process(res, ax=None, n_calls=-1, objective=None,
+                          n_points=1000, noise_level=0, show_legend=True,
+                          show_title=True, show_acq_func=False,
+                          show_next_point=False, show_observations=True,
+                          show_mu=True):
     """Plots the optimization results and the gaussian process
     for 1-D objective functions.
 
@@ -169,17 +173,6 @@ def plot_gaussian_process(res, **kwargs):
     ax : `Axes`
         The matplotlib axes.
     """
-    ax = kwargs.get("ax", None)
-    n_calls = kwargs.get("n_calls", -1)
-    objective = kwargs.get("objective", None)
-    noise_level = kwargs.get("noise_level", 0)
-    show_legend = kwargs.get("show_legend", True)
-    show_title = kwargs.get("show_title", True)
-    show_acq_func = kwargs.get("show_acq_func", False)
-    show_next_point = kwargs.get("show_next_point", False)
-    show_observations = kwargs.get("show_observations", True)
-    show_mu = kwargs.get("show_mu", True)
-    n_points = kwargs.get("n_points", 1000)
 
     if ax is None:
         ax = plt.gca()
@@ -281,7 +274,7 @@ def plot_gaussian_process(res, **kwargs):
     return ax
 
 
-def plot_regret(*args, **kwargs):
+def plot_regret(*args, ax=None, true_minimum=None, yscale=None):
     """Plot one or several cumulative regret traces.
 
     Parameters
@@ -311,10 +304,6 @@ def plot_regret(*args, **kwargs):
     ax : `Axes`
         The matplotlib axes.
     """
-    # <3 legacy python
-    ax = kwargs.get("ax", None)
-    true_minimum = kwargs.get("true_minimum", None)
-    yscale = kwargs.get("yscale", None)
 
     if ax is None:
         ax = plt.gca()
@@ -643,7 +632,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         at each of the `n_points` when `sample_method` is set to 'random'.
 
     size : float, default=2
-        Height (in inches) of each facet.
+        Height (in inches) of each facet. Ignored if ``ax`` is provided.
 
     zscale : str, default='linear'
         Scale to use for the z axis of the contour plots. Either 'linear'
@@ -709,7 +698,9 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
         `plt.contourf()`
 
     ax: `Matplotlib.Axes`, default= None
-        An axis object in which to plot the dependence plot.
+        An axis object in which to plot the dependence plot. If provided,
+        ``size`` is ignored and the caller is responsible for the size of the
+        plot.
 
     Returns
     -------
