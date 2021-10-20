@@ -246,6 +246,7 @@ def base_minimize(func, dimensions, base_estimator,
         raise ValueError(
             "Expected `n_calls` >= %d, got %d" % (required_calls, n_calls))
     # calculate the total number of initial points
+    n_random = n_initial_points
     n_initial_points = n_initial_points + len(x0)
 
     # Build optimizer
@@ -270,7 +271,7 @@ def base_minimize(func, dimensions, base_estimator,
     if verbose:
         callbacks.append(VerboseCallback(
             n_init=len(x0) if not y0 else 0,
-            n_random=n_initial_points,
+            n_random=n_random,
             n_total=n_calls))
 
     # Record provided points
