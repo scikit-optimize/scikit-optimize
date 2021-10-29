@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+    tags:
+      - v*
+  pull_request:
+    branches:
+    - master
+  # Run daily at 1:23 UTC
+  schedule:
+  - cron:  '23 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  test:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        include:
+          - os: macos-latest
+            python-version: 3.9
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install .[plots]
+        python -m pip install pytest pytest-cov
+
+    - name: List installed Python packages
+      run: |
+        python -m pip list
+
+    - name: Environment short summary
+      run: |
+        python -m pip list | grep 'numpy\|scipy\|scikit-learn\|scikit-optimize'
+        python -c 'import multiprocessing as mp; print(f"{mp.cpu_count()} CPUs")'
+
+    - name: Setup testing environment
+      run: |
+        mkdir tmp
+        cp setup.cfg tmp/
+        pushd tmp
+
+    - name: Test with pytest
+      run: |
+        export SKOPT_SKIP_NETWORK_TESTS=1
+        pytest --showlocals --durations=20 --pyargs --cov skopt
