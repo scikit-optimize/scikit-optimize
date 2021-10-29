@@ -798,6 +798,21 @@ class Space(object):
             index += 1
         return names
 
+    @dimension_names.setter
+    def dimension_names(self, names):
+        """Sets the names of all dimension objects via list of names.
+
+        Parameters
+        ----------
+        names : list of str
+            List of names. Must be the same length as self.dimensions.
+        """
+        if len(names) != len(self.dimensions):
+            raise ValueError("`names` must be the same length as "
+                             "`self.dimensions`.")
+        for dim, name in zip(self.dimensions, names):
+            dim.name = name
+
     @property
     def is_real(self):
         """

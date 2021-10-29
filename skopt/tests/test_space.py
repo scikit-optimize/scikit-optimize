@@ -705,6 +705,19 @@ def test_dimension_name():
     assert s[0, 2] == [(0, s.dimensions[0]), (2, s.dimensions[2])]
 
 
+@pytest.mark.fast_test
+def test_dimension_names_setter():
+    s = Space([Real(1, 2, name="a"),
+               Integer(1, 100, name="b"),
+               Categorical(["red, blue"], name="c")])
+    with pytest.raises(ValueError) as exc:
+        s.dimension_names = ["d", "e"]
+        assert("`names` must be the same length as "
+               "`self.dimensions`." == exc.value.args[0])
+    s.dimension_names = ["d", "e", "f"]
+    assert s.dimension_names == ["d", "e", "f"]
+
+
 @pytest.mark.parametrize("dimension",
                          [Real(1, 2), Integer(1, 100), Categorical(["red, blue"])])
 def test_dimension_name_none(dimension):
