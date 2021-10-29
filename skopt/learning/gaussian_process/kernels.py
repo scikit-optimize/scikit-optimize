@@ -92,7 +92,7 @@ class RBF(Kernel, sk_RBF):
 
 class Matern(Kernel, sk_Matern):
     def gradient_x(self, x, X_train):
-        x = np.asarray(x)
+        x = np.asarray(x).reshape((-1,))
         X_train = np.asarray(X_train)
         length_scale = np.asarray(self.length_scale)
 
