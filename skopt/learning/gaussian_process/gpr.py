@@ -1,6 +1,8 @@
 import numpy as np
 import warnings
 
+import packaging.version
+
 from scipy.linalg import cho_solve
 from scipy.linalg import solve_triangular
 
@@ -224,10 +226,13 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         self.K_inv_ = L_inv.dot(L_inv.T)
 
         # Fix deprecation warning #462
-        if sklearn.__version__ >= "0.23":
+        sklearn_version = packaging.version.Version(sklearn.__version__)
+        if sklearn_version.major == 1 \
+                or (sklearn_version.major == 0
+                    and sklearn_version.minor >= 23):
             self.y_train_std_ = self._y_train_std
             self.y_train_mean_ = self._y_train_mean
-        elif sklearn.__version__ >= "0.19":
+        elif sklearn_version.major == 0 and sklearn_version.minor >= 19:
             self.y_train_mean_ = self._y_train_mean
             self.y_train_std_ = 1
         else:
