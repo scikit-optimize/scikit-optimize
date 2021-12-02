@@ -228,7 +228,8 @@ class GaussianProcessRegressor(sk_GaussianProcessRegressor):
         # Fix deprecation warning #462
         sklearn_version = packaging.version.Version(sklearn.__version__)
         if sklearn_version.major == 1 \
-                or (sklearn_version.major == 0 and sklearn_version.minor >= 23):
+                or (sklearn_version.major == 0
+                    and sklearn_version.minor >= 23):
             self.y_train_std_ = self._y_train_std
             self.y_train_mean_ = self._y_train_mean
         elif sklearn_version.major == 0 and sklearn_version.minor >= 19:
