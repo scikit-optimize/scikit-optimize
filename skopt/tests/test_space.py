@@ -795,6 +795,7 @@ def test_normalize_bounds():
         y = space.transform(x)
         check_limits(y, 0., 1.)
 
+
 @pytest.mark.parametrize("dimension, bounds", [
     (Real, (-1, 1)), (Integer, (-1, 1)),
     (Real, (0, 1)), (Integer, (0, 1)),
@@ -804,6 +805,8 @@ def test_dimension_loguniform_prior(dimension, bounds):
     # Raise error when Integer and Real dimensions
     # contain 0 but are instantiated with log-uniform prior
     lower, upper = bounds
-    assert_raises_regex(ValueError,
-                        "search space should not contain 0 when using log-uniform prior",
-                        dimension, lower, upper, prior = 'log-uniform')
+    assert_raises_regex(
+        ValueError,
+        "search space should not contain 0 when using log-uniform prior",
+        dimension, lower, upper, prior='log-uniform'
+    )
