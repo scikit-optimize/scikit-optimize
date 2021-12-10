@@ -257,6 +257,10 @@ class Real(Dimension):
         if prior not in ["uniform", "log-uniform"]:
             raise ValueError("prior should be 'uniform' or 'log-uniform'"
                              " got {}".format(prior))
+        if prior == 'log-uniform' and low * high <= 0:
+            raise ValueError("search space should not contain 0 when"
+                             " using log-uniform prior")
+
         self.low = low
         self.high = high
         self.prior = prior
@@ -442,6 +446,10 @@ class Integer(Dimension):
         if prior not in ["uniform", "log-uniform"]:
             raise ValueError("prior should be 'uniform' or 'log-uniform'"
                              " got {}".format(prior))
+        if prior == 'log-uniform' and low * high <= 0:
+            raise ValueError("search space should not contain 0"
+                             " when using log-uniform prior")
+
         self.low = low
         self.high = high
         self.prior = prior
