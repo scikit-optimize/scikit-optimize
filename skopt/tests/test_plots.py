@@ -179,7 +179,9 @@ def test_names_dimensions():
 
 
 @pytest.mark.slow_test
-@pytest.mark.parametrize('acq_func', ['EI', 'EIps', 'PI', 'PIps', 'gp_hedge', 'LCB'])
+@pytest.mark.parametrize(
+    'acq_func',
+    ['EI', 'EIps', 'PI', 'PIps', 'gp_hedge', 'LCB'])
 def test_plot_gaussian_process_works(acq_func):
 
     def objective(x):
@@ -193,7 +195,11 @@ def test_plot_gaussian_process_works(acq_func):
     else:
         obj = objective
 
-    res = gp_minimize(obj, [(-1, 1)], n_calls=2, n_initial_points=2, random_state=1,
+    res = gp_minimize(obj,
+                      [(-1, 1)],
+                      n_calls=2,
+                      n_initial_points=2,
+                      random_state=1,
                       acq_func=acq_func)
 
     plots.plot_gaussian_process(res)
