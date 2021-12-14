@@ -212,7 +212,14 @@ def plot_gaussian_process(res, **kwargs):
 
     # Plot GP(x) + contours
     if show_mu:
-        y_pred, sigma = model.predict(x_model, return_std=True)
+
+        per_second = acq_func.endswith("ps")
+        if per_second:
+            y_pred, sigma = model.estimators_[0].predict(
+                x_model, return_std=True)
+        else:
+            y_pred, sigma = model.predict(x_model, return_std=True)
+
         ax.plot(x, y_pred, "g--", label=r"$\mu_{GP}(x)$")
         ax.fill(np.concatenate([x, x[::-1]]),
                 np.concatenate([y_pred - 1.9600 * sigma,
