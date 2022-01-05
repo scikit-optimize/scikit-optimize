@@ -447,7 +447,7 @@ class Optimizer(object):
                                for xi in self.Xi])
             if abs(min_delta_x) <= 1e-8:
                 warnings.warn("The objective has been evaluated "
-                              "at this point before.")
+                              f"at {next_x!r} before.")
 
             # return point computed from last call to tell()
             return next_x
