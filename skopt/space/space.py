@@ -676,17 +676,6 @@ class Categorical(Dimension):
 
         return "Categorical(categories={}, prior={})".format(cats, prior)
 
-    def inverse_transform(self, Xt):
-        """Inverse transform samples from the warped space back into the
-           original space.
-        """
-        # The concatenation of all transformed dimensions makes Xt to be
-        # of type float, hence the required cast back to int.
-        inv_transform = super(Categorical, self).inverse_transform(Xt)
-        if isinstance(inv_transform, list):
-            inv_transform = np.array(inv_transform)
-        return inv_transform
-
     def rvs(self, n_samples=None, random_state=None):
         choices = self._rvs.rvs(size=n_samples, random_state=random_state)
 
