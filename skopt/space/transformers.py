@@ -192,7 +192,6 @@ class LabelEncoder(Transformer):
         Xt : array-like, shape=(n_samples, n_categories)
             The integer categories.
         """
-        X = np.asarray(X)
         return [self.mapping_[v] for v in X]
 
     def inverse_transform(self, Xt):
