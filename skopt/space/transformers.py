@@ -166,15 +166,7 @@ class LabelEncoder(Transformer):
         X : array-like, shape=(n_categories,)
             List of categories.
         """
-        X = np.asarray(X)
-        if X.dtype == object:
-            self.mapping_ = {v: i for i, v in enumerate(X)}
-        else:
-            i = 0
-            self.mapping_ = {}
-            for v in np.unique(X):
-                self.mapping_[v] = i
-                i += 1
+        self.mapping_ = {v: i for i, v in enumerate(X)}
         self.inverse_mapping_ = {i: v for v, i in self.mapping_.items()}
         return self
 
@@ -192,7 +184,6 @@ class LabelEncoder(Transformer):
         Xt : array-like, shape=(n_samples, n_categories)
             The integer categories.
         """
-        X = np.asarray(X)
         return [self.mapping_[v] for v in X]
 
     def inverse_transform(self, Xt):
