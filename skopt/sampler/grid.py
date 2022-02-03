@@ -137,7 +137,7 @@ class Grid(InitialPointGenerator):
                 order = int(np.ceil(n_samples / 2.))
             if order < 2:
                 order = 2
-            h = _create_uniform_grid_exclude_border(n_dim, order)
+            h = _create_uniform_grid_only_border(n_dim, order)
         else:
             raise ValueError("Wrong value for border")
         if np.size(h, 0) > n_samples:
