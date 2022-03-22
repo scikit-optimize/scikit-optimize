@@ -235,11 +235,15 @@ class Normalize(Transformer):
     is_int : bool, default=False
         Round and cast the return value of `inverse_transform` to integer. Set
         to `True` when applying this transform to integers.
+
+    n_categories : int, default=0
+        The number of categories if categorical data is normalized.
     """
-    def __init__(self, low, high, is_int=False):
+    def __init__(self, low, high, is_int=False, n_categories=0):
         self.low = float(low)
         self.high = float(high)
         self.is_int = is_int
+        self.n_categories = n_categories
         self._eps = 1e-8
 
     def transform(self, X):
@@ -274,12 +278,15 @@ class Normalize(Transformer):
             raise ValueError("All values should be greater than 0.0")
         X_orig = X * (self.high - self.low) + self.low
         if self.is_int:
-            from sklearn.preprocessing import KBinsDiscretizer
-
-            est = KBinsDiscretizer(
-                n_bins=int(self.high + 1), encode="ordinal", strategy="uniform"
-            )
-            return est.fit_transform(X_orig.reshape((-1,1))).reshape((-1,))
+            if self.n_categories == 0:
+                return np.round(X_orig).astype(np.int)
+            else:
+                from sklearn.preprocessing import KBinsDiscretizer
+    
+                est = KBinsDiscretizer(
+                    n_bins=self.n_categories, encode="ordinal", strategy="uniform"
+                )
+                return est.fit_transform(X_orig.reshape((-1,1))).reshape((-1,))
         return X_orig
 
 

@@ -646,7 +646,10 @@ class Categorical(Dimension):
         elif transform == "normalize":
             self.transformer = Pipeline(
                 [LabelEncoder(list(self.categories)),
-                 Normalize(0, len(self.categories) - 1, is_int=True)])
+                 Normalize(
+                     0, len(self.categories) - 1, is_int=True,
+                     n_categories=len(self.categories)
+                 )])
         else:
             self.transformer = Identity()
             self.transformer.fit(self.categories)
