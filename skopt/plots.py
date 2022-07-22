@@ -756,7 +756,7 @@ def plot_objective(result, levels=10, n_points=40, n_samples=250, size=2,
 
 
 def plot_evaluations(result, bins=20, dimensions=None,
-                     plot_dims=None):
+                     plot_dims=None, size=2):
     """Visualize the order in which points were sampled during optimization.
 
     This creates a 2-d matrix plot where the diagonal plots are histograms
@@ -788,6 +788,9 @@ def plot_evaluations(result, bins=20, dimensions=None,
         search-space dimensions to be included in the plot.
         If `None` then use all dimensions except constant ones
         from the search-space.
+        
+    size : float, default=2
+        Height (in inches) of each facet.
 
     Returns
     -------
@@ -818,7 +821,7 @@ def plot_evaluations(result, bins=20, dimensions=None,
         assert len(dimensions) == n_dims
 
     fig, ax = plt.subplots(n_dims, n_dims,
-                           figsize=(2 * n_dims, 2 * n_dims))
+                           figsize=(size * n_dims, size * n_dims))
 
     fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
                         hspace=0.1, wspace=0.1)
