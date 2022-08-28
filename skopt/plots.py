@@ -1334,7 +1334,10 @@ def _evenly_sample(dim, n_points):
 def _cat_format(dimension, x, _):
     """Categorical axis tick formatter function.  Returns the name of category
     `x` in `dimension`.  Used with `matplotlib.ticker.FuncFormatter`."""
-    return str(dimension.categories[int(x)])
+    if len(dimension.categories) > x:
+        return str(dimension.categories[int(x)])
+    else:
+        return ''
 
 
 def _evaluate_min_params(result, params='result',
