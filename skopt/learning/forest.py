@@ -435,7 +435,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
         mean = super(ExtraTreesRegressor, self).predict(X)
 
         if return_std:
-            if self.criterion != "mse":
+            if self.criterion not in {"mse", "friedman_mse"}:
                 raise ValueError(
                     "Expected impurity to be 'mse', got %s instead"
                     % self.criterion)
