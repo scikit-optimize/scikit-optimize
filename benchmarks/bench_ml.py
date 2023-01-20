@@ -161,7 +161,7 @@ def load_data_target(name):
             samples = np.array(data)
             data = dict()
             data["data"] = samples[:, :-1]
-            data["target"] = np.array(samples[:, -1], dtype=np.int)
+            data["target"] = np.array(samples[:, -1], dtype=int)
     else:
         raise ValueError("dataset not supported.")
     return data["data"], data["target"]
