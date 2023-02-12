@@ -1,11 +1,59 @@
 [build-system]
-# Minimum requirements for the build system to execute.
-requires = [
-    "setuptools",
-    "wheel",
-    "numpy>=1.12",
-    "scipy>=0.18",
-    "scikit-learn>=0.19.1",
-    "pyaml>=16.9",
-    "joblib>=0.11",
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scikit-optimize"
+authors = [{name = "The scikit-optimize contributors"}]
+license = {text = "BSD 3-clause"}
+description = "Sequential model-based optimization toolbox."
+readme = "README.rst"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
 ]
+dependencies = [
+    "joblib>=0.11",
+    "pyaml>=16.9",
+    "numpy>=1.13.3",
+    "scipy>=0.19.1",
+    "scikit-learn>=0.20.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://scikit-optimize.github.io/"
+"Source Code" = "https://github.com/scikit-optimize/scikit-optimize"
+"Bug Tracker" = "https://github.com/scikit-optimize/scikit-optimize/issues"
+
+[project.optional-dependencies]
+plots = ["matplotlib>=2.0.0"]
+
+[tool.setuptools]
+packages = [
+    "skopt",
+    "skopt.learning",
+    "skopt.optimizer",
+    "skopt.space",
+    "skopt.learning.gaussian_process",
+    "skopt.sampler",
+]
+include-package-data = false
+
+[tool.setuptools.dynamic]
+version = {attr = "skopt.__version__"}
+
+[tool.distutils.bdist_wheel]
+universal = 1
+
