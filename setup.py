@@ -40,6 +40,10 @@ setup(name='scikit-optimize',
       license='BSD 3-clause',
       author='The scikit-optimize contributors',
       classifiers=CLASSIFIERS,
+      project_urls = {
+        "Source Code": "https://github.com/scikit-optimize/scikit-optimize",
+        "Bug Tracker": "https://github.com/scikit-optimize/scikit-optimize/issues",
+        },
       packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
                 'skopt.learning.gaussian_process', 'skopt.sampler'],
       install_requires=['joblib>=0.11', 'pyaml>=16.9', 'numpy>=1.13.3',
@@ -48,5 +52,4 @@ setup(name='scikit-optimize',
       extras_require={
         'plots':  ["matplotlib>=2.0.0"]
         }
-
       )
