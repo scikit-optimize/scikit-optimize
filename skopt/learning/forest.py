@@ -63,9 +63,9 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
 
     criterion : string, optional (default="squared_error")
         The function to measure the quality of a split. Supported criteria
-        are "squared_error" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, and "mae" for the
+        mean absolute error.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -259,9 +259,9 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
 
     criterion : string, optional (default="squared_error")
         The function to measure the quality of a split. Supported criteria
-        are "squared_error" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        are "squared_error" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion, and "mae" for the
+        mean absolute error.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
