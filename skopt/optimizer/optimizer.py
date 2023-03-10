@@ -86,7 +86,9 @@ class Optimizer(object):
         - `"LCB"` for lower confidence bound.
         - `"EI"` for negative expected improvement.
         - `"PI"` for negative probability of improvement.
-        - `"gp_hedge"` Probabilistically choose one of the above three
+        - `"MES"` for Max-value Entropy Search.
+        - `"PVRS"` for Predictive Variance Reduction Search.
+        - `"gp_hedge"` Probabilistically choose one of the above four
           acquisition functions at every iteration.
 
           - The gains `g_i` are initialized to zero.
@@ -181,15 +183,15 @@ class Optimizer(object):
         self.acq_func = acq_func
         self.acq_func_kwargs = acq_func_kwargs
 
-        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "PI", "EIps", "PIps"]
+        allowed_acq_funcs = ["gp_hedge", "EI", "LCB", "MES", "PVRS", "PI", "EIps", "PIps"]
         if self.acq_func not in allowed_acq_funcs:
             raise ValueError("expected acq_func to be in %s, got %s" %
                              (",".join(allowed_acq_funcs), self.acq_func))
 
         # treat hedging method separately
         if self.acq_func == "gp_hedge":
-            self.cand_acq_funcs_ = ["EI", "LCB", "PI"]
-            self.gains_ = np.zeros(3)
+            self.cand_acq_funcs_ = ["EI", "LCB", "PI", "MES"]
+            self.gains_ = np.zeros(4)
         else:
             self.cand_acq_funcs_ = [self.acq_func]
 
@@ -237,7 +239,8 @@ class Optimizer(object):
 
         # decide optimizer based on gradient information
         if acq_optimizer == "auto":
-            if has_gradients(self.base_estimator_):
+            if (has_gradients(self.base_estimator_) and
+                acq_func not in ["MES", "PVRS", "gp_hedge"]):
                 acq_optimizer = "lbfgs"
             else:
                 acq_optimizer = "sampling"

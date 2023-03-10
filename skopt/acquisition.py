@@ -2,6 +2,8 @@ import numpy as np
 import warnings
 
 from scipy.stats import norm
+from scipy.optimize import brentq
+from scipy.linalg import cho_solve, cholesky
 
 
 def gaussian_acquisition_1D(X, model, y_opt=None, acq_func="LCB",
@@ -33,6 +35,8 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
         acq_func_kwargs = dict()
     xi = acq_func_kwargs.get("xi", 0.01)
     kappa = acq_func_kwargs.get("kappa", 1.96)
+    n_samples = acq_func_kwargs.get("n_samples", 1000)
+    n_thompson = acq_func_kwargs.get("n_thompson", 10)
 
     # Evaluate acquisition function
     per_second = acq_func.endswith("ps")
@@ -79,6 +83,16 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
                 acq_grad *= inv_t
                 acq_grad += acq_vals * (-mu_grad + std*std_grad)
 
+    elif acq_func == "MES":
+        if return_grad:
+            raise ValueError("No gradients available for MES acquisition.")
+        func = gaussian_mes(X, model, n_samples)
+        acq_vals = -func
+    elif acq_func == "PVRS":
+        if return_grad:
+            raise ValueError("No gradients available for PVRS acquisition.")
+        func = gaussian_pvrs(X, model, n_thompson)
+        acq_vals = -func
     else:
         raise ValueError("Acquisition function not implemented.")
 
@@ -319,3 +333,97 @@ def gaussian_ei(X, model, y_opt=0.0, xi=0.01, return_grad=False):
         return values, grad
 
     return values
+
+
+def gaussian_mes(X, model, n_min_samples=1000):
+    """Select points based on their mutual information with the optimum value.
+    This uses the "Sample with Gumbel" approximation.
+
+    Parameters
+    ----------
+    n_min_samples : int, default=1000
+        Number of samples for the optimum distribution
+
+    References
+    ----------
+    [0] Implementation based on https://github.com/kiudee/bayes-skopt
+        and https://github.com/zi-w/Max-value-Entropy-Search/
+    [1] Wang, Z. & Jegelka, S.. (2017). Max-value Entropy Search for Efficient
+        Bayesian Optimization. Proceedings of the 34th International Conference
+        on Machine Learning, in PMLR 70:3627-3635
+    """
+
+    mu, std = model.predict(X, return_std=True)
+    # Avoid numerical errors by enforcing variance to be positive.
+    std = np.maximum(std, 1e-10)
+
+    def probf(x):
+        return np.exp(np.sum(norm.logcdf((x - mean) / std), axis=0))
+
+    # Negative sign, since the original algorithm is defined in terms of the maximum
+    mean = -mu
+    left = np.min(mean - 3 * std)
+    if probf(left) > 0.25:
+        warnings.warn("MES failed to bracket the quantiles.")
+    right = np.max(mean + 5 * std)
+    while probf(right) < 0.75:
+        right = right + right - left
+    # Binary search for 3 percentiles
+    q1, med, q2 = [
+        brentq(lambda x: probf(x) - val, left, right,) for val in [0.25, 0.5, 0.75]
+    ]
+    # See https://stats.stackexchange.com/a/153067
+    beta = (q1 - q2) / (np.log(np.log(4.0 / 3.0)) - np.log(np.log(4.0)))
+    alpha = med + beta * np.log(np.log(2.0))
+    max_values = (
+        -np.log(-np.log(np.random.rand(n_min_samples).astype(np.float32))) * beta
+        + alpha
+    )
+
+    gamma = (max_values[None, :] - mean[:, None]) / std[:, None]
+    # Equation 6
+    return (
+        np.sum(
+            gamma * norm().pdf(gamma) / (2.0 * norm().cdf(gamma))
+            - norm().logcdf(gamma),
+            axis=1,
+        )
+        / n_min_samples
+    )
+
+
+def gaussian_pvrs(X, model, n_thompson=10):
+    """Implements the predictive variance reduction search algorithm.
+
+    The algorithm draws a set of Thompson samples (samples from the optimum
+    distribution) and proposes the point which reduces the predictive variance
+    of these samples the most.
+
+    Parameters
+    ----------
+    n_thompson : int, default=10
+        Number of Thompson samples to draw
+
+    References
+    ----------
+    [0] Implementation based on https://github.com/kiudee/bayes-skopt
+    [1] Nguyen, Vu, et al. "Predictive variance reduction search." Workshop on
+        Bayesian optimization at neural information processing systems (NIPSW).
+        2017.
+    """
+
+    n = len(X)
+    thompson_sample = model.sample_y(X, n_samples=n_thompson)
+    thompson_points = np.array(X)[np.argmin(thompson_sample, axis=0)]
+    covs = np.empty(n)
+    for i in range(n):
+        X_train_aug = np.concatenate([model.X_train_, [X[i]]])
+        K = model.kernel_(X_train_aug)
+        if np.iterable(model.alpha):
+            K[np.diag_indices_from(K)] += np.concatenate([model.alpha, [0.0]])
+        L = cholesky(K, lower=True)
+        K_trans = model.kernel_(thompson_points, X_train_aug)
+        v = cho_solve((L, True), K_trans.T)
+        cov = K_trans.dot(v)
+        covs[i] = np.diag(cov).sum()
+    return covs
