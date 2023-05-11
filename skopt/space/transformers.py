@@ -259,7 +259,7 @@ class Normalize(Transformer):
         if (self.high - self.low) == 0.:
             return X * 0.
         if self.is_int:
-            return (np.round(X).astype(np.int) - self.low) /\
+            return (np.round(X).astype(int) - self.low) /\
                    (self.high - self.low)
         else:
             return (X - self.low) / (self.high - self.low)
