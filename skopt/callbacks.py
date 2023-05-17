@@ -272,8 +272,9 @@ class DeadlineStopper(EarlyStopper):
 
 class StdStopper(EarlyStopper):
     """
-    Stop the optimization when the standard deviation of the Gaussian process is lower than the threshold.
-    https://www.amazon.science/publications/automatic-termination-for-hyperparameter-optimization
+    Stop the optimization when the standard deviation of the Gaussian 
+    process is lower than the threshold.
+    Paper: automatic-termination-for-hyperparameter-optimization
     """
     def __init__(self, threshold: float, log_interval=10) -> None:
         super(EarlyStopper, self).__init__()
@@ -286,9 +287,10 @@ class StdStopper(EarlyStopper):
             y_train_std_.append(model.y_train_std_)
         if len(y_train_std_) == 0:
             return False
-        if len(y_train_std_)%self.log_interval == 0:
-            print("num_models:", len(y_train_std_), "min_std:", min(y_train_std_), "max_std:", max(y_train_std_))
-        return min(y_train_std_) <= self.threshold        
+        if len(y_train_std_) % self.log_interval == 0:
+            print("num_models:", len(y_train_std_), "min_std:", 
+                  min(y_train_std_), "max_std:", max(y_train_std_))
+        return min(y_train_std_) <= self.threshold
 
 class ThresholdStopper(EarlyStopper):
     """
