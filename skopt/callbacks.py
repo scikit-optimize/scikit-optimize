@@ -270,10 +270,10 @@ class DeadlineStopper(EarlyStopper):
         else:
             return None
 
-        
+
 class StdStopper(EarlyStopper):
     """
-    Stop the optimization when the standard deviation of the Gaussian 
+    Stop the optimization when the standard deviation of the Gaussian
     process is lower than the threshold.
     Paper: automatic-termination-for-hyperparameter-optimization
     """
@@ -293,7 +293,7 @@ class StdStopper(EarlyStopper):
                   min(y_train_std_), "max_std:", max(y_train_std_))
         return min(y_train_std_) <= self.threshold
 
-    
+
 class ThresholdStopper(EarlyStopper):
     """
     Stop the optimization when the objective value is lower
