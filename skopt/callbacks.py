@@ -270,6 +270,7 @@ class DeadlineStopper(EarlyStopper):
         else:
             return None
 
+        
 class StdStopper(EarlyStopper):
     """
     Stop the optimization when the standard deviation of the Gaussian 
@@ -288,10 +289,11 @@ class StdStopper(EarlyStopper):
         if len(y_train_std_) == 0:
             return False
         if len(y_train_std_) % self.log_interval == 0:
-            print("num_models:", len(y_train_std_), "min_std:", 
+            print("num_models:", len(y_train_std_), "min_std:",
                   min(y_train_std_), "max_std:", max(y_train_std_))
         return min(y_train_std_) <= self.threshold
 
+    
 class ThresholdStopper(EarlyStopper):
     """
     Stop the optimization when the objective value is lower
