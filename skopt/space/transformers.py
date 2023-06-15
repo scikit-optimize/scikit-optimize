@@ -272,7 +272,7 @@ class Normalize(Transformer):
             raise ValueError("All values should be greater than 0.0")
         X_orig = X * (self.high - self.low) + self.low
         if self.is_int:
-            return np.round(X_orig).astype(np.int)
+            return np.round(X_orig).astype(np.int32)
         return X_orig
 
 
