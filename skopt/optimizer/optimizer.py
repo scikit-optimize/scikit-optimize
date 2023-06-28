@@ -446,8 +446,33 @@ class Optimizer(object):
             min_delta_x = min([self.space.distance(next_x, xi)
                                for xi in self.Xi])
             if abs(min_delta_x) <= 1e-8:
-                warnings.warn("The objective has been evaluated "
-                              "at this point before.")
+                avoid_duplicates = True
+                if avoid_duplicates:
+                    next_x_new = next_x
+                    if hasattr(self, "next_xs_"):
+                        # Test if one of the acquisition functions proposed a
+                        # candidate that has not been used yet
+                        for x in self.next_xs_:
+                            next_x_new_ = self.space.inverse_transform(
+                                x.reshape((1, -1)))[0]
+                            if next_x_new_ != next_x:
+                                # Also compare for all previous points
+                                if next_x_new_ in self.Xi:
+                                    continue  # Do not use this candidate
+                                else:
+                                    next_x_new = next_x_new_
+                                    break  # Found an actually new candidate
+
+                    if next_x_new == next_x:
+                        # No new candidate could be found. Use a random one
+                        next_x_new = self.space.rvs(random_state=self.rng)[0]
+                        warnings.warn("The objective has been evaluated at "
+                                      "point {} before, using random point {}"
+                                      .format(next_x, next_x_new))
+                    next_x = next_x_new
+                else:
+                    warnings.warn("The objective has been evaluated at point "
+                                  "{} before".format(next_x))
 
             # return point computed from last call to tell()
             return next_x
