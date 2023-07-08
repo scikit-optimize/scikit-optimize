@@ -28,8 +28,6 @@ code. Never load serialized data from untrusted or unauthenticated sources!
 """
 print(__doc__)
 import numpy as np
-import os
-import sys
 
 
 #############################################################################

@@ -1,0 +1,40 @@
+name: Publish
+on:
+  push:
+    tags: [ 'v[0-9]+\.[0-9]+.*' ]
+
+jobs:
+  build:
+    uses: scikit-optimize/scikit-optimize/.github/workflows/ci.yml
+
+  package:
+    needs: build
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: package
+
+      - name: Publish 📦 on PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  docs:
+    needs: build
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [ 3.9 ]
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: docs
+
+      - name: Publish docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_DOCS_TOKEN }}
+        run: |
+          .github/scripts/publish_docs.sh doc/_build/html/stable

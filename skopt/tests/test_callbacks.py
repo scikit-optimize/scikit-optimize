@@ -17,6 +17,7 @@ from skopt.callbacks import ThresholdStopper
 
 from skopt.utils import load
 
+
 @pytest.mark.fast_test
 def test_timer_callback():
     callback = TimerCallback()
@@ -110,7 +111,8 @@ def test_checkpoint_saver():
         os.remove(checkpoint_path)
 
     checkpoint_saver = CheckpointSaver(checkpoint_path, compress=9)
-    result = dummy_minimize(bench1,
+    result = dummy_minimize(
+        bench1,
         [(-1.0, 1.0)],
         callback=checkpoint_saver,
         n_calls=10)

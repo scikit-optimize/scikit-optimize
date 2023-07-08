@@ -22,10 +22,10 @@ from packaging.version import parse
 # import pkg_resources
 import sys
 import skopt
+import sphinx_gallery
 
 sys.path.insert(0, os.path.abspath('sphinxext'))
-from github_link import make_linkcode_resolve
-import sphinx_gallery
+from github_link import make_linkcode_resolve  # noqa: E402
 
 
 #  __version__ = pkg_resources.get_distribution('skopt').version
@@ -282,7 +282,7 @@ class SubSectionTitleOrder:
 sphinx_gallery_conf = {
     'doc_module': 'skopt',
     'backreferences_dir': os.path.join('modules', 'generated'),
-    'show_memory': True,
+    'show_memory': False,
     'reference_url': {
         'skopt': None},
     'examples_dirs': ['../examples'],
@@ -381,3 +381,7 @@ warnings.filterwarnings("ignore", category=UserWarning,
 
 
 # -- Extension configuration -------------------------------------------------
+
+linkcheck_ignore = [
+    r'(../)?auto_examples/',
+]

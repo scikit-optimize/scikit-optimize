@@ -7,7 +7,6 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
 from skopt import gp_minimize
-from skopt import forest_minimize
 from skopt.benchmarks import bench1, bench1_with_time
 from skopt.benchmarks import branin
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
@@ -197,7 +196,7 @@ def test_acq_optimizer(base_estimator):
 @pytest.mark.parametrize("base_estimator", TREE_REGRESSORS)
 @pytest.mark.parametrize("acq_func", ACQ_FUNCS_PS)
 def test_acq_optimizer_with_time_api(base_estimator, acq_func):
-    opt = Optimizer([(-2.0, 2.0),], base_estimator=base_estimator,
+    opt = Optimizer([(-2.0, 2.0)], base_estimator=base_estimator,
                     acq_func=acq_func,
                     acq_optimizer="sampling", n_initial_points=2)
     x1 = opt.ask()
@@ -214,7 +213,7 @@ def test_acq_optimizer_with_time_api(base_estimator, acq_func):
 
     # x3 = opt.ask()
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError):
         opt.tell(x2, bench1(x2))
 
 
@@ -315,24 +314,22 @@ def test_defaults_are_equivalent():
     # check that the defaults of Optimizer reproduce the defaults of
     # gp_minimize
     space = [(-5., 10.), (0., 15.)]
-    #opt = Optimizer(space, 'ET', acq_func="EI", random_state=1)
     opt = Optimizer(space, random_state=1)
 
     for n in range(12):
         x = opt.ask()
         res_opt = opt.tell(x, branin(x))
 
-    #res_min = forest_minimize(branin, space, n_calls=12, random_state=1)
     res_min = gp_minimize(branin, space, n_calls=12, random_state=1)
 
     assert res_min.space == res_opt.space
     # tolerate small differences in the points sampled
-    assert np.allclose(res_min.x_iters, res_opt.x_iters)#, atol=1e-5)
-    assert np.allclose(res_min.x, res_opt.x)#, atol=1e-5)
+    assert np.allclose(res_min.x_iters, res_opt.x_iters)
+    assert np.allclose(res_min.x, res_opt.x)
 
     res_opt2 = opt.get_result()
-    assert np.allclose(res_min.x_iters, res_opt2.x_iters)  # , atol=1e-5)
-    assert np.allclose(res_min.x, res_opt2.x)  # , atol=1e-5)
+    assert np.allclose(res_min.x_iters, res_opt2.x_iters)
+    assert np.allclose(res_min.x, res_opt2.x)
 
 
 @pytest.mark.fast_test

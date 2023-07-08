@@ -13,6 +13,7 @@ doc/_build
 doc/modules/generated/
 *.pkl
 *.gz
+*.log
 doc/auto_examples
 # mac OS users
 .DS_Store

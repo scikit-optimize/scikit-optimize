@@ -27,10 +27,8 @@ This is useful, for example,
 
 """
 print(__doc__)
-import sys
 import numpy as np
 np.random.seed(777)
-import os
 
 #############################################################################
 # Simple example
@@ -42,7 +40,6 @@ import os
 # and pass it to the minimizer:
 
 from skopt import gp_minimize
-from skopt import callbacks
 from skopt.callbacks import CheckpointSaver
 
 noise_level = 0.1
@@ -52,7 +49,7 @@ def obj_fun(x, noise_level=noise_level):
     return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2)) + np.random.randn() \
         * noise_level
 
-checkpoint_saver = CheckpointSaver("./checkpoint.pkl", compress=9) # keyword arguments will be passed to `skopt.dump`
+checkpoint_saver = CheckpointSaver("./checkpoint.pkl", compress=9)  # kwargs passed to `skopt.dump`
 
 gp_minimize(obj_fun,            # the function to minimize
             [(-20.0, 20.0)],    # the bounds on each dimension of x

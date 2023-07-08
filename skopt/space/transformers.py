@@ -1,7 +1,6 @@
 from __future__ import division
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import column_or_1d
 
 
 class Transformer(object):
