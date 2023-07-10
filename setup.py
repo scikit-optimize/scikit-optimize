@@ -6,10 +6,6 @@ with open("README.md", "r") as fh:
 with open("LICENSE", "r") as fh:
     license = fh.read()
 
-print(setuptools.find_packages(
-        exclude=('doc')
-    ))
-
 setuptools.setup(
     name='scikit-optimize',
     version='0.1',
@@ -18,12 +14,14 @@ setuptools.setup(
         exclude=('doc')
     ),
     url='https://github.com/MikeSmithLab/scikit-optimize',
-    install_requires=[
-        'numpy',
-        'matplotlib',
-        'scipy'      
-    ],
-    test_suite='nose.collector',
-    tests_require=['nose'],
+    packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
+                'skopt.learning.gaussian_process', 'skopt.sampler'],
+    install_requires=['joblib>=0.11', 'pyaml>=16.9', 'numpy>=1.13.3',
+                        'scipy>=0.19.1',
+                        'scikit-learn>=0.20.0'],
+    extras_require={
+        'plots':  ["matplotlib>=2.0.0"]
+        }
+   
     include_package_data=True,
 )
