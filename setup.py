@@ -7,7 +7,7 @@ with open("LICENSE", "r") as fh:
     license = fh.read()
 
 print(setuptools.find_packages(
-        exclude=('tests', 'doc')
+        exclude=('doc')
     ))
 
 setuptools.setup(
@@ -15,7 +15,7 @@ setuptools.setup(
     version='0.1',
     license=license,
     packages=setuptools.find_packages(
-        exclude=('tests', 'docs')
+        exclude=('doc')
     ),
     url='https://github.com/MikeSmithLab/scikit-optimize',
     install_requires=[
