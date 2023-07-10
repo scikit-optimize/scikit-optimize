@@ -7,15 +7,20 @@ with open("LICENSE", "r") as fh:
     license = fh.read()
 
 setuptools.setup(
-    name='skopt',
+    name='scikit-optimize',
     version='0.1',
     license=license,
     packages=setuptools.find_packages(
-        exclude=('doc')
+        exclude=('tests', 'docs')
     ),
-    url='https://github.com/MikeSmithLab/scikit-optimize',
-    install_requires=['joblib>=0.11', 'pyaml>=16.9', 'numpy>=1.13.3',
-                        'scipy>=0.19.1',
-                        'scikit-learn>=0.20.0'],   
+    url='https://github.com/MikeSmithLabTeam/scikit-optimize',
+    install_requires=[
+        'numpy',
+        'matplotlib',
+        'scipy',
+        'slicerator'
+    ],
+    test_suite='nose.collector',
+    tests_require=['nose'],
     include_package_data=True,
 )
