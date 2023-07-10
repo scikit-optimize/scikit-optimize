@@ -7,7 +7,7 @@ with open("LICENSE", "r") as fh:
     license = fh.read()
 
 setuptools.setup(
-    name='scikit-optimize',
+    name='skopt',
     version='0.1',
     license=license,
     packages=setuptools.find_packages(
