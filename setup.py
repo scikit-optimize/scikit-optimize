@@ -12,13 +12,10 @@ setuptools.setup(
     name='scikit-optimize',
     version='0.1',
     license=license,
-    packages=['skopt', 'skopt.learning', 'skopt.optimizer', 'skopt.space',
-                'skopt.learning.gaussian_process', 'skopt.sampler'],
-    #packages=setuptools.find_packages(
-    #    exclude=('doc')
-    #),
+    packages=setuptools.find_packages(
+        exclude=('doc')
+    ),
     url='https://github.com/MikeSmithLab/scikit-optimize',
-    
     install_requires=['joblib>=0.11', 'pyaml>=16.9', 'numpy>=1.13.3',
                         'scipy>=0.19.1',
                         'scikit-learn>=0.20.0'],   
