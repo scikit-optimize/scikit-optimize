@@ -246,22 +246,26 @@ def test_use_named_args():
 
     # Ensure the objective function can be called with a single
     # argument named x.
-    res = func(x=default_parameters)  # pylint: disable=E1120 no-value-for-parameter
+    res = func(x=default_parameters)
+    # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
     # Ensure the objective function can be called with a single
     # argument that is unnamed.
-    res = func(default_parameters)  # pylint: disable=E1120 no-value-for-parameter
+    res = func(default_parameters)
+    # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
     # Ensure the objective function can be called with a single
     # argument that is a numpy array named x.
-    res = func(x=np.array(default_parameters))  # pylint: disable=E1120 no-value-for-parameter
+    res = func(x=np.array(default_parameters))
+    # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
     # Ensure the objective function can be called with a single
     # argument that is an unnamed numpy array.
-    res = func(np.array(default_parameters))  # pylint: disable=E1120 no-value-for-parameter
+    res = func(np.array(default_parameters))
+    # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
 
