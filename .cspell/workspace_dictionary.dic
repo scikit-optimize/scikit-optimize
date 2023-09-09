@@ -1,0 +1,9 @@
+# -
+# -   replace <proj_name> with local project name -> venv
+# - Custom Dictionary Words
+# - Dictionary
+# - File: ${workspaceFolder:<proj_name>}/.cspell/workspace_dictionary.txt"
+# - no quotation marks or delimiters
+# - one word per line
+# ------------------------------------------------------------------
+AFML
