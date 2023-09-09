@@ -28,7 +28,7 @@
   // ---------------------------------------------------------------
   // test
   "python.testing.pytestArgs": [
-    "./mlfinlab"
+    "skopt"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
@@ -36,7 +36,7 @@
   // ---------------------------------------------------------------
   // pylance
   "python.analysis.extraPaths": [
-    "./mlfinlab",
+    "./skopt",
   ],
   // 
   // ---------------------------------------------------------------
@@ -72,4 +72,11 @@
   },
   // DarkSteelBlue
   "peacock.remoteColor": "#002f52",
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "./skopt",
+    "-p",
+    "test_*.py"
+  ],
 }

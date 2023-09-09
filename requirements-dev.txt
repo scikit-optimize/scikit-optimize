@@ -1,0 +1,14 @@
+#-------------------------------------------------------------------
+# xgboost
+# Technologies that will be used: 
+JupyterLab         # (Notebook)
+pandas 
+scikit-learn       # pip install -U scikit-learn
+category_encoders  # pip install category-encoders 
+xgboost            # pip install xgboost
+# scikit-optimize    
+# Use `https://github.com/c-w-m/scikit-optimize` 
+#   which replaces `np.int` with `int` 
+#   to allow `opt.fix` to run without throwing an error.
+
+#===================================================================
