@@ -175,11 +175,13 @@ def test_categorical_transform_binary():
 @pytest.mark.fast_test
 def test_categorical_repr():
     small_cat = Categorical([1, 2, 3, 4, 5])
-    assert (small_cat.__repr__() == "Categorical(categories=(1, 2, 3, 4, 5), prior=None)")
+    assert (small_cat.__repr__() == 
+            "Categorical(categories=(1, 2, 3, 4, 5), prior=None)")
     # pylint: disable=C2801 unnecessary-dunder-call
 
     big_cat = Categorical([1, 2, 3, 4, 5, 6, 7, 8])
-    assert (big_cat.__repr__() == 'Categorical(categories=(1, 2, 3, ..., 6, 7, 8), prior=None)')
+    assert (big_cat.__repr__() == 
+            'Categorical(categories=(1, 2, 3, ..., 6, 7, 8), prior=None)')
     # pylint: disable=C2801 unnecessary-dunder-call
 
 
