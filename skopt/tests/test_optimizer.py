@@ -7,7 +7,7 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
 from skopt import gp_minimize
-from skopt import forest_minimize
+# from skopt import forest_minimize  # unused
 from skopt.benchmarks import bench1, bench1_with_time
 from skopt.benchmarks import branin
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor
@@ -27,7 +27,7 @@ ESTIMATOR_STRINGS = ["GP", "RF", "ET", "GBRT", "DUMMY",
 
 @pytest.mark.fast_test
 def test_multiple_asks():
-    # calling ask() multiple times without a tell() inbetween should
+    # calling ask() multiple times without a tell() in-between should
     # be a "no op"
     base_estimator = ExtraTreesRegressor(random_state=2)
     opt = Optimizer([(-2.0, 2.0)], base_estimator, n_initial_points=1,

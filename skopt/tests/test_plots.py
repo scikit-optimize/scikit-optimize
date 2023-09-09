@@ -10,7 +10,7 @@ from skopt import plots, gp_minimize
 import matplotlib.pyplot as plt
 from skopt.benchmarks import bench3
 from skopt import expected_minimum, expected_minimum_random_sampling
-from skopt.plots import _evaluate_min_params, partial_dependence
+from skopt.plots import _evaluate_min_params  # unused `partial_dependence`
 from skopt.plots import partial_dependence_1D, partial_dependence_2D
 from skopt import Optimizer
 
@@ -95,7 +95,7 @@ def test_plots_work():
     plots.plot_histogram(res, 0, 4)
 
     # TODO: Compare plots to known good results?
-    # Look into how matplotlib does this.
+    # Look into how matplotlib does this (i.e., bit compare image file)
 
 
 @pytest.mark.slow_test
@@ -129,7 +129,7 @@ def test_plots_work_without_cat():
     plots.plot_regret(res)
 
     # TODO: Compare plots to known good results?
-    # Look into how matplotlib does this.
+    # Look into how matplotlib does this (i.e., bit compare image file)
 
 
 @pytest.mark.fast_test

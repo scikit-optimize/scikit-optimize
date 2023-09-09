@@ -149,7 +149,7 @@ def test_reproducible_runs(strategy, surrogate):
         points.append(x)
         optimizer.tell(x, [branin(v) for v in x])
 
-    # the x's should be exaclty as they are in `points`
+    # the x's should be exactly as they are in `points`
     optimizer = Optimizer(
         base_estimator=surrogate(random_state=1),
         dimensions=[Real(-5.0, 10.0), Real(0.0, 15.0)],

@@ -2,7 +2,7 @@ import pytest
 import numbers
 import numpy as np
 import os
-import yaml
+# import yaml  # unused
 from tempfile import NamedTemporaryFile
 
 from numpy.testing import assert_array_almost_equal
@@ -175,12 +175,10 @@ def test_categorical_transform_binary():
 @pytest.mark.fast_test
 def test_categorical_repr():
     small_cat = Categorical([1, 2, 3, 4, 5])
-    assert (small_cat.__repr__() ==
-            "Categorical(categories=(1, 2, 3, 4, 5), prior=None)")
+    assert (small_cat.__repr__() == "Categorical(categories=(1, 2, 3, 4, 5), prior=None)")  # pylint: disable=C2801 unnecessary-dunder-call
 
     big_cat = Categorical([1, 2, 3, 4, 5, 6, 7, 8])
-    assert (big_cat.__repr__() ==
-            'Categorical(categories=(1, 2, 3, ..., 6, 7, 8), prior=None)')
+    assert (big_cat.__repr__() == 'Categorical(categories=(1, 2, 3, ..., 6, 7, 8), prior=None)')  # pylint: disable=C2801 unnecessary-dunder-call
 
 
 @pytest.mark.fast_test
@@ -568,7 +566,7 @@ def test_normalize_categorical():
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
 @pytest.mark.fast_test
-def test_normalize_integer():
+def test_normalize_integers():
     for dtype in ['int', 'int8', 'int16', 'int32', 'int64',
                   'uint8', 'uint16', 'uint32', 'uint64']:
         a = Integer(2, 30, transform="normalize", dtype=dtype)
@@ -686,7 +684,7 @@ def test_dimension_name(dimension, name):
     assert dimension.name == name
 
 
-def test_dimension_name():
+def test_dimension_names():
     notnames = [1, 1., True]
     for n in notnames:
         with pytest.raises(ValueError) as exc:

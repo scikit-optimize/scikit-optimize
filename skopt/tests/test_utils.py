@@ -6,7 +6,7 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 import numpy as np
 
-from skopt import gp_minimize, forest_minimize
+from skopt import gp_minimize  # unused `forest_minimize`
 from skopt import load
 from skopt import dump
 from skopt import expected_minimum, expected_minimum_random_sampling
@@ -204,7 +204,7 @@ def test_normalize_dimensions(dimensions, normalizations):
                          [(Real(1, 2, name="learning rate"), "learning rate"),
                           (Integer(1, 100, name="no of trees"), "no of trees"),
                           (Categorical(["red, blue"], name="colors"), "colors")])
-def test_normalize_dimensions(dimension, name):
+def test_normalize_dimensions_by_name(dimension, name):
     space = normalize_dimensions([dimension])
     assert space.dimensions[0].name == name
 
@@ -235,7 +235,7 @@ def test_use_named_args():
     # Define the objective function with named arguments
     # and use this function-decorator to specify the search-space dimensions.
     @use_named_args(dimensions=dimensions)
-    def func(foo, bar, baz):
+    def func(foo, bar, baz):  # pylint: disable=C0104 disallowed-name
         # Assert that all the named args are indeed correct.
         assert foo == default_parameters[0]
         assert bar == default_parameters[1]
@@ -246,22 +246,22 @@ def test_use_named_args():
 
     # Ensure the objective function can be called with a single
     # argument named x.
-    res = func(x=default_parameters)
+    res = func(x=default_parameters)  # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
     # Ensure the objective function can be called with a single
     # argument that is unnamed.
-    res = func(default_parameters)
+    res = func(default_parameters)  # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
     # Ensure the objective function can be called with a single
     # argument that is a numpy array named x.
-    res = func(x=np.array(default_parameters))
+    res = func(x=np.array(default_parameters))  # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
     # Ensure the objective function can be called with a single
     # argument that is an unnamed numpy array.
-    res = func(np.array(default_parameters))
+    res = func(np.array(default_parameters))  # pylint: disable=E1120 no-value-for-parameter
     assert (isinstance(res, float))
 
 

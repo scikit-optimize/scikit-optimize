@@ -1,0 +1,41 @@
+[MASTER]
+# Ignore certain files or directories during analysis
+ignore-paths=build_tools/,doc/,examples/,media/
+
+# A comma-separated list of package or module names from where C extensions may
+# be loaded. Extensions are loading into the active Python interpreter and may
+# run arbitrary code (same as arg `--extension-pkg-whitelist=numpy`)
+extension-pkg-whitelist=numpy
+
+[REPORTS]
+# Set the output format for `pylint` messages (text, colorized, json, etc.)
+output-format=text
+
+[MESSAGES CONTROL]
+# Specify the maximum allowed line length
+max-line-length=120
+
+# Disable some pylint messages that may be too strict or not relevant for your project
+disable=
+    C0103,  # Argument name doesn't conform to snake_case naming style
+    C0114,  # Missing module docstring
+    C0115,  # Missing class docstring
+    C0116,  # Missing function docstring
+    C0200,  # Consider using enumerate instead of iterating with range and len
+    C0325,  # Superfluous parentheses after keyword
+    C0411,  # Wrong import order
+    C0412,  # Imports are not grouped
+    C0415,  # Import outside toplevel
+    C3001,  # Unnecessary lambda assignment to a variable
+    R0903,  # Too few public methods
+    R0913,  # Too many arguments
+    R0914,  # Too many local variables
+    W0201,  # Attribute defined outside __init__
+    W0612,  # Unused variable
+    W0613,  # Unused argument
+    W0212,  # Access to protected member in client class
+
+# Include additional pylint messages or message categories
+#enable=
+#    C0114,  # Missing module, function, class docstring
+#    R0903,  # Too few public methods

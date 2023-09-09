@@ -6,7 +6,41 @@
 # - no quotation marks or delimiters
 # - one word per line
 # ------------------------------------------------------------------
+abcdefghij
 AFML
+argmin
+aslist
 branin
+categoricals
+cgpr
+corput
+deltay
+dunder
+fprime
+FUNCS
 gbrt
+gini
+halton
+hammersly
+INITGEN
+klass
+lbfgs
+linalg
+logn
+maen
+Matern
+multioutput
+nextafter
+njobs
+notnames
+onehot
+optim
+pdist
+randn
+rankdata
+samlper
+searchcv
 skopt
+sobol
+xstar
+xstars
