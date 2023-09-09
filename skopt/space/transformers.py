@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import column_or_1d
+# from sklearn.utils import column_or_1d  # unused
 
 
 class Transformer(object):
@@ -259,7 +259,7 @@ class Normalize(Transformer):
         if (self.high - self.low) == 0.:
             return X * 0.
         if self.is_int:
-            # FIXME: replace `np.int` with `int`
+            # replace `np.int` with `int`
             return (np.round(X).astype(int) - self.low) /\
                    (self.high - self.low)
         else:
@@ -273,7 +273,7 @@ class Normalize(Transformer):
             raise ValueError("All values should be greater than 0.0")
         X_orig = X * (self.high - self.low) + self.low
         if self.is_int:
-            # FIXME: replace `np.int` with `int`
+            # replace `np.int` with `int`
             return np.round(X_orig).astype(int)
         return X_orig
 

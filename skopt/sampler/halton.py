@@ -16,7 +16,7 @@ class Halton(InitialPointGenerator):
     Although these sequences are deterministic, they are of low discrepancy,
     that is, appear to be random
     for many purposes. They were first introduced in 1960 and are an example
-    of a quasi-random number sequence. They generalise the one-dimensional
+    of a quasi-random number sequence. They generalize the one-dimensional
     van der Corput sequences.
 
     For ``dim == 1`` the sequence falls back to Van Der Corput sequence.

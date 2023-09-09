@@ -186,7 +186,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
     the best found split may vary, even with the same training data,
     ``max_features=n_features`` and ``bootstrap=False``, if the improvement
     of the criterion is identical for several splits enumerated during the
-    search of the best split. To obtain a deterministic behaviour during
+    search of the best split. To obtain a deterministic behavior during
     fitting, ``random_state`` has to be fixed.
 
     References
@@ -382,7 +382,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
     the best found split may vary, even with the same training data,
     ``max_features=n_features`` and ``bootstrap=False``, if the improvement
     of the criterion is identical for several splits enumerated during the
-    search of the best split. To obtain a deterministic behaviour during
+    search of the best split. To obtain a deterministic behavior during
     fitting, ``random_state`` has to be fixed.
 
     References

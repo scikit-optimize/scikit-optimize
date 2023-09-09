@@ -119,7 +119,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
           - The gains `g_i` are initialized to zero.
           - At every iteration,
 
-            - Each acquisition function is optimised independently to
+            - Each acquisition function is optimized independently to
               propose an candidate point `X_i`.
             - Out of all these candidate points, the next point `X_best` is
               chosen by :math:`softmax(\\eta g_i)`

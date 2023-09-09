@@ -7,7 +7,7 @@ from scipy.stats.distributions import rv_discrete
 from scipy.stats.distributions import uniform
 
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import sp_version
+# from sklearn.utils.fixes import sp_version  # unused
 
 from .transformers import CategoricalEncoder
 from .transformers import StringEncoder

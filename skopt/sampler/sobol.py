@@ -89,7 +89,8 @@ class Sobol(InitialPointGenerator):
     """
     def __init__(self, skip=0, randomize=True):
 
-        if not (skip & (skip - 1) == 0):
+        # consider changing 'not skip & skip -1 == 0 to 'skip & skip -1 != 0`
+        if not (skip & (skip - 1) == 0):  # pylint: disable=C0113 unneeded-not
             raise ValueError("The balance properties of Sobol' points require"
                              " skipping a power of 2.")
         if skip != 0:

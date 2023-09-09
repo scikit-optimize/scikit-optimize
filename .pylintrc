@@ -22,6 +22,8 @@ disable=
     C0115,  # Missing class docstring
     C0116,  # Missing function docstring
     C0200,  # Consider using enumerate instead of iterating with range and len
+    C0209,  # Formatting a regular string which could be a f-string
+    C0301,  # Line too long
     C0325,  # Superfluous parentheses after keyword
     C0411,  # Wrong import order
     C0412,  # Imports are not grouped
