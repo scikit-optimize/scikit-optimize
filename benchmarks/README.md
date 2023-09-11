@@ -17,8 +17,6 @@ To reproduce, run `python bench_branin.py`
 | forest_minimize| 0.515 +/- 0.15 |0.399 | 163.8 | 33.295 | 83
 | gbrt_minimize | 0.580 +/- 0.33 |0.401 | 110.5 | 49.810 | 46
 
-
-
 ## Hart6
 
 To reproduce, run `python bench_hart6.py`
@@ -40,7 +38,6 @@ To reproduce, run `python bench_ml.py`
 | gp_minimize | 1.287 +/- 0.036 | 1.231 | 47.500 | 1.910 | 43.000
 | forest_minimize | 1.311 +/- 0.052 | 1.229 | 40.375 | 8.348 | 15.000
 | gbrt_minimize | 1.289 +/- 0.038 | 1.223 | 42.925 | 5.116 | 31.000
-
 
 ## ML, Regression
 

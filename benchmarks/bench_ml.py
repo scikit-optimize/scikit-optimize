@@ -20,10 +20,10 @@ import math
 if sys.version_info.major == 2:
     # Python 2
     from urllib2 import HTTPError
-    from urllib import urlopen
+    from urllib import urlopen  # pylint: disable=E0611 no-name-in-module
 else:
     from urllib.error import HTTPError
-    from urllib import urlopen
+    from urllib.request import urlopen
 
 from joblib import delayed
 from joblib import Parallel
@@ -31,8 +31,10 @@ import numpy as np
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
 from sklearn.datasets import fetch_california_housing
-from sklearn.datasets import fetch_mldata
-from sklearn.datasets import load_boston
+#from sklearn.datasets import fetch_mldata  # deprecated
+from sklearn.datasets import fetch_openml
+#from sklearn.datasets import load_boston  # deprecated
+from load_boston import load_boston
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -49,7 +51,7 @@ from skopt import gbrt_minimize
 from skopt import gp_minimize
 from skopt import forest_minimize
 from skopt.space import Categorical
-from skopt.space import Integer
+# from skopt.space import Integer  # unused
 from skopt.space import Real
 
 
@@ -153,7 +155,8 @@ def load_data_target(name):
         data = load_digits()
     elif name == "Climate Model Crashes":
         try:
-            data = fetch_mldata("climate-model-simulation-crashes")
+            #data = fetch_mldata("climate-model-simulation-crashes")
+            data = fetch_openml("climate-model-simulation-crashes")
         except HTTPError as e:
             url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00252/pop_failures.dat"
             data = urlopen(url).read().split('\n')[1:]
@@ -234,13 +237,17 @@ class MLBench(object):
                 score = r2_score(y_test, y_predicted)
             elif isinstance(model_instance, ClassifierMixin): # log loss
                 y_predicted = model_instance.predict_proba(X_test)
-                score = -log_loss(y_test, y_predicted) # in the context of this function, the higher score is better
-            # avoid any kind of singularitites, eg probability being zero, and thus breaking the log_loss
+                # in the context of this function, the higher score is better
+                # avoid any kind of singularities, e.g., probability being zero,
+                # and thus breaking the log_loss
+                score -= log_loss(y_test, y_predicted)  
             if math.isnan(score):
                 score = min_obj_val
-            score = max(score, min_obj_val) # this is necessary to avoid -inf or NaN
-        except BaseException as ex:
-            score = min_obj_val # on error: return assumed smallest value of objective function
+            # this is necessary to avoid -inf or NaN
+            score = max(score, min_obj_val) 
+        except BaseException as ex:  # pylint: disable=W0718 broad-exception-caught
+            # on error: return assumed smallest value of objective function
+            score = min_obj_val 
 
         return score
 
@@ -408,7 +415,7 @@ def run(n_calls=32, n_runs=1, save_traces=True, n_jobs=1):
 
     # dump the recorded objective values as json
     if save_traces:
-        with open(datetime.now().strftime("%m_%Y_%d_%H_%m_%s")+'.json', 'w') as f:
+        with open(datetime.now().strftime("%m_%Y_%d_%H_%m_%s")+'.json', 'w', encoding="utf-8") as f:
             json.dump(all_data, f)
     calculate_performance(all_data)
 

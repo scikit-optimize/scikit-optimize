@@ -61,6 +61,6 @@ if __name__ == "__main__":
         '--n_runs', nargs="?", default=10, type=int, help="Number of runs.")
     parser.add_argument(
         '--acq_optimizer', nargs="?", default="lbfgs", type=str,
-        help="Acquistion optimizer.")
+        help="Acquisition optimizer.")
     args = parser.parse_args()
     run(args.n_calls, args.n_runs, args.acq_optimizer)
