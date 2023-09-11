@@ -1,0 +1,82 @@
+{
+  // ===============================================================
+  // 2023-07-09
+  // ===============================================================
+  //
+  // ---------------------------------------------------------------
+  //"python.pythonPath": "C:/bin/venv/.dev38/Scripts/python.exe",
+  //"python.pythonPath": "C:/bin/venv/.dev310/Scripts/python.exe",
+  "python.pythonPath": "C:/bin/venv/.dev311/Scripts/python.exe",
+  //
+  // ---------------------------------------------------------------
+  // cSpell - replace <proj_name> with local project name -> venv
+  "cSpell.customDictionaries": {
+    "workspace_dictionary": {
+      "name": "workspace_dictionary",
+      "path": "${workspaceFolder:scikit-optimize}/.cspell/workspace_dictionary.dic",
+      "addWords": true,
+      "scope": "workspace"
+    }
+  },
+  // 
+  // ---------------------------------------------------------------
+  // reStructuredText, root ReadMe.rst
+  // If it is "", then docutils is used to render the preview page.
+  "esbonio.sphinx.confDir": "",
+  "restructuredtext.preview.docutils.disabled": false,
+  //
+  // ---------------------------------------------------------------
+  // test
+  "python.testing.pytestArgs": [
+    "skopt"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  // 
+  // ---------------------------------------------------------------
+  // pylance
+  "python.analysis.extraPaths": [
+    "./skopt",
+  ],
+  // 
+  // ---------------------------------------------------------------
+  // peacock color scheme
+  // 
+  // DarkBlue
+  "peacock.color": "#00195c",
+  "peacock.affectActivityBar": true,
+  "peacock.affectStatusBar": true,
+  "peacock.affectTitleBar": true,
+  "peacock.elementAdjustments": {
+    "activityBar": "lighten"
+  },
+  //
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#00278f",
+    "activityBar.background": "#00278f",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#df003d",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#00278f",
+    "statusBar.background": "#00195c",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#00278f",
+    "statusBarItem.remoteBackground": "#00195c",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#00195c",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#00195c99",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  // DarkSteelBlue
+  "peacock.remoteColor": "#002f52",
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "./skopt",
+    "-p",
+    "test_*.py"
+  ],
+}
