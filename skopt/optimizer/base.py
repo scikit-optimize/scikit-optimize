@@ -9,9 +9,9 @@ import numbers
 try:
     from collections.abc import Iterable
 except ImportError:
-    from collections import Iterable
+    from collections import Iterable  # pylint disable=W4904 deprecated-class
 
-import numpy as np
+# import numpy as np  # unused
 
 from ..callbacks import check_callback
 from ..callbacks import VerboseCallback

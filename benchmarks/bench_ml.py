@@ -240,14 +240,14 @@ class MLBench(object):
                 # in the context of this function, the higher score is better
                 # avoid any kind of singularities, e.g., probability being zero,
                 # and thus breaking the log_loss
-                score -= log_loss(y_test, y_predicted)  
+                score -= log_loss(y_test, y_predicted)
             if math.isnan(score):
                 score = min_obj_val
             # this is necessary to avoid -inf or NaN
-            score = max(score, min_obj_val) 
+            score = max(score, min_obj_val)
         except BaseException as ex:  # pylint: disable=W0718 broad-exception-caught
             # on error: return assumed smallest value of objective function
-            score = min_obj_val 
+            score = min_obj_val
 
         return score
 

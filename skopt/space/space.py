@@ -7,7 +7,7 @@ from scipy.stats.distributions import rv_discrete
 from scipy.stats.distributions import uniform
 
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import sp_version
+# from sklearn.utils.fixes import sp_version  # unused
 
 from .transformers import CategoricalEncoder
 from .transformers import StringEncoder
@@ -204,8 +204,8 @@ class Dimension(object):
 
 def _uniform_inclusive(loc=0.0, scale=1.0):
     # like scipy.stats.distributions but inclusive of `high`
-    # XXX scale + 1. might not actually be a float after scale if
-    # XXX scale is very large.
+    # FIXME scale + 1. might not actually be a float after scale if
+    # FIXME scale is very large.
     return uniform(loc=loc, scale=np.nextafter(scale, scale + 1.))
 
 
@@ -296,7 +296,7 @@ class Real(Dimension):
             raise ValueError("transform should be 'normalize' or 'identity'"
                              " got {}".format(self.transform_))
 
-        # XXX: The _rvs is for sampling in the transformed space.
+        # FIXME: The _rvs is for sampling in the transformed space.
         # The rvs on Dimension calls inverse_transform on the points sampled
         # using _rvs
         if self.transform_ == "normalize":
@@ -653,7 +653,7 @@ class Categorical(Dimension):
         if transform == "normalize":
             self._rvs = _uniform_inclusive(0.0, 1.0)
         else:
-            # XXX check that sum(prior) == 1
+            # FIXME check that sum(prior) == 1
             self._rvs = rv_discrete(
                 values=(range(len(self.categories)), self.prior_)
             )

@@ -1,9 +1,9 @@
 """Forest based minimization algorithms."""
 
-from sklearn.utils import check_random_state
+# from sklearn.utils import check_random_state  # unused
 
 from .base import base_minimize
-from ..utils import cook_estimator
+# from ..utils import cook_estimator  # unused
 
 
 
@@ -13,7 +13,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
                     x0=None, y0=None, random_state=None, verbose=False,
                     callback=None, n_points=10000, xi=0.01, kappa=1.96,
                     n_jobs=1, model_queue_size=None):
-    """Sequential optimisation using decision trees.
+    """Sequential optimization using decision trees.
 
     A tree based regression model is used to model the expensive to evaluate
     function `func`. The model is improved by sequentially evaluating

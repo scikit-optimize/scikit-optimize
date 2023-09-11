@@ -28,14 +28,14 @@ from ..utils import cook_initial_point_generator
 
 
 class Optimizer(object):
-    """Run bayesian optimisation loop.
+    """Run bayesian optimization loop.
 
-    An `Optimizer` represents the steps of a bayesian optimisation loop. To
+    An `Optimizer` represents the steps of a bayesian optimization loop. To
     use it you need to provide your own loop mechanism. The various
-    optimisers provided by `skopt` use this class under the hood.
+    optimizers provided by `skopt` use this class under the hood.
 
     Use this class directly if you want to control the iterations of your
-    bayesian optimisation loop.
+    bayesian optimization loop.
 
     Parameters
     ----------
@@ -92,7 +92,7 @@ class Optimizer(object):
           - The gains `g_i` are initialized to zero.
           - At every iteration,
 
-            - Each acquisition function is optimised independently to
+            - Each acquisition function is optimized independently to
               propose an candidate point `X_i`.
             - Out of all these candidate points, the next point `X_best` is
               chosen by :math:`softmax(\\eta g_i)`
@@ -177,7 +177,7 @@ class Optimizer(object):
 
         # Configure acquisition function
 
-        # Store and creat acquisition function set
+        # Store and create acquisition function set
         self.acq_func = acq_func
         self.acq_func_kwargs = acq_func_kwargs
 
@@ -226,7 +226,7 @@ class Optimizer(object):
             raise ValueError(
                 "%s has to be a regressor." % base_estimator)
 
-        # treat per second acqusition function specially
+        # treat per second acquisition function specially
         is_multi_regressor = isinstance(base_estimator, MultiOutputRegressor)
         if "ps" in self.acq_func and not is_multi_regressor:
             self.base_estimator_ = MultiOutputRegressor(base_estimator)
@@ -386,7 +386,7 @@ class Optimizer(object):
 
         # Copy of the optimizer is made in order to manage the
         # deletion of points with "lie" objective (the copy of
-        # oiptimizer is simply discarded)
+        # optimizer is simply discarded)
         opt = self.copy(random_state=self.rng.randint(0,
                                                       np.iinfo(np.int32).max))
 
@@ -563,7 +563,7 @@ class Optimizer(object):
                 if self.acq_optimizer == "sampling":
                     next_x = X[np.argmin(values)]
 
-                # Use BFGS to find the mimimum of the acquisition function, the
+                # Use BFGS to find the minimum of the acquisition function, the
                 # minimization starts from `n_restarts_optimizer` different
                 # points and the best minimum is used
                 elif self.acq_optimizer == "lbfgs":

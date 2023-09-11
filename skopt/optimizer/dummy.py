@@ -91,7 +91,7 @@ def dummy_minimize(func, dimensions, n_calls=100,
         - `x_iters` [list of lists]: location of function evaluation for each
           iteration.
         - `func_vals` [array]: function value for each iteration.
-        - `space` [Space]: the optimisation space.
+        - `space` [Space]: the optimization space.
         - `specs` [dict]: the call specifications.
         - `rng` [RandomState instance]: State of the random state
           at the end of minimization.

@@ -238,8 +238,8 @@ def plot_gaussian_process(res, **kwargs):
                                     acq_func_kwargs=acq_func_kwargs)
         next_x = x[np.argmin(acq)]
         next_acq = acq[np.argmin(acq)]
-        acq = - acq
-        next_acq = -next_acq
+        acq -= acq
+        next_acq -= next_acq
         ax_ei.plot(x, acq, "b", label=str(acq_func) + "(x)")
         if not plot_both:
             ax_ei.fill_between(x.ravel(), 0, acq.ravel(),
@@ -945,7 +945,7 @@ def partial_dependence_1D(space, model, i, samples,
 
     # dim_locs[i] is the (column index of the) start of dim i in
     # sample_points.
-    # This is usefull when we are using one hot encoding, i.e using
+    # This is useful when we are using one hot encoding, i.e using
     # categorical values
     dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
 
@@ -960,7 +960,7 @@ def partial_dependence_1D(space, model, i, samples,
         # We replace the values in the dimension that we want to keep
         # fixed
         rvs_[:, dim_locs[i]:dim_locs[i + 1]] = x
-        # In case of `x_eval=None` rvs conists of random samples.
+        # In case of `x_eval=None` rvs consists of random samples.
         # Calculating the mean of these samples is how partial dependence
         # is implemented.
         return np.mean(model.predict(rvs_))
@@ -1027,7 +1027,7 @@ def partial_dependence_2D(space, model, i, j, samples,
 
     # dim_locs[i] is the (column index of the) start of dim i in
     # sample_points.
-    # This is usefull when we are using one hot encoding, i.e using
+    # This is useful when we are using one hot encoding, i.e using
     # categorical values
     dim_locs = np.cumsum([0] + [d.transformed_size for d in space.dimensions])
 
@@ -1325,7 +1325,7 @@ def _evenly_sample(dim, n_points):
         xi_transformed = dim.transform(cats[xi])
     else:
         bounds = dim.bounds
-        # XXX use linspace(*bounds, n_points) after python2 support ends
+        # FIXED: use linspace(*bounds, n_points) after python2 support ends
         xi = np.linspace(bounds[0], bounds[1], n_points)
         xi_transformed = dim.transform(xi)
     return xi, xi_transformed

@@ -119,7 +119,7 @@ def test_searchcv_runs(surrogate, n_jobs, n_points, cv=None):
     opt.fit(X_train, y_train)
 
     # this normally does not hold only if something is wrong
-    # with the optimizaiton procedure as such
+    # with the optimization procedure as such
     assert opt.score(X_test, y_test) > 0.9
 
 
@@ -375,7 +375,7 @@ def test_searchcv_refit():
 
     opt2.fit(X_train, y_train)
     # this normally does not hold only if something is wrong
-    # with the optimizaiton procedure as such
+    # with the optimization procedure as such
     assert opt2.score(X_test, y_test) > 0.9
 
 

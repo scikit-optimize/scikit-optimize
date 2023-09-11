@@ -53,10 +53,10 @@ def _gaussian_acquisition(X, model, y_opt=None, acq_func="LCB",
             func_and_grad = gaussian_pi(X, model, y_opt, xi, return_grad)
 
         if return_grad:
-            acq_vals = -func_and_grad[0]
-            acq_grad = -func_and_grad[1]
+            acq_vals -= func_and_grad[0]
+            acq_grad -= func_and_grad[1]
         else:
-            acq_vals = -func_and_grad
+            acq_vals -= func_and_grad
 
         if acq_func in ["EIps", "PIps"]:
 

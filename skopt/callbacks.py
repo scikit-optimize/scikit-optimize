@@ -8,7 +8,7 @@ the optimization early by returning `True`.
 try:
     from collections.abc import Callable
 except ImportError:
-    from collections import Callable
+    from collections import Callable  # pylint: disable=W4904 deprecated-class
 
 from time import time
 

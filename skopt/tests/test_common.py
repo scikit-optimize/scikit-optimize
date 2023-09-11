@@ -370,7 +370,7 @@ def test_repeated_x(minimizer):
 @pytest.mark.parametrize("minimizer", MINIMIZERS)
 def test_consistent_x_iter_dimensions(minimizer):
     # check that all entries in x_iters have the same dimensions
-    # two dmensional problem, bench1 is a 1D function but in this
+    # two dimensional problem, bench1 is a 1D function but in this
     # instance we do not really care about the objective, could be
     # a total dummy
     res = minimizer(bench1,

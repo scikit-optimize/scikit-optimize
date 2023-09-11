@@ -7,7 +7,7 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
 from skopt import gp_minimize
-from skopt import forest_minimize
+# from skopt import forest_minimize  # unused
 from skopt.benchmarks import bench1, bench1_with_time
 from skopt.benchmarks import branin
 from skopt.learning import ExtraTreesRegressor, RandomForestRegressor

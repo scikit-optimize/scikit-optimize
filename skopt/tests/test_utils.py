@@ -6,7 +6,7 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 import numpy as np
 
-from skopt import gp_minimize, forest_minimize
+from skopt import gp_minimize  # unused `forest_minimize`
 from skopt import load
 from skopt import dump
 from skopt import expected_minimum, expected_minimum_random_sampling
@@ -235,7 +235,7 @@ def test_use_named_args():
     # Define the objective function with named arguments
     # and use this function-decorator to specify the search-space dimensions.
     @use_named_args(dimensions=dimensions)
-    def func(foo, bar, baz):
+    def func(foo, bar, baz):  # pylint disable=C0104 disallowed-name
         # Assert that all the named args are indeed correct.
         assert foo == default_parameters[0]
         assert bar == default_parameters[1]

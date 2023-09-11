@@ -42,7 +42,7 @@ def test_tree_based_minimize(name, minimizer):
     check_minimize(minimizer, bench1, 0.05,
                    [(-2.0, 2.0)], 0.05, 25, 5)
 
-    # XXX: We supply points at the edge of the search
+    # Note: We supply points at the edge of the search
     # space as an initial point to the minimizer.
     # This makes sure that the RF model can find the minimum even
     # if all the randomly sampled points are one side of the

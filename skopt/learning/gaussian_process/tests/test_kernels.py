@@ -122,7 +122,7 @@ def test_isotropic_kernel():
     X = rng.randint(0, 4, (5, 3))
     hm = HammingKernel()
 
-    # Scipy calulates the mean. We need exp(-sum)
+    # Scipy calculates the mean. We need exp(-sum)
     hamming_distance = squareform(pdist(X, metric='hamming'))
     scipy_dist = np.exp(-hamming_distance * X.shape[1])
     assert_array_almost_equal(scipy_dist, hm(X))

@@ -10,7 +10,7 @@ from skopt import plots, gp_minimize
 import matplotlib.pyplot as plt
 from skopt.benchmarks import bench3
 from skopt import expected_minimum, expected_minimum_random_sampling
-from skopt.plots import _evaluate_min_params, partial_dependence
+from skopt.plots import _evaluate_min_params  # unused `partial_dependence`
 from skopt.plots import partial_dependence_1D, partial_dependence_2D
 from skopt import Optimizer
 
