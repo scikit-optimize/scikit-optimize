@@ -140,7 +140,7 @@ print(res)
 # the last iteration:
 
 from skopt.plots import plot_convergence
-plot_convergence(res);
+plot_convergence(res)
 
 #############################################################################
 # Let us now visually examine

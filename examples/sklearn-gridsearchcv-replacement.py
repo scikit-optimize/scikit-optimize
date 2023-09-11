@@ -79,14 +79,14 @@ print("test score: %s" % opt.score(X_test, y_test))
 # example of such search over parameters of Linear SVM, Kernel SVM, and
 # decision trees is given below.
 
-from skopt import BayesSearchCV
+# from skopt import BayesSearchCV  # unused
 from skopt.space import Real, Categorical, Integer
 from skopt.plots import plot_objective, plot_histogram
 
-from sklearn.datasets import load_digits
-from sklearn.svm import LinearSVC, SVC
+# from sklearn.datasets import load_digits  # unused
+from sklearn.svm import LinearSVC    # unused `SVC`
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split  # unused
 
 X, y = load_digits(n_class=10, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)

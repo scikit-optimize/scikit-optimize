@@ -21,7 +21,7 @@ configurations (e.g., using :obj:`sklearn.model_selection.GridSearchCV`), which
 often results in a very time consuming operation.
 
 In this notebook, we illustrate how to couple :class:`gp_minimize` with sklearn's
-estimators to tune hyper-parameters using sequential model-based optimisation,
+estimators to tune hyper-parameters using sequential model-based optimization,
 hopefully resulting in equivalent or better solutions, but within fewer
 evaluations.
 
@@ -42,7 +42,8 @@ import numpy as np
 # decide which parameters to optimize, and define the objective function
 # we want to minimize.
 
-from sklearn.datasets import load_boston
+# from sklearn.datasets import load_boston
+from load_boston import load_boston
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import cross_val_score
 
@@ -86,7 +87,7 @@ def objective(**params):
 # Optimize all the things!
 # ========================
 # With these two pieces, we are now ready for sequential model-based
-# optimisation. Here we use gaussian process-based optimisation.
+# optimization. Here we use gaussian process-based optimization.
 
 from skopt import gp_minimize
 res_gp = gp_minimize(objective, space, n_calls=50, random_state=0)
@@ -111,4 +112,3 @@ print("""Best parameters:
 from skopt.plots import plot_convergence
 
 plot_convergence(res_gp)
-

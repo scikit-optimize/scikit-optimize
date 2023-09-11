@@ -52,7 +52,7 @@ import matplotlib.pyplot as plt
 # it hard to visualize. This will show off the utility of
 # :class:`plots.plot_evaluations`.
 
-from skopt.benchmarks import branin as branin
+from skopt.benchmarks import branin
 from skopt.benchmarks import hart6 as hart6_
 
 

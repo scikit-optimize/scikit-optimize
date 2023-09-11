@@ -27,10 +27,10 @@ This is useful, for example,
 
 """
 print(__doc__)
-import sys
+# import sys  # unused
 import numpy as np
 np.random.seed(777)
-import os
+# import os  # unused
 
 #############################################################################
 # Simple example
@@ -42,7 +42,7 @@ import os
 # and pass it to the minimizer:
 
 from skopt import gp_minimize
-from skopt import callbacks
+# from skopt import callbacks  # unused
 from skopt.callbacks import CheckpointSaver
 
 noise_level = 0.1

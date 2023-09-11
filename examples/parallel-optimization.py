@@ -37,7 +37,7 @@ interface is as follows:
 """
 
 print(__doc__)
-import numpy as np
+# import numpy as np  # unused
 
 #############################################################################
 # Example
