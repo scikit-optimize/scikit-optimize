@@ -35,11 +35,11 @@ def test_random_forest():
     assert_array_equal(clf.predict(T), true_result)
     assert 10 == len(clf)
 
-    clf = RandomForestRegressor(n_estimators=10, criterion="mse",
+    clf = RandomForestRegressor(n_estimators=10, criterion="squared_error",
                                 max_depth=None, min_samples_split=2,
                                 min_samples_leaf=1,
                                 min_weight_fraction_leaf=0.,
-                                max_features="auto", max_leaf_nodes=None,
+                                max_features=1.0, max_leaf_nodes=None,
                                 min_impurity_decrease=0., bootstrap=True,
                                 oob_score=False,
                                 n_jobs=1, random_state=1,
@@ -48,7 +48,7 @@ def test_random_forest():
     assert_array_equal(clf.predict(T), true_result)
     assert 10 == len(clf)
 
-    clf = RandomForestRegressor(n_estimators=10, max_features=1,
+    clf = RandomForestRegressor(n_estimators=10, max_features=1.0,
                                 random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
@@ -80,10 +80,10 @@ def test_extra_forest():
     assert_array_equal(clf.predict(T), true_result)
     assert 10 == len(clf)
 
-    clf = ExtraTreesRegressor(n_estimators=10, criterion="mse",
+    clf = ExtraTreesRegressor(n_estimators=10, criterion="squared_error",
                               max_depth=None, min_samples_split=2,
                               min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                              max_features="auto", max_leaf_nodes=None,
+                              max_features=1.0, max_leaf_nodes=None,
                               min_impurity_decrease=0., bootstrap=False,
                               oob_score=False,
                               n_jobs=1, random_state=1,
@@ -92,7 +92,7 @@ def test_extra_forest():
     assert_array_equal(clf.predict(T), true_result)
     assert 10 == len(clf)
 
-    clf = ExtraTreesRegressor(n_estimators=10, max_features=1, random_state=1)
+    clf = ExtraTreesRegressor(n_estimators=10, max_features=1.0, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert 10 == len(clf)

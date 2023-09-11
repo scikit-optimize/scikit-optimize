@@ -568,7 +568,7 @@ def test_normalize_categorical():
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
 @pytest.mark.fast_test
-def test_normalize_integer():
+def test_normalize_integers():
     for dtype in ['int', 'int8', 'int16', 'int32', 'int64',
                   'uint8', 'uint16', 'uint32', 'uint64']:
         a = Integer(2, 30, transform="normalize", dtype=dtype)
@@ -686,7 +686,7 @@ def test_dimension_name(dimension, name):
     assert dimension.name == name
 
 
-def test_dimension_name():
+def test_dimension_names():
     notnames = [1, 1., True]
     for n in notnames:
         with pytest.raises(ValueError) as exc:

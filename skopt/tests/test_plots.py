@@ -95,7 +95,7 @@ def test_plots_work():
     plots.plot_histogram(res, 0, 4)
 
     # TODO: Compare plots to known good results?
-    # Look into how matplotlib does this.
+    # Look into how matplotlib does this (i.e., bit compare image file)
 
 
 @pytest.mark.slow_test
@@ -129,7 +129,7 @@ def test_plots_work_without_cat():
     plots.plot_regret(res)
 
     # TODO: Compare plots to known good results?
-    # Look into how matplotlib does this.
+    # Look into how matplotlib does this (i.e., bit compare image file)
 
 
 @pytest.mark.fast_test

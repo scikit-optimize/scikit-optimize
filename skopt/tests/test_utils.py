@@ -190,7 +190,7 @@ def test_categoricals_mixed_types():
                            ('normalize', 'normalize')
                            ),
                           (((1, 3), ('a', 'b', 'c')),
-                           ('normalize', 'onehot')
+                           ('normalize', 'normalize')
                            ),
                           ])
 def test_normalize_dimensions(dimensions, normalizations):
@@ -204,7 +204,7 @@ def test_normalize_dimensions(dimensions, normalizations):
                          [(Real(1, 2, name="learning rate"), "learning rate"),
                           (Integer(1, 100, name="no of trees"), "no of trees"),
                           (Categorical(["red, blue"], name="colors"), "colors")])
-def test_normalize_dimensions(dimension, name):
+def test_normalize_dimensions_by_name(dimension, name):
     space = normalize_dimensions([dimension])
     assert space.dimensions[0].name == name
 

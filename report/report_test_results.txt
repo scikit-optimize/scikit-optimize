@@ -1,0 +1,29 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.5, pytest-7.3.1, pluggy-1.0.0
+rootdir: C:\code\ghcwm\scikit-optimize
+configfile: setup.cfg
+plugins: anyio-3.7.0, hypothesis-6.82.0, asyncio-0.21.0, cov-4.1.0, xdist-3.3.1
+asyncio: mode=Mode.STRICT
+collected 445 items
+
+test_acquisition.py ............                                         [  2%]
+test_benchmarks.py ..                                                    [  3%]
+test_callbacks.py ......                                                 [  4%]
+test_common.py ......................................................... [ 17%]
+........................................................................ [ 33%]
+................................                                         [ 40%]
+test_deprecation.py .                                                    [ 40%]
+test_dummy_opt.py ..                                                     [ 41%]
+test_forest_opt.py .......                                               [ 42%]
+test_gp_opt.py ..................................                        [ 50%]
+test_gpr.py .                                                            [ 50%]
+test_optimizer.py ................................................       [ 61%]
+test_parallel_cl.py .............................................        [ 71%]
+test_plots.py ....                                                       [ 72%]
+test_sampler.py .............................                            [ 79%]
+test_searchcv.py ..................                                      [ 83%]
+test_space.py ..............................................             [ 93%]
+test_transformers.py .......                                             [ 95%]
+test_utils.py ......................                                     [100%]
+
+================ 445 passed, 204 warnings in 639.88s (0:10:39) ================
