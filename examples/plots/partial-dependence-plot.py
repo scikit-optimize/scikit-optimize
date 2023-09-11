@@ -12,12 +12,12 @@ Plot objective now supports optional use of partial dependence as well as
 different methods of defining parameter values for dependency plots.
 """
 print(__doc__)
-import sys
+# import sys  # unused
 from skopt.plots import plot_objective
 from skopt import forest_minimize
 import numpy as np
 np.random.seed(123)
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt  # unused
 
 #############################################################################
 # Objective function
@@ -33,7 +33,7 @@ def funny_func(x):
     return s
 
 #############################################################################
-# Optimisation using decision trees
+# Optimization using decision trees
 # =================================
 # We run forest_minimize on the function
 bounds = [(-1, 1.), ] * 3
@@ -76,7 +76,7 @@ _ = plot_objective(result,  sample_source='result', n_points=10)
 # ========================
 # Here we try with setting the `minimum` parameters to something other than
 # "result". First we try with "expected_minimum" which is the set of
-# parameters that gives the miniumum value of the surrogate function,
+# parameters that gives the minimum value of the surrogate function,
 # using scipys minimum search method.
 
 _ = plot_objective(result, n_points=10, sample_source='expected_minimum',
@@ -111,5 +111,3 @@ _ = plot_objective(result, n_points=10, sample_source="expected_minimum",
 
 _ = plot_objective(result, n_points=10, sample_source=[1, -0.5, 0.5],
                    minimum=[1, -0.5, 0.5])
-
-

@@ -12,19 +12,19 @@ Plot objective now supports optional use of partial dependence as well as
 different methods of defining parameter values for dependency plots.
 """
 print(__doc__)
-import sys
+# import sys
 from skopt.plots import plot_objective
-from skopt import forest_minimize
+# from skopt import forest_minimize  # unused
 import numpy as np
 np.random.seed(123)
-import matplotlib.pyplot as plt
-import numpy as np
+# import matplotlib.pyplot as plt  # unused
+# import numpy as np  # unused
 from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 from skopt.space import Integer, Categorical
-from skopt import plots, gp_minimize
-from skopt.plots import plot_objective
+from skopt import gp_minimize  # unused `plots,`
+# from skopt.plots import plot_objective  # unused (reimport)
 
 #############################################################################
 # objective function
@@ -90,8 +90,10 @@ _ = plot_objective(result, n_points=10, sample_source='expected_minimum_random',
 #############################################################################
 # Set a minimum location
 # ======================
-# Lastly we can also define these parameters ourselfs by
+# Lastly we can also define these parameters ourselves by
 # parsing a list as the pars argument:
 
-_ = plot_objective(result, n_points=10, sample_source=[15, 4, 7, 15, 'b', 'entropy', 'e'],
+_ = plot_objective(result,
+                   n_points=10,
+                   sample_source=[15, 4, 7, 15, 'b', 'entropy', 'e'],
                    minimum=[15, 4, 7, 15, 'b', 'entropy', 'e'])

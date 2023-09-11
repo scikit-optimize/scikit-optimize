@@ -8,7 +8,7 @@ Holger Nahrstaedt 2020 Sigurd Carlsen October 2019
 .. currentmodule:: skopt
 
 
-When doing baysian optimization we often want to reserve some of the
+When doing bayesian optimization we often want to reserve some of the
 early part of the optimization to pure exploration. By default the
 optimizer suggests purely random samples for the first n_initial_points
 (10 by default). The downside to this is that there is no guarantee that
@@ -158,7 +158,7 @@ x_label.append("grid")
 # ----------------------------
 #
 # This boxplot shows the distance between all generated points using
-# Euclidian distance. The higher the value, the better the sampling method.
+# Euclidean distance. The higher the value, the better the sampling method.
 # It can be seen that random has the worst performance
 
 fig, ax = plt.subplots()

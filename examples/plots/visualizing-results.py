@@ -65,7 +65,7 @@ def hart6(x):
 # ======================
 #
 # To start let's take advantage of the fact that :class:`benchmarks.branin` is a simple
-# function which can be visualised in two dimensions.
+# function which can be visualized in two dimensions.
 
 from matplotlib.colors import LogNorm
 
@@ -109,9 +109,9 @@ plot_branin()
 # :class:`benchmarks.branin` function. Then we visualize at which points the objective is being
 # evaluated using :class:`plots.plot_evaluations`.
 
-from functools import partial
+# from functools import partial  # unused
 from skopt.plots import plot_evaluations
-from skopt import gp_minimize, forest_minimize, dummy_minimize
+from skopt import forest_minimize, dummy_minimize  # unused `gp_minimize`
 
 
 bounds = [(-5.0, 10.0), (0.0, 15.0)]
@@ -132,10 +132,10 @@ _ = plot_evaluations(forest_res, bins=10)
 # location of the minimum found by the optimization process.
 #
 # You should be able to see that points start clustering around the location
-# of the true miminum. The histograms show that the objective is evaluated
+# of the true minimum. The histograms show that the objective is evaluated
 # more often at locations near to one of the three minima.
 #
-# Using :class:`plots.plot_objective` we can visualise the one dimensional partial
+# Using :class:`plots.plot_objective` we can visualize the one dimensional partial
 # dependence of the surrogate model for each dimension. The contour plot in
 # the bottom left corner shows the two dimensional partial dependence. In this
 # case this is the same as simply plotting the objective as it only has two
@@ -184,7 +184,7 @@ _ = plot_evaluations(dummy_res, bins=10)
 # Working in six dimensions
 # =========================
 #
-# Visualising what happens in two dimensions is easy, where
+# Visualizing what happens in two dimensions is easy, where
 # :class:`plots.plot_evaluations` and :class:`plots.plot_objective` start to be useful is when the
 # number of dimensions grows. They take care of many of the more mundane
 # things needed to make good plots of all combinations of the dimensions.
