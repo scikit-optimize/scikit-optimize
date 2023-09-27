@@ -650,6 +650,7 @@ class Categorical(Dimension):
                      0, len(self.categories) - 1, is_int=True,
                      n_categories=len(self.categories)
                  )])
+            self.transformer.fit(self.categories)
         else:
             self.transformer = Identity()
             self.transformer.fit(self.categories)

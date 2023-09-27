@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, KBinsDiscretizer
 from sklearn.utils import column_or_1d
 
 
@@ -245,6 +245,14 @@ class Normalize(Transformer):
         self.is_int = is_int
         self.n_categories = n_categories
         self._eps = 1e-8
+        self._est = KBinsDiscretizer(n_bins=self.n_categories, encode="ordinal",
+                                       strategy="uniform", subsample=None)
+
+    def fit(self, X):
+        X = np.asarray(X)
+        self._est.fit(X.reshape(-1, 1))
+
+        return self
 
     def transform(self, X):
         X = np.asarray(X)
@@ -281,12 +289,7 @@ class Normalize(Transformer):
             if self.n_categories < 2:
                 return np.round(X_orig).astype(int)
             else:
-                from sklearn.preprocessing import KBinsDiscretizer
-    
-                est = KBinsDiscretizer(
-                    n_bins=self.n_categories, encode="ordinal", strategy="uniform"
-                )
-                return est.fit_transform(X_orig.reshape((-1,1))).reshape((-1,))
+                return self._est.transform(X_orig.reshape(-1, 1)).reshape(-1,)
         return X_orig
 
 
@@ -310,7 +313,7 @@ class Pipeline(Transformer):
 
     def fit(self, X):
         for transformer in self.transformers:
-            transformer.fit(X)
+            X = transformer.fit(X).transform(X)
         return self
 
     def transform(self, X):
