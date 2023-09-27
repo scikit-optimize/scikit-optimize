@@ -548,6 +548,16 @@ def test_normalize_categorical():
     assert a.inverse_transform([1.0]) == [categories[2]]
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1]))
 
+    categories = ["cat", "dog", "rat", "mice"]
+    a = Categorical(categories, transform="normalize")
+    for i in range(len(categories)):
+        assert a.rvs(random_state=i)[0] in categories
+    assert a.inverse_transform([0.]) == [categories[0]]
+    assert a.inverse_transform([0.33]) == [categories[1]]
+    assert a.inverse_transform([0.66]) == [categories[2]]
+    assert a.inverse_transform([1]) == [categories[3]]
+    assert_array_equal(categories, a.inverse_transform([0., 0.33, 0.66, 1]))
+
     categories = [1, 2, 3]
     a = Categorical(categories, transform="normalize")
     assert_array_equal(categories, np.sort(np.unique(a.rvs(100,

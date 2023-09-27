@@ -278,15 +278,7 @@ class Normalize(Transformer):
             raise ValueError("All values should be greater than 0.0")
         X_orig = X * (self.high - self.low) + self.low
         if self.is_int:
-            if self.n_categories < 2:
-                return np.round(X_orig).astype(int)
-            else:
-                from sklearn.preprocessing import KBinsDiscretizer
-    
-                est = KBinsDiscretizer(
-                    n_bins=self.n_categories, encode="ordinal", strategy="uniform"
-                )
-                return est.fit_transform(X_orig.reshape((-1,1))).reshape((-1,))
+            return np.round(X_orig).astype(int)
         return X_orig
 
 
