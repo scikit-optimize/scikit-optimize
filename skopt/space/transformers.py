@@ -245,12 +245,17 @@ class Normalize(Transformer):
         self.is_int = is_int
         self.n_categories = n_categories
         self._eps = 1e-8
-        self._est = KBinsDiscretizer(n_bins=self.n_categories, encode="ordinal",
-                                       strategy="uniform", subsample=None)
+
+        if n_categories > 1:
+            self._est = KBinsDiscretizer(n_bins=self.n_categories, encode="ordinal",
+                                           strategy="uniform", subsample=None)
+        else:
+            self._est = None
 
     def fit(self, X):
         X = np.asarray(X)
-        self._est.fit(X.reshape(-1, 1))
+        if self._est:
+            self._est.fit(X.reshape(-1, 1))
 
         return self
 
