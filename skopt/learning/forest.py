@@ -27,7 +27,7 @@ def _return_std(X, trees, predictions, min_variance):
     -------
     std : array-like, shape=(n_samples,)
         Standard deviation of `y` at `X`. If criterion
-        is set to "mse", then `std[i] ~= std(y | X[i])`.
+        is set to "squared_error", then `std[i] ~= std(y | X[i])`.
 
     """
     # This derives std(y | x) as described in 4.3.2 of arXiv:1211.0906
@@ -61,9 +61,9 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-    criterion : string, optional (default="mse")
+    criterion : string, optional (default="squared_error")
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
+        are "squared_error" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
 
@@ -194,7 +194,7 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
     """
-    def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
+    def __init__(self, n_estimators=10, criterion='squared_error', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
                  min_weight_fraction_leaf=0.0, max_features='auto',
                  max_leaf_nodes=None, min_impurity_decrease=0.,
@@ -228,20 +228,20 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
         Returns
         -------
         predictions : array-like of shape = (n_samples,)
-            Predicted values for X. If criterion is set to "mse",
+            Predicted values for X. If criterion is set to "squared_error",
             then `predictions[i] ~= mean(y | X[i])`.
 
         std : array-like of shape=(n_samples,)
             Standard deviation of `y` at `X`. If criterion
-            is set to "mse", then `std[i] ~= std(y | X[i])`.
+            is set to "squared_error", then `std[i] ~= std(y | X[i])`.
 
         """
         mean = super(RandomForestRegressor, self).predict(X)
 
         if return_std:
-            if self.criterion != "mse":
+            if self.criterion != "squared_error":
                 raise ValueError(
-                    "Expected impurity to be 'mse', got %s instead"
+                    "Expected impurity to be 'squared_error', got %s instead"
                     % self.criterion)
             std = _return_std(X, self.estimators_, mean, self.min_variance)
             return mean, std
@@ -257,9 +257,9 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-    criterion : string, optional (default="mse")
+    criterion : string, optional (default="squared_error")
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
+        are "squared_error" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
 
@@ -390,7 +390,7 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
     """
-    def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
+    def __init__(self, n_estimators=10, criterion='squared_error', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
                  min_weight_fraction_leaf=0.0, max_features='auto',
                  max_leaf_nodes=None, min_impurity_decrease=0.,
@@ -425,19 +425,19 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
         Returns
         -------
         predictions : array-like of shape=(n_samples,)
-            Predicted values for X. If criterion is set to "mse",
+            Predicted values for X. If criterion is set to "squared_error",
             then `predictions[i] ~= mean(y | X[i])`.
 
         std : array-like of shape=(n_samples,)
             Standard deviation of `y` at `X`. If criterion
-            is set to "mse", then `std[i] ~= std(y | X[i])`.
+            is set to "squared_error", then `std[i] ~= std(y | X[i])`.
         """
         mean = super(ExtraTreesRegressor, self).predict(X)
 
         if return_std:
-            if self.criterion != "mse":
+            if self.criterion != "squared_error":
                 raise ValueError(
-                    "Expected impurity to be 'mse', got %s instead"
+                    "Expected impurity to be 'squared_error', got %s instead"
                     % self.criterion)
             std = _return_std(X, self.estimators_, mean, self.min_variance)
             return mean, std
