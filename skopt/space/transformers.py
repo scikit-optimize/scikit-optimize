@@ -239,12 +239,13 @@ class Normalize(Transformer):
     n_categories : int, default=0
         The number of categories if categorical data is normalized.
     """
-    def __init__(self, low, high, is_int=False, n_categories=0):
+    def __init__(self, low, high, is_int=False, n_categories=0, unbounded=False):
         self.low = float(low)
         self.high = float(high)
         self.is_int = is_int
         self.n_categories = n_categories
         self._eps = 1e-8
+        self.unbounded = unbounded
 
         if n_categories > 1:
             self._est = KBinsDiscretizer(n_bins=self.n_categories, encode="ordinal",
@@ -262,17 +263,17 @@ class Normalize(Transformer):
     def transform(self, X):
         X = np.asarray(X)
         if self.is_int:
-            if np.any(np.round(X) > self.high):
+            if np.any(np.round(X) > self.high) and not self.unbounded:
                 raise ValueError("All integer values should"
                                  "be less than %f" % self.high)
-            if np.any(np.round(X) < self.low):
+            if np.any(np.round(X) < self.low) and not self.unbounded:
                 raise ValueError("All integer values should"
                                  "be greater than %f" % self.low)
         else:
-            if np.any(X > self.high + self._eps):
+            if np.any(X > self.high + self._eps) and not self.unbounded:
                 raise ValueError("All values should"
                                  "be less than %f" % self.high)
-            if np.any(X < self.low - self._eps):
+            if np.any(X < self.low - self._eps) and not self.unbounded:
                 raise ValueError("All values should"
                                  "be greater than %f" % self.low)
         if (self.high - self.low) == 0.:
@@ -285,9 +286,9 @@ class Normalize(Transformer):
 
     def inverse_transform(self, X):
         X = np.asarray(X)
-        if np.any(X > 1.0 + self._eps):
+        if np.any(X > 1.0 + self._eps) and not self.unbounded:
             raise ValueError("All values should be less than 1.0")
-        if np.any(X < 0.0 - self._eps):
+        if np.any(X < 0.0 - self._eps) and not self.unbounded:
             raise ValueError("All values should be greater than 0.0")
         X_orig = X * (self.high - self.low) + self.low
         if self.is_int:

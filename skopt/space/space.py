@@ -63,7 +63,7 @@ def check_dimension(dimension, transform=None):
         - an instance of a `Dimension` object (`Real`, `Integer` or
           `Categorical`).
 
-    transform : "identity", "normalize", "string", "label", "onehot" optional
+    transform : "identity", "normalize", "normalize_unbounded", "string", "label", "onehot" optional
         - For `Categorical` dimensions, the following transformations are
           supported.
 
@@ -78,6 +78,8 @@ def check_dimension(dimension, transform=None):
           - "identity", (default) the transformed space is the same as the
             original space.
           - "normalize", the transformed space is scaled to be between 0 and 1.
+          - "normalize_unbounded", the transformed space is scaled to be between 0 and 1, 
+            and out of bounds values are mapped to <0 or >1.
 
     Returns
     -------
@@ -287,30 +289,31 @@ class Real(Dimension):
         Parameters
         ----------
         transform : str
-           Can be 'normalize' or 'identity'
+           Can be 'normalize' or 'identity' or 'normalize_unbounded'
 
         """
         self.transform_ = transform
 
-        if self.transform_ not in ["normalize", "identity"]:
-            raise ValueError("transform should be 'normalize' or 'identity'"
+        if self.transform_ not in ["normalize", "identity", "normalize_unbounded"]:
+            raise ValueError("transform should be 'normalize' or 'identity' or 'normalize_unbounded"
                              " got {}".format(self.transform_))
 
         # XXX: The _rvs is for sampling in the transformed space.
         # The rvs on Dimension calls inverse_transform on the points sampled
         # using _rvs
-        if self.transform_ == "normalize":
+        if "normalize" in self.transform_:
             # set upper bound to next float after 1. to make the numbers
             # inclusive of upper edge
+            is_unbounded = self.transform_ == "normalize_unbounded"
             self._rvs = _uniform_inclusive(0., 1.)
             if self.prior == "uniform":
                 self.transformer = Pipeline(
-                    [Identity(), Normalize(self.low, self.high)])
+                    [Identity(), Normalize(self.low, self.high, unbounded=is_unbounded)])
             else:
                 self.transformer = Pipeline(
                     [LogN(self.base),
                      Normalize(np.log10(self.low) / self.log_base,
-                               np.log10(self.high) / self.log_base)]
+                               np.log10(self.high) / self.log_base, unbounded=is_unbounded)]
                 )
         else:
             if self.prior == "uniform":
@@ -365,7 +368,7 @@ class Real(Dimension):
 
     @property
     def transformed_bounds(self):
-        if self.transform_ == "normalize":
+        if "normalize" in self.transform_:
             return 0.0, 1.0
         else:
             if self.prior == "uniform":
@@ -643,7 +646,7 @@ class Categorical(Dimension):
         elif transform == "label":
             self.transformer = LabelEncoder()
             self.transformer.fit(self.categories)
-        elif transform == "normalize":
+        elif "normalize" in transform:
             self.transformer = Pipeline(
                 [LabelEncoder(list(self.categories)),
                  Normalize(
@@ -654,7 +657,7 @@ class Categorical(Dimension):
         else:
             self.transformer = Identity()
             self.transformer.fit(self.categories)
-        if transform == "normalize":
+        if "normalize" in transform:
             self._rvs = _uniform_inclusive(0.0, 1.0)
         else:
             # XXX check that sum(prior) == 1
