@@ -8,6 +8,7 @@ Scikit-Optimize is a community effort. Contributors include, in alphabetical ord
 * [Alexander Fabisch][AlexanderFabisch]
 * [Thomas Fan][thomasjpfan]
 * [Tim Head][betatim]
+* [kernc][kernc]
 * [Manoj Kumar][mechcoder]
 * [Gilles Louppe][glouppe]
 * [Katie Malone][cmmalone]
@@ -37,3 +38,4 @@ The scikit-optimize logo was a contribution by
 [mirca]: http://mirca.github.io/
 [iaroslav-ai]: http://iaroslav-ai.github.io/
 [holgern]: https://github.com/holgern
+[kernc]: https://github.com/kernc

@@ -40,7 +40,7 @@ for acq in ACQUISITION:
 
 def check_minimizer_api(result, n_calls, n_models=None):
     # assumes the result was produced on branin
-    assert(isinstance(result.space, Space))
+    assert isinstance(result.space, Space)
 
     if n_models is not None:
         assert_equal(len(result.models), n_models)
@@ -48,23 +48,23 @@ def check_minimizer_api(result, n_calls, n_models=None):
     assert_equal(len(result.x_iters), n_calls)
     assert_array_equal(result.func_vals.shape, (n_calls,))
 
-    assert(isinstance(result.x, list))
+    assert isinstance(result.x, list)
     assert_equal(len(result.x), 2)
 
-    assert(isinstance(result.x_iters, list))
+    assert isinstance(result.x_iters, list)
     for n in range(n_calls):
-        assert(isinstance(result.x_iters[n], list))
+        assert isinstance(result.x_iters[n], list)
         assert_equal(len(result.x_iters[n]), 2)
 
-        assert(isinstance(result.func_vals[n], float))
+        assert isinstance(result.func_vals[n], float)
         assert_almost_equal(result.func_vals[n], branin(result.x_iters[n]))
 
     assert_array_equal(result.x, result.x_iters[np.argmin(result.func_vals)])
     assert_almost_equal(result.fun, branin(result.x))
 
-    assert(isinstance(result.specs, dict))
-    assert("args" in result.specs)
-    assert("function" in result.specs)
+    assert isinstance(result.specs, dict)
+    assert "args" in result.specs
+    assert "function" in result.specs
 
 
 def check_minimizer_bounds(result, n_calls):
@@ -78,7 +78,7 @@ def check_result_callable(res):
     """
     Check that the result instance is set right at every callable call.
     """
-    assert(isinstance(res, OptimizeResult))
+    assert isinstance(res, OptimizeResult)
     assert_equal(len(res.x_iters), len(res.func_vals))
     assert_equal(np.min(res.func_vals), res.fun)
 

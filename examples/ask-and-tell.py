@@ -38,7 +38,6 @@ from skopt.plots import plot_gaussian_process
 # artificial as you normally would not use the ask-and-tell interface if you
 # had a function you can call to evaluate the objective.
 
-from skopt.learning import ExtraTreesRegressor
 from skopt import Optimizer
 
 noise_level = 0.1

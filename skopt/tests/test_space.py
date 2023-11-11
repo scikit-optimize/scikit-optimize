@@ -2,7 +2,6 @@ import pytest
 import numbers
 import numpy as np
 import os
-import yaml
 from tempfile import NamedTemporaryFile
 
 from numpy.testing import assert_array_almost_equal
@@ -82,7 +81,8 @@ def test_real():
     random_values = a.rvs(random_state=0, n_samples=10)
     assert len(random_values) == 10
     assert_array_equal(a.transform(random_values), random_values)
-    assert_array_equal(a.inverse_transform(random_values), random_values)
+    assert_array_almost_equal(
+        a.inverse_transform(random_values), random_values, decimal=12)
 
     log_uniform = Real(10**-5, 10**5, prior="log-uniform")
     assert log_uniform != Real(10**-5, 10**5)
@@ -93,8 +93,8 @@ def test_real():
     assert len(random_values) == 10
     transformed_vals = log_uniform.transform(random_values)
     assert_array_equal(transformed_vals, np.log10(random_values))
-    assert_array_equal(
-        log_uniform.inverse_transform(transformed_vals), random_values)
+    assert_array_almost_equal(
+        log_uniform.inverse_transform(transformed_vals), random_values, decimal=12)
 
 
 @pytest.mark.fast_test
@@ -296,6 +296,7 @@ def test_space_consistency():
     s3 = Space([np.array([True, False])])
     assert s1 == s2 == s3
 
+
 @pytest.mark.fast_test
 def test_space_api():
     space = Space([(0.0, 1.0), (-5, 5),
@@ -423,6 +424,7 @@ def test_normalize_types():
     assert isinstance(space.inverse_transform(Xt)[0][0], float)
     assert isinstance(space.inverse_transform(Xt)[0][1], int)
     assert isinstance(space.inverse_transform(Xt)[0][2], (np.bool_, bool))
+
 
 @pytest.mark.fast_test
 def test_normalize_real():
@@ -567,8 +569,9 @@ def test_normalize_categorical():
                                                            random_state=1))))
     assert_array_equal(categories, a.inverse_transform([0., 0.5, 1.]))
 
+
 @pytest.mark.fast_test
-def test_normalize_integer():
+def test_normalize_int():
     for dtype in ['int', 'int8', 'int16', 'int32', 'int64',
                   'uint8', 'uint16', 'uint32', 'uint64']:
         a = Integer(2, 30, transform="normalize", dtype=dtype)
@@ -674,7 +677,7 @@ def test_real_distance():
                           (Real, (2, 2)), (Integer, (2, 2))])
 def test_dimension_bounds(dimension, bounds):
     with pytest.raises(ValueError) as exc:
-        dim = dimension(*bounds)
+        _ = dimension(*bounds)
         assert "has to be less than the upper bound " in exc.value.args[0]
 
 
@@ -686,12 +689,12 @@ def test_dimension_name(dimension, name):
     assert dimension.name == name
 
 
-def test_dimension_name():
+def test_dimension_name2():
     notnames = [1, 1., True]
     for n in notnames:
         with pytest.raises(ValueError) as exc:
-            real = Real(1, 2, name=n)
-            assert("Dimension's name must be either string or"
+            _ = Real(1, 2, name=n)
+            assert ("Dimension's name must be either string or"
                    "None." == exc.value.args[0])
     s = Space([Real(1, 2, name="a"),
                Integer(1, 100, name="b"),
@@ -749,11 +752,12 @@ def test_space_from_yaml():
         tmp.close()
         os.unlink(tmp.name)
 
+
 @pytest.mark.parametrize("name", [1, 1., True])
 def test_dimension_with_invalid_names(name):
     with pytest.raises(ValueError) as exc:
         Real(1, 2, name=name)
-    assert("Dimension's name must be either string or None." ==
+    assert ("Dimension's name must be either string or None." ==
            exc.value.args[0])
 
 

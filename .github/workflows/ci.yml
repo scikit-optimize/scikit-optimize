@@ -1,0 +1,128 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v[0-9]+\.[0-9]+.*' ]
+  pull_request: { branches: [master] }
+  schedule: [ cron: '20 16 * * 6' ]
+  workflow_call:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/cache@v2
+        name: Set up caches
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-py${{ matrix.python-version }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+      - name: Install dependencies
+        run: pip install flake8
+      - name: flake8
+        run: flake8 skopt/
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # When bumping, note to revise env.TEST_WITH_COVERAGE below
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        scikit-version: [ "1.1.3", "1.2.2", "1.3.2" ]
+
+    env:
+      TEST_WITH_COVERAGE: ${{ matrix.python-version == '3.11' && matrix.scikit-version == '1.3.2' }}
+
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pip install -U pip wheel
+          pip install scikit-learn==${{ matrix.scikit-version }}
+          pip install .
+          pip install .[dev,plots]
+          python -c 'import skopt; print(skopt.__version__)'
+
+      - name: Test
+        if: env.TEST_WITH_COVERAGE != 'true'
+        run: |
+          make test-code-parallel
+
+      - name: Test with Coverage
+        if: env.TEST_WITH_COVERAGE == 'true'
+        run: |
+          make test-coverage
+          bash <(curl -s https://codecov.io/bash)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: dist
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.11" ]
+    env:
+      MPLBACKEND: "agg"
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install latex dependencies
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq --no-install-recommends install \
+              dvipng texlive-latex-base texlive-latex-extra \
+              texlive-latex-recommended texlive-fonts-recommended \
+              latexmk tex-gyre gsfonts ccache
+
+      - name: Install dependencies
+        run: |
+          pip install -U pip setuptools wheel
+          pip install .[dev,doc,plots]
+
+      - name: Test docs
+        run: |
+          python -c 'import skopt; skopt.show_versions()'
+          make test-doc
+          make test-sphinxext
+          make -C doc doctest
+          make -C doc linkcheck
+
+      - name: Build docs
+        run: |
+          .github/scripts/build_docs.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docs
+          path: doc/_build/html/stable

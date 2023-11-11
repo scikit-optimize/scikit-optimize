@@ -12,23 +12,24 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
+# the above path adjustment needs to be before the rest of the imports
+
 import warnings
 import os
 import re
 from packaging.version import parse
-# import pkg_resources
 import sys
-import skopt
+import skopt  # noqa: F401
+import sphinx_gallery
+from importlib.metadata import version, PackageNotFoundError
 
 sys.path.insert(0, os.path.abspath('sphinxext'))
-from github_link import make_linkcode_resolve
-import sphinx_gallery
+from github_link import make_linkcode_resolve  # noqa: E402
 
 
-#  __version__ = pkg_resources.get_distribution('skopt').version
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 # -- Project information -----------------------------------------------------
@@ -38,10 +39,14 @@ copyright = '2017 - 2020, scikit-optimize contributors (BSD License)'
 author = 'The scikit-optimize contributors'
 
 # The short X.Y version
-version = parse(skopt.__version__).base_version
+try:
+    _version = version("skopt")
+except PackageNotFoundError:
+    _version = version("scikit-optimize")
+version = parse(_version).base_version
 version = ".".join(version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
-release = skopt.__version__
+release = _version
 
 # -- General configuration ---------------------------------------------------
 
@@ -102,7 +107,7 @@ master_doc = 'contents'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -282,7 +287,7 @@ class SubSectionTitleOrder:
 sphinx_gallery_conf = {
     'doc_module': 'skopt',
     'backreferences_dir': os.path.join('modules', 'generated'),
-    'show_memory': True,
+    'show_memory': False,
     'reference_url': {
         'skopt': None},
     'examples_dirs': ['../examples'],
@@ -381,3 +386,7 @@ warnings.filterwarnings("ignore", category=UserWarning,
 
 
 # -- Extension configuration -------------------------------------------------
+
+linkcheck_ignore = [
+    r'(../)?auto_examples/',
+]

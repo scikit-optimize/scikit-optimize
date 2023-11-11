@@ -42,12 +42,12 @@ import numpy as np
 # decide which parameters to optimize, and define the objective function
 # we want to minimize.
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_california_housing
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import cross_val_score
 
-boston = load_boston()
-X, y = boston.data, boston.target
+housing = fetch_california_housing()
+X, y = housing.data, housing.target
 n_features = X.shape[1]
 
 # gradient boosted trees tend to do well on problems like this
@@ -66,11 +66,11 @@ from skopt.utils import use_named_args
 # The list of hyper-parameters we want to optimize. For each one we define the
 # bounds, the corresponding scikit-learn parameter name, as well as how to
 # sample values from that dimension (`'log-uniform'` for the learning rate)
-space  = [Integer(1, 5, name='max_depth'),
-          Real(10**-5, 10**0, "log-uniform", name='learning_rate'),
-          Integer(1, n_features, name='max_features'),
-          Integer(2, 100, name='min_samples_split'),
-          Integer(1, 100, name='min_samples_leaf')]
+space = [Integer(1, 5, name='max_depth'),
+         Real(10**-5, 10**0, "log-uniform", name='learning_rate'),
+         Integer(1, n_features, name='max_features'),
+         Integer(2, 100, name='min_samples_split'),
+         Integer(1, 100, name='min_samples_leaf')]
 
 # this decorator allows your objective function to receive a the parameters as
 # keyword arguments. This is particularly convenient when you want to set
@@ -111,4 +111,3 @@ print("""Best parameters:
 from skopt.plots import plot_convergence
 
 plot_convergence(res_gp)
-

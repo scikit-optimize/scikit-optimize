@@ -37,9 +37,9 @@ default_parameters = [1e-4, 1, 64, 'relu']
 def model_fitness(x):
     learning_rate, num_dense_layers, num_dense_nodes, activation = x
 
-    fitness = ((exp(learning_rate) - 1.0) * 1000) ** 2 + \
-               (num_dense_layers) ** 2 + \
-               (num_dense_nodes/100) ** 2
+    fitness = (((exp(learning_rate) - 1.0) * 1000)**2 +
+               num_dense_layers**2 +
+               (num_dense_nodes / 100)**2)
 
     fitness *= 1.0 + 0.1 * np.random.rand()
 

@@ -1,10 +1,6 @@
 """Forest based minimization algorithms."""
 
-from sklearn.utils import check_random_state
-
 from .base import base_minimize
-from ..utils import cook_estimator
-
 
 
 def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
@@ -37,7 +33,7 @@ def forest_minimize(func, dimensions, base_estimator="ET", n_calls=100,
     func : callable
         Function to minimize. Should take a single list of parameters
         and return the objective value.
-    
+
         If you have a search-space where all dimensions have names,
         then you can use :func:`skopt.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
