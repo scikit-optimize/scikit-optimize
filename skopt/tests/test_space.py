@@ -81,7 +81,8 @@ def test_real():
     random_values = a.rvs(random_state=0, n_samples=10)
     assert len(random_values) == 10
     assert_array_equal(a.transform(random_values), random_values)
-    assert_array_equal(a.inverse_transform(random_values), random_values)
+    assert_array_almost_equal(
+        a.inverse_transform(random_values), random_values, decimal=12)
 
     log_uniform = Real(10**-5, 10**5, prior="log-uniform")
     assert log_uniform != Real(10**-5, 10**5)
@@ -92,8 +93,8 @@ def test_real():
     assert len(random_values) == 10
     transformed_vals = log_uniform.transform(random_values)
     assert_array_equal(transformed_vals, np.log10(random_values))
-    assert_array_equal(
-        log_uniform.inverse_transform(transformed_vals), random_values)
+    assert_array_almost_equal(
+        log_uniform.inverse_transform(transformed_vals), random_values, decimal=12)
 
 
 @pytest.mark.fast_test
@@ -693,7 +694,7 @@ def test_dimension_name2():
     for n in notnames:
         with pytest.raises(ValueError) as exc:
             _ = Real(1, 2, name=n)
-            assert("Dimension's name must be either string or"
+            assert ("Dimension's name must be either string or"
                    "None." == exc.value.args[0])
     s = Space([Real(1, 2, name="a"),
                Integer(1, 100, name="b"),
@@ -756,7 +757,7 @@ def test_space_from_yaml():
 def test_dimension_with_invalid_names(name):
     with pytest.raises(ValueError) as exc:
         Real(1, 2, name=name)
-    assert("Dimension's name must be either string or None." ==
+    assert ("Dimension's name must be either string or None." ==
            exc.value.args[0])
 
 

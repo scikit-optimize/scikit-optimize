@@ -42,12 +42,12 @@ import numpy as np
 # decide which parameters to optimize, and define the objective function
 # we want to minimize.
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_california_housing
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import cross_val_score
 
-boston = load_boston()
-X, y = boston.data, boston.target
+housing = fetch_california_housing()
+X, y = housing.data, housing.target
 n_features = X.shape[1]
 
 # gradient boosted trees tend to do well on problems like this

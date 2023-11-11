@@ -1,0 +1,60 @@
+
+[project]
+name = "scikit-optimize"
+description = "Sequential model-based optimization toolbox."
+readme = "README.rst"
+authors = [
+    {name = "The scikit-optimize contributors"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">= 3.8"
+dependencies = [
+    "joblib>=1.2",
+    "numpy>=1.17",
+    "pyaml>=16.9",
+    "scikit-learn>=1.1",
+    "scipy>=1.5",
+]
+license = {text = "BSD-3-Clause"}
+version = "0.9.1"
+
+[project.urls]
+Homepage = "https://scikit-optimize.github.io/"
+Documentation = "https://scikit-optimize.github.io/"
+Source = "https://github.com/scikit-optimize/scikit-optimize"
+Tracker = "https://github.com/scikit-optimize/scikit-optimize/issues"
+
+[project.optional-dependencies]
+plots = [
+    "matplotlib>=2.0.0",
+]
+dev = [
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+]
+doc = [
+    "memory_profiler",
+    "numpydoc",
+    "sphinx<7",
+    "sphinx-gallery>=0.6",
+]
+
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel"]
+build-backend = "setuptools.build_meta:__legacy__"

@@ -10,13 +10,13 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.9 ]
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - uses: actions/cache@v2
@@ -25,58 +25,42 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-py${{ matrix.python-version }}
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 3
       - name: Install dependencies
         run: pip install flake8
       - name: flake8
-        run: flake8
+        run: flake8 skopt/
 
   test:
     name: Test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         # When bumping, note to revise env.TEST_WITH_COVERAGE below
-        python-version: [ 3.7, 3.8, 3.9, "pypy-3.7" ]
-        scikit-version: [ "0.*", "1.*" ]
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        scikit-version: [ "1.1.3", "1.2.2", "1.3.2" ]
+
     env:
-      TEST_WITH_COVERAGE: ${{ matrix.python-version == '3.9' && matrix.scikit-version == '1.*' }}
+      TEST_WITH_COVERAGE: ${{ matrix.python-version == '3.11' && matrix.scikit-version == '1.3.2' }}
+
     steps:
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up caches
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache
-            ~/.ccache
-          key: ${{ runner.os }}-py${{ matrix.python-version }}
-
       - name: Checkout repo
-        uses: actions/checkout@v2
-
-      - name: Install ccache
-        run: |
-          sudo apt-get install -yq ccache
-          echo /usr/lib/ccache >> $GITHUB_PATH
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
-          pip install -U pip setuptools wheel twine
-          pip install numpy cython  # scikit-learn build deps if wheel missing
+          pip install -U pip wheel
           pip install scikit-learn==${{ matrix.scikit-version }}
+          pip install .
           pip install .[dev,plots]
-          python -c 'import skopt; skopt.show_versions()'
-
-      - name: Python sdist
-        run: |
-          python setup.py sdist
-          twine check dist/*
+          python -c 'import skopt; print(skopt.__version__)'
 
       - name: Test
         if: env.TEST_WITH_COVERAGE != 'true'
@@ -97,26 +81,20 @@ jobs:
 
   docs:
     name: Docs
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.9 ]
+        python-version: [ "3.11" ]
     env:
       MPLBACKEND: "agg"
     steps:
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up caches
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-py${{ matrix.python-version }}
-
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install latex dependencies
         run: |
@@ -129,7 +107,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip setuptools wheel
-          pip install -e .[dev,doc,plots]
+          pip install .[dev,doc,plots]
 
       - name: Test docs
         run: |

@@ -17,17 +17,16 @@ if __name__ == '__main__':
         packages=find_packages(include=('skopt.*',),
                                exclude=('*.tests',)),
         use_scm_version=True,
-        python_requires='>= 3.6',
+        python_requires='>= 3.8',
         setup_requires=[
             'setuptools_scm',
         ],
         install_requires=[
-            'joblib>=0.11',
+            'joblib>=1.2',
             'pyaml>=16.9',
-            'numpy>=1.13.3',
-            'scipy>=0.19.1',
-            'scikit-learn>=0.20.0',
-            'importlib-metadata; python_version < "3.8"'
+            'numpy>=1.17',
+            'scipy>=1.5',
+            'scikit-learn>1.1',
         ],
         extras_require={
             'plots': [
