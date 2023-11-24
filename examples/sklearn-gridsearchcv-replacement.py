@@ -19,22 +19,25 @@ cross-validation performance is necessary in almost all practical
 cases to get a model with best generalization estimate.
 
 A standard approach in scikit-learn is to use :obj:`sklearn.model_selection.GridSearchCV` class,
-which enumerates all combinations of hyperparameters values given as input. The complexity of such search grows
-exponentially with the number of parameters. A more scalable
-approach is to use :obj:`sklearn.model_selection.RandomizedSearchCV`, w shich however does not take
+which enumerates all combinations of hyperparameters values given as input. 
+This search complexity grows exponentially with the number of parameters. A more scalable
+approach is to use :obj:`sklearn.model_selection.RandomizedSearchCV`, which however does not take
 advantage of the structure of a search space.
 
 Scikit-optimize provides a drop-in replacement for these two scikit-learn methods.
-The hyperparameter search is achieved by Bayesian Optimization, which determines subsequent evaluation points using prior results.
-At each step of the optimization, a surrogate model infers the objective function using observed data points.
-An acquisition function utilizes these predictions to navigate between exploration (sampling unexplored areas)
+The hyperparameter search is achieved by Bayesian Optimization.
+At each step of the optimization, a surrogate model infers the objective 
+function using observed evluation results as priors. An acquisition function utilizes 
+these predictions to navigate between exploration (sampling unexplored areas)
 and exploitation (focusing on regions likely containing the global optimum).
-By balancing these two strategies, Bayesian Optimization identifies probable optimal areas while
-ensuring comprehensive search coverage. and exploitation (focusing on regions likely containing the global optimum).
+By balancing these two strategies, Bayesian Optimization identifies 
+probable optimal areas while ensuring comprehensive search coverage.
+
 In practice, this method often leads to quicker and better results.
 
 Note: for a manual hyperparameter optimization example, see
 "Hyperparameter Optimization" notebook.
+
 """
 print(__doc__)
 import numpy as np
