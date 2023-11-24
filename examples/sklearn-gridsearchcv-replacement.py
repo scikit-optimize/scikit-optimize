@@ -18,20 +18,23 @@ Search for parameters of machine learning models that results in best
 cross-validation performance is necessary in almost all practical
 cases to get a model with best generalization estimate.
 
-A standard approach in scikit-learn is to use :obj:`sklearn.model_selection.GridSearchCV` class,
-which enumerates all combinations of hyperparameters values given as input. 
-This search complexity grows exponentially with the number of parameters. A more scalable
-approach is to use :obj:`sklearn.model_selection.RandomizedSearchCV`, which however does not take
+A standard approach in scikit-learn is to use 
+:obj:`sklearn.model_selection.GridSearchCV` class, which enumerates 
+all combinations of hyperparameters values given as input. 
+This search complexity grows exponentially with the number of parameters. 
+A more scalable approach is to use 
+:obj:`sklearn.model_selection.RandomizedSearchCV`, which however does not take
 advantage of the structure of a search space.
 
-Scikit-optimize provides a drop-in replacement for these two scikit-learn methods.
-The hyperparameter search is achieved by Bayesian Optimization.
+Scikit-optimize provides a drop-in replacement for these two scikit-learn 
+methods. The hyperparameter search is achieved by Bayesian Optimization.
 At each step of the optimization, a surrogate model infers the objective 
-function using observed evluation results as priors. An acquisition function utilizes 
-these predictions to navigate between exploration (sampling unexplored areas)
-and exploitation (focusing on regions likely containing the global optimum).
-By balancing these two strategies, Bayesian Optimization identifies 
-probable optimal areas while ensuring comprehensive search coverage.
+function using observed evluation results as priors. An acquisition function 
+utilizes these predictions to navigate between exploration (sampling 
+unexplored areas) and exploitation (focusing on regions likely containing 
+the global optimum). By balancing these two strategies, Bayesian Optimization
+identifies probable optimal areas while ensuring comprehensive search 
+coverage.
 
 In practice, this method often leads to quicker and better results.
 
