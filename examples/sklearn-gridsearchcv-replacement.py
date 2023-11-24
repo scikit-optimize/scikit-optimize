@@ -23,8 +23,8 @@ A standard approach in scikit-learn is to use
 all combinations of hyperparameters values given as input. 
 This search complexity grows exponentially with the number of parameters. 
 A more scalable approach is to use 
-:obj:`sklearn.model_selection.RandomizedSearchCV`, which however does not take
-advantage of the structure of a search space.
+:obj:`sklearn.model_selection.RandomizedSearchCV`, which however does not 
+take advantage of the structure of a search space.
 
 Scikit-optimize provides a drop-in replacement for these two scikit-learn 
 methods. The hyperparameter search is achieved by Bayesian Optimization.
