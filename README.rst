@@ -39,12 +39,12 @@ Install
 
 scikit-optimize requires
 
-* Python >= 3.6
+* Python (>= 3.6)
 * NumPy (>= 1.13.3)
 * SciPy (>= 0.19.1)
 * joblib (>= 0.11)
-* scikit-learn >= 0.20
-* matplotlib >= 2.0.0
+* scikit-learn (>= 0.20)
+* matplotlib (>= 2.0.0)
 
 You can install the latest release with:
 ::
