@@ -4,4 +4,4 @@ This is a fork of the scikit-optimize project https://scikit-optimize.github.io/
 
 ## installation
 
-`pip install git+https://github.com/mikesmithlab/scikit-optimize`
+`pip install git+https://github.com/mikesmithlab/skopt`
